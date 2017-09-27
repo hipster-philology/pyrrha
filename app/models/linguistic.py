@@ -71,13 +71,14 @@ class WordToken(db.Model):
             "order_id": self.order_id,
             "form": self.form,
             "lemma": self.lemma,
-            "POS": self.morph,
+            "POS": self.POS,
+            "morph": self.morph,
             "context": self.context
         }
 
     @property
     def tsv(self):
-        return "\t".join([self.form, self.lemma, self.POS, self.morph])
+        return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
     @staticmethod
     def add_batch(corpus_id, word_tokens_dict):
@@ -149,9 +150,12 @@ class WordToken(db.Model):
             db.and_(
                 WordToken.corpus == change_record.corpus,
                 db.or_(
-                    db.and_(WordToken.form == change_record.form, WordToken.lemma == change_record.lemma, change_record.lemma != change_record.lemma_new),
-                    db.and_(WordToken.form == change_record.form, WordToken.POS == change_record.POS, change_record.POS != change_record.POS_new),
-                    db.and_(WordToken.form == change_record.form, WordToken.POS == change_record.POS, change_record.morph != change_record.morph_new),
+                    db.and_(WordToken.form == change_record.form, WordToken.lemma == change_record.lemma,
+                            change_record.lemma != change_record.lemma_new),
+                    db.and_(WordToken.form == change_record.form, WordToken.POS == change_record.POS,
+                            change_record.POS != change_record.POS_new, change_record.POS_new is not None),
+                    db.and_(WordToken.form == change_record.form, WordToken.morph == change_record.morph,
+                            change_record.morph != change_record.morph_new, change_record.morph_new is not None),
                 )
             )
         )

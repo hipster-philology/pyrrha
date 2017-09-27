@@ -13,10 +13,6 @@
         <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
         <textarea type="email" aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
     </div>
-    <div class="form-group">
-        <label for="postCorrect">Use Post-Correct Lemma as Lemma</label>
-        <input type="checkbox" name="postCorrect" id="postCorrect" value="postCorrect" />
-    </div>
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>
 {% endblock %}

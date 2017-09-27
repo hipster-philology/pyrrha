@@ -56,7 +56,11 @@
                     word_tokens: selected_tokens
                 }),
                 success:function(response){
-                    console.log(response);
+                    location.reload();
+                },
+                error:function(response){
+                    alert(response);
+                    location.reload();
                 }
             });
         });
@@ -68,8 +72,11 @@
         // Add Class
         $('.editable a').on("click", function (event) {
             event.preventDefault();
-            var parent = $(this).parents("tr.editable");
+            var link = $(this),
+                parent = link.parents("tr.editable");
 
+
+            link.text("(Saving) Save");
             jQuery.ajax({
                 url: event.target.href,
                 type: 'POST',
@@ -79,7 +86,11 @@
                     morph:parent.find(".token_morph").text()
                 },
                 success:function(response){
-                    console.log(response);
+                    link.text("(Saved) Save");
+                },
+                error:function (response) {
+                    link.text("(Error) Save");
+                    alert(response);
                 }
             });
         });
@@ -89,7 +100,7 @@
 {% elif tracking %}
     <table class="table table-bordered">
         <thead>
-            <tr>
+            <th>
                 <th>Edit</th><th>Form</th>
                 <th>Context</th>
                 <th>Lemma</th><th>POS</th><th>Morph</th>

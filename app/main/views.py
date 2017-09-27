@@ -2,8 +2,7 @@ from flask import render_template, jsonify, request, flash
 
 from . import main
 from ..models import Corpus, WordToken, ChangeRecord
-from ..utils.tsv import StringDictReader
-from ..utils.pagination import int_or
+from ..utils import StringDictReader, int_or, string_to_none
 
 
 def render_template_with_nav_info(template, **kwargs):
@@ -61,7 +60,9 @@ def similar_tokens(corpus_id, record_id):
 def edit_single_token(corpus_id, token_id):
     token = WordToken.update(
         token_id=token_id, corpus_id=corpus_id,
-        lemma=request.form.get("lemma"), POS=request.form.get("POS"), morph=request.form.get("morph")
+        lemma=request.form.get("lemma"),
+        POS=string_to_none(request.form.get("POS")),
+        morph=string_to_none(request.form.get("morph"))
     )
     return jsonify(token.to_dict())
 
