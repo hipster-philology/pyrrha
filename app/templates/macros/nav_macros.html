@@ -1,21 +1,25 @@
 {% macro render_nav(corpora=[]) %}
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-      <a class="navbar-brand" href="#">Pandora Post-Correction Editor</a>
+      <a class="navbar-brand" href="{{url_for("main.index")}}">Pandora Post-Correction Editor</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item active">
-            <a class="nav-link" href="{{url_for("main.index")}}">Home <span class="sr-only">(current)</span></a>
-          </li>
           <li class="nav-item">
             <a class="nav-link" href="{{url_for("main.new_corpus")}}">New Corpus</a>
           </li>
             {% for corpus in corpora %}
-              <li class="nav-item">
-                <a class="nav-link" href="{{url_for("main.get_corpus", corpus_id=corpus.id)}}">{{corpus.name}}</a>
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{corpus.name}}</a>
+                <div class="dropdown-menu">
+                  <a class="dropdown-item" href="{{url_for("main.get_corpus", corpus_id=corpus.id)}}">Overview</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="{{url_for("main.edit_tokens", corpus_id=corpus.id)}}">Edit tokens</a>
+                  <a class="dropdown-item" href="{{url_for("main.view_tokens", corpus_id=corpus.id)}}">Export tokens</a>
+                  <a class="dropdown-item" href="{{url_for("main.corpus_history", corpus_id=corpus.id)}}">History</a>
+                </div>
               </li>
             {% endfor %}
         </ul>
