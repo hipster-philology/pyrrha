@@ -97,9 +97,9 @@ class WordToken(db.Model):
             if i == count_tokens-1:
                 next_token = []
             elif count_tokens-1-i < WordToken.CONTEXT_RIGHT:
-                next_token = [tok.get("form") for tok in word_tokens_dict[i:]]
+                next_token = [tok.get("form") for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form") for tok in word_tokens_dict[i+1:i+WordToken.CONTEXT_RIGHT]]
+                next_token = [tok.get("form") for tok in word_tokens_dict[i+1:i+WordToken.CONTEXT_RIGHT+1]]
 
             wt = WordToken(
                 form=token.get("form"),

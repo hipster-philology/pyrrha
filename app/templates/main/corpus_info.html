@@ -3,9 +3,9 @@
 {% block page_title %}Corpus {{corpus.name}}{% endblock %}
 
 {% block content %}
-    <div class="container">
+    <p class="container">
       <h1>Corpus {{corpus.name}}</h1>
-      <div class="alert alert-info">Ce corpus contient {{corpus.tokens_count|thousands}} tokens.</div>
+    <p>This corpus has <em>{{corpus.tokens_count|thousands}} tokens</em>.</p>
         <div>
             <a class="btn btn-primary" href="{{url_for("main.edit_tokens", corpus_id=corpus.id)}}">Edit tokens</a> -
             <a class="btn btn-primary" href="{{url_for("main.view_tokens", corpus_id=corpus.id)}}">Export tokens</a> -
