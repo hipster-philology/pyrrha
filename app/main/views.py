@@ -3,6 +3,7 @@ from flask import render_template, jsonify, request, flash
 from . import main
 from ..models import Corpus, WordToken
 from ..utils.tsv import StringDictReader
+from ..utils.pagination import int_or
 
 
 def render_template_with_nav_info(template, **kwargs):
@@ -32,9 +33,9 @@ def get_corpus(corpus_id):
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/edit')
-def edit_tokens(corpus_id, page=1, limit=100):
+def edit_tokens(corpus_id):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    tokens = corpus.get_tokens(page=page, limit=limit)
+    tokens = corpus.get_tokens(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 100))
     return render_template_with_nav_info('main/tokens_edit.html', corpus=corpus, tokens=tokens)
 
 
