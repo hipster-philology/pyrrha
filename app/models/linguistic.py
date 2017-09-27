@@ -10,8 +10,11 @@ class Corpus(db.Model):
     def tokens_count(self):
         return WordToken.query.filter_by(corpus=self.id).count()
 
-    def get_tokens(self, page=0, limit=100):
+    def get_tokens(self, page=1, limit=100):
         return WordToken.query.filter_by(corpus=self.id).paginate(page=page, per_page=limit)
+
+    def get_history(self, page=1, limit=100):
+        return ChangeRecord.query.filter_by(corpus=self.id).paginate(page=page, per_page=limit)
 
     def get_all_tokens(self):
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id).all()
@@ -112,7 +115,11 @@ class WordToken(db.Model):
     @staticmethod
     def update(corpus_id, token_id, lemma, POS, morph):
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
-        ChangeRecord.track(token)
+        # Avoid updating for the same
+        if token.lemma == lemma and token.POS == POS and token.morph == morph:
+            return token
+        # Updating
+        ChangeRecord.track(token, lemma, POS, morph)
         token.lemma = lemma
         token.POS = POS
         token.morph = morph
@@ -125,18 +132,23 @@ class ChangeRecord(db.Model):
     """ A change record keep track of lemma, POS or morph that have been changed for a particular form"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
-    word_token = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
     POS = db.Column(db.String(64))
     morph = db.Column(db.String(64))
+    lemma_new = db.Column(db.String(64))
+    POS_new = db.Column(db.String(64))
+    morph_new = db.Column(db.String(64))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
+    word_token = db.relationship('WordToken', lazy='select')
 
     @staticmethod
-    def track(token):
+    def track(token, lemma_new, POS_new, morph_new):
         tracked = ChangeRecord(
-            corpus=token.corpus, word_token=token.id,
-            form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph
+            corpus=token.corpus, word_token_id=token.id,
+            form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph,
+            lemma_new=lemma_new, POS_new=POS_new, morph_new=morph_new
         )
         db.session.add(tracked)
         return tracked

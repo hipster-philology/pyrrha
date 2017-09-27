@@ -1,14 +1,13 @@
 {% import 'macros/nav_macros.html' as nav %}
 {% import 'macros/tokens_macros.html' as tokens_macros %}
-
 {% extends 'layouts/base.html' %}
 
 {% block content %}
 
 <h1>Corpus {{corpus.name}} - List of tokens </h1>
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.edit_tokens") }}
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.corpus_history") }}
 
-{{ tokens_macros.table(tokens, corpus=corpus, editable=True) }}
+{{ tokens_macros.table(tokens, corpus=corpus, tracking=True) }}
 
 {% endblock %}

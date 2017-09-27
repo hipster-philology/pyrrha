@@ -26,7 +26,7 @@ python manager.py run
 - [x] Edit a single token data
 - [x] Export to a tab file again
 - [x] Track changes
-- [ ] Show history
+- [x] Show history
 - [ ] Find item with similar structure as corrected one and auto-edit them after approval
 - [ ] Add Tokens after corpus creation
 - [ ] Register allowed lemmas

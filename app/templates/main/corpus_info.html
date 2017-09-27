@@ -8,7 +8,8 @@
       <div class="alert alert-info">Ce corpus contient {{corpus.tokens_count|thousands}} tokens.</div>
         <div>
             <a class="btn btn-primary" href="{{url_for("main.edit_tokens", corpus_id=corpus.id)}}">Edit tokens</a> -
-            <a class="btn btn-primary" href="{{url_for("main.view_tokens", corpus_id=corpus.id)}}">Export tokens</a>
+            <a class="btn btn-primary" href="{{url_for("main.view_tokens", corpus_id=corpus.id)}}">Export tokens</a> -
+            <a class="btn btn-primary" href="{{url_for("main.corpus_history", corpus_id=corpus.id)}}">History</a>
         </div>
     </div>
 {% endblock %}

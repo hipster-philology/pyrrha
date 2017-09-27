@@ -28,8 +28,15 @@ def new_corpus():
 
 @main.route('/corpus/get/<int:corpus_id>')
 def get_corpus(corpus_id):
-    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    corpus = Corpus.query.get_or_404(corpus_id)
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
+
+
+@main.route('/corpus/get/<int:corpus_id>/history')
+def corpus_history(corpus_id):
+    corpus = Corpus.query.get_or_404(corpus_id)
+    tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 100))
+    return render_template_with_nav_info('main/corpus_history.html', corpus=corpus, tokens=tokens)
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/edit')

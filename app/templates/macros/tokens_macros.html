@@ -1,0 +1,92 @@
+
+{% macro table(tokens, corpus, editable=False, tracking=False) %}
+{% if editable %}
+    <table class="table table-bordered">
+        <thead>
+            <tr><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th><th>Save</th></tr>
+        </thead>
+        <tbody>
+            {% for token in tokens.items %}
+                <tr class="editable">
+                    <td>{{token.form}}</td>
+                    <td contenteditable="true" class="token_lemma">{{token.lemma}}</td>
+                    <td contenteditable="true" class="token_pos">{{token.POS}}</td>
+                    <td contenteditable="true" class="token_morph">{{token.morph}}</td>
+                    <td class="small">{{token.context}}</td>
+                    <td><a href="{{url_for("main.edit_single_token", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <script type="text/javascript">
+    $(document).ready(function(){
+        // Add Class
+        $('.editable a').on("click", function (event) {
+            event.preventDefault();
+            var parent = $(this).parents("tr.editable");
+
+            jQuery.ajax({
+                url: event.target.href,
+                type: 'POST',
+                data: {
+                    lemma:parent.find(".token_lemma").text(),
+                    POS:parent.find(".token_pos").text(),
+                    morph:parent.find(".token_morph").text()
+                },
+                success:function(response){
+                    console.log(response);
+                }
+            });
+        });
+    });
+    </script>
+{% elif tracking %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Edit</th><th>Form</th>
+                <th>Context</th>
+                <th>Lemma</th><th>POS</th><th>Morph</th>
+                <th>Corr Lemma</th><th>Corr POS</th><th>Corr Morph</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for token in tokens.items %}
+                <tr>
+                    <td class="small">{{token.created_on}}</td>
+                    <td>{{token.form}}</td>
+                    <td class="small">{{token.word_token.context}}</td>
+                    <td class="bg-warning">{{token.lemma}}</td>
+                    <td class="bg-warning">{{token.POS}}</td>
+                    <td class="bg-warning">{{token.morph}}</td>
+                    <td class="bg-info">{{token.lemma_new}}</td>
+                    <td class="bg-info">{{token.POS_new}}</td>
+                    <td class="bg-info">{{token.morph_new}}</td>
+                    <td><a href="#">Find Similar</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for token in tokens.items %}
+                <tr class="editable">
+                    <td>{{token.form}}</td>
+                    <td contenteditable="true" class="token_lemma">{{token.lemma}}</td>
+                    <td contenteditable="true" class="token_pos">{{token.POS}}</td>
+                    <td contenteditable="true" class="token_morph">{{token.morph}}</td>
+                    <td class="small">{{token.context}}</td>
+                    <td><a href="{{url_for("main.edit_single_token", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endif %}
+{% endmacro %}
