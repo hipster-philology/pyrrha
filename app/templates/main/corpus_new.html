@@ -11,7 +11,22 @@
     <div class="form-group">
         <label for="tokens">Tokens (as TSV content)</label>
         <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
-        <textarea type="email" aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
+        <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="allowed_lemma">Allowed lemma</label>
+        <small id="allowed_lemma_help" class="form-text text-muted">This should be formatted as a list of lemma separated by new line</small>
+        <textarea aria-describedby="allowed_lemma_help" class="form-control" id="allowed_lemma" name="allowed_lemma">{% if allowed_lemma %}{{allowed_lemma}}{%endif%}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="allowed_POS">Allowed POS</label>
+        <small id="allowed_POS_help" class="form-text text-muted">This should be formatted as a list of POS separated by comma <b>and no space</b></small>
+        <textarea aria-describedby="allowed_POS_help" class="form-control" id="allowed_POS" name="allowed_POS">{% if allowed_POS %}{{allowed_POS}}{%endif%}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="allowed_morph">Allowed Morph (as TSV content)</label>
+        <small id="allowed_morph_help" class="form-text text-muted">The TSV should at least have the header : label and could have a <code>readable</code> column for human</small>
+        <textarea aria-describedby="allowed_morph_help" class="form-control" id="allowed_morph" name="allowed_morph">{% if allowed_morph %}{{allowed_morph}}{%endif%}</textarea>
     </div>
     <button type="submit" class="btn btn-primary">Submit</button>
 </form>

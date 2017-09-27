@@ -6,26 +6,100 @@ class Corpus(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), unique=True)
 
+    def get_allowed_values(self, allowed_type="lemma", label=None):
+        """ Make a query to retrieve
+
+        :param allowed_type: A value from the set "lemma", "POS", "morph"
+        :return: Flask SQL Alchemy Query
+        :rtype: BaseQuery
+        """
+        cls = AllowedLemma
+        if allowed_type == "lemma":
+            cls = AllowedLemma
+        elif allowed_type == "POS":
+            cls = AllowedPOS
+        elif allowed_type == "morph":
+            cls = AllowedMorph
+        else:
+            raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
+        if label is not None:
+            return db.session.query(cls).filter(
+                db.and_(cls.corpus == self.id, cls.label == label)
+            )
+        return db.session.query(cls).filter(cls.corpus == self.id)
+
     @property
     def tokens_count(self):
+        """ Count the number of tokens
+
+        :rtype: int
+        """
         return WordToken.query.filter_by(corpus=self.id).count()
 
+    def get_all_tokens(self):
+        """ Retrieve all WordTokens from the Corpus
+
+        :param page: Page to retrieve
+        :param limit: Hits per page
+        :return: List of tokens
+        """
+        return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id).all()
+
     def get_tokens(self, page=1, limit=100):
+        """ Retrieve WordTokens from the Corpus
+
+        :param page: Page to retrieve
+        :param limit: Hits per page
+        :return: Pagination of tokens
+        """
         return WordToken.query.filter_by(corpus=self.id).paginate(page=page, per_page=limit)
 
     def get_history(self, page=1, limit=100):
+        """ Retrieve ChangeRecord from the Corpus
+
+        :param page: Page to retrieve
+        :param limit: Hits per page
+        :return: Pagination of records
+        """
         return ChangeRecord.query.filter_by(corpus=self.id).order_by(ChangeRecord.created_on.desc()).paginate(page=page, per_page=limit)
 
-    def get_all_tokens(self):
-        return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id).all()
-
     @staticmethod
-    def create(name, word_tokens_dict):
+    def create(name, word_tokens_dict, allowed_lemma=None, allowed_POS=None, allowed_morph=None):
+        """ Create a corpus
+
+        :param name: Name of the corpus
+        :param word_tokens_dict: Generator yielding a dictionaries of tokens
+        :param allowed_lemma: List of allowed lemma
+        :param allowed_POS: List of allowed POS
+        :param allowed_morph: list of Allowed Morph in the form of dict with keys (label, readable)
+        :return:
+        """
         c = Corpus(name=name)
         db.session.add(c)
         db.session.commit()
 
         WordToken.add_batch(corpus_id=c.id, word_tokens_dict=word_tokens_dict)
+
+        if allowed_lemma is not None and len(allowed_lemma) > 0:
+            for item in allowed_lemma:
+                current = AllowedLemma(label=item, corpus=c.id)
+                db.session.add(current)
+
+        if allowed_POS is not None and len(allowed_POS) > 0:
+            for item in allowed_POS:
+                current = AllowedPOS(label=item, corpus=c.id)
+                db.session.add(current)
+
+        if allowed_morph is not None and len(allowed_morph) > 0:
+            for item in allowed_morph:
+                current = AllowedMorph(
+                    label=item["label"],
+                    readable=item.get("readable", default=item["label"]),
+                    corpus=c.id
+                )
+                db.session.add(current)
+
+        db.session.commit()
         return c
 
 
@@ -47,6 +121,7 @@ class AllowedMorph(db.Model):
     """ An allowed POS is a POS that is accepted """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
+    readable = db.Column(db.String(256))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
 
 
@@ -64,7 +139,16 @@ class WordToken(db.Model):
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
 
+    class ValidityError(ValueError):
+        """ Error for values which are not allowed """
+        statuses = {}
+        msg = ""
+
     def to_dict(self):
+        """ Export the current lemma to a dict
+
+        :return: Dict version of the lemma
+        """
         return {
             "id": self.id,
             "corpus": self.corpus,
@@ -78,11 +162,52 @@ class WordToken(db.Model):
 
     @property
     def tsv(self):
+        """ Export the current token as a TSV line
+
+        :return:  Current token as a TSV line (Order : form, lemma, POS, Morph)
+        """
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
     @staticmethod
+    def is_valid(lemma, POS, morph, corpus):
+        """ Check if a token is valid for a given corpus
+
+        :param token: WordToken to check for validity
+        :param corpus: Corpus
+        :return: Dictionary of status
+        """
+        allowed_lemma, allowed_POS, allowed_morph = corpus.get_allowed_values("lemma"), \
+                                                    corpus.get_allowed_values("POS"), \
+                                                    corpus.get_allowed_values("morph")
+
+        statuses = {
+            "lemma": True,
+            "POS": True,
+            "morph": True
+        }
+        if lemma is not None \
+                and allowed_lemma.count() > 0 \
+                and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
+            statuses["lemma"] = False
+
+        if POS is not None \
+                and allowed_POS.count() > 0 \
+                and corpus.get_allowed_values("POS", label=POS).count() == 0:
+            statuses["POS"] = False
+
+        if morph is not None and allowed_morph.count() > 0 and \
+                        corpus.get_allowed_values("morph", label=morph).count() == 0:
+            statuses["morph"] = False
+        return statuses
+
+    @staticmethod
     def add_batch(corpus_id, word_tokens_dict):
-        """ Add a batch of tokens to a corpus given a TSV """
+        """ Add a batch of tokens to a corpus given a TSV
+
+        :param corpus_id: Id of the corpus
+        :param word_tokens_dict: Generator made of dicts of tokens with form, lemma, POS and morph key
+        :return:
+        """
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
         for i, token in enumerate(word_tokens_dict):
@@ -124,10 +249,24 @@ class WordToken(db.Model):
         :param morph: Morphology tag
         :return: Current token
         """
+        corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
+
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph:
             return token
+
+        # Check if values are correct regarding allowed values
+        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
+        if False in list(validity.values()):
+            error_msg = "Invalid value in {}".format(
+                ", ".join([key for key in validity.keys() if validity[key] is False])
+            )
+            error = WordToken.ValidityError(error_msg)
+            error.msg = error_msg
+            error.statuses = validity
+            raise error
+
         # Updating
         ChangeRecord.track(token, lemma, POS, morph)
         token.lemma = lemma

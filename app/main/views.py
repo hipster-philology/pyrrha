@@ -20,7 +20,26 @@ def index():
 @main.route('/corpus/new', methods=["POST", "GET"])
 def new_corpus():
     if request.method == "POST":
-        corpus = Corpus.create(request.form.get("name"), StringDictReader(request.form.get("tsv")))
+
+        allowed_lemma = request.form.get("allowed_lemma")
+        if allowed_lemma is not None:
+            allowed_lemma = [x.replace('\r', '') for x in allowed_lemma.split("\n") if len(x.replace('\r', '').strip()) > 0]
+
+        allowed_POS = request.form.get("allowed_POS")
+        if allowed_POS is not None:
+            allowed_POS = [x.replace('\r', '') for x in allowed_POS.split(",") if len(x.replace('\r', '').strip()) > 0]
+
+        allowed_morph = request.form.get("allowed_morph")
+        if allowed_morph is not None:
+            allowed_morph = list(StringDictReader(allowed_morph))
+
+        corpus = Corpus.create(
+            request.form.get("name"),
+            word_tokens_dict=StringDictReader(request.form.get("tsv")),
+            allowed_lemma=allowed_lemma,
+            allowed_POS=allowed_POS,
+            allowed_morph=allowed_morph
+        )
         flash("New corpus registered", category="success")
     return render_template_with_nav_info('main/corpus_new.html')
 
@@ -58,13 +77,18 @@ def similar_tokens(corpus_id, record_id):
 
 @main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["POST"])
 def edit_single_token(corpus_id, token_id):
-    token = WordToken.update(
-        token_id=token_id, corpus_id=corpus_id,
-        lemma=request.form.get("lemma"),
-        POS=string_to_none(request.form.get("POS")),
-        morph=string_to_none(request.form.get("morph"))
-    )
-    return jsonify(token.to_dict())
+    try:
+        token = WordToken.update(
+            token_id=token_id, corpus_id=corpus_id,
+            lemma=request.form.get("lemma"),
+            POS=string_to_none(request.form.get("POS")),
+            morph=string_to_none(request.form.get("morph"))
+        )
+        return jsonify(token.to_dict())
+    except WordToken.ValidityError as E:
+        response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
+        response.status_code = 403
+        return response
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>/update', methods=["POST"])

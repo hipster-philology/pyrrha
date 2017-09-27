@@ -58,8 +58,9 @@
                 success:function(response){
                     location.reload();
                 },
-                error:function(response){
-                    alert(response);
+                error:function(jq, response, errorThrown){
+                    console.log(response);
+                    alert(response.message);
                     location.reload();
                 }
             });
@@ -88,9 +89,14 @@
                 success:function(response){
                     link.text("(Saved) Save");
                 },
-                error:function (response) {
-                    link.text("(Error) Save");
-                    alert(response);
+                error:function(response){
+                    link.text("(" + response.responseJSON.message + ") Save");
+                    $.each(response.responseJSON.details, function(key, status) {
+                        var selector = ".token_"+key.toLowerCase();
+                        if (status === false) { parent.find(selector).addClass("table-danger"); }
+                        else { parent.find(selector).removeClass("table-danger");  }
+                    });
+                    alert(response.responseJSON.message);
                 }
             });
         });
