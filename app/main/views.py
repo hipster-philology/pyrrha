@@ -1,7 +1,7 @@
 from flask import render_template, jsonify, request, flash
 
 from . import main
-from ..models import Corpus, WordToken
+from ..models import Corpus, WordToken, ChangeRecord
 from ..utils.tsv import StringDictReader
 from ..utils.pagination import int_or
 
@@ -35,7 +35,7 @@ def get_corpus(corpus_id):
 @main.route('/corpus/get/<int:corpus_id>/history')
 def corpus_history(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
-    tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 100))
+    tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 20))
     return render_template_with_nav_info('main/corpus_history.html', corpus=corpus, tokens=tokens)
 
 
@@ -46,6 +46,17 @@ def edit_tokens(corpus_id):
     return render_template_with_nav_info('main/tokens_edit.html', corpus=corpus, tokens=tokens)
 
 
+@main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>')
+def similar_tokens(corpus_id, record_id):
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
+    tokens = WordToken.get_similar_to(change_record=record).paginate(per_page=1000)
+    return render_template_with_nav_info(
+        # The Dict is a small hack to emulate paginate
+        'main/corpus_similar.html', corpus=corpus, tokens=tokens, record=record
+    )
+
+
 @main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["POST"])
 def edit_single_token(corpus_id, token_id):
     token = WordToken.update(
@@ -53,6 +64,21 @@ def edit_single_token(corpus_id, token_id):
         lemma=request.form.get("lemma"), POS=request.form.get("POS"), morph=request.form.get("morph")
     )
     return jsonify(token.to_dict())
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>/update', methods=["POST"])
+def edit_from_tracked_record(corpus_id, record_id):
+    _ = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
+    record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
+    changed = []
+    for token_id in request.json.get("word_tokens"):
+        changed.append(
+            WordToken.update(
+                token_id=token_id, corpus_id=corpus_id,
+                lemma=record.lemma_new, POS=record.POS_new, morph=record.morph_new
+            )
+        )
+    return jsonify([token.to_dict() for token in changed])
 
 
 @main.route('/corpus/<int:corpus_id>/tokens')

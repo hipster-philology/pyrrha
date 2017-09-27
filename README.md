@@ -27,7 +27,7 @@ python manager.py run
 - [x] Export to a tab file again
 - [x] Track changes
 - [x] Show history
-- [ ] Find item with similar structure as corrected one and auto-edit them after approval
+- [x] Find item with similar structure as corrected one and auto-edit them after approval
 - [ ] Add Tokens after corpus creation
 - [ ] Register allowed lemmas
 - [ ] Check for unallowed lemma

@@ -14,7 +14,7 @@ class Corpus(db.Model):
         return WordToken.query.filter_by(corpus=self.id).paginate(page=page, per_page=limit)
 
     def get_history(self, page=1, limit=100):
-        return ChangeRecord.query.filter_by(corpus=self.id).paginate(page=page, per_page=limit)
+        return ChangeRecord.query.filter_by(corpus=self.id).order_by(ChangeRecord.created_on.desc()).paginate(page=page, per_page=limit)
 
     def get_all_tokens(self):
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id).all()
@@ -114,6 +114,15 @@ class WordToken(db.Model):
 
     @staticmethod
     def update(corpus_id, token_id, lemma, POS, morph):
+        """ Update a given token with lemma, POS and morph value
+
+        :param corpus_id: Id of the corpus
+        :param token_id: Id of the token
+        :param lemma: Lemma
+        :param POS: PartOfSpeech
+        :param morph: Morphology tag
+        :return: Current token
+        """
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph:
@@ -126,6 +135,26 @@ class WordToken(db.Model):
         db.session.add(token)
         db.session.commit()
         return token
+
+    @staticmethod
+    def get_similar_to(change_record):
+        """ Get tokens which shares similarity with ChangeRecord
+
+        :param change_record:
+        :type change_record: ChangeRecord
+        :return: Word tokens
+        :rtype: db.BaseQuery
+        """
+        return db.session.query(WordToken).filter(
+            db.and_(
+                WordToken.corpus == change_record.corpus,
+                db.or_(
+                    db.and_(WordToken.form == change_record.form, WordToken.lemma == change_record.lemma, change_record.lemma != change_record.lemma_new),
+                    db.and_(WordToken.form == change_record.form, WordToken.POS == change_record.POS, change_record.POS != change_record.POS_new),
+                    db.and_(WordToken.form == change_record.form, WordToken.POS == change_record.POS, change_record.morph != change_record.morph_new),
+                )
+            )
+        )
 
 
 class ChangeRecord(db.Model):
@@ -142,6 +171,10 @@ class ChangeRecord(db.Model):
     morph_new = db.Column(db.String(64))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     word_token = db.relationship('WordToken', lazy='select')
+
+    @property
+    def similar_remaining(self):
+        return WordToken.get_similar_to(self).count()
 
     @staticmethod
     def track(token, lemma_new, POS_new, morph_new):

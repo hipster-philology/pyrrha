@@ -1,0 +1,43 @@
+{% import 'macros/nav_macros.html' as nav %}
+{% import 'macros/tokens_macros.html' as tokens_macros %}
+
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+<h1>Corpus {{corpus.name}} - List of tokens </h1>
+
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_similar") }}
+
+<h2>Change</h2>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Edit</th><th>Form</th>
+            <th>Context</th>
+            <th>Lemma</th><th>POS</th><th>Morph</th>
+            <th>Corr Lemma</th><th>Corr POS</th><th>Corr Morph</th>
+            <th>Similar</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td class="small">{{record.created_on}}</td>
+            <td>{{record.form}}</td>
+            <td class="small">{{record.word_token.context}}</td>
+            <td class="bg-warning">{{record.lemma}}</td>
+            <td class="bg-warning">{{record.POS}}</td>
+            <td class="bg-warning">{{record.morph}}</td>
+            <td class="bg-info">{{record.lemma_new}}</td>
+            <td class="bg-info">{{record.POS_new}}</td>
+            <td class="bg-info">{{record.morph_new}}</td>
+            <td >{{record.similar_remaining}}</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Similar matching</h2>
+{{ tokens_macros.table(tokens, corpus=corpus, editable=True, checkbox=True, record=record) }}
+
+{% endblock %}
