@@ -3,6 +3,10 @@ Pandora TAB Post-correction App
 
 ![Pandora Post-Correction Editor](./readme.png)
 
+![Pandora Post-Correction Editor](./history.png)
+
+![Pandora Post-Correction Editor](./batch_changes.png)
+
 ## Install
 
 Create a virtual environment, source it and run
