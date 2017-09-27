@@ -1,0 +1,27 @@
+{% import 'macros/nav_macros.html' as nav %}
+
+<!DOCTYPE html>
+<html>
+    <head>
+        {% include 'partials/_head.html' %}
+        {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
+        {% block custom_head_tags %}{% endblock %}
+    </head>
+    <body style="padding-top: 5rem;">
+        {% block nav %}
+          {# add dropdown variable here to the render_nav method to render dropdowns #}
+          {{ nav.render_nav(corpora=corpora) }}
+        {% endblock %}
+
+
+        <div class="container">
+
+          <div class="starter-template">
+            {% include 'partials/_flashes.html' %}
+            {# When extended, the content block contains all the html of the webpage #}
+            {% block content %}
+            {% endblock %}
+          </div>
+        </div>
+    </body>
+</html>

@@ -1,0 +1,14 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+<h1>Corpus {{corpus.name}} - List of tokens </h1>
+
+<p><em>Just click to copy</em></p>
+
+<textarea class="form-control" onClick="this.select();">{{headers}}
+{% for token in tokens %}{{token.tsv}}
+{% endfor %}
+</textarea>
+
+{% endblock %}

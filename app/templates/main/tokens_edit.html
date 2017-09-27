@@ -1,0 +1,50 @@
+{% import 'macros/nav_macros.html' as nav %}
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+<h1>Corpus {{corpus.name}} - List of tokens </h1>
+
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.edit_tokens") }}
+
+<table class="table table-bordered">
+    <thead>
+        <tr><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th><th>Save</th></tr>
+    </thead>
+    <tbody>
+        {% for token in tokens.items %}
+            <tr class="editable">
+                <td>{{token.form}}</td>
+                <td contenteditable="true" class="token_lemma">{{token.lemma}}</td>
+                <td contenteditable="true" class="token_pos">{{token.POS}}</td>
+                <td contenteditable="true" class="token_morph">{{token.morph}}</td>
+                <td class="small">{{token.context}}</td>
+                <td><a href="{{url_for("main.edit_single_token", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<script type="text/javascript">
+$(document).ready(function(){
+    // Add Class
+    $('.editable a').on("click", function (event) {
+        event.preventDefault();
+        var parent = $(this).parents("tr.editable");
+
+        jQuery.ajax({
+            url: event.target.href,
+            type: 'POST',
+            data: {
+                lemma:parent.find(".token_lemma").text(),
+                POS:parent.find(".token_pos").text(),
+                morph:parent.find(".token_morph").text()
+            },
+            success:function(response){
+                console.log(response);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

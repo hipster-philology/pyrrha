@@ -1,0 +1,43 @@
+{% macro render_nav(corpora=[]) %}
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <a class="navbar-brand" href="#">Pandora Post-Correction Editor</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item active">
+            <a class="nav-link" href="{{url_for("main.index")}}">Home <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{url_for("main.new_corpus")}}">New Corpus</a>
+          </li>
+            {% for corpus in corpora %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for("main.get_corpus", corpus_id=corpus.id)}}">{{corpus.name}}</a>
+              </li>
+            {% endfor %}
+        </ul>
+      </div>
+    </nav>
+{% endmacro %}
+
+
+{% macro render_pagination(pagination, endpoint, corpus_id) %}
+<nav aria-label="Page navigation example">
+  <ul class="pagination">
+  {%- for page in pagination.iter_pages() %}
+    {% if page %}
+      {% if page != pagination.page %}
+        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, corpus_id=corpus_id) }}">{{ page }}</a></li>
+      {% else %}
+        <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+      {% endif %}
+    {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+    {% endif %}
+  {%- endfor %}
+  </ul>
+</nav>
+{% endmacro %}
