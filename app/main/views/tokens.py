@@ -1,4 +1,4 @@
-from flask import request, jsonify
+from flask import request, jsonify, url_for
 
 from .utils import render_template_with_nav_info
 from .. import main
@@ -28,13 +28,18 @@ def tokens_similar(corpus_id, record_id):
 @main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["POST"])
 def tokens_edit_single(corpus_id, token_id):
     try:
-        token = WordToken.update(
+        token, change_record = WordToken.update(
             token_id=token_id, corpus_id=corpus_id,
             lemma=request.form.get("lemma"),
             POS=string_to_none(request.form.get("POS")),
             morph=string_to_none(request.form.get("morph"))
         )
-        return jsonify(token.to_dict())
+        return jsonify({
+            "token": token.to_dict(),
+            "similar": {
+                "count": change_record.similar_remaining,
+                "link": url_for(".tokens_similar", corpus_id=corpus_id, record_id=change_record.id)
+            }})
     except WordToken.ValidityError as E:
         response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
         response.status_code = 403

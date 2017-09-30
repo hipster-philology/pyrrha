@@ -25,7 +25,7 @@
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
                     <td class="small">{{token.context}}</td>
                     {%- if checkbox %}<td><input class="form-check word-token" type="checkbox" checked="checked" value="{{token.id}}" /></td>
-                    {% else%}<td><a href="{{url_for("main.tokens_edit_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
+                    {% else%}<td><a class="save" href="{{url_for("main.tokens_edit_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
                     {% endif%}
                 </tr>
             {% endfor %}
@@ -78,7 +78,7 @@
             return original.apply(this, arguments);
         };
         $('td.token_lemma').autoComplete({
-            minChars: 2,
+            minChars: 1,
             source: function(term, suggest){
                 var term = term.toLowerCase(),
                     url = "{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='lemma')}}?form="+term;
@@ -116,6 +116,9 @@
                     morph:parent.find(".token_morph").text()
                 },
                 success:function(response){
+                    if(response.similar.count > 0) {
+                        link.parent().append("<a href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
+                    }
                     link.text("(Saved) Save");
                 },
                 error:function(response){

@@ -301,13 +301,13 @@ class WordToken(db.Model):
             raise error
 
         # Updating
-        ChangeRecord.track(token, lemma, POS, morph)
+        record = ChangeRecord.track(token, lemma, POS, morph)
         token.lemma = lemma
         token.POS = POS
         token.morph = morph
         db.session.add(token)
         db.session.commit()
-        return token
+        return token, record
 
     @staticmethod
     def get_similar_to(change_record):
