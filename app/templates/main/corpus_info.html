@@ -7,9 +7,9 @@
       <h1>Corpus {{corpus.name}}</h1>
     <p>This corpus has <em>{{corpus.tokens_count|thousands}} tokens</em>.</p>
         <div>
-            <a class="btn btn-primary" href="{{url_for("main.edit_tokens", corpus_id=corpus.id)}}">Edit tokens</a> -
-            <a class="btn btn-primary" href="{{url_for("main.view_tokens", corpus_id=corpus.id)}}">Export tokens</a> -
-            <a class="btn btn-primary" href="{{url_for("main.corpus_history", corpus_id=corpus.id)}}">History</a>
+            <a class="btn btn-primary" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a> -
+            <a class="btn btn-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a> -
+            <a class="btn btn-primary" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
         </div>
     </div>
 {% endblock %}

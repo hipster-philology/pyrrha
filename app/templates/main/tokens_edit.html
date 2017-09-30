@@ -7,7 +7,7 @@
 
 <h1>Corpus {{corpus.name}} - List of tokens </h1>
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.edit_tokens") }}
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit") }}
 
 {{ tokens_macros.table(tokens, corpus=corpus, editable=True) }}
 
