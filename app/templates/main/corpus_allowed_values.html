@@ -3,4 +3,18 @@
 {% block page_title %}Corpus {{corpus.name}}{% endblock %}
 
 {% block content %}
+{% if allowed_values %}
+<table class="table">
+    <thead><tr><th>Label</th>{% if allowed_values[0].readable %}<th>Readable</th>{% endif %}</tr></thead>
+    <tbody>
+        {%- for token in allowed_values %}
+        <tr>
+            <td>{{token.label}}</td>
+            {% if token.readable %}<td>{{token.readable}}</td>{% endif %}
+        </tr>
+    {% endfor -%}
+    </tbody>
+</table>
+{% else %}<p>No allowed value in this category</p>
+{% endif %}
 {% endblock %}

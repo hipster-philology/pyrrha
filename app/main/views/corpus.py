@@ -40,8 +40,18 @@ def corpus_get(corpus_id):
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
 
 
-@main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
+@main.route('/corpus/<int:corpus_id>/allowed/<allowed_type>')
 def corpus_allowed_values(corpus_id, allowed_type):
+    corpus = Corpus.query.get_or_404(corpus_id)
+
+    return render_template_with_nav_info(
+        "main/corpus_allowed_values.html",
+        allowed_values=list(corpus.get_allowed_values(allowed_type=allowed_type).all())
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
+def corpus_allowed_values_api(corpus_id, allowed_type):
     _ = Corpus.query.get_or_404(corpus_id)
 
     return jsonify(

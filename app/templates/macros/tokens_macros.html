@@ -81,7 +81,7 @@
             minChars: 1,
             source: function(term, suggest){
                 var term = term.toLowerCase(),
-                    url = "{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='lemma')}}?form="+term;
+                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='lemma')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
@@ -92,7 +92,7 @@
             minChars: 1,
             source: function(term, suggest){
                 var term = term.toLowerCase(),
-                    url = "{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='POS')}}?form="+term;
+                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='POS')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
