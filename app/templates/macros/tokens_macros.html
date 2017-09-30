@@ -19,7 +19,8 @@
             {% for token in tokens.items %}
                 <tr class="editable">
                     <td>{{token.form}}</td>
-                    <td {% if not checkbox %}contenteditable="true" class="token_lemma"{% endif %}>{{token.lemma}}</td>
+                    <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}
+                    </td>
                     <td {% if not checkbox %}contenteditable="true" class="token_pos"{% endif %}>{{token.POS}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
                     <td class="small">{{token.context}}</td>
@@ -70,7 +71,25 @@
     {% else %}
     <script type="text/javascript">
     $(document).ready(function(){
-        // Add Class
+        var original = $.fn.val;
+        $.fn.val = function() {
+            if ($(this).is('*[contenteditable=true]')) {
+                return $.fn.html.apply(this, arguments);
+            };
+            return original.apply(this, arguments);
+        };
+        $('td.token_lemma').autoComplete({
+            minChars: 2,
+            source: function(term, suggest){
+                var term = term.toLowerCase(),
+                    url = "{{url_for("main.corpus_lemma", corpus_id=corpus.id)}}?form="+term;
+                $.getJSON(url, function(data) {
+                    suggest(data);
+                });
+
+            }
+        });
+
         $('.editable a').on("click", function (event) {
             event.preventDefault();
             var link = $(this),
@@ -106,14 +125,15 @@
 {% elif tracking %}
     <table class="table table-bordered">
         <thead>
-            <th>
-                <th>Edit</th><th>Form</th>
+            <tr>
+                <th>Edit</th>
+                <th>Form</th>
                 <th>Context</th>
                 <th>Lemma</th><th>POS</th><th>Morph</th>
                 <th>Corr Lemma</th><th>Corr POS</th><th>Corr Morph</th>
                 <th>Similar</th>
                 <th>Actions</th>
-            </th>
+            </tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}

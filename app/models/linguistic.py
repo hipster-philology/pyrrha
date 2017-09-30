@@ -93,7 +93,7 @@ class Corpus(db.Model):
         if allowed_morph is not None and len(allowed_morph) > 0:
             for item in allowed_morph:
                 current = AllowedMorph(
-                    label=item["label"],
+                    label=item.get("label"),
                     readable=item.get("readable", default=item["label"]),
                     corpus=c.id
                 )
@@ -169,6 +169,25 @@ class WordToken(db.Model):
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
     @staticmethod
+    def get_like(corpus_id, form, group_by):
+        """ Get tokens starting with form
+
+        :param corpus_id: Id of the corpus
+        :param form: Form to filter with
+        :param group_by: Group by the form used
+        :return: BaseQuery
+        """
+        query = db.session.query(WordToken).filter(
+            db.and_(
+                WordToken.corpus == corpus_id,
+                WordToken.lemma.like("{}%".format(form))
+            )
+        )
+        if group_by is True:
+            return query.group_by(WordToken.lemma)
+        return query
+
+    @staticmethod
     def is_valid(lemma, POS, morph, corpus):
         """ Check if a token is valid for a given corpus
 
@@ -215,23 +234,23 @@ class WordToken(db.Model):
             if i == 0:
                 previous_token = []
             elif i < WordToken.CONTEXT_LEFT:
-                previous_token = [tok.get("form") for tok in word_tokens_dict[:i]]
+                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[:i]]
             else:
-                previous_token = [tok.get("form") for tok in word_tokens_dict[i-WordToken.CONTEXT_LEFT:i]]
+                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i-WordToken.CONTEXT_LEFT:i]]
 
             if i == count_tokens-1:
                 next_token = []
             elif count_tokens-1-i < WordToken.CONTEXT_RIGHT:
-                next_token = [tok.get("form") for tok in word_tokens_dict[i+1:]]
+                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form") for tok in word_tokens_dict[i+1:i+WordToken.CONTEXT_RIGHT+1]]
+                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+WordToken.CONTEXT_RIGHT+1]]
 
             wt = WordToken(
-                form=token.get("form"),
-                lemma=token.get("lemma"),
-                POS=token.get("POS"),
+                form=token.get("form", token.get("tokens")),
+                lemma=token.get("lemma", token.get("lemmas")),
+                POS=token.get("POS", token.get("pos")),
                 morph=token.get("morph"),
-                context=" ".join(previous_token + [token.get("form")] + next_token),
+                context=" ".join(previous_token + [token.get("form", token.get("tokens"))] + next_token),
                 corpus=corpus_id,
                 order_id=i
             )

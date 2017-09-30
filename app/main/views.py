@@ -50,6 +50,24 @@ def get_corpus(corpus_id):
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
 
 
+@main.route('/corpus/<int:corpus_id>/api/lemma')
+def corpus_lemma(corpus_id):
+    corpus = Corpus.query.get_or_404(corpus_id)
+    if request.args.get("form") is not None:
+        return jsonify(
+            [
+                token.lemma
+                for token in WordToken.get_like(
+                    corpus_id=corpus_id,
+                    form=request.args.get("form"),
+                    group_by=True
+                ).all()
+            ]
+        )
+
+    return jsonify([token.lemma for token in WordToken.query.filter_by(corpus=corpus.id).group_by(WordToken.lemma).all()])
+
+
 @main.route('/corpus/get/<int:corpus_id>/history')
 def corpus_history(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
