@@ -42,17 +42,17 @@ def corpus_get(corpus_id):
 
 @main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
 def corpus_allowed_values(corpus_id, allowed_type):
-    corpus = Corpus.query.get_or_404(corpus_id)
-    if request.args.get("form") is not None:
-        return jsonify(
-            [
-                token.lemma
-                for token in WordToken.get_like(
-                    corpus_id=corpus_id,
-                    form=request.args.get("form"),
-                    group_by=True
-                ).all()
-            ]
-        )
+    _ = Corpus.query.get_or_404(corpus_id)
 
-    return jsonify([token.lemma for token in WordToken.query.filter_by(corpus=corpus.id).group_by(WordToken.lemma).all()])
+    return jsonify(
+        [
+            token
+            for (token, ) in WordToken.get_like(
+                corpus_id=corpus_id,
+                form=request.args.get("form"),
+                group_by=True,
+                type_like=allowed_type
+            ).all()
+            if token is not None
+        ]
+    )

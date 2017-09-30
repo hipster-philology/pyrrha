@@ -169,7 +169,7 @@ class WordToken(db.Model):
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
     @staticmethod
-    def get_like(corpus_id, form, group_by):
+    def get_like(corpus_id, form, group_by, type_like="lemma"):
         """ Get tokens starting with form
 
         :param corpus_id: Id of the corpus
@@ -177,14 +177,28 @@ class WordToken(db.Model):
         :param group_by: Group by the form used
         :return: BaseQuery
         """
-        query = db.session.query(WordToken).filter(
+
+        if type_like == "POS":
+            type_like = WordToken.POS
+        else:
+            type_like = WordToken.lemma
+
+        query = db.session.query(type_like)
+        if form is None:
+            query = query.filter(
+            db.and_(
+                WordToken.corpus == corpus_id
+            )
+        )
+        else:
+            query = query.filter(
             db.and_(
                 WordToken.corpus == corpus_id,
-                WordToken.lemma.like("{}%".format(form))
+                type_like.like("{}%".format(form))
             )
         )
         if group_by is True:
-            return query.group_by(WordToken.lemma)
+            return query.group_by(type_like)
         return query
 
     @staticmethod

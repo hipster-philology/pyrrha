@@ -88,6 +88,17 @@
 
             }
         });
+        $('td.token_pos').autoComplete({
+            minChars: 1,
+            source: function(term, suggest){
+                var term = term.toLowerCase(),
+                    url = "{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='POS')}}?form="+term;
+                $.getJSON(url, function(data) {
+                    suggest(data);
+                });
+
+            }
+        });
 
         $('.editable a').on("click", function (event) {
             event.preventDefault();
