@@ -46,6 +46,8 @@ def corpus_allowed_values(corpus_id, allowed_type):
 
     return render_template_with_nav_info(
         "main/corpus_allowed_values.html",
+        allowed_type=allowed_type,
+        corpus=corpus,
         allowed_values=list(corpus.get_allowed_values(allowed_type=allowed_type).all())
     )
 

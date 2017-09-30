@@ -1,10 +1,12 @@
 {% extends 'layouts/base.html' %}
 
+{% import 'macros/header_macros.html' as header_macros %}
+
 {% block page_title %}Corpus {{corpus.name}}{% endblock %}
 
 {% block content %}
     <p class="container">
-      <h1>Corpus {{corpus.name}}</h1>
+    {{ header_macros.render_corpus(corpus) }}
     <p>This corpus has <em>{{corpus.tokens_count|thousands}} tokens</em>.</p>
         <div>
             <p>
