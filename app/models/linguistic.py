@@ -28,6 +28,33 @@ class Corpus(db.Model):
             )
         return db.session.query(cls).filter(cls.corpus == self.id)
 
+    def get_unallowed(self, allowed_type="lemma"):
+        """ Make a query to retrieve unallowed tokens by allowed_type
+
+        :param allowed_type: A value from the set "lemma", "POS", "morph"
+        :return: Flask SQL Alchemy Query
+        :rtype: BaseQuery
+        """
+        if allowed_type == "lemma":
+            cls = AllowedLemma
+            prop = WordToken.lemma
+        elif allowed_type == "POS":
+            cls = AllowedPOS
+            prop = WordToken.POS
+        elif allowed_type == "morph":
+            cls = AllowedMorph
+            prop = WordToken.morph
+        else:
+            raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
+
+        allowed = db.session.query(cls.label).filter(cls.corpus == self.id)
+        return db.session.query(WordToken).filter(
+            db.and_(
+                WordToken.corpus == self.id,
+                prop.notin_(allowed)
+            )
+        ).order_by(WordToken.order_id)
+
     @property
     def tokens_count(self):
         """ Count the number of tokens
@@ -36,23 +63,12 @@ class Corpus(db.Model):
         """
         return WordToken.query.filter_by(corpus=self.id).count()
 
-    def get_all_tokens(self):
-        """ Retrieve all WordTokens from the Corpus
-
-        :param page: Page to retrieve
-        :param limit: Hits per page
-        :return: List of tokens
-        """
-        return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id).all()
-
-    def get_tokens(self, page=1, limit=100):
+    def get_tokens(self):
         """ Retrieve WordTokens from the Corpus
 
-        :param page: Page to retrieve
-        :param limit: Hits per page
-        :return: Pagination of tokens
+        :return: Tokens Query
         """
-        return WordToken.query.filter_by(corpus=self.id).paginate(page=page, per_page=limit)
+        return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
 
     def get_history(self, page=1, limit=100):
         """ Retrieve ChangeRecord from the Corpus
@@ -194,7 +210,7 @@ class WordToken(db.Model):
             query = query.filter(
             db.and_(
                 WordToken.corpus == corpus_id,
-                type_like.like("{}%".format(form))
+                type_like.ilike("{}%".format(form))
             )
         )
         if group_by is True:

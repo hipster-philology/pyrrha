@@ -19,6 +19,14 @@
                   <a class="dropdown-item" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Edit tokens with unallowed lemma</a>
+                  <a class="dropdown-item" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Edit tokens with unallowed POS</a>
+                  <a class="dropdown-item" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Edit tokens with unallowed morph</a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='lemma')}}">Allowed lemma</a>
+                  <a class="dropdown-item" href="{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='POS')}}">Allowed POS</a>
+                  <a class="dropdown-item" href="{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='morph')}}">Allowed morph</a>
                 </div>
               </li>
             {% endfor %}
@@ -34,7 +42,7 @@
   {%- for page in pagination.iter_pages() %}
     {% if page %}
       {% if page != pagination.page %}
-        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, corpus_id=corpus_id, limit=pagination.per_page) }}">{{ page }}</a></li>
+        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, corpus_id=corpus_id, limit=pagination.per_page, **kwargs) }}">{{ page }}</a></li>
       {% else %}
         <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
       {% endif %}

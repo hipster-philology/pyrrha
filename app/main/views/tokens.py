@@ -10,8 +10,24 @@ from ...utils.pagination import int_or
 @main.route('/corpus/<int:corpus_id>/tokens/edit')
 def tokens_edit(corpus_id):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    tokens = corpus.get_tokens(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 100))
+    tokens = corpus\
+        .get_tokens()\
+        .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
     return render_template_with_nav_info('main/tokens_edit.html', corpus=corpus, tokens=tokens)
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/edit')
+def tokens_edit_unallowed(corpus_id, allowed_type):
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    tokens = corpus\
+        .get_unallowed(allowed_type)\
+        .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
+    return render_template_with_nav_info(
+        'main/tokens_edit_unallowed.html',
+        corpus=corpus,
+        tokens=tokens,
+        allowed_type=allowed_type
+    )
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>')
@@ -64,7 +80,7 @@ def tokens_edit_from_record(corpus_id, record_id):
 @main.route('/corpus/<int:corpus_id>/tokens')
 def tokens_export(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
-    tokens = corpus.get_all_tokens()
+    tokens = corpus.get_tokens().all()
     return render_template_with_nav_info(
         template="main/tokens_view.html",
         corpus=corpus, tokens=tokens,
