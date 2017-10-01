@@ -1,3 +1,5 @@
+import unidecode
+
 from .. import db
 
 
@@ -98,7 +100,7 @@ class Corpus(db.Model):
 
         if allowed_lemma is not None and len(allowed_lemma) > 0:
             for item in allowed_lemma:
-                current = AllowedLemma(label=item, corpus=c.id)
+                current = AllowedLemma(label=item, corpus=c.id, label_uniform=unidecode.unidecode(item))
                 db.session.add(current)
 
         if allowed_POS is not None and len(allowed_POS) > 0:
@@ -123,6 +125,7 @@ class AllowedLemma(db.Model):
     """ An allowed lemma is a lemma that is accepted """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
+    label_uniform = db.Column(db.String(64))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
 
 
@@ -148,6 +151,7 @@ class WordToken(db.Model):
     order_id = db.Column(db.Integer)  # Id in the corpus
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
+    label_uniform = db.Column(db.String(64))
     POS = db.Column(db.String(64))
     morph = db.Column(db.String(64))
     context = db.Column(db.String(512))
@@ -196,10 +200,12 @@ class WordToken(db.Model):
 
         if type_like == "POS":
             type_like = WordToken.POS
+            retrieve_field = WordToken.POS
         else:
-            type_like = WordToken.lemma
+            type_like = WordToken.label_uniform
+            retrieve_field = WordToken.lemma
 
-        query = db.session.query(type_like)
+        query = db.session.query(retrieve_field)
         if form is None:
             query = query.filter(
             db.and_(
@@ -278,6 +284,7 @@ class WordToken(db.Model):
             wt = WordToken(
                 form=token.get("form", token.get("tokens")),
                 lemma=token.get("lemma", token.get("lemmas")),
+                label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
                 POS=token.get("POS", token.get("pos")),
                 morph=token.get("morph"),
                 context=" ".join(previous_token + [token.get("form", token.get("tokens"))] + next_token),
@@ -319,6 +326,7 @@ class WordToken(db.Model):
         # Updating
         record = ChangeRecord.track(token, lemma, POS, morph)
         token.lemma = lemma
+        token.label_uniform = unidecode.unidecode(lemma)
         token.POS = POS
         token.morph = morph
         db.session.add(token)
