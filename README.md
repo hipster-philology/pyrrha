@@ -33,10 +33,10 @@ python manager.py run
 - [x] Show history
 - [x] Find item with similar structure as corrected one and auto-edit them after approval
 - [ ] Add Tokens after corpus creation
-- [ ] Register allowed lemmas
-- [ ] Check for unallowed lemma
-- [ ] Register allowed POS
-- [ ] Check for unallowed POS
+- [x] Register allowed lemmas
+- [x] Check for unallowed lemma
+- [x] Register allowed POS
+- [x] Check for unallowed POS
 - [ ] Register allowed Morph
 - [ ] Check for unallowed morph
 
