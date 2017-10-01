@@ -54,7 +54,7 @@ def corpus_allowed_values(corpus_id, allowed_type):
 
 @main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
 def corpus_allowed_values_api(corpus_id, allowed_type):
-    _ = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.query.get_or_404(corpus_id)
 
     return jsonify(
         [
@@ -63,7 +63,8 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
                 corpus_id=corpus_id,
                 form=request.args.get("form"),
                 group_by=True,
-                type_like=allowed_type
+                type_like=allowed_type,
+                allowed_list=corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
             ).all()
             if token is not None
         ]
