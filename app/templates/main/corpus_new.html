@@ -28,6 +28,6 @@
         <small id="allowed_morph_help" class="form-text text-muted">The TSV should at least have the header : label and could have a <code>readable</code> column for human</small>
         <textarea aria-describedby="allowed_morph_help" class="form-control" id="allowed_morph" name="allowed_morph">{% if allowed_morph %}{{allowed_morph}}{%endif%}</textarea>
     </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
 </form>
 {% endblock %}

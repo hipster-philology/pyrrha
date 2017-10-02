@@ -2,3 +2,6 @@ Flask==0.12.2
 Flask-SQLAlchemy==2.2
 flask-script==2.0.6
 unidecode==0.4.21
+flask-testing==0.6.2
+selenium==3.6.0
+nose2==0.6.5

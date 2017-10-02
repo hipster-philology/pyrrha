@@ -27,7 +27,17 @@ class DevelopmentConfig(Config):
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
+
+class TestConfig(Config):
+    DEBUG = True
+    ASSETS_DEBUG = True
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
+    print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
+
+
 config = {
     "dev": DevelopmentConfig,
-    "prod": Config
+    "prod": Config,
+    "test": TestConfig
 }
