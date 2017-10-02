@@ -15,7 +15,6 @@ class Corpus(db.Model):
         :return: Flask SQL Alchemy Query
         :rtype: BaseQuery
         """
-        cls = AllowedLemma
         if allowed_type == "lemma":
             cls = AllowedLemma
         elif allowed_type == "POS":
@@ -26,8 +25,8 @@ class Corpus(db.Model):
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
         if label is not None:
             return db.session.query(cls).filter(
-                db.and_(cls.corpus == self.id, cls.label == label).order_by(cls.label)
-            )
+                db.and_(cls.corpus == self.id, cls.label == label)
+            ).order_by(cls.label)
         return db.session.query(cls).filter(cls.corpus == self.id).order_by(cls.label)
 
     def get_unallowed(self, allowed_type="lemma"):
