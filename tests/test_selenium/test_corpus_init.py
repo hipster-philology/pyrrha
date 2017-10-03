@@ -15,13 +15,13 @@ class TestCorpusRegistration(TestBase):
 
         # Click register menu link
         self.driver.find_element_by_id("new_corpus_link").click()
-        time.sleep(1)
+        self.driver.implicitly_wait(15)
 
         # Fill in registration form
         self.driver.find_element_by_id("corpusName").send_keys(CORPUS_NAME)
-        self.driver.find_element_by_id("tokens").send_keys(CORPUS_DATA)
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), CORPUS_DATA)
         self.driver.find_element_by_id("submit").click()
-        time.sleep(1)
+        self.driver.implicitly_wait(15)
 
         self.assertIn(
             url_for('main.corpus_new'), self.driver.current_url,
@@ -29,6 +29,6 @@ class TestCorpusRegistration(TestBase):
         )
 
         self.assertEqual(
-            db.session.query(Corpus).filter_by(Corpus.name == CORPUS_NAME).count(), 1,
+            db.session.query(Corpus).filter(Corpus.name == CORPUS_NAME).count(), 1,
             "There should be one well named corpus"
         )
