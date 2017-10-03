@@ -1,4 +1,3 @@
-
 CORPUS_NAME = "Wauchier"
 CORPUS_DATA = """tokens	lemmas	pos
 De	de	PRE
@@ -27,25 +26,10 @@ puet	pöoir	VERcjg
 l	il	PROper
 en	en1	PRE"""
 
-CORPUS_LEMMA_ALLOWED = """de
-saint
-martin
-mout
-devoir
-un
-doucement
-et
-volentiers
-le
-bien
-öir
-et
-entendre
-,
-car
-par
-le
-bien
-savoir
-et
-"""
+FULL_CORPUS_LEMMA_ALLOWED = "\n".join([
+    'öir', 'car', 'devoir', 'entendre', ',', 'de', 'par', 'martin', 'un', 'pöoir', 'il', 'doucement', 'en1', 'le',
+    'mout', 'bien', 'retenir', 'volentiers', 'saint', 'et', 'savoir'
+])
+
+
+PARTIAL_CORPUS_ALLOWED_LEMMA = "\n".join(["de", "saint", "martin"])
