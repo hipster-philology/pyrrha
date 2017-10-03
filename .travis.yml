@@ -3,7 +3,6 @@ python:
   - "3.5"
 addons:
   chrome: stable
-# command to install dependencies
 install:
   - wget -N https://chromedriver.storage.googleapis.com/2.32/chromedriver_linux64.zip -P ~/
   - unzip ~/chromedriver_linux64.zip -d ~/
@@ -12,10 +11,9 @@ install:
   - sudo chmod +x /usr/local/share/chromedriver
   - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
   - pip install -r requirements.txt
-before_script:
-  - "export DISPLAY=:99.0"
-  - "sh -e /etc/init.d/xvfb start"
-  - sleep 3 # give xvfb some time to start
+  - pip install coveralls
 # command to run tests
 script:
-    - nose2
+  - nose2 --with-coverage --coverage ./app
+after_success:
+  - coveralls

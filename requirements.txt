@@ -6,3 +6,4 @@ flask-testing==0.6.2
 selenium==3.6.0
 nose2==0.6.5
 clipboard==0.0.4
+cov-core==1.15.0

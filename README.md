@@ -1,5 +1,8 @@
 Pandora TAB Post-correction App
-===============================================
+===============================
+
+[![Coverage Status](https://coveralls.io/repos/github/hipster-philology/pandora-postcorrect-app/badge.svg?branch=master)](https://coveralls.io/github/hipster-philology/pandora-postcorrect-app?branch=master)
+[![Build Status](https://travis-ci.org/hipster-philology/pandora-postcorrect-app.svg?branch=master)](https://travis-ci.org/hipster-philology/pandora-postcorrect-app)
 
 ![Pandora Post-Correction Editor](./readme.png)
 
