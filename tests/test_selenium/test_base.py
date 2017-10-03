@@ -4,6 +4,7 @@ from app import create_app, db
 import clipboard
 
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options, DesiredCapabilities
 from selenium.webdriver.common.keys import Keys
 
 from urllib.request import urlopen
@@ -22,7 +23,10 @@ class TestBase(LiveServerTestCase):
 
     def setUp(self):
         """Setup the test driver and create test users"""
-        self.driver = webdriver.Chrome()
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get(self.get_server_url())
 
         db.session.commit()
