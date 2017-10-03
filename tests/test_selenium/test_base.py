@@ -56,4 +56,5 @@ class TestBase(LiveServerTestCase):
         :param partial_allowed_pos: Restrict to first three allowed POS (ADJqua, NOMpro, CONcoo)
         """
         add_wauchier(db, *args, **kwargs)
+        self.driver.get(self.get_server_url())
         self.driver.refresh()

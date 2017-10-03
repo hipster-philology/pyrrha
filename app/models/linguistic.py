@@ -1,6 +1,7 @@
 import unidecode
 
 from .. import db
+from ..utils.forms import strip_or_none
 
 
 class Corpus(db.Model):
@@ -314,11 +315,13 @@ class WordToken(db.Model):
         """
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
-
+        # Strip if things are not None
+        lemma = strip_or_none(lemma)
+        POS = strip_or_none(POS)
+        morph = strip_or_none(morph)
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph:
             return token
-
         # Check if values are correct regarding allowed values
         validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):
