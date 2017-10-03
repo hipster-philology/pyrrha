@@ -1,4 +1,4 @@
-from tests.test_selenium.test_base import TestBase
+from tests.test_selenium.base import TestBase
 from app.models import WordToken
 import time
 

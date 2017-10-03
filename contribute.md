@@ -59,7 +59,7 @@ tests are in the module `tests.test_selenium`.
 
 #### New class of test
 
-Class for integration tests should inherit from `tests.test_selenium.test_base.TestBase`. This class comes with a `self.driver` property to use Selenium
+Class for integration tests should inherit from `tests.test_selenium.base.TestBase`. This class comes with a `self.driver` property to use Selenium
 It also comes with a `self.writeMultiline(element, text)` method that will allow to write multiline and tab-including strings to element in the browser.
 
 - A class must have a name starting with `Test` and should be camelCase after that.
