@@ -6,7 +6,7 @@ from tests.fixtures import CORPUS_NAME, CORPUS_DATA
 
 
 class TestCorpusRegistration(TestBase):
-
+    """ Test creation of Corpus """
     def test_registration(self):
         """
         Test that a user can create a corpus and that this corpus has its data well recorded

@@ -1,10 +1,6 @@
-import unittest
-
-from flask import abort, url_for
 from flask_testing import TestCase
 
 from app import create_app, db
-from app.models import WordToken, AllowedLemma, AllowedMorph, AllowedPOS, ChangeRecord, Corpus
 
 
 class TestBase(TestCase):
@@ -25,6 +21,7 @@ class TestBase(TestCase):
         db.drop_all()
         db.create_all()
         db.session.commit()
+        self.db = db
 
     def tearDown(self):
         """

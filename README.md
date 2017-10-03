@@ -46,6 +46,10 @@ python manage.py run
 - [ ] Register allowed Morph
 - [ ] Check for unallowed morph
 
+## How to contribute
+
+- See [Contribute.md](contribute.md)
+
 ## Source
 
 This app is wished to be simple and local at the moment (No User system). But to keep in the abilities to extend and use
