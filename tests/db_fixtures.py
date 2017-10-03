@@ -1,4 +1,6 @@
 from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS
+import time
+import copy
 
 Wauchier = Corpus(name="Wauchier", id=1)
 
@@ -81,19 +83,24 @@ def add_wauchier(
     :param with_allowed_pos: Add allowed POS to db
     :param partial_allowed_pos: Restrict to first three allowed POS (ADJqua, NOMpro, CONcoo)
     """
-    db.session.add(Wauchier)
+    db.session.add(copy.deepcopy(Wauchier))
     db.session.commit()
+    add = []
     if with_token is True:
-        for tok in WauchierTokens:
-            db.session.add(tok)
+        add += WauchierTokens
+
     if with_allowed_lemma is True:
         if partial_allowed_lemma:
-            db.session.add_all(WauchierAllowedLemma[:3])
+            add += WauchierAllowedLemma[:3]
         else:
-            db.session.add_all(WauchierAllowedLemma)
+            add += WauchierAllowedLemma
+
     if with_allowed_pos is True:
         if partial_allowed_pos:
-            db.session.add_all(WauchierAllowedPOS[:3])
+            add += WauchierAllowedPOS[:3]
         else:
-            db.session.add_all(WauchierAllowedPOS)
+            add += WauchierAllowedPOS
+    for x in add:
+        db.session.add(copy.deepcopy(x))
     db.session.commit()
+    time.sleep(1)
