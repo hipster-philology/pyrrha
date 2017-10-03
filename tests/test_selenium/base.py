@@ -1,11 +1,14 @@
 from flask_testing import LiveServerTestCase
-
+import os
+import signal
+import logging
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 from app import db, create_app
 from tests.db_fixtures import add_wauchier
 
+LIVESERVER_TIMEOUT = 1
 
 class TestBase(LiveServerTestCase):
     db = db
@@ -42,6 +45,18 @@ class TestBase(LiveServerTestCase):
         """
         self.driver.execute_script('arguments[0].value = arguments[1];', element, text)
         return element
+
+    def _terminate_live_server(self):
+        if self._process:
+            try:
+                os.kill(self._process.pid, signal.SIGINT)
+                self._process.join(LIVESERVER_TIMEOUT)
+            except Exception as ex:
+                logging.error('Failed to join the live server process: %r', ex)
+            finally:
+                if self._process.is_alive():
+                    # If it's still alive, kill it
+                    self._process.terminate()
 
     def tearDown(self):
         self.driver.quit()

@@ -1,7 +1,7 @@
 from flask import url_for
 from app.models import Corpus, WordToken, AllowedLemma
 from app import db
-from tests.test_selenium.test_base import TestBase
+from tests.test_selenium.base import TestBase
 from tests.fixtures import CORPUS_NAME, CORPUS_DATA, FULL_CORPUS_LEMMA_ALLOWED, PARTIAL_CORPUS_ALLOWED_LEMMA
 
 
