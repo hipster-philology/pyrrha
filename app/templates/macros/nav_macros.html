@@ -12,11 +12,11 @@
           </li>
             {% for corpus in corpora %}
               <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{corpus.name}}</a>
+                <a id="toggle_corpus_{{corpus.id}}" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{corpus.name}}</a>
                 <div class="dropdown-menu">
                   <a class="dropdown-item" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">Overview</a>
                   <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a>
+                  <a class="dropdown-item" id="corpus_{{corpus.id}}_edit_tokens" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
                   <div class="dropdown-divider"></div>
