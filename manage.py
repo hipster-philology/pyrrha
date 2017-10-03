@@ -41,6 +41,14 @@ def recreate_db():
 
 
 @manager.command
+def test():
+    """ Run tests locally
+    """
+    import tests.__main__ as tests
+    tests.unittest.main()
+
+
+@manager.command
 def run():
     """
     Recreates a local database. You probably should not use this on

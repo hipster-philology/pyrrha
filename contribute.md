@@ -45,7 +45,7 @@ sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
 
 ### Run the tests
 
-To run the tests, you simply need run `nose2` at the root of the pandora-postcorrect-app folder.
+To run the tests, you simply need run `nose2` at the root of the pandora-postcorrect-app folder. You can also run `python manage.py test`
 
 ## Writing a test
 
