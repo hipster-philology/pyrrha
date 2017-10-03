@@ -27,13 +27,12 @@ class TestBase(LiveServerTestCase):
         db.drop_all()
         db.create_all()
         db.session.commit()
-        
+
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get(self.get_server_url())
-
 
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
