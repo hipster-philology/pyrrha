@@ -23,16 +23,17 @@ class TestBase(LiveServerTestCase):
 
     def setUp(self):
         """Setup the test driver and create test users"""
+        db.session.commit()
+        db.drop_all()
+        db.create_all()
+        db.session.commit()
+        
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get(self.get_server_url())
 
-        db.session.commit()
-        db.drop_all()
-        db.create_all()
-        db.session.commit()
 
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
