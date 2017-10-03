@@ -1,13 +1,8 @@
 from flask_testing import LiveServerTestCase
 from app import create_app, db
 
-import clipboard
-
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options, DesiredCapabilities
-from selenium.webdriver.common.keys import Keys
-
-from urllib.request import urlopen
+from selenium.webdriver.chrome.options import Options
 
 
 class TestBase(LiveServerTestCase):
@@ -42,20 +37,8 @@ class TestBase(LiveServerTestCase):
         :param text: Multiline text to write
         :return: element
         """
-        clipboard.copy(text)
-        element.send_keys(Keys.CONTROL+"v")
-        """for part in text.split('\n'):
-            count_t = part.count("\t")
-            for index, subpart in enumerate(part.split("\t")):
-                t = Keys.TAB
-                if index == count_t:
-                    t = "\n"
-                element.send_keys(subpart+t)"""
+        self.driver.execute_script('arguments[0].value = arguments[1];', element, text)
         return element
 
     def tearDown(self):
         self.driver.quit()
-
-    def test_server_is_up_and_running(self):
-        response = urlopen(self.get_server_url())
-        self.assertEqual(response.code, 200)
