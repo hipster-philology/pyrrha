@@ -1,5 +1,8 @@
 Pandora TAB Post-correction App
-===============================================
+===============================
+
+[![Coverage Status](https://coveralls.io/repos/github/hipster-philology/pandora-postcorrect-app/badge.svg?branch=master)](https://coveralls.io/github/hipster-philology/pandora-postcorrect-app?branch=master)
+[![Build Status](https://travis-ci.org/hipster-philology/pandora-postcorrect-app.svg?branch=master)](https://travis-ci.org/hipster-philology/pandora-postcorrect-app)
 
 ![Pandora Post-Correction Editor](./readme.png)
 
@@ -45,6 +48,10 @@ python manage.py run
 - [x] Check for unallowed POS
 - [ ] Register allowed Morph
 - [ ] Check for unallowed morph
+
+## How to contribute
+
+- See [Contribute.md](contribute.md)
 
 ## Source
 

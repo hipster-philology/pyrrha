@@ -17,7 +17,7 @@
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr class="editable">
+                <tr class="editable" id="token_{{token.id}}_row">
                     <td>{{token.form}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}
                     </td>
