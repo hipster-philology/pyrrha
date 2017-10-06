@@ -69,3 +69,15 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
             if token is not None
         ]
     )
+
+
+@main.route('/corpus/<int:corpus_id>/fixtures')
+def generate_fixtures(corpus_id):
+    corpus = Corpus.query.get_or_404(corpus_id)
+    tokens = corpus.get_tokens().all()
+    allowed_lemma = corpus.get_allowed_values(allowed_type="lemma")
+    allowed_POS = corpus.get_allowed_values(allowed_type="POS")
+    return render_template_with_nav_info(
+        template="main/corpus_generate_fixtures.html", tokens=tokens,
+        allowed_lemma=allowed_lemma, allowed_pos=allowed_POS
+    )

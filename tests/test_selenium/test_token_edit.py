@@ -63,7 +63,7 @@ class TestTokenEdit(TestBase):
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
 
-    def test_edit_token_with_allowed_values(self):
+    def test_edit_token_lemma_with_allowed_values(self):
         """ Test the edition of a token """
         # Try first with an edit that would word
         self.addWauchier(with_token=True, with_allowed_lemma=True)
@@ -84,7 +84,7 @@ class TestTokenEdit(TestBase):
         self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
         self.assertEqual(status_text, "(Saved) Save")
 
-    def test_edit_token_with_allowed_values_autocomplete(self):
+    def test_edit_token_lemma_with_allowed_values_autocomplete(self):
         """ Test the edition of a token """
         # Try first with an edit that would word
         self.addWauchier(with_token=True, with_allowed_lemma=True)
@@ -94,4 +94,14 @@ class TestTokenEdit(TestBase):
         )
         self.assertEqual(token.lemma, "devoir", "Lemma should have been changed to devoir")
         self.assertEqual(token.POS, "PRE", "POS should not have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+    def test_edit_POS(self):
+        """ Edit POS of a token """
+        self.addWauchier(with_token=True, with_allowed_lemma=True)
+        token, status_text = self.edith_nth_row_value(
+            "ADJqua", id_row="1", value_type="POS"
+        )
+        self.assertEqual(token.lemma, "de", "Lemma should have been changed to devoir")
+        self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
         self.assertEqual(status_text, "(Saved) Save")
