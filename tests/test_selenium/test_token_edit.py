@@ -69,7 +69,7 @@ class TokenEditBase(TestBase):
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
-        self.assertEqual()
+        self.assertIn("table-changed", row.get_attribute("class"))
 
 
 class TestTokenEditWauchierCorpus(TokenEditBase):
@@ -197,4 +197,5 @@ class TestTokensEditFloovant(TokenEditBase):
         self.addCorpus(with_token=True)
         token, status_text, row = self.edith_nth_row_value("seignor", id_row="1", value_type="lemma")
         self.assertEqual(status_text, "(No value where changed) Save")
+        self.assertNotIn("table-changed", row.get_attribute("class"))
 
