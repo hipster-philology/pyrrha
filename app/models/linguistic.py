@@ -207,8 +207,8 @@ class WordToken(db.Model):
                 retrieve_field = WordToken.lemma
         else:
             if type_like == "POS":
-                type_like = AllowedLemma.POS
-                retrieve_field = AllowedLemma.POS
+                type_like = AllowedPOS.label
+                retrieve_field = AllowedPOS.label
             else:
                 type_like = AllowedLemma.label_uniform
                 retrieve_field = AllowedLemma.label
