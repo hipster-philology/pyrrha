@@ -6,7 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
 from app import db, create_app
-from tests.db_fixtures import add_wauchier
+from tests.db_fixtures import add_corpus
 
 LIVESERVER_TIMEOUT = 1
 
@@ -61,15 +61,10 @@ class TestBase(LiveServerTestCase):
     def tearDown(self):
         self.driver.quit()
 
-    def addWauchier(self, *args, **kwargs):
-        """ Add the Wauchier Corpus to fixtures
-
-        :param with_token: Add tokens as well
-        :param with_allowed_lemma: Add allowed lemma to db
-        :param partial_allowed_lemma: Restrict to first three allowed lemma (de saint martin)
-        :param with_allowed_pos: Add allowed POS to db
-        :param partial_allowed_pos: Restrict to first three allowed POS (ADJqua, NOMpro, CONcoo)
-        """
-        add_wauchier(db, *args, **kwargs)
+    def addCorpus(self, corpus, *args, **kwargs):
+        if corpus == "wauchier":
+            add_corpus("wauchier", db, *args, **kwargs)
+        else:
+            add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
         self.driver.refresh()

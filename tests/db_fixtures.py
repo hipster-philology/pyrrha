@@ -213,20 +213,3 @@ def add_corpus(
         db.session.add(copy.deepcopy(x))
     db.session.commit()
     time.sleep(1)
-
-def add_wauchier(
-        db, with_token=True,
-        with_allowed_lemma=False, partial_allowed_lemma=False,
-        with_allowed_pos=False, partial_allowed_pos=False
-):
-    """ Add the Wauchier Corpus to fixtures
-
-    :param with_token: Add tokens as well
-    :param with_allowed_lemma: Add allowed lemma to db
-    :param partial_allowed_lemma: Restrict to first three allowed lemma (de saint martin)
-    :param with_allowed_pos: Add allowed POS to db
-    :param partial_allowed_pos: Restrict to first three allowed POS (ADJqua, NOMpro, CONcoo)
-    """
-    return add_corpus(corpus="wauchier", db=db, with_token=with_token,
-        with_allowed_lemma=with_allowed_lemma, partial_allowed_lemma=partial_allowed_lemma,
-        with_allowed_pos=with_allowed_pos, partial_allowed_pos=partial_allowed_pos)
