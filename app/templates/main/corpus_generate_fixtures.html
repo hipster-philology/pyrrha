@@ -1,0 +1,20 @@
+
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<h2>Tokens</h2>
+<pre>
+{% for token in tokens %}    WordToken(form="{{token.form}}", lemma="{{token.lemma}}", context="{{token.context}}", label_uniform="{{token.label_uniform}}", morph="{{token.morph}}")
+{% endfor %}
+</pre>
+<h2>Allowed Lemma</h2>
+<pre>
+{% for lemma in allowed_lemma %}    AllowedLemma(label="{{lemma.label}}", label_uniform="{{lemma.label_uniform}}")
+{% endfor %}
+</pre>
+<h2>Allowed POS</h2>
+<pre>
+{% for pos in allowed_pos %}    AllowedPOS(label="{{pos.label}}")
+{% endfor %}
+</pre>
+{% endblock %}}

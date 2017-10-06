@@ -2,7 +2,7 @@ from flask import url_for
 from app.models import Corpus, WordToken, AllowedLemma
 from app import db
 from tests.test_selenium.base import TestBase
-from tests.fixtures import CORPUS_NAME, CORPUS_DATA, FULL_CORPUS_LEMMA_ALLOWED, PARTIAL_CORPUS_ALLOWED_LEMMA
+from tests.fixtures import PLAINTEXT_CORPORA
 
 
 class TestCorpusRegistration(TestBase):
@@ -17,8 +17,8 @@ class TestCorpusRegistration(TestBase):
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(CORPUS_NAME)
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), CORPUS_DATA)
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
@@ -28,10 +28,10 @@ class TestCorpusRegistration(TestBase):
         )
 
         self.assertEqual(
-            db.session.query(Corpus).filter(Corpus.name == CORPUS_NAME).count(), 1,
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
             "There should be one well named corpus"
         )
-        corpus = db.session.query(Corpus).filter(Corpus.name == CORPUS_NAME).first()
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
         self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
 
@@ -61,9 +61,9 @@ class TestCorpusRegistration(TestBase):
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(CORPUS_NAME)
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), CORPUS_DATA)
-        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), FULL_CORPUS_LEMMA_ALLOWED)
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["lemma"])
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
@@ -73,10 +73,10 @@ class TestCorpusRegistration(TestBase):
         )
 
         self.assertEqual(
-            db.session.query(Corpus).filter(Corpus.name == CORPUS_NAME).count(), 1,
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
             "There should be one well named corpus"
         )
-        corpus = db.session.query(Corpus).filter(Corpus.name == CORPUS_NAME).first()
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
         self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
 
@@ -105,9 +105,9 @@ class TestCorpusRegistration(TestBase):
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(CORPUS_NAME)
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), CORPUS_DATA)
-        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PARTIAL_CORPUS_ALLOWED_LEMMA)
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
@@ -117,10 +117,10 @@ class TestCorpusRegistration(TestBase):
         )
 
         self.assertEqual(
-            db.session.query(Corpus).filter(Corpus.name == CORPUS_NAME).count(), 1,
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
             "There should be one well named corpus"
         )
-        corpus = db.session.query(Corpus).filter(Corpus.name == CORPUS_NAME).first()
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
         self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
 
