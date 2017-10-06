@@ -164,6 +164,11 @@ class WordToken(db.Model):
         statuses = {}
         msg = ""
 
+    class NothingChangedError(ValueError):
+        """ Error for values which are not allowed """
+        statuses = {}
+        msg = ""
+
     def to_dict(self):
         """ Export the current lemma to a dict
 
@@ -311,7 +316,7 @@ class WordToken(db.Model):
         :param lemma: Lemma
         :param POS: PartOfSpeech
         :param morph: Morphology tag
-        :return: Current token
+        :return: Current token, Record Token
         """
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
@@ -321,7 +326,9 @@ class WordToken(db.Model):
         morph = strip_or_none(morph)
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph:
-            return token
+            error = WordToken.NothingChangedError("No value where changed")
+            error.msg = "No value where changed"
+            raise error
         # Check if values are correct regarding allowed values
         validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):

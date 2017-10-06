@@ -189,3 +189,10 @@ class TestTokensEditFloovant(TokenEditBase):
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
         self.assertEqual(token.morph, "SomeMorph", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
+
+    def test_edit_token_with_same_value(self):
+        """ Test the edition of a token's morph"""
+        # Try first with an edit that would word
+        self.addCorpus(with_token=True)
+        token, status_text = self.edith_nth_row_value("seignor", id_row="1", value_type="lemma")
+        self.assertEqual(status_text, "(No value where changed) Save")

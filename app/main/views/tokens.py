@@ -60,6 +60,10 @@ def tokens_edit_single(corpus_id, token_id):
         response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
         response.status_code = 403
         return response
+    except WordToken.NothingChangedError as E:
+        response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
+        response.status_code = 412
+        return response
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>/update', methods=["POST"])
