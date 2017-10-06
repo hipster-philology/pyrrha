@@ -202,3 +202,33 @@ class TestTokensEditFloovant(TokenEditBase):
         self.assertEqual(status_text, "(No value where changed) Save")
         self.assertNotIn("table-changed", row.get_attribute("class"))
 
+
+class TestTokensEditTwoCorpora(TokenEditBase):
+    CORPUS = "wauchier"
+    CORPUS_ID = "1"
+
+    def addCorpus(self, *args, **kwargs):
+        super(TokenEditBase, self).addCorpus("wauchier", *args, **kwargs)
+        super(TokenEditBase, self).addCorpus("floovant", *args, **kwargs)
+
+    def test_edit_token_lemma_with_allowed_values_lemma_pos(self):
+        """ Test the edition of a token """
+        # Try first with an edit that would work
+        self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_pos=True)
+        token, status_text, row = self.edith_nth_row_value("saint", id_row="1")
+        self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with an allowed lemma from the second corpus
+        self.driver.refresh()
+        token, status_text, row = self.edith_nth_row_value("seignor", id_row="2")
+        self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with a POS update but keeping the lemma
+        self.driver.refresh()
+        token, status_text, row = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
+        self.assertEqual(token.lemma, "escouter", "Lemma should have not been changed")
+        self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
+        self.assertEqual(status_text, "(Saved) Save")
+

@@ -209,16 +209,20 @@ class WordToken(db.Model):
         """
         if allowed_list is False:
             if type_like == "POS":
+                cls = WordToken
                 type_like = WordToken.POS
                 retrieve_field = WordToken.POS
             else:
+                cls = WordToken
                 type_like = WordToken.label_uniform
                 retrieve_field = WordToken.lemma
         else:
             if type_like == "POS":
+                cls = AllowedPOS
                 type_like = AllowedPOS.label
                 retrieve_field = AllowedPOS.label
             else:
+                cls = AllowedLemma
                 type_like = AllowedLemma.label_uniform
                 retrieve_field = AllowedLemma.label
 
@@ -226,13 +230,13 @@ class WordToken(db.Model):
         if form is None:
             query = query.filter(
             db.and_(
-                WordToken.corpus == corpus_id
+                cls.corpus == corpus_id
             )
         )
         else:
             query = query.filter(
             db.and_(
-                WordToken.corpus == corpus_id,
+                cls.corpus == corpus_id,
                 type_like.ilike("{}%".format(form))
             )
         )
