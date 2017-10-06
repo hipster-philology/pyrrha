@@ -1,0 +1,15 @@
+
+.table-changed,
+.table-changed > th,
+.table-changed > td {
+  background-color: #bee5eb;
+}
+
+.table-hover .table-changedtable-info:hover {
+  background-color: #abdde5;
+}
+
+.table-hover .table-changed:hover > td,
+.table-hover .table-changed:hover > th {
+  background-color: #abdde5;
+}

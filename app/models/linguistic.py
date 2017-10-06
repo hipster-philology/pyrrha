@@ -193,6 +193,10 @@ class WordToken(db.Model):
         """
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
+    @property
+    def changed(self):
+        return 0 < db.session.query(ChangeRecord).filter_by(**{"id": self.token, "corpus": self.corpus}).limit(1).count()
+
     @staticmethod
     def get_like(corpus_id, form, group_by, type_like="lemma", allowed_list=False):
         """ Get tokens starting with form
@@ -369,6 +373,26 @@ class WordToken(db.Model):
                             change_record.POS != change_record.POS_new, change_record.POS_new is not None),
                     db.and_(WordToken.form == change_record.form, WordToken.morph == change_record.morph,
                             change_record.morph != change_record.morph_new, change_record.morph_new is not None),
+                )
+            )
+        )
+
+    @staticmethod
+    def get_nearly_similar_to(token):
+        """ Get tokens which shares similarity with ChangeRecord
+
+        :param token: Token to find similar
+        :type token: WordToken
+        :return: Word tokens
+        :rtype: db.BaseQuery
+        """
+        return db.session.query(WordToken).filter(
+            db.and_(
+                WordToken.corpus == token.corpus,
+                db.or_(
+                    db.and_(WordToken.form == token.form, WordToken.lemma != token.lemma),
+                    db.and_(WordToken.form == token.form, WordToken.POS != token.POS),
+                    db.and_(WordToken.form == token.form, WordToken.morph != token.morph),
                 )
             )
         )
