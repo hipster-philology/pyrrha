@@ -3,13 +3,15 @@ from app.models import WordToken
 import time
 
 
-class TestTokenEdit(TestBase):
-    """ Checks that token edition works correctly """
+class TokenEditBase(TestBase):
+    """ Base class with helpers to test token edition page """
+    CORPUS = "wauchier"
+    CORPUS_ID = "1"
 
     def edith_nth_row_value(
             self, value,
             value_type="lemma",
-            id_row="1", corpus_id="1",
+            id_row="1", corpus_id=None,
             autocomplete_selector=None):
         """ Helper to go to the right page and edit the first row
 
@@ -27,6 +29,8 @@ class TestTokenEdit(TestBase):
         :returns: Token that has been edited, Content of the save link td
         :rtype: WordToken, str
         """
+        if corpus_id is None:
+            corpus_id = self.CORPUS_ID
         # Show the dropdown
         self.driver.find_element_by_id("toggle_corpus_"+corpus_id).click()
         # Click on the edit link
@@ -56,17 +60,22 @@ class TestTokenEdit(TestBase):
 
         return self.db.session.query(WordToken).get(int(id_row)), row.find_elements_by_tag_name("td")[-1].text.strip()
 
+    def addCorpus(self, *args, **kwargs):
+        return super(TokenEditBase, self).addCorpus(self.CORPUS, *args, **kwargs)
+
     def test_edit_token(self):
         """ Test the edition of a token """
-        self.addWauchier(with_token=True)
-        token, status_text = self.edith_nth_row_value("un")
+        self.addCorpus(with_token=True)
+        token, status_text = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
 
+
+class TestTokenEditWauchierCorpus(TokenEditBase):
     def test_edit_token_lemma_with_allowed_values(self):
         """ Test the edition of a token """
         # Try first with an edit that would word
-        self.addWauchier(with_token=True, with_allowed_lemma=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True)
         token, status_text = self.edith_nth_row_value("un", id_row="1")
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -87,7 +96,7 @@ class TestTokenEdit(TestBase):
     def test_edit_token_lemma_with_allowed_values_autocomplete(self):
         """ Test the edition of a token """
         # Try first with an edit that would word
-        self.addWauchier(with_token=True, with_allowed_lemma=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True)
         token, status_text = self.edith_nth_row_value(
             "d", id_row="1",
             autocomplete_selector=".autocomplete-suggestion[data-val='devoir']"
@@ -98,10 +107,25 @@ class TestTokenEdit(TestBase):
 
     def test_edit_POS(self):
         """ Edit POS of a token """
-        self.addWauchier(with_token=True, with_allowed_lemma=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True)
         token, status_text = self.edith_nth_row_value(
             "ADJqua", id_row="1", value_type="POS"
         )
         self.assertEqual(token.lemma, "de", "Lemma should have been changed to devoir")
+        self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+
+class TestTokensEditFloovant(TokenEditBase):
+    CORPUS = "floovant"
+    CORPUS_ID = "2"
+
+    def test_edit_POS(self):
+        """ Edit POS of a token """
+        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        token, status_text = self.edith_nth_row_value(
+            "ADJqua", id_row="1", value_type="POS"
+        )
+        self.assertEqual(token.lemma, "seignor", "Lemma should have been changed to devoir")
         self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
         self.assertEqual(status_text, "(Saved) Save")
