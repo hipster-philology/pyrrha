@@ -195,7 +195,7 @@ class WordToken(db.Model):
 
     @property
     def changed(self):
-        return 0 < db.session.query(ChangeRecord).filter_by(**{"id": self.token, "corpus": self.corpus}).limit(1).count()
+        return 0 < db.session.query(ChangeRecord).filter_by(**{"word_token_id": self.id, "corpus": self.corpus}).limit(1).count()
 
     @staticmethod
     def get_like(corpus_id, form, group_by, type_like="lemma", allowed_list=False):

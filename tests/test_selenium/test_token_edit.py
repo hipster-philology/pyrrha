@@ -70,6 +70,9 @@ class TokenEditBase(TestBase):
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
         self.assertIn("table-changed", row.get_attribute("class"))
+        self.driver.refresh()
+        row = self.driver.find_element_by_id("token_1_row")
+        self.assertIn("table-changed", row.get_attribute("class"))
 
 
 class TestTokenEditWauchierCorpus(TokenEditBase):
