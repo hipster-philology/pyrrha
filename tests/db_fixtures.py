@@ -206,9 +206,9 @@ def add_corpus(
 
     if with_allowed_pos is True:
         if partial_allowed_pos:
-            add += DB_CORPORA[corpus]["POS"]
+            add += DB_CORPORA[corpus]["POS"][:3]
         else:
-            add += DB_CORPORA[corpus]["pos"]
+            add += DB_CORPORA[corpus]["POS"]
     for x in add:
         db.session.add(copy.deepcopy(x))
     db.session.commit()

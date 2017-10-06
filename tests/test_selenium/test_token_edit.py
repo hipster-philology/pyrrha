@@ -129,3 +129,63 @@ class TestTokensEditFloovant(TokenEditBase):
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed to devoir")
         self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
         self.assertEqual(status_text, "(Saved) Save")
+
+    def test_edit_token_lemma_with_allowed_values_lemma_pos(self):
+        """ Test the edition of a token """
+        # Try first with an edit that would word
+        self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_pos=True)
+        token, status_text = self.edith_nth_row_value("estoire1", id_row="1")
+        self.assertEqual(token.lemma, "estoire1", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with an unallowed lemma
+        self.driver.refresh()
+        token, status_text = self.edith_nth_row_value("WRONG", id_row="2")
+        self.assertEqual(token.lemma, "or4", "Lemma should have not been changed")
+        self.assertEqual(status_text, "(Invalid value in lemma) Save", "Error should be written about lemma")
+
+        # Try with a POS update but keeping the lemma
+        self.driver.refresh()
+        token, status_text = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
+        self.assertEqual(token.lemma, "escouter", "Lemma should have not been changed")
+        self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
+        self.assertEqual(status_text, "(Saved) Save")
+
+    def test_edit_token_lemma_with_allowed_values_lemma(self):
+        """ Test the edition of a token's lemma and POS with allowed_lemma """
+        # Try first with an edit that would word
+        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        token, status_text = self.edith_nth_row_value("estoire1", id_row="1")
+        self.assertEqual(token.lemma, "estoire1", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with an unallowed lemma
+        self.driver.refresh()
+        token, status_text = self.edith_nth_row_value("WRONG", id_row="2")
+        self.assertEqual(token.lemma, "or4", "Lemma should have not been changed")
+        self.assertEqual(status_text, "(Invalid value in lemma) Save", "Error should be written about lemma")
+
+        # Try with a POS update but keeping the lemma
+        self.driver.refresh()
+        token, status_text = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
+        self.assertEqual(token.lemma, "escouter", "Lemma should have not been changed")
+        self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
+        self.assertEqual(status_text, "(Saved) Save")
+
+    def test_edit_token_morph_with_allowed_values_lemma(self):
+        """ Test the edition of a token's morph  with allowed_lemma """
+        # Try first with an edit that would word
+        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        token, status_text = self.edith_nth_row_value("SomeMorph", id_row="1", value_type="morph")
+        self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
+        self.assertEqual(token.morph, "SomeMorph", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+    def test_edit_token_morph(self):
+        """ Test the edition of a token's morph"""
+        # Try first with an edit that would word
+        self.addCorpus(with_token=True)
+        token, status_text = self.edith_nth_row_value("SomeMorph", id_row="1", value_type="morph")
+        self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
+        self.assertEqual(token.morph, "SomeMorph", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
