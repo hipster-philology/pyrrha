@@ -1,6 +1,8 @@
 from tests.test_selenium.base import TestBase
 from app.models import WordToken
 import time
+import selenium
+from tests.db_fixtures import DB_CORPORA
 
 
 class TokenEditBase(TestBase):
@@ -222,13 +224,40 @@ class TestTokensEditTwoCorpora(TokenEditBase):
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("seignor", id_row="2")
-        self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
-        self.assertEqual(status_text, "(Saved) Save")
+        self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
+        self.assertEqual(status_text, "(Invalid value in lemma) Save")
 
         # Try with a POS update but keeping the lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
-        self.assertEqual(token.lemma, "escouter", "Lemma should have not been changed")
+        self.assertEqual(token.lemma, "martin", "Lemma should have not been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
         self.assertEqual(status_text, "(Saved) Save")
 
+    def test_edit_token_lemma_with_typeahead_click(self):
+        """ Test the edition of a token """
+        # Try first with an edit that would work
+        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        token, status_text, row = self.edith_nth_row_value(
+            "s", id_row="1", corpus_id="1",
+            autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
+        )
+        self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with an allowed lemma from the second corpus
+        self.driver.refresh()
+        token, status_text, row = self.edith_nth_row_value(
+            "s", id_row=str(DB_CORPORA["floovant"]["first_id"]+1), corpus_id="2",
+            autocomplete_selector=".autocomplete-suggestion[data-val='seignor']"
+        )
+        self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with an allowed lemma from the second corpus
+        self.driver.refresh()
+        with self.assertRaises(selenium.common.exceptions.NoSuchElementException):
+            _ = self.edith_nth_row_value(
+                "s", id_row=str(DB_CORPORA["floovant"]["first_id"]+1), corpus_id="2",
+                autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
+            )
