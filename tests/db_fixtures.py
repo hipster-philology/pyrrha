@@ -162,6 +162,7 @@ FloovantAllowedLemma = [
 DB_CORPORA = {
     "wauchier": {
         "corpus": Wauchier,
+        "first_id": 1,
         "tokens": WauchierTokens,
         "lemma": WauchierAllowedLemma,
         "POS": WauchierAllowedPOS,
@@ -169,6 +170,7 @@ DB_CORPORA = {
     },
     "floovant": {
         "corpus": Floovant,
+        "first_id": len(WauchierTokens)+1,
         "tokens": FloovantTokens,
         "lemma": FloovantAllowedLemma,
         "POS": FloovantAllowedPOS,
