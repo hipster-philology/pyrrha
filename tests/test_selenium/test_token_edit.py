@@ -2,7 +2,6 @@ from tests.test_selenium.base import TestBase
 from app.models import WordToken
 import time
 import selenium
-from tests.db_fixtures import DB_CORPORA
 
 
 class TokenEditBase(TestBase):
@@ -262,6 +261,6 @@ class TestTokensEditTwoCorpora(TokenEditBase):
         self.driver.refresh()
         with self.assertRaises(selenium.common.exceptions.NoSuchElementException):
             _ = self.edith_nth_row_value(
-                "s", id_row=str(self.first_token_id(2gi)+1), corpus_id="2",
+                "s", id_row=str(self.first_token_id(2)+1), corpus_id="2",
                 autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
             )
