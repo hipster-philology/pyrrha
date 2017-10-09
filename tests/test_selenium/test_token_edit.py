@@ -62,12 +62,16 @@ class TokenEditBase(TestBase):
 
         return self.db.session.query(WordToken).get(int(id_row)), row.find_elements_by_tag_name("td")[-1].text.strip(), row
 
+    def first_token_id(self, corpus_id):
+        return self.db.session.query(WordToken.id).\
+            filter_by(corpus=corpus_id).order_by(WordToken.order_id).limit(1).first()[0]
+
     def addCorpus(self, *args, **kwargs):
         return super(TokenEditBase, self).addCorpus(self.CORPUS, *args, **kwargs)
 
     def test_edit_token(self):
         """ Test the edition of a token """
-        self.addCorpus(with_token=True)
+        self.addCorpus(with_token=True, tokens_up_to=24)
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -81,7 +85,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
     def test_edit_token_lemma_with_allowed_values(self):
         """ Test the edition of a token """
         # Try first with an edit that would word
-        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
         token, status_text, row = self.edith_nth_row_value("un", id_row="1")
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -102,7 +106,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
     def test_edit_token_lemma_with_allowed_values_autocomplete(self):
         """ Test the edition of a token """
         # Try first with an edit that would word
-        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
         token, status_text, row = self.edith_nth_row_value(
             "d", id_row="1",
             autocomplete_selector=".autocomplete-suggestion[data-val='devoir']"
@@ -113,7 +117,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
 
     def test_edit_POS(self):
         """ Edit POS of a token """
-        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
         token, status_text, row = self.edith_nth_row_value(
             "ADJqua", id_row="1", value_type="POS"
         )
@@ -216,7 +220,7 @@ class TestTokensEditTwoCorpora(TokenEditBase):
     def test_edit_token_lemma_with_allowed_values_lemma_pos(self):
         """ Test the edition of a token """
         # Try first with an edit that would work
-        self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_pos=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_pos=True, tokens_up_to=24)
         token, status_text, row = self.edith_nth_row_value("saint", id_row="1")
         self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -237,7 +241,7 @@ class TestTokensEditTwoCorpora(TokenEditBase):
     def test_edit_token_lemma_with_typeahead_click(self):
         """ Test the edition of a token """
         # Try first with an edit that would work
-        self.addCorpus(with_token=True, with_allowed_lemma=True)
+        self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
         token, status_text, row = self.edith_nth_row_value(
             "s", id_row="1", corpus_id="1",
             autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
@@ -248,7 +252,7 @@ class TestTokensEditTwoCorpora(TokenEditBase):
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value(
-            "s", id_row=str(DB_CORPORA["floovant"]["first_id"]+1), corpus_id="2",
+            "s", id_row=str(self.first_token_id(2)+1), corpus_id="2",
             autocomplete_selector=".autocomplete-suggestion[data-val='seignor']"
         )
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
@@ -258,6 +262,6 @@ class TestTokensEditTwoCorpora(TokenEditBase):
         self.driver.refresh()
         with self.assertRaises(selenium.common.exceptions.NoSuchElementException):
             _ = self.edith_nth_row_value(
-                "s", id_row=str(DB_CORPORA["floovant"]["first_id"]+1), corpus_id="2",
+                "s", id_row=str(self.first_token_id(2gi)+1), corpus_id="2",
                 autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
             )

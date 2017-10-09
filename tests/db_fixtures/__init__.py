@@ -6,7 +6,6 @@ import time
 DB_CORPORA = {
     "wauchier": {
         "corpus": Wauchier,
-        "first_id": 1,
         "tokens": WauchierTokens,
         "lemma": WauchierAllowedLemma,
         "POS": WauchierAllowedPOS,
@@ -14,7 +13,6 @@ DB_CORPORA = {
     },
     "floovant": {
         "corpus": Floovant,
-        "first_id": len(WauchierTokens)+1,
         "tokens": FloovantTokens,
         "lemma": FloovantAllowedLemma,
         "POS": FloovantAllowedPOS,
@@ -24,7 +22,7 @@ DB_CORPORA = {
 
 
 def add_corpus(
-        corpus, db, with_token=True,
+        corpus, db, with_token=True, tokens_up_to=None,
         with_allowed_lemma=False, partial_allowed_lemma=False,
         with_allowed_pos=False, partial_allowed_pos=False
 ):
@@ -42,7 +40,10 @@ def add_corpus(
     db.session.commit()
     add = []
     if with_token is True:
-        add += DB_CORPORA[corpus]["tokens"]
+        if tokens_up_to is not None:
+            add += DB_CORPORA[corpus]["tokens"][:tokens_up_to]
+        else:
+            add += DB_CORPORA[corpus]["tokens"]
 
     if with_allowed_lemma is True:
         if partial_allowed_lemma:
