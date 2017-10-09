@@ -4,7 +4,7 @@
 {% block content %}
 <h2>Tokens</h2>
 <pre>
-{% for token in tokens %}    WordToken(form="{{token.form}}", lemma="{{token.lemma}}", context="{{token.context}}", label_uniform="{{token.label_uniform}}", morph="{{token.morph}}")
+{% for token in tokens %}    WordToken(form="{{token.form}}", lemma="{{token.lemma}}", POS="{{token.POS}}", context="{{token.context}}", label_uniform="{{token.label_uniform}}", morph="{{token.morph}}")
 {% endfor %}
 </pre>
 <h2>Allowed Lemma</h2>

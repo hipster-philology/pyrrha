@@ -1,6 +1,6 @@
 from flask import request, jsonify, url_for
 
-from .utils import render_template_with_nav_info
+from .utils import render_template_with_nav_info, request_wants_json
 from .. import main
 from ...models import WordToken, Corpus, ChangeRecord
 from ...utils.forms import string_to_none
@@ -30,14 +30,33 @@ def tokens_edit_unallowed(corpus_id, allowed_type):
     )
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>')
-def tokens_similar(corpus_id, record_id):
+@main.route('/corpus/<int:corpus_id>/tokens/changes/similar/<int:record_id>')
+def tokens_similar_to_record(corpus_id, record_id):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
-    tokens = WordToken.get_similar_to(change_record=record).paginate(per_page=1000)
+    tokens = WordToken.get_similar_to_record(change_record=record).paginate(per_page=1000)
     return render_template_with_nav_info(
         # The Dict is a small hack to emulate paginate
-        'main/tokens_similar.html', corpus=corpus, tokens=tokens, record=record
+        'main/tokens_similar_to_record.html', corpus=corpus, tokens=tokens, record=record
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/similar/<int:token_id>')
+def tokens_similar_to_token(corpus_id, token_id):
+    mode = request.args.get("mode", "partial")
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
+    tokens = WordToken.get_nearly_similar_to(token, mode=mode)
+    if request_wants_json():
+        if request.args.get("hits", "false").lower() == "true":
+            return jsonify([
+                tok.to_dict() for tok in tokens.all()
+            ])
+        return jsonify({"count" : tokens.count()})
+    return render_template_with_nav_info(
+        # The Dict is a small hack to emulate paginate
+        'main/tokens_similar_to_token.html',
+        corpus=corpus, tokens=tokens.paginate(per_page=1000), mode=mode, token=token
     )
 
 
@@ -54,7 +73,7 @@ def tokens_edit_single(corpus_id, token_id):
             "token": token.to_dict(),
             "similar": {
                 "count": change_record.similar_remaining,
-                "link": url_for(".tokens_similar", corpus_id=corpus_id, record_id=change_record.id)
+                "link": url_for(".tokens_similar_to_record", corpus_id=corpus_id, record_id=change_record.id)
             }})
     except WordToken.ValidityError as E:
         response = jsonify({"status": False, "message": E.msg, "details": E.statuses})

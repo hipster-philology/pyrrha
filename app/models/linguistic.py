@@ -1,5 +1,5 @@
 import unidecode
-
+from werkzeug.exceptions import BadRequest
 from .. import db
 from ..utils.forms import strip_or_none
 
@@ -197,6 +197,10 @@ class WordToken(db.Model):
     def changed(self):
         return 0 < db.session.query(ChangeRecord).filter_by(**{"word_token_id": self.id, "corpus": self.corpus}).limit(1).count()
 
+    @property
+    def similar(self):
+        return WordToken.get_nearly_similar_to(self, mode="partial").count()
+
     @staticmethod
     def get_like(corpus_id, form, group_by, type_like="lemma", allowed_list=False):
         """ Get tokens starting with form
@@ -359,7 +363,7 @@ class WordToken(db.Model):
         return token, record
 
     @staticmethod
-    def get_similar_to(change_record):
+    def get_similar_to_record(change_record):
         """ Get tokens which shares similarity with ChangeRecord
 
         :param change_record:
@@ -382,22 +386,51 @@ class WordToken(db.Model):
         )
 
     @staticmethod
-    def get_nearly_similar_to(token):
+    def get_nearly_similar_to(token, mode):
         """ Get tokens which shares similarity with ChangeRecord
 
         :param token: Token to find similar
         :type token: WordToken
+        :param mode: Mode to use (partial, complete, lemma, POS, morph)
+        :type mode: str
         :return: Word tokens
         :rtype: db.BaseQuery
         """
+        filtering = None
+        if mode not in ["partial", "complete", "lemma", "POS", "morph"]:
+            raise BadRequest(description="Mode is not from the list partial, complete, lemma, POS, morph")
+        elif mode == "partial":
+            filtering = db.or_(
+                    db.and_(WordToken.form == token.form, WordToken.lemma == token.lemma),
+                    db.and_(WordToken.form == token.form, WordToken.POS == token.POS),
+                    db.and_(WordToken.form == token.form, WordToken.morph == token.morph),
+                )
+        elif mode == "complete":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.lemma == token.lemma,
+                    WordToken.POS == token.POS,
+                    WordToken.morph == token.morph
+                )
+        elif mode == "lemma":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.lemma == token.lemma,
+                )
+        elif mode == "POS":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.POS == token.POS,
+                )
+        elif mode == "morph":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.morph == token.morph,
+                )
         return db.session.query(WordToken).filter(
             db.and_(
                 WordToken.corpus == token.corpus,
-                db.or_(
-                    db.and_(WordToken.form == token.form, WordToken.lemma != token.lemma),
-                    db.and_(WordToken.form == token.form, WordToken.POS != token.POS),
-                    db.and_(WordToken.form == token.form, WordToken.morph != token.morph),
-                )
+                filtering
             )
         )
 
@@ -419,7 +452,7 @@ class ChangeRecord(db.Model):
 
     @property
     def similar_remaining(self):
-        return WordToken.get_similar_to(self).count()
+        return WordToken.get_similar_to_record(self).count()
 
     @staticmethod
     def track(token, lemma_new, POS_new, morph_new):

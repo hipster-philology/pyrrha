@@ -1,5 +1,5 @@
 from ...models import Corpus
-from flask import render_template
+from flask import render_template, request
 
 
 def render_template_with_nav_info(template, **kwargs):
@@ -7,3 +7,11 @@ def render_template_with_nav_info(template, **kwargs):
         corpora=Corpus.query.all()
     ))
     return render_template(template, **kwargs)
+
+
+def request_wants_json():
+    best = request.accept_mimetypes \
+        .best_match(['application/json', 'text/html'])
+    return best == 'application/json' and \
+        request.accept_mimetypes[best] > \
+        request.accept_mimetypes['text/html']
