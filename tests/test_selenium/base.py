@@ -78,19 +78,24 @@ class TokenEditBase(TestBase):
     CORPUS = "wauchier"
     CORPUS_ID = "1"
 
-    def go_to_edit_token_page(self, corpus_id):
+    def go_to_edit_token_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's edit token page """
-        # Show the dropdown
-        self.driver.find_element_by_id("toggle_corpus_"+corpus_id).click()
-        # Click on the edit link
-        self.driver.find_element_by_id("corpus_"+corpus_id+"_edit_tokens").click()
+        def callback():
+            # Show the dropdown
+            self.driver.find_element_by_id("toggle_corpus_"+corpus_id).click()
+            # Click on the edit link
+            self.driver.find_element_by_id("corpus_"+corpus_id+"_edit_tokens").click()
+        if as_callback:
+            return callback
+        callback()
 
     def edith_nth_row_value(
             self, value,
             value_type="lemma",
             id_row="1", corpus_id=None,
             autocomplete_selector=None,
-            additional_action_before=None):
+            additional_action_before=None,
+            go_to_edit_token_page=None):
         """ Helper to go to the right page and edit the first row
 
         :param value: Value to write
@@ -112,7 +117,9 @@ class TokenEditBase(TestBase):
         if corpus_id is None:
             corpus_id = self.CORPUS_ID
 
-        self.go_to_edit_token_page(corpus_id)
+        if go_to_edit_token_page is None:
+            go_to_edit_token_page = self.go_to_edit_token_page(corpus_id)
+        go_to_edit_token_page()
 
         if additional_action_before is not None:
             additional_action_before()

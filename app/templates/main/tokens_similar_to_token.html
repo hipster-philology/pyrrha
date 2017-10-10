@@ -9,7 +9,7 @@
 
 
 <div class="btn-group" role="group" aria-label="Mode of filtering">
-  <a href="#" class="btn btn-outline-primary morph disabled">Match</a>
+  <a href="#" class="btn btn-outline-primary disabled">Match</a>
   <a href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}" class="btn btn-outline-secondary partial {%if mode == 'partial' %}active{%endif%}">Partial</a>
   <a href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='complete')}}" class="btn btn-outline-secondary complete {%if mode == 'complete' %}active{%endif%}">Complete</a>
   <a href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='lemma')}}" class="btn btn-outline-secondary lemma {%if mode == 'lemma' %}active{%endif%}">Lemma only</a>
@@ -44,6 +44,9 @@
 </table>
 
 <h2>Similar matching</h2>
-{{ tokens_macros.table(tokens, corpus=corpus, editable=True, similar=False) }}
+
+<div class="main">
+    {{ tokens_macros.table(tokens, corpus=corpus, editable=True, similar=False) }}
+</div>
 
 {% endblock %}

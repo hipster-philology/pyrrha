@@ -430,6 +430,7 @@ class WordToken(db.Model):
         return db.session.query(WordToken).filter(
             db.and_(
                 WordToken.corpus == token.corpus,
+                WordToken.id != token.id,
                 filtering
             )
         )
