@@ -87,7 +87,7 @@ class TokenEditBase(TestBase):
             self.driver.find_element_by_id("corpus_"+corpus_id+"_edit_tokens").click()
         if as_callback:
             return callback
-        callback()
+        return callback()
 
     def edith_nth_row_value(
             self, value,
@@ -110,6 +110,7 @@ class TokenEditBase(TestBase):
         :type autocomplete_selector: str
         :param additional_action_before: Action to perform between page reaching and token editing
         :type additional_action_before: Callable
+        :param go_to_edit_token_page: Action to perform to go to the edit token page
 
         :returns: Token that has been edited, Content of the save link td
         :rtype: WordToken, str

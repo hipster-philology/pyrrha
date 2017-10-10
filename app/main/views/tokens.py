@@ -97,7 +97,7 @@ def tokens_edit_from_record(corpus_id, record_id):
                 lemma=record.lemma_new, POS=record.POS_new, morph=record.morph_new
             )
         )
-    return jsonify([token.to_dict() for token in changed])
+    return jsonify([token.to_dict() for token, _ in changed])
 
 
 @main.route('/corpus/<int:corpus_id>/tokens')

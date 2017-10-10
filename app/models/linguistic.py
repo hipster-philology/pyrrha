@@ -397,8 +397,9 @@ class WordToken(db.Model):
         :rtype: db.BaseQuery
         """
         filtering = None
-        if mode not in ["partial", "complete", "lemma", "POS", "morph"]:
-            raise BadRequest(description="Mode is not from the list partial, complete, lemma, POS, morph")
+        if mode not in ["partial", "complete", "lemma", "POS", "morph", "POS_ex", "lemma_ex", "morph_ex"]:
+            raise BadRequest(description="Mode is not from the list partial, complete, "
+                                         "lemma, POS, morph, lemma_ex, morph_ex, POS_ex")
         elif mode == "partial":
             filtering = db.or_(
                     db.and_(WordToken.form == token.form, WordToken.lemma == token.lemma),
@@ -417,15 +418,30 @@ class WordToken(db.Model):
                     WordToken.form == token.form,
                     WordToken.lemma == token.lemma,
                 )
+        elif mode == "lemma_ex":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.lemma != token.lemma,
+                )
         elif mode == "POS":
             filtering = db.and_(
                     WordToken.form == token.form,
                     WordToken.POS == token.POS,
                 )
+        elif mode == "POS_ex":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.POS != token.POS,
+                )
         elif mode == "morph":
             filtering = db.and_(
                     WordToken.form == token.form,
                     WordToken.morph == token.morph,
+                )
+        elif mode == "morph_ex":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.morph != token.morph,
                 )
         return db.session.query(WordToken).filter(
             db.and_(
