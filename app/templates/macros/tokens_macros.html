@@ -165,7 +165,7 @@
                     <td class="bg-info">{{token.POS_new}}</td>
                     <td class="bg-info">{{token.morph_new}}</td>
                     <td>{{token.similar_remaining}}</td>
-                    <td><a href="{{url_for("main.tokens_similar", corpus_id=corpus.id, record_id=token.id)}}">Find Similar</a></td>
+                    <td><a href="{{url_for("main.tokens_similar_to_record", corpus_id=corpus.id, record_id=token.id)}}">Find Similar</a></td>
                 </tr>
             {% endfor %}
         </tbody>
