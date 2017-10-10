@@ -1,7 +1,7 @@
 
-{% macro table(tokens, corpus, editable=False, tracking=False, checkbox=False, record=None) %}
+{% macro table(tokens, corpus, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
 {% if editable %}
-    {% if checkbox %}
+    {%- if checkbox %}
         <div>
             <h3>Save checked similar lemma</h3>
             <p>
@@ -10,10 +10,12 @@
                 <a class="btn btn-secondary deselect-lemma" href="#">Deselect All</a>
             </p>
         </div>
-    {% endif %}
+    {% endif -%}
+
     <table class="table table-bordered">
         <thead>
-            <tr><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th><th>Save</th></tr>
+            <tr><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+                {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th></tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
@@ -24,6 +26,7 @@
                     <td {% if not checkbox %}contenteditable="true" class="token_pos"{% endif %}>{{token.POS}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
                     <td class="small">{{token.context}}</td>
+                    {%- if similar %}<td><a class="similar-link" href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}"><span class="badge badge-secondary">{{token.similar}}</span></a></td>{% endif -%}
                     {%- if checkbox %}<td><input class="form-check word-token" type="checkbox" checked="checked" value="{{token.id}}" /></td>
                     {% else%}<td><a class="save" href="{{url_for("main.tokens_edit_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
                     {% endif%}
@@ -100,7 +103,7 @@
             }
         });
 
-        $('.editable a').on("click", function (event) {
+        $('.editable a.save').on("click", function (event) {
             event.preventDefault();
             var link = $(this),
                 parent = link.parents("tr.editable");
@@ -162,7 +165,7 @@
                     <td class="bg-info">{{token.POS_new}}</td>
                     <td class="bg-info">{{token.morph_new}}</td>
                     <td>{{token.similar_remaining}}</td>
-                    <td><a href="{{url_for("main.tokens_similar", corpus_id=corpus.id, record_id=token.id)}}">Find Similar</a></td>
+                    <td><a href="{{url_for("main.tokens_similar_to_record", corpus_id=corpus.id, record_id=token.id)}}">Find Similar</a></td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -178,11 +181,10 @@
             {% for token in tokens.items %}
                 <tr class="editable">
                     <td>{{token.form}}</td>
-                    <td contenteditable="true" class="token_lemma">{{token.lemma}}</td>
-                    <td contenteditable="true" class="token_pos">{{token.POS}}</td>
-                    <td contenteditable="true" class="token_morph">{{token.morph}}</td>
+                    <td class="token_lemma">{{token.lemma}}</td>
+                    <td class="token_pos">{{token.POS}}</td>
+                    <td class="token_morph">{{token.morph}}</td>
                     <td class="small">{{token.context}}</td>
-                    <td><a href="{{url_for("main.tokens_edit", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
                 </tr>
             {% endfor %}
         </tbody>

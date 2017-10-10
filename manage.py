@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from flask_script import Manager
 from config import Config
+from tests.db_fixtures import add_corpus
 
 from app import create_app, db
 # from app.models import Role, User
@@ -41,6 +42,22 @@ def recreate_db():
 
 
 @manager.command
+def fixtures_to_db():
+    """
+    Recreates a local database. You probably should not use this on
+    production.
+    """
+    add_corpus(
+        "wauchier", db, with_token=True, tokens_up_to=None,
+        with_allowed_lemma=True, partial_allowed_lemma=False,
+        with_allowed_pos=True, partial_allowed_pos=False)
+    add_corpus(
+        "floovant", db, with_token=True, tokens_up_to=None,
+        with_allowed_lemma=True, partial_allowed_lemma=False,
+        with_allowed_pos=True, partial_allowed_pos=False)
+
+
+@manager.command
 def test():
     """ Run tests locally
     """
@@ -55,6 +72,7 @@ def run():
     production.
     """
     app.run()
+
 
 if __name__ == '__main__':
     manager.run()

@@ -224,3 +224,15 @@ class TestNavigation(TestBase):
         response = self.client.get(url_for("main.index"))
         self.assertEqual(response.status_code, 200, "Display of index should work")
 ```
+
+## Fixtures and getting fixtures
+
+Fixtures are mock-up data that can be drawn from real life corpora. To generate a corpora's 
+fixture you can simply got to `/corpus/<id>/fixtures` and you will be able to get 
+python code printed to your page.
+
+To browse the application with data sample, you can run `python manage.py fixtures_to_db` after
+having created or recreated the database.
+
+You can contribute fixtures by adding a corpus in db_fixtures and fixtures following the 
+example of the Floovant or Wauchier corpus. 

@@ -1,4 +1,5 @@
 from flask_testing import TestCase
+from tests.db_fixtures import add_corpus
 
 from app import create_app, db
 
@@ -30,3 +31,11 @@ class TestBase(TestCase):
 
         db.session.remove()
         db.drop_all()
+
+    def addCorpus(self, corpus, *args, **kwargs):
+        if corpus == "wauchier":
+            add_corpus("wauchier", db, *args, **kwargs)
+        else:
+            add_corpus("floovant", db, *args, **kwargs)
+        self.driver.get(self.get_server_url())
+        self.driver.refresh()
