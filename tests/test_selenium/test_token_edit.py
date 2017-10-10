@@ -39,7 +39,6 @@ class TokenEditBase(TestBase):
         # Take the first row
         row = self.driver.find_element_by_id("token_"+id_row+"_row")
         # Take the td to edit
-
         if value_type == "POS":
             td = row.find_element_by_class_name("token_pos")
         elif value_type == "morph":
