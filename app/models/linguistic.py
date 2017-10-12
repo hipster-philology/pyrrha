@@ -5,14 +5,28 @@ from ..utils.forms import strip_or_none
 
 
 class Corpus(db.Model):
-    """ A corpus is a set of tokens that is independent from others. This allows for multi-text management"""
+    """ A corpus is a set of tokens that is independent from others.
+    This allows for multi-text management
+
+    :param id: ID of the corpus
+    :type id: int
+    :param name: Name of the corpus
+    :type name: str
+
+    :ivar id: ID of the corpus
+    :type id: int
+    :ivar name: Name of the corpus
+    :type name: str
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), unique=True)
 
     def get_allowed_values(self, allowed_type="lemma", label=None):
-        """ Make a query to retrieve
+        """ List values that are allowed (without label) or checks that given label is part
+        of the existing corpus
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
+        :param label: Value to match with as the POS, lemma or morph
         :return: Flask SQL Alchemy Query
         :rtype: BaseQuery
         """
@@ -31,7 +45,8 @@ class Corpus(db.Model):
         return db.session.query(cls).filter(cls.corpus == self.id).order_by(cls.label)
 
     def get_unallowed(self, allowed_type="lemma"):
-        """ Make a query to retrieve unallowed tokens by allowed_type
+        """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
+        AllowedPOS, AllowedMorph)
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
         :return: Flask SQL Alchemy Query
@@ -76,13 +91,18 @@ class Corpus(db.Model):
         """ Retrieve ChangeRecord from the Corpus
 
         :param page: Page to retrieve
+        :type page: int
         :param limit: Hits per page
+        :type limit: int
         :return: Pagination of records
         """
         return ChangeRecord.query.filter_by(corpus=self.id).order_by(ChangeRecord.created_on.desc()).paginate(page=page, per_page=limit)
 
     @staticmethod
-    def create(name, word_tokens_dict, allowed_lemma=None, allowed_POS=None, allowed_morph=None):
+    def create(
+            name, word_tokens_dict,
+            allowed_lemma=None, allowed_POS=None, allowed_morph=None
+    ):
         """ Create a corpus
 
         :param name: Name of the corpus
@@ -122,7 +142,13 @@ class Corpus(db.Model):
 
 
 class AllowedLemma(db.Model):
-    """ An allowed lemma is a lemma that is accepted """
+    """ An allowed lemma is a lemma that is accepted
+
+    :param id: ID of the Allowed Lemma (Optional)
+    :param label: Allowed Lemma Value
+    :param label_uniform: Normalized value of label, which allows for plaintext search
+    :param corpus: ID of the corpus this AllowedLemma is related to
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
     label_uniform = db.Column(db.String(64))
@@ -130,14 +156,25 @@ class AllowedLemma(db.Model):
 
 
 class AllowedPOS(db.Model):
-    """ An allowed POS is a POS that is accepted """
+    """ An allowed POS is a POS that is accepted
+
+    :param id: ID of the Allowed Lemma (Optional)
+    :param label: Allowed POS Value
+    :param corpus: ID of the corpus this AllowedLemma is related to
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
 
 
 class AllowedMorph(db.Model):
-    """ An allowed POS is a POS that is accepted """
+    """ An allowed POS is a POS that is accepted
+
+    :param id: ID of the Allowed Lemma (Optional)
+    :param label: Allowed Morph Value
+    :param readable: Human Readable value of the label. *iei* v--1s-pi becomes Verb, 1st Singular Present Indicative
+    :param corpus: ID of the corpus this AllowedLemma is related to
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
     readable = db.Column(db.String(256))
@@ -145,7 +182,31 @@ class AllowedMorph(db.Model):
 
 
 class WordToken(db.Model):
-    """ A word token is a word from a corpus with primary annotation"""
+    """ A word token is a word from a corpus with primary annotation
+
+    :param id: ID of the word token
+    :type id: int
+    :param corpus: ID Of the corpus
+    :type corpus: int
+    :param order_id: Position identifier of the token in the corpus
+    :type order_id: int
+    :param form: Form, in the text, of the word token
+    :type form: str
+    :param lemma: Lemma assigned to the word token
+    :type lemma: str
+    :param POS: Part-Of-Speech tag assigned to the word token
+    :type POS: str
+    :param morph: Morphology label assigned to the word token
+    :type morph: str
+    :param context: Quotation of the text around this word
+    :type context: str
+
+    :cvar CONTEXT_LEFT: Number of word at the left of the current word to put in \
+     context when adding WordToken in batch
+    :cvar CONTEXT_RIGHT: Number of word at the right of the current word to put in \
+     context when adding WordToken in batch
+
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
     order_id = db.Column(db.Integer)  # Id in the corpus
@@ -165,12 +226,12 @@ class WordToken(db.Model):
         msg = ""
 
     class NothingChangedError(ValueError):
-        """ Error for values which are not allowed """
+        """ Error when an update is triggered and nothing is updated """
         statuses = {}
         msg = ""
 
     def to_dict(self):
-        """ Export the current lemma to a dict
+        """ Export the current lemma to a dict (Most useful for jsonify)
 
         :return: Dict version of the lemma
         """
