@@ -256,20 +256,36 @@ class WordToken(db.Model):
 
     @property
     def changed(self):
+        """ Tells whether this token has already been edited
+
+        :return: If the token has been edited
+        :rtype: bool
+        """
         return 0 < db.session.query(ChangeRecord).filter_by(**{"word_token_id": self.id, "corpus": self.corpus}).limit(1).count()
 
     @property
     def similar(self):
+        """ Number of partial match this token has
+
+        :return: Number of partial match this token has
+        :rtype: int
+        """
         return WordToken.get_nearly_similar_to(self, mode="partial").count()
 
     @staticmethod
     def get_like(corpus_id, form, group_by, type_like="lemma", allowed_list=False):
-        """ Get tokens starting with form
+        """ Get values starting with given form
 
         :param corpus_id: Id of the corpus
-        :param form: Form to filter with
-        :param group_by: Group by the form used
-        :param allowed_list: Get from the allowed list
+        :type corpus_id: int
+        :param form: Plaintext string to search for
+        :type form: str
+        :param group_by: Group by the form used (Avoid duplicate values)
+        :type group_by: bool
+        :param type_like: Type of value to match on (lemma, POS, morph)
+        :type type_like: str
+        :param allowed_list: Retrieve possible values from Allowed[Type] tables
+        :type allowed_list: bool
         :return: BaseQuery
         """
         if allowed_list is False:
@@ -313,9 +329,16 @@ class WordToken(db.Model):
     def is_valid(lemma, POS, morph, corpus):
         """ Check if a token is valid for a given corpus
 
-        :param token: WordToken to check for validity
+        :param lemma: Lemma value of the token to validate
+        :type lemma: str
+        :param POS: POS value of the token to validate
+        :type POS: str
+        :param morph: Morphology tag of the token to validate
+        :type morph: str
         :param corpus: Corpus
+        :type corpus: Corpus
         :return: Dictionary of status
+        :rtype: dict
         """
         allowed_lemma, allowed_POS, allowed_morph = corpus.get_allowed_values("lemma"), \
                                                     corpus.get_allowed_values("POS"), \
@@ -346,8 +369,9 @@ class WordToken(db.Model):
         """ Add a batch of tokens to a corpus given a TSV
 
         :param corpus_id: Id of the corpus
+        :type corpus_id: int
         :param word_tokens_dict: Generator made of dicts of tokens with form, lemma, POS and morph key
-        :return:
+        :type word_tokens_dict: list of dict
         """
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
@@ -385,11 +409,17 @@ class WordToken(db.Model):
         """ Update a given token with lemma, POS and morph value
 
         :param corpus_id: Id of the corpus
+        :type corpus_id: int
         :param token_id: Id of the token
+        :type token_id: int
         :param lemma: Lemma
+        :type lemma: str
         :param POS: PartOfSpeech
+        :type POS: str
         :param morph: Morphology tag
+        :type morph: str
         :return: Current token, Record Token
+        :rtype: (WordToken, ChangeRecord)
         """
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
@@ -427,7 +457,7 @@ class WordToken(db.Model):
     def get_similar_to_record(change_record):
         """ Get tokens which shares similarity with ChangeRecord
 
-        :param change_record:
+        :param change_record: Change Record that we want to match against
         :type change_record: ChangeRecord
         :return: Word tokens
         :rtype: db.BaseQuery
@@ -530,10 +560,28 @@ class ChangeRecord(db.Model):
 
     @property
     def similar_remaining(self):
+        """ Count similar token that look like the original form of the token recorded
+
+        :return: Count similar token that look like the original form of the token recorded
+        :rtype: int
+        """
         return WordToken.get_similar_to_record(self).count()
 
     @staticmethod
     def track(token, lemma_new, POS_new, morph_new):
+        """ Save the history of change for the token
+
+        :param token: Token that has been updated
+        :type token: WordToken
+        :param lemma_new: New lemma assigned to the token
+        :type lemma_new: str
+        :param POS_new: New POS assigned to the token
+        :type POS_new: str
+        :param morph_new: New morphology assigned to the token
+        :type morph_new: str
+        :return: Change Record history item
+        :rtype: ChangeRecord
+        """
         tracked = ChangeRecord(
             corpus=token.corpus, word_token_id=token.id,
             form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph,
