@@ -3,7 +3,7 @@ from flask import request, jsonify, flash
 from .utils import render_template_with_nav_info
 from .. import main
 from ...utils.tsv import StringDictReader
-from ...utils.pagination import int_or
+from werkzeug.exceptions import BadRequest
 from ...models import Corpus, WordToken
 
 
@@ -98,3 +98,38 @@ def generate_fixtures(corpus_id):
         template="main/corpus_generate_fixtures.html", tokens=tokens,
         allowed_lemma=allowed_lemma, allowed_pos=allowed_POS
     )
+
+
+@main.route('/corpus/<int:corpus_id>/settings/edit/allowed_<allowed_type>', methods=["GET", "POST"])
+def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
+    """ Find allowed values and allow their edition
+
+    :param corpus_id: Id of the corpus
+    :param allowed_type: Type of allowed value (lemma, morph, POS)
+    """
+    if allowed_type not in ["lemma", "POS", "morph"]:
+        raise BadRequest("Unknown type of resource.")
+    corpus = Corpus.query.get_or_404(corpus_id)
+    if request.method == "POST":
+        pass
+    values = corpus.get_allowed_values(allowed_type=allowed_type)
+    if allowed_type == "lemma":
+        format_message = "This should be formatted as a list of lemma separated by new line"
+        values = "\n".join([d.label for d in values])
+    elif allowed_type == "POS":
+        format_message = "This should be formatted as a list of POS separated by comma and no space"
+        values = ",".join([d.label for d in values])
+    else:
+        format_message = "The TSV should at least have the header : label and could have a readable column for human"
+        values = "\n".join(
+            ["label\treadable"] + ["{}+\t{}".format(d.label, d.readable) for d in values]
+        )
+    return render_template_with_nav_info(
+        "main/corpus_edit_allowed_values.html",
+        format_message=format_message,
+        values=values,
+        allowed_type=allowed_type,
+        corpus=corpus
+    )
+
+
