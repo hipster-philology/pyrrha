@@ -9,6 +9,8 @@ from ...models import Corpus, WordToken
 
 @main.route('/corpus/new', methods=["POST", "GET"])
 def corpus_new():
+    """ Register a new corpus
+    """
     if request.method == "POST":
 
         allowed_lemma = request.form.get("allowed_lemma")
@@ -36,12 +38,22 @@ def corpus_new():
 
 @main.route('/corpus/get/<int:corpus_id>')
 def corpus_get(corpus_id):
+    """ Read information about the corpus
+
+    :param corpus_id: ID of the corpus
+    :return:
+    """
     corpus = Corpus.query.get_or_404(corpus_id)
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
 
 
 @main.route('/corpus/<int:corpus_id>/allowed/<allowed_type>')
 def corpus_allowed_values(corpus_id, allowed_type):
+    """ Find allowed values
+
+    :param corpus_id: Id of the corpus
+    :param allowed_type: Type of allowed value (lemma, morph, POS)
+    """
     corpus = Corpus.query.get_or_404(corpus_id)
 
     return render_template_with_nav_info(
@@ -54,6 +66,11 @@ def corpus_allowed_values(corpus_id, allowed_type):
 
 @main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
 def corpus_allowed_values_api(corpus_id, allowed_type):
+    """ Find allowed values
+
+    :param corpus_id: Id of the corpus
+    :param allowed_type: Type of allowed value (lemma, morph, POS)
+    """
     corpus = Corpus.query.get_or_404(corpus_id)
 
     return jsonify(
