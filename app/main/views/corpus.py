@@ -110,8 +110,26 @@ def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
     if allowed_type not in ["lemma", "POS", "morph"]:
         raise BadRequest("Unknown type of resource.")
     corpus = Corpus.query.get_or_404(corpus_id)
+
+    # In case of Post
     if request.method == "POST":
-        pass
+        allowed_values = request.form.get("allowed_values")
+        if allowed_type == "lemma":
+            allowed_values = [
+                x.replace('\r', '')
+                for x in allowed_values.split("\n")
+                if len(x.replace('\r', '').strip()) > 0
+            ]
+        elif allowed_type == "POS":
+            allowed_values = [
+                x.replace('\r', '')
+                for x in allowed_values.split(",")
+                if len(x.replace('\r', '').strip()) > 0
+            ]
+        else:
+            allowed_values = list(StringDictReader(allowed_values))
+        corpus.update_allowed_values(allowed_type, allowed_values)
+
     values = corpus.get_allowed_values(allowed_type=allowed_type)
     if allowed_type == "lemma":
         format_message = "This should be formatted as a list of lemma separated by new line"
