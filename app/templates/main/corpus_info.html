@@ -19,9 +19,9 @@
                 <a class="btn btn-primary" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Edit tokens with unallowed morph</a>
                 <hr />
                 <em>Settings</em> :
-                <a class="btn btn-warning" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='lemma')}}">Edit Lemma allowed values</a>
-                <a class="btn btn-warning" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='POS')}}">Edit POS allowed values</a>
-                <a class="btn btn-warning" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='morph')}}">Edit morph allowed values</a>
+                <a class="btn btn-warning settings-lemma" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='lemma')}}">Edit Lemma allowed values</a>
+                <a class="btn btn-warning settings-POS" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='POS')}}">Edit POS allowed values</a>
+                <a class="btn btn-warning settings-morph" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='morph')}}">Edit morph allowed values</a>
             </p>
         </div>
     </div>
