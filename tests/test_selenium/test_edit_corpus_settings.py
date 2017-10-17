@@ -16,7 +16,10 @@ class TestCorpusSettingsUpdate(TestBase):
         """ Ensure editing allowed lemma works """
         # Show the dropdown
         allowed_values = self.go_to()
-        original_lemma = """ami
+        original_lemma = """escouter
+or4
+seignor
+ami
 avoir
 bon
 cel
@@ -29,7 +32,6 @@ devenir
 deviser
 dieu
 en1
-escouter
 escrit
 estoire1
 estre1
@@ -37,12 +39,10 @@ france
 il
 je
 nom
-or4
 premier
 que4
 qui
 roi2
-seignor
 si
 trois1
 trover
@@ -59,4 +59,24 @@ vos1"""
                 "New values were saved : "+",".join(new_allowed_values)
             )
 
+    def test_edit_allowed_POS(self):
+        """ Ensure editing allowed POS works """
+        # Show the dropdown
+        allowed_values = self.go_to(mode="POS")
+        original_lemma = "ADVgen,VERcjg,NOMcom,ADJord,ADJqua,ADVneg,CONsub,DETcar,NOMpro,PRE,PRE.DETdef,PROdem," \
+                         "PROper,PROrel"
+        self.assertEqual(allowed_values, original_lemma, "Original allowed lemma should be correctly listed")
+        for i in range(20):
+            new_allowed_values = list(random.sample(allowed_values.split(","), original_lemma.count(",")))
+            self.writeMultiline(self.driver.find_element_by_id("allowed_values"), ",".join(new_allowed_values))
+            self.driver.find_element_by_id("submit").click()
+            self.assertEqual(
+                self.driver.find_element_by_id("allowed_values").get_attribute('value'),
+                ",".join(new_allowed_values),
+                "New values were saved : "+",".join(new_allowed_values)
+            )
 
+    def test_edit_allowed_morph(self):
+        """ Ensure editing allowed morph works """
+        #  todo
+        pass

@@ -21,7 +21,7 @@ class Corpus(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), unique=True)
 
-    def get_allowed_values(self, allowed_type="lemma", label=None):
+    def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
         of the existing corpus
 
@@ -32,17 +32,20 @@ class Corpus(db.Model):
         """
         if allowed_type == "lemma":
             cls = AllowedLemma
+            order_by = getattr(cls, order_by)
         elif allowed_type == "POS":
             cls = AllowedPOS
+            order_by = getattr(cls, order_by)
         elif allowed_type == "morph":
             cls = AllowedMorph
+            order_by = getattr(cls, order_by)
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
         if label is not None:
             return db.session.query(cls).filter(
                 db.and_(cls.corpus == self.id, cls.label == label)
-            ).order_by(cls.label)
-        return db.session.query(cls).filter(cls.corpus == self.id).order_by(cls.label)
+            ).order_by(order_by)
+        return db.session.query(cls).filter(cls.corpus == self.id).order_by(order_by)
 
     def get_unallowed(self, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,

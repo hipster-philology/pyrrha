@@ -130,7 +130,7 @@ def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
             allowed_values = list(StringDictReader(allowed_values))
         corpus.update_allowed_values(allowed_type, allowed_values)
 
-    values = corpus.get_allowed_values(allowed_type=allowed_type)
+    values = corpus.get_allowed_values(allowed_type=allowed_type, order_by="id")
     if allowed_type == "lemma":
         format_message = "This should be formatted as a list of lemma separated by new line"
         values = "\n".join([d.label for d in values])
