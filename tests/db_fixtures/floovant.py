@@ -90,7 +90,7 @@ FloovantAllowedLemma = [
     AllowedLemma(corpus=Floovant.id, label="vos1", label_uniform="vos1")
 ]
 FloovantAllowedMorph = [
-    AllowedMorph(corpus=Floovant.id, label="_"),
+    AllowedMorph(corpus=Floovant.id, label="_", readable="pas de morphologie"),
     AllowedMorph(corpus=Floovant.id, label="DEGRE=-", readable="non applicable"),
     AllowedMorph(corpus=Floovant.id, label="MODE=imp|PERS.=2|NOMB.=p", readable="impératif 2e personne pluriel"),
     AllowedMorph(corpus=Floovant.id, label="MODE=ind|TEMPS=psp|PERS.=3|NOMB.=s", readable="indicatif passé simple 3e personne singulier"),

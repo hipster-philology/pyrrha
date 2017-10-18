@@ -45,6 +45,22 @@ CORPUS_2_PARTIAL_LEMMA = "\n".join(['escouter', 'seignor', 'or4'])
 CORPUS_2_FULL_POS = "\n".join(['PROdem', 'ADVgen', 'NOMpro', 'ADJord', 'PROrel', 'CONsub', 'NOMcom', 'VERcjg',
                                'PROper', 'PRE', 'ADJqua', 'PRE.DETdef', 'ADVneg', 'DETcar'])
 CORPUS_2_PARTIAL_POS = "\n".join(["NOMcom", "VERcjg", "ADJgen"])
-CORPUS_2_FULL_MORPH = "\n".join(['_','DEGRE=-','MODE=imp|PERS.=2|NOMB.=p','MODE=ind|TEMPS=psp|PERS.=3|NOMB.=s','MODE=ind|TEMPS=pst|PERS.=1|NOMB.=s','MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s','NOMB.=p|GENRE=m|CAS=n','NOMB.=p|GENRE=m|CAS=r','NOMB.=s|GENRE=f|CAS=r','NOMB.=s|GENRE=f|CAS=r|DEGRE=p','NOMB.=s|GENRE=m|CAS=n','NOMB.=s|GENRE=m|CAS=r','PERS.=1|NOMB.=s|GENRE=m|CAS=n','PERS.=2|NOMB.=p|GENRE=m|CAS=r','PERS.=3|NOMB.=p|GENRE=m|CAS=r'])
-CORPUS_2_PARTIAL_MORPH = "\n".join(['MODE=ind|TEMPS=pst|PERS.=1|NOMB.=s','NOMB.=p|GENRE=m|CAS=n','NOMB.=s|GENRE=f|CAS=r|DEGRE=p','PERS.=3|NOMB.=p|GENRE=m|CAS=r'])
+CORPUS_2_FULL_MORPH = """
+label\treadable
+_\tpas de morphologie
+DEGRE=-\tnon applicable
+MODE=imp|PERS.=2|NOMB.=p\timpératif 2e personne pluriel
+MODE=ind|TEMPS=psp|PERS.=3|NOMB.=s\tindicatif passé simple 3e personne singulier
+MODE=ind|TEMPS=pst|PERS.=1|NOMB.=s\tindicatif présent 1re personne singulier
+MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s\tsubjonctif présent 3e personne singulier
+NOMB.=p|GENRE=m|CAS=n\tpluriel masculin nominatif
+NOMB.=p|GENRE=m|CAS=r\tpluriel masculin régime
+NOMB.=s|GENRE=f|CAS=r\tsingulier féminin régime
+NOMB.=s|GENRE=f|CAS=r|DEGRE=p\tsingulier féminin régime positif
+NOMB.=s|GENRE=m|CAS=n\tsingulier masculin nominatif
+NOMB.=s|GENRE=m|CAS=r\tsingulier masculin régime
+PERS.=1|NOMB.=s|GENRE=m|CAS=n\t1re personne singulier masculin nominatif
+PERS.=2|NOMB.=p|GENRE=m|CAS=r\t2e personne pluriel masculin régime
+PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime
+"""
 
