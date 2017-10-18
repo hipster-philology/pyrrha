@@ -21,7 +21,7 @@ class Corpus(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), unique=True)
 
-    def get_allowed_values(self, allowed_type="lemma", label=None):
+    def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
         of the existing corpus
 
@@ -32,17 +32,20 @@ class Corpus(db.Model):
         """
         if allowed_type == "lemma":
             cls = AllowedLemma
+            order_by = getattr(cls, order_by)
         elif allowed_type == "POS":
             cls = AllowedPOS
+            order_by = getattr(cls, order_by)
         elif allowed_type == "morph":
             cls = AllowedMorph
+            order_by = getattr(cls, order_by)
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
         if label is not None:
             return db.session.query(cls).filter(
                 db.and_(cls.corpus == self.id, cls.label == label)
-            ).order_by(cls.label)
-        return db.session.query(cls).filter(cls.corpus == self.id).order_by(cls.label)
+            ).order_by(order_by)
+        return db.session.query(cls).filter(cls.corpus == self.id).order_by(order_by)
 
     def get_unallowed(self, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
@@ -119,26 +122,36 @@ class Corpus(db.Model):
         WordToken.add_batch(corpus_id=c.id, word_tokens_dict=word_tokens_dict)
 
         if allowed_lemma is not None and len(allowed_lemma) > 0:
-            for item in allowed_lemma:
-                current = AllowedLemma(label=item, corpus=c.id, label_uniform=unidecode.unidecode(item))
-                db.session.add(current)
+            AllowedLemma.add_batch(allowed_lemma, c.id)
 
         if allowed_POS is not None and len(allowed_POS) > 0:
-            for item in allowed_POS:
-                current = AllowedPOS(label=item, corpus=c.id)
-                db.session.add(current)
+            AllowedPOS.add_batch(allowed_POS, c.id)
 
         if allowed_morph is not None and len(allowed_morph) > 0:
-            for item in allowed_morph:
-                current = AllowedMorph(
-                    label=item.get("label"),
-                    readable=item.get("readable", default=item["label"]),
-                    corpus=c.id
-                )
-                db.session.add(current)
-
+            AllowedMorph.add_batch(allowed_morph, c.id)
         db.session.commit()
         return c
+
+    def update_allowed_values(self, allowed_type, allowed_values):
+        """ Update allowed values of the current corpus
+
+        :param allowed_type: Allowed Value Type (lemma, morph, POS)
+        :param allowed_values: New values
+        :return: Bool of success
+        """
+        if allowed_type == "lemma":
+            cls = AllowedLemma
+        elif allowed_type == "POS":
+            cls = AllowedPOS
+        elif allowed_type == "morph":
+            cls = AllowedMorph
+        else:
+            raise BadRequest("The type is not of lemma, morph or POS")
+        data = db.session.query(cls).filter_by(corpus=self.id).delete()
+        cls.add_batch(allowed_values, self.id, _commit=True)
+        return data
+
+
 
 
 class AllowedLemma(db.Model):
@@ -154,6 +167,20 @@ class AllowedLemma(db.Model):
     label_uniform = db.Column(db.String(64))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
 
+    @staticmethod
+    def add_batch(allowed_values, corpus_id, _commit=False):
+        """ Add a batch of allowed values
+
+        :param allowed_values: List of dictionary with label and readable keys
+        :param corpus_id: Id of the corpus
+        :param _commit: Force commit (Default: false)
+        """
+        for item in allowed_values:
+            current = AllowedLemma(label=item, corpus=corpus_id, label_uniform=unidecode.unidecode(item))
+            db.session.add(current)
+        if _commit:
+            db.session.commit()
+
 
 class AllowedPOS(db.Model):
     """ An allowed POS is a POS that is accepted
@@ -165,6 +192,20 @@ class AllowedPOS(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+
+    @staticmethod
+    def add_batch(allowed_values, corpus_id, _commit=False):
+        """ Add a batch of allowed values
+
+        :param allowed_values: List of dictionary with label and readable keys
+        :param corpus_id: Id of the corpus
+        :param _commit: Force commit (Default: false)
+        """
+        for item in allowed_values:
+            current = AllowedPOS(label=item, corpus=corpus_id)
+            db.session.add(current)
+        if _commit:
+            db.session.commit()
 
 
 class AllowedMorph(db.Model):
@@ -180,6 +221,23 @@ class AllowedMorph(db.Model):
     readable = db.Column(db.String(256))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
 
+    @staticmethod
+    def add_batch(allowed_values, corpus_id, _commit=False):
+        """ Add a batch of allowed values
+
+        :param allowed_values: List of dictionary with label and readable keys
+        :param corpus_id: Id of the corpus
+        :param _commit: Force commit (Default: false)
+        """
+        for item in allowed_values:
+            current = AllowedMorph(
+                label=item.get("label"),
+                readable=item.get("readable", default=item["label"]),
+                corpus=corpus_id
+            )
+            db.session.add(current)
+        if _commit:
+            db.session.commit()
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
