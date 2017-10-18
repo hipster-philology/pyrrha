@@ -13,7 +13,7 @@ def create_app(config_name="dev"):
         __name__,
         template_folder=config[config_name].template_folder,
         static_folder=config[config_name].static_folder,
-        static_path="/statics"
+        static_url_path="/statics"
     )
     app.config.from_object(config[config_name])
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False

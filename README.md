@@ -1,5 +1,8 @@
 Pandora TAB Post-correction App
-===============================================
+===============================
+
+[![Coverage Status](https://coveralls.io/repos/github/hipster-philology/pandora-postcorrect-app/badge.svg?branch=master)](https://coveralls.io/github/hipster-philology/pandora-postcorrect-app?branch=master)
+[![Build Status](https://travis-ci.org/hipster-philology/pandora-postcorrect-app.svg?branch=master)](https://travis-ci.org/hipster-philology/pandora-postcorrect-app)
 
 ![Pandora Post-Correction Editor](./readme.png)
 
@@ -39,12 +42,16 @@ python manage.py run
 - [x] Show history
 - [x] Find item with similar structure as corrected one and auto-edit them after approval
 - [ ] Add Tokens after corpus creation
-- [ ] Register allowed lemmas
-- [ ] Check for unallowed lemma
-- [ ] Register allowed POS
-- [ ] Check for unallowed POS
+- [x] Register allowed lemmas
+- [x] Check for unallowed lemma
+- [x] Register allowed POS
+- [x] Check for unallowed POS
 - [ ] Register allowed Morph
 - [ ] Check for unallowed morph
+
+## How to contribute
+
+- See [Contribute.md](contribute.md)
 
 ## Source
 

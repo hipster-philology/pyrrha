@@ -1,35 +1,55 @@
+import unidecode
+from werkzeug.exceptions import BadRequest
 from .. import db
+from ..utils.forms import strip_or_none
 
 
 class Corpus(db.Model):
-    """ A corpus is a set of tokens that is independent from others. This allows for multi-text management"""
+    """ A corpus is a set of tokens that is independent from others.
+    This allows for multi-text management
+
+    :param id: ID of the corpus
+    :type id: int
+    :param name: Name of the corpus
+    :type name: str
+
+    :ivar id: ID of the corpus
+    :type id: int
+    :ivar name: Name of the corpus
+    :type name: str
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), unique=True)
 
-    def get_allowed_values(self, allowed_type="lemma", label=None):
-        """ Make a query to retrieve
+    def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
+        """ List values that are allowed (without label) or checks that given label is part
+        of the existing corpus
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
+        :param label: Value to match with as the POS, lemma or morph
         :return: Flask SQL Alchemy Query
         :rtype: BaseQuery
         """
-        cls = AllowedLemma
         if allowed_type == "lemma":
             cls = AllowedLemma
+            order_by = getattr(cls, order_by)
         elif allowed_type == "POS":
             cls = AllowedPOS
+            order_by = getattr(cls, order_by)
         elif allowed_type == "morph":
             cls = AllowedMorph
+            order_by = getattr(cls, order_by)
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
         if label is not None:
             return db.session.query(cls).filter(
-                db.and_(cls.corpus == self.id, cls.label == label).order_by(cls.label)
-            )
-        return db.session.query(cls).filter(cls.corpus == self.id).order_by(cls.label)
+                db.and_(cls.corpus == self.id, cls.label == label)
+            ).order_by(order_by)
+        return db.session.query(cls).filter(cls.corpus == self.id).order_by(order_by)
 
     def get_unallowed(self, allowed_type="lemma"):
-        """ Make a query to retrieve unallowed tokens by allowed_type
+        """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
+        AllowedPOS, AllowedMorph)
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
         :return: Flask SQL Alchemy Query
@@ -74,13 +94,18 @@ class Corpus(db.Model):
         """ Retrieve ChangeRecord from the Corpus
 
         :param page: Page to retrieve
+        :type page: int
         :param limit: Hits per page
+        :type limit: int
         :return: Pagination of records
         """
         return ChangeRecord.query.filter_by(corpus=self.id).order_by(ChangeRecord.created_on.desc()).paginate(page=page, per_page=limit)
 
     @staticmethod
-    def create(name, word_tokens_dict, allowed_lemma=None, allowed_POS=None, allowed_morph=None):
+    def create(
+            name, word_tokens_dict,
+            allowed_lemma=None, allowed_POS=None, allowed_morph=None
+    ):
         """ Create a corpus
 
         :param name: Name of the corpus
@@ -97,57 +122,155 @@ class Corpus(db.Model):
         WordToken.add_batch(corpus_id=c.id, word_tokens_dict=word_tokens_dict)
 
         if allowed_lemma is not None and len(allowed_lemma) > 0:
-            for item in allowed_lemma:
-                current = AllowedLemma(label=item, corpus=c.id)
-                db.session.add(current)
+            AllowedLemma.add_batch(allowed_lemma, c.id)
 
         if allowed_POS is not None and len(allowed_POS) > 0:
-            for item in allowed_POS:
-                current = AllowedPOS(label=item, corpus=c.id)
-                db.session.add(current)
+            AllowedPOS.add_batch(allowed_POS, c.id)
 
         if allowed_morph is not None and len(allowed_morph) > 0:
-            for item in allowed_morph:
-                current = AllowedMorph(
-                    label=item.get("label"),
-                    readable=item.get("readable", default=item["label"]),
-                    corpus=c.id
-                )
-                db.session.add(current)
-
+            AllowedMorph.add_batch(allowed_morph, c.id)
         db.session.commit()
         return c
 
+    def update_allowed_values(self, allowed_type, allowed_values):
+        """ Update allowed values of the current corpus
+
+        :param allowed_type: Allowed Value Type (lemma, morph, POS)
+        :param allowed_values: New values
+        :return: Bool of success
+        """
+        if allowed_type == "lemma":
+            cls = AllowedLemma
+        elif allowed_type == "POS":
+            cls = AllowedPOS
+        elif allowed_type == "morph":
+            cls = AllowedMorph
+        else:
+            raise BadRequest("The type is not of lemma, morph or POS")
+        data = db.session.query(cls).filter_by(corpus=self.id).delete()
+        cls.add_batch(allowed_values, self.id, _commit=True)
+        return data
+
+
+
 
 class AllowedLemma(db.Model):
-    """ An allowed lemma is a lemma that is accepted """
+    """ An allowed lemma is a lemma that is accepted
+
+    :param id: ID of the Allowed Lemma (Optional)
+    :param label: Allowed Lemma Value
+    :param label_uniform: Normalized value of label, which allows for plaintext search
+    :param corpus: ID of the corpus this AllowedLemma is related to
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
+    label_uniform = db.Column(db.String(64))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+
+    @staticmethod
+    def add_batch(allowed_values, corpus_id, _commit=False):
+        """ Add a batch of allowed values
+
+        :param allowed_values: List of dictionary with label and readable keys
+        :param corpus_id: Id of the corpus
+        :param _commit: Force commit (Default: false)
+        """
+        for item in allowed_values:
+            current = AllowedLemma(label=item, corpus=corpus_id, label_uniform=unidecode.unidecode(item))
+            db.session.add(current)
+        if _commit:
+            db.session.commit()
 
 
 class AllowedPOS(db.Model):
-    """ An allowed POS is a POS that is accepted """
+    """ An allowed POS is a POS that is accepted
+
+    :param id: ID of the Allowed Lemma (Optional)
+    :param label: Allowed POS Value
+    :param corpus: ID of the corpus this AllowedLemma is related to
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
 
+    @staticmethod
+    def add_batch(allowed_values, corpus_id, _commit=False):
+        """ Add a batch of allowed values
+
+        :param allowed_values: List of dictionary with label and readable keys
+        :param corpus_id: Id of the corpus
+        :param _commit: Force commit (Default: false)
+        """
+        for item in allowed_values:
+            current = AllowedPOS(label=item, corpus=corpus_id)
+            db.session.add(current)
+        if _commit:
+            db.session.commit()
+
 
 class AllowedMorph(db.Model):
-    """ An allowed POS is a POS that is accepted """
+    """ An allowed POS is a POS that is accepted
+
+    :param id: ID of the Allowed Lemma (Optional)
+    :param label: Allowed Morph Value
+    :param readable: Human Readable value of the label. *iei* v--1s-pi becomes Verb, 1st Singular Present Indicative
+    :param corpus: ID of the corpus this AllowedLemma is related to
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
     readable = db.Column(db.String(256))
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
 
+    @staticmethod
+    def add_batch(allowed_values, corpus_id, _commit=False):
+        """ Add a batch of allowed values
+
+        :param allowed_values: List of dictionary with label and readable keys
+        :param corpus_id: Id of the corpus
+        :param _commit: Force commit (Default: false)
+        """
+        for item in allowed_values:
+            current = AllowedMorph(
+                label=item.get("label"),
+                readable=item.get("readable", default=item["label"]),
+                corpus=corpus_id
+            )
+            db.session.add(current)
+        if _commit:
+            db.session.commit()
 
 class WordToken(db.Model):
-    """ A word token is a word from a corpus with primary annotation"""
+    """ A word token is a word from a corpus with primary annotation
+
+    :param id: ID of the word token
+    :type id: int
+    :param corpus: ID Of the corpus
+    :type corpus: int
+    :param order_id: Position identifier of the token in the corpus
+    :type order_id: int
+    :param form: Form, in the text, of the word token
+    :type form: str
+    :param lemma: Lemma assigned to the word token
+    :type lemma: str
+    :param POS: Part-Of-Speech tag assigned to the word token
+    :type POS: str
+    :param morph: Morphology label assigned to the word token
+    :type morph: str
+    :param context: Quotation of the text around this word
+    :type context: str
+
+    :cvar CONTEXT_LEFT: Number of word at the left of the current word to put in \
+     context when adding WordToken in batch
+    :cvar CONTEXT_RIGHT: Number of word at the right of the current word to put in \
+     context when adding WordToken in batch
+
+    """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
     order_id = db.Column(db.Integer)  # Id in the corpus
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
+    label_uniform = db.Column(db.String(64))
     POS = db.Column(db.String(64))
     morph = db.Column(db.String(64))
     context = db.Column(db.String(512))
@@ -160,8 +283,13 @@ class WordToken(db.Model):
         statuses = {}
         msg = ""
 
+    class NothingChangedError(ValueError):
+        """ Error when an update is triggered and nothing is updated """
+        statuses = {}
+        msg = ""
+
     def to_dict(self):
-        """ Export the current lemma to a dict
+        """ Export the current lemma to a dict (Most useful for jsonify)
 
         :return: Dict version of the lemma
         """
@@ -184,32 +312,70 @@ class WordToken(db.Model):
         """
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
+    @property
+    def changed(self):
+        """ Tells whether this token has already been edited
+
+        :return: If the token has been edited
+        :rtype: bool
+        """
+        return 0 < db.session.query(ChangeRecord).filter_by(**{"word_token_id": self.id, "corpus": self.corpus}).limit(1).count()
+
+    @property
+    def similar(self):
+        """ Number of partial match this token has
+
+        :return: Number of partial match this token has
+        :rtype: int
+        """
+        return WordToken.get_nearly_similar_to(self, mode="partial").count()
+
     @staticmethod
-    def get_like(corpus_id, form, group_by, type_like="lemma"):
-        """ Get tokens starting with form
+    def get_like(corpus_id, form, group_by, type_like="lemma", allowed_list=False):
+        """ Get values starting with given form
 
         :param corpus_id: Id of the corpus
-        :param form: Form to filter with
-        :param group_by: Group by the form used
+        :type corpus_id: int
+        :param form: Plaintext string to search for
+        :type form: str
+        :param group_by: Group by the form used (Avoid duplicate values)
+        :type group_by: bool
+        :param type_like: Type of value to match on (lemma, POS, morph)
+        :type type_like: str
+        :param allowed_list: Retrieve possible values from Allowed[Type] tables
+        :type allowed_list: bool
         :return: BaseQuery
         """
-
-        if type_like == "POS":
-            type_like = WordToken.POS
+        if allowed_list is False:
+            if type_like == "POS":
+                cls = WordToken
+                type_like = WordToken.POS
+                retrieve_field = WordToken.POS
+            else:
+                cls = WordToken
+                type_like = WordToken.label_uniform
+                retrieve_field = WordToken.lemma
         else:
-            type_like = WordToken.lemma
+            if type_like == "POS":
+                cls = AllowedPOS
+                type_like = AllowedPOS.label
+                retrieve_field = AllowedPOS.label
+            else:
+                cls = AllowedLemma
+                type_like = AllowedLemma.label_uniform
+                retrieve_field = AllowedLemma.label
 
-        query = db.session.query(type_like)
+        query = db.session.query(retrieve_field)
         if form is None:
             query = query.filter(
             db.and_(
-                WordToken.corpus == corpus_id
+                cls.corpus == corpus_id
             )
         )
         else:
             query = query.filter(
             db.and_(
-                WordToken.corpus == corpus_id,
+                cls.corpus == corpus_id,
                 type_like.ilike("{}%".format(form))
             )
         )
@@ -221,9 +387,16 @@ class WordToken(db.Model):
     def is_valid(lemma, POS, morph, corpus):
         """ Check if a token is valid for a given corpus
 
-        :param token: WordToken to check for validity
+        :param lemma: Lemma value of the token to validate
+        :type lemma: str
+        :param POS: POS value of the token to validate
+        :type POS: str
+        :param morph: Morphology tag of the token to validate
+        :type morph: str
         :param corpus: Corpus
+        :type corpus: Corpus
         :return: Dictionary of status
+        :rtype: dict
         """
         allowed_lemma, allowed_POS, allowed_morph = corpus.get_allowed_values("lemma"), \
                                                     corpus.get_allowed_values("POS"), \
@@ -254,8 +427,9 @@ class WordToken(db.Model):
         """ Add a batch of tokens to a corpus given a TSV
 
         :param corpus_id: Id of the corpus
+        :type corpus_id: int
         :param word_tokens_dict: Generator made of dicts of tokens with form, lemma, POS and morph key
-        :return:
+        :type word_tokens_dict: list of dict
         """
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
@@ -278,6 +452,7 @@ class WordToken(db.Model):
             wt = WordToken(
                 form=token.get("form", token.get("tokens")),
                 lemma=token.get("lemma", token.get("lemmas")),
+                label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
                 POS=token.get("POS", token.get("pos")),
                 morph=token.get("morph"),
                 context=" ".join(previous_token + [token.get("form", token.get("tokens"))] + next_token),
@@ -292,19 +467,29 @@ class WordToken(db.Model):
         """ Update a given token with lemma, POS and morph value
 
         :param corpus_id: Id of the corpus
+        :type corpus_id: int
         :param token_id: Id of the token
+        :type token_id: int
         :param lemma: Lemma
+        :type lemma: str
         :param POS: PartOfSpeech
+        :type POS: str
         :param morph: Morphology tag
-        :return: Current token
+        :type morph: str
+        :return: Current token, Record Token
+        :rtype: (WordToken, ChangeRecord)
         """
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
-
+        # Strip if things are not None
+        lemma = strip_or_none(lemma)
+        POS = strip_or_none(POS)
+        morph = strip_or_none(morph)
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph:
-            return token
-
+            error = WordToken.NothingChangedError("No value where changed")
+            error.msg = "No value where changed"
+            raise error
         # Check if values are correct regarding allowed values
         validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):
@@ -319,6 +504,7 @@ class WordToken(db.Model):
         # Updating
         record = ChangeRecord.track(token, lemma, POS, morph)
         token.lemma = lemma
+        token.label_uniform = unidecode.unidecode(lemma)
         token.POS = POS
         token.morph = morph
         db.session.add(token)
@@ -326,10 +512,10 @@ class WordToken(db.Model):
         return token, record
 
     @staticmethod
-    def get_similar_to(change_record):
+    def get_similar_to_record(change_record):
         """ Get tokens which shares similarity with ChangeRecord
 
-        :param change_record:
+        :param change_record: Change Record that we want to match against
         :type change_record: ChangeRecord
         :return: Word tokens
         :rtype: db.BaseQuery
@@ -345,6 +531,72 @@ class WordToken(db.Model):
                     db.and_(WordToken.form == change_record.form, WordToken.morph == change_record.morph,
                             change_record.morph != change_record.morph_new, change_record.morph_new is not None),
                 )
+            )
+        )
+
+    @staticmethod
+    def get_nearly_similar_to(token, mode):
+        """ Get tokens which shares similarity with ChangeRecord
+
+        :param token: Token to find similar
+        :type token: WordToken
+        :param mode: Mode to use (partial, complete, lemma, POS, morph)
+        :type mode: str
+        :return: Word tokens
+        :rtype: db.BaseQuery
+        """
+        filtering = None
+        if mode not in ["partial", "complete", "lemma", "POS", "morph", "POS_ex", "lemma_ex", "morph_ex"]:
+            raise BadRequest(description="Mode is not from the list partial, complete, "
+                                         "lemma, POS, morph, lemma_ex, morph_ex, POS_ex")
+        elif mode == "partial":
+            filtering = db.or_(
+                    db.and_(WordToken.form == token.form, WordToken.lemma == token.lemma),
+                    db.and_(WordToken.form == token.form, WordToken.POS == token.POS),
+                    db.and_(WordToken.form == token.form, WordToken.morph == token.morph),
+                )
+        elif mode == "complete":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.lemma == token.lemma,
+                    WordToken.POS == token.POS,
+                    WordToken.morph == token.morph
+                )
+        elif mode == "lemma":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.lemma == token.lemma,
+                )
+        elif mode == "lemma_ex":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.lemma != token.lemma,
+                )
+        elif mode == "POS":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.POS == token.POS,
+                )
+        elif mode == "POS_ex":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.POS != token.POS,
+                )
+        elif mode == "morph":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.morph == token.morph,
+                )
+        elif mode == "morph_ex":
+            filtering = db.and_(
+                    WordToken.form == token.form,
+                    WordToken.morph != token.morph,
+                )
+        return db.session.query(WordToken).filter(
+            db.and_(
+                WordToken.corpus == token.corpus,
+                WordToken.id != token.id,
+                filtering
             )
         )
 
@@ -366,10 +618,28 @@ class ChangeRecord(db.Model):
 
     @property
     def similar_remaining(self):
-        return WordToken.get_similar_to(self).count()
+        """ Count similar token that look like the original form of the token recorded
+
+        :return: Count similar token that look like the original form of the token recorded
+        :rtype: int
+        """
+        return WordToken.get_similar_to_record(self).count()
 
     @staticmethod
     def track(token, lemma_new, POS_new, morph_new):
+        """ Save the history of change for the token
+
+        :param token: Token that has been updated
+        :type token: WordToken
+        :param lemma_new: New lemma assigned to the token
+        :type lemma_new: str
+        :param POS_new: New POS assigned to the token
+        :type POS_new: str
+        :param morph_new: New morphology assigned to the token
+        :type morph_new: str
+        :return: Change Record history item
+        :rtype: ChangeRecord
+        """
         tracked = ChangeRecord(
             corpus=token.corpus, word_token_id=token.id,
             form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph,
