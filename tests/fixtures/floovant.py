@@ -63,4 +63,16 @@ PERS.=1|NOMB.=s|GENRE=m|CAS=n\t1re personne singulier masculin nominatif
 PERS.=2|NOMB.=p|GENRE=m|CAS=r\t2e personne pluriel masculin régime
 PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime
 """
+CORPUS_2_PARTIAL_MORPH = """
+label\treadable
+_\tpas de morphologie
+DEGRE=-\tnon applicable
+MODE=imp|PERS.=2|NOMB.=p\timpératif 2e personne pluriel
+NOMB.=p|GENRE=m|CAS=n\tpluriel masculin nominatif
+NOMB.=p|GENRE=m|CAS=r\tpluriel masculin régime
+NOMB.=s|GENRE=f|CAS=r|DEGRE=p\tsingulier féminin régime positif
+NOMB.=s|GENRE=m|CAS=n\tsingulier masculin nominatif
+PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime
+"""
+
 

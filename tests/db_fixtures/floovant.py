@@ -1,4 +1,4 @@
-from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS
+from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph
 
 Floovant = Corpus(name="Floovant", id=2)
 FloovantTokens = [
