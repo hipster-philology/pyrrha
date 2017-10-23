@@ -185,9 +185,9 @@ class AllowedLemma(db.Model):
 class AllowedPOS(db.Model):
     """ An allowed POS is a POS that is accepted
 
-    :param id: ID of the Allowed Lemma (Optional)
+    :param id: ID of the Allowed POS (Optional)
     :param label: Allowed POS Value
-    :param corpus: ID of the corpus this AllowedLemma is related to
+    :param corpus: ID of the corpus this AllowedPOS is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
@@ -209,12 +209,12 @@ class AllowedPOS(db.Model):
 
 
 class AllowedMorph(db.Model):
-    """ An allowed POS is a POS that is accepted
+    """ An allowed Morph is a Morph that is accepted
 
-    :param id: ID of the Allowed Lemma (Optional)
+    :param id: ID of the Allowed Morph (Optional)
     :param label: Allowed Morph Value
     :param readable: Human Readable value of the label. *iei* v--1s-pi becomes Verb, 1st Singular Present Indicative
-    :param corpus: ID of the corpus this AllowedLemma is related to
+    :param corpus: ID of the corpus this AllowedMorph is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
