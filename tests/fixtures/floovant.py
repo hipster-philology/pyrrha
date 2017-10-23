@@ -45,8 +45,7 @@ CORPUS_2_PARTIAL_LEMMA = "\n".join(['escouter', 'seignor', 'or4'])
 CORPUS_2_FULL_POS = "\n".join(['PROdem', 'ADVgen', 'NOMpro', 'ADJord', 'PROrel', 'CONsub', 'NOMcom', 'VERcjg',
                                'PROper', 'PRE', 'ADJqua', 'PRE.DETdef', 'ADVneg', 'DETcar'])
 CORPUS_2_PARTIAL_POS = "\n".join(["NOMcom", "VERcjg", "ADJgen"])
-CORPUS_2_FULL_MORPH = """
-label\treadable
+CORPUS_2_FULL_MORPH = """label\treadable
 _\tpas de morphologie
 DEGRE=-\tnon applicable
 MODE=imp|PERS.=2|NOMB.=p\timpératif 2e personne pluriel
