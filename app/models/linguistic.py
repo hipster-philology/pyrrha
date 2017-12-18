@@ -472,7 +472,7 @@ class WordToken(db.Model):
                 lemma=token.get("lemma", token.get("lemmas")),
                 label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
                 POS=token.get("POS", token.get("pos")),
-                morph=token.get("morph"),
+                morph=token.get("morph", None),
                 context=" ".join(previous_token + [token.get("form", token.get("tokens"))] + next_token),
                 corpus=corpus_id,
                 order_id=i
@@ -627,7 +627,7 @@ class ChangeRecord(db.Model):
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
     POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64))
+    morph = db.Column(db.String(64), nullable=True)
     lemma_new = db.Column(db.String(64))
     POS_new = db.Column(db.String(64))
     morph_new = db.Column(db.String(64))
