@@ -1,4 +1,4 @@
-from flask import request, jsonify, flash
+from flask import request, jsonify, flash, redirect, url_for
 
 from .utils import render_template_with_nav_info, format_api_like_reply
 from .. import main
@@ -33,6 +33,7 @@ def corpus_new():
             allowed_morph=allowed_morph
         )
         flash("New corpus registered", category="success")
+        return redirect(url_for("corpus_get", corpus.id))
     return render_template_with_nav_info('main/corpus_new.html')
 
 
