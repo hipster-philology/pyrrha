@@ -73,6 +73,10 @@
     {% else %}
     <script type="text/javascript">
     $(document).ready(function(){
+        var sanitize = function (val) {
+            val = val.replace(/[<]br[^>]*[>]/gi,"").replace(/[&]nbsp[;]/gi," ");
+            return val.toLowerCase();
+        };
         var original = $.fn.val;
         $.fn.val = function() {
             if ($(this).is('*[contenteditable=true]')) {
@@ -100,6 +104,23 @@
                     suggest(data);
                 });
 
+            }
+        });
+        $('td.token_morph').autoComplete({
+            minChars: 1,
+            source: function(term, suggest){
+                var term = sanitize(term),
+                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='morph')}}?form="+term;
+                $.getJSON(url, function(data) {
+                    suggest(data);
+                });
+
+            },
+            renderItem: function (item, search){
+                return '<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>';
+            },
+            onSelect: function(e, term, item){
+                $(this).val(item.data("value"));
             }
         });
 

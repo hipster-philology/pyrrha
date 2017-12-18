@@ -232,12 +232,13 @@ class AllowedMorph(db.Model):
         for item in allowed_values:
             current = AllowedMorph(
                 label=item.get("label"),
-                readable=item.get("readable", default=item["label"]),
+                readable=item.get("readable", item["label"]),
                 corpus=corpus_id
             )
             db.session.add(current)
         if _commit:
             db.session.commit()
+
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -350,36 +351,53 @@ class WordToken(db.Model):
             if type_like == "POS":
                 cls = WordToken
                 type_like = WordToken.POS
-                retrieve_field = WordToken.POS
+                retrieve_field = WordToken.POS,
+            elif type_like == "morph":
+                cls = WordToken
+                type_like = WordToken.morph
+                retrieve_field = WordToken.morph,
             else:
                 cls = WordToken
                 type_like = WordToken.label_uniform
-                retrieve_field = WordToken.lemma
+                retrieve_field = WordToken.lemma,
         else:
             if type_like == "POS":
                 cls = AllowedPOS
                 type_like = AllowedPOS.label
-                retrieve_field = AllowedPOS.label
+                retrieve_field = AllowedPOS.label,
+            elif type_like == "morph":
+                cls = AllowedMorph
+                type_like = [AllowedMorph.readable]
+                retrieve_field = (AllowedMorph.label, AllowedMorph.readable)
             else:
                 cls = AllowedLemma
                 type_like = AllowedLemma.label_uniform
-                retrieve_field = AllowedLemma.label
+                retrieve_field = AllowedLemma.label,
 
-        query = db.session.query(retrieve_field)
+        query = cls.query.with_entities(*retrieve_field)
         if form is None:
             query = query.filter(
             db.and_(
                 cls.corpus == corpus_id
             )
         )
+        elif isinstance(type_like, list):
+            query = query.filter(
+                db.and_(
+                    cls.corpus == corpus_id,
+                    *[type_like[0].ilike("%{}%".format(fsplitted)) for fsplitted in form.split()]
+                )
+            )
         else:
             query = query.filter(
-            db.and_(
-                cls.corpus == corpus_id,
-                type_like.ilike("{}%".format(form))
+                db.and_(
+                    cls.corpus == corpus_id,
+                    type_like.ilike("{}%".format(form))
+                )
             )
-        )
         if group_by is True:
+            if isinstance(type_like, list):
+                return query.group_by(type_like[0])
             return query.group_by(type_like)
         return query
 
