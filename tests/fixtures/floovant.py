@@ -42,9 +42,9 @@ CORPUS_2_FULL_LEMMA = "\n".join(['trover', 'de+le', 'or4', 'france', 'cel', 'tro
                                  'escouter', 'ami', 'vers1', 'deviser', 'je']
 )
 CORPUS_2_PARTIAL_LEMMA = "\n".join(['escouter', 'seignor', 'or4'])
-CORPUS_2_FULL_POS = "\n".join(['PROdem', 'ADVgen', 'NOMpro', 'ADJord', 'PROrel', 'CONsub', 'NOMcom', 'VERcjg',
+CORPUS_2_FULL_POS = ",".join(['PROdem', 'ADVgen', 'NOMpro', 'ADJord', 'PROrel', 'CONsub', 'NOMcom', 'VERcjg',
                                'PROper', 'PRE', 'ADJqua', 'PRE.DETdef', 'ADVneg', 'DETcar'])
-CORPUS_2_PARTIAL_POS = "\n".join(["NOMcom", "VERcjg", "ADJgen"])
+CORPUS_2_PARTIAL_POS = ",".join(["NOMcom", "VERcjg", "ADJgen"])
 CORPUS_2_FULL_MORPH = """label\treadable
 _\tpas de morphologie
 DEGRE=-\tnon applicable
@@ -60,10 +60,8 @@ NOMB.=s|GENRE=m|CAS=n\tsingulier masculin nominatif
 NOMB.=s|GENRE=m|CAS=r\tsingulier masculin régime
 PERS.=1|NOMB.=s|GENRE=m|CAS=n\t1re personne singulier masculin nominatif
 PERS.=2|NOMB.=p|GENRE=m|CAS=r\t2e personne pluriel masculin régime
-PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime
-"""
-CORPUS_2_PARTIAL_MORPH = """
-label\treadable
+PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime"""
+CORPUS_2_PARTIAL_MORPH = """label\treadable
 _\tpas de morphologie
 DEGRE=-\tnon applicable
 MODE=imp|PERS.=2|NOMB.=p\timpératif 2e personne pluriel
@@ -71,7 +69,6 @@ NOMB.=p|GENRE=m|CAS=n\tpluriel masculin nominatif
 NOMB.=p|GENRE=m|CAS=r\tpluriel masculin régime
 NOMB.=s|GENRE=f|CAS=r|DEGRE=p\tsingulier féminin régime positif
 NOMB.=s|GENRE=m|CAS=n\tsingulier masculin nominatif
-PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime
-"""
+PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime"""
 
 

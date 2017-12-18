@@ -33,7 +33,7 @@ def corpus_new():
             allowed_morph=allowed_morph
         )
         flash("New corpus registered", category="success")
-        return redirect(url_for("corpus_get", corpus.id))
+        return redirect(url_for(".corpus_get", corpus_id=corpus.id))
     return render_template_with_nav_info('main/corpus_new.html')
 
 
@@ -75,7 +75,7 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
     corpus = Corpus.query.get_or_404(corpus_id)
     return jsonify(
         [
-            format_api_like_reply(result)
+            format_api_like_reply(result, allowed_type)
             for result in WordToken.get_like(
                 corpus_id=corpus_id,
                 form=request.args.get("form"),

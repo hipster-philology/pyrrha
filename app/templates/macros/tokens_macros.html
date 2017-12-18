@@ -50,7 +50,6 @@
             event.preventDefault();
 
             var selected_tokens = $.map($(".word-token:checked"), function(elem) { return $(elem).val(); });
-            console.log(selected_tokens)
             jQuery.ajax({
                 url: event.target.href,
                 type: 'POST',
@@ -63,7 +62,6 @@
                     location.reload();
                 },
                 error:function(jq, response, errorThrown){
-                    alert(response.message);
                     location.reload();
                 }
             });
@@ -153,7 +151,6 @@
                         if (status === false) { parent.find(selector).addClass("table-danger"); }
                         else { parent.find(selector).removeClass("table-danger");  }
                     });
-                    alert(response.responseJSON.message);
                 }
             });
         });
