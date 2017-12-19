@@ -20,6 +20,8 @@ class Corpus(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), unique=True)
+    context_left = db.Column(db.SmallInteger(2), default=3)
+    context_right = db.Column(db.SmallInteger(2), default=3)
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
@@ -104,7 +106,8 @@ class Corpus(db.Model):
     @staticmethod
     def create(
             name, word_tokens_dict,
-            allowed_lemma=None, allowed_POS=None, allowed_morph=None
+            allowed_lemma=None, allowed_POS=None, allowed_morph=None,
+            context_left=None, context_right=None
     ):
         """ Create a corpus
 
@@ -119,7 +122,10 @@ class Corpus(db.Model):
         db.session.add(c)
         db.session.commit()
 
-        WordToken.add_batch(corpus_id=c.id, word_tokens_dict=word_tokens_dict)
+        WordToken.add_batch(
+            corpus_id=c.id, word_tokens_dict=word_tokens_dict,
+            context_left=context_left, context_right=context_right
+        )
 
         if allowed_lemma is not None and len(allowed_lemma) > 0:
             AllowedLemma.add_batch(allowed_lemma, c.id)
@@ -238,6 +244,7 @@ class AllowedMorph(db.Model):
             db.session.add(current)
         if _commit:
             db.session.commit()
+
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -423,7 +430,7 @@ class WordToken(db.Model):
         return statuses
 
     @staticmethod
-    def add_batch(corpus_id, word_tokens_dict):
+    def add_batch(corpus_id, word_tokens_dict, context_left=None, context_right=None):
         """ Add a batch of tokens to a corpus given a TSV
 
         :param corpus_id: Id of the corpus
@@ -431,6 +438,8 @@ class WordToken(db.Model):
         :param word_tokens_dict: Generator made of dicts of tokens with form, lemma, POS and morph key
         :type word_tokens_dict: list of dict
         """
+        context_left = context_left or WordToken.CONTEXT_LEFT
+        context_right = context_right or WordToken.CONTEXT_RIGHT
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
         for i, token in enumerate(word_tokens_dict):
