@@ -20,8 +20,8 @@ class Corpus(db.Model):
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), unique=True)
-    context_left = db.Column(db.SmallInteger(2), default=3)
-    context_right = db.Column(db.SmallInteger(2), default=3)
+    context_left = db.Column(db.SmallInteger, default=3)
+    context_right = db.Column(db.SmallInteger, default=3)
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
@@ -121,7 +121,6 @@ class Corpus(db.Model):
         c = Corpus(name=name)
         db.session.add(c)
         db.session.commit()
-
         WordToken.add_batch(
             corpus_id=c.id, word_tokens_dict=word_tokens_dict,
             context_left=context_left, context_right=context_right
@@ -156,8 +155,6 @@ class Corpus(db.Model):
         data = db.session.query(cls).filter_by(corpus=self.id).delete()
         cls.add_batch(allowed_values, self.id, _commit=True)
         return data
-
-
 
 
 class AllowedLemma(db.Model):
@@ -438,25 +435,25 @@ class WordToken(db.Model):
         :param word_tokens_dict: Generator made of dicts of tokens with form, lemma, POS and morph key
         :type word_tokens_dict: list of dict
         """
-        context_left = context_left or WordToken.CONTEXT_LEFT
-        context_right = context_right or WordToken.CONTEXT_RIGHT
+        context_left = int(context_left) or WordToken.CONTEXT_LEFT
+        context_right = int(context_right) or WordToken.CONTEXT_RIGHT
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
         for i, token in enumerate(word_tokens_dict):
 
             if i == 0:
                 previous_token = []
-            elif i < WordToken.CONTEXT_LEFT:
+            elif i < context_left:
                 previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[:i]]
             else:
-                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i-WordToken.CONTEXT_LEFT:i]]
+                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i-context_left:i]]
 
             if i == count_tokens-1:
                 next_token = []
-            elif count_tokens-1-i < WordToken.CONTEXT_RIGHT:
+            elif count_tokens-1-i < context_right:
                 next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+WordToken.CONTEXT_RIGHT+1]]
+                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
             wt = WordToken(
                 form=token.get("form", token.get("tokens")),
