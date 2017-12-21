@@ -462,7 +462,7 @@ class WordToken(db.Model):
         db.session.commit()
 
     @staticmethod
-    def update(corpus_id, token_id, lemma, POS, morph):
+    def update(corpus_id, token_id, lemma=None, POS=None, morph=None):
         """ Update a given token with lemma, POS and morph value
 
         :param corpus_id: Id of the corpus
@@ -693,9 +693,8 @@ class ChangeRecord(db.Model):
                 WordToken.corpus == self.corpus
             )
         ).all():
-            for attr, values in watch.items():
-                old, new = values
-                if old == getattr(token, attr):
-                    setattr(token, attr, new)
+            apply = {"token_id": token.id, "corpus_id": token.corpus}
+            apply.update({attr: val[1] for attr, val in watch.items() if val[0] == getattr(token, attr)})
+            WordToken.update(**apply)
             changed.append(token)
         return changed
