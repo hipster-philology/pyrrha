@@ -121,14 +121,7 @@ def tokens_edit_from_record(corpus_id, record_id):
     """
     _ = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
-    changed = []
-    for token_id in request.json.get("word_tokens"):
-        changed.append(
-            WordToken.update(
-                token_id=token_id, corpus_id=corpus_id,
-                lemma=record.lemma_new, POS=record.POS_new, morph=record.morph_new
-            )
-        )
+    changed = record.apply_changes_to(request.json.get("word_tokens"))
     return jsonify([token.to_dict() for token, _ in changed])
 
 
