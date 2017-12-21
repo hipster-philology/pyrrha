@@ -119,3 +119,26 @@ class TestChangeRecord(TestModels):
         self.assertEqual(tok_5.lemma, "cil", "Lemma was updated")
         self.assertEqual(tok_5.morph, "mmn", "Morph stayed the same as it was not changed")
         self.assertEqual(tok_5.POS, "n", "POS stayed the same as it was not common with original token")
+
+        # Check number of change record ands IDS of lemmas
+        crs = self.db.session.query(ChangeRecord).all()
+        self.assertEqual(len(crs), 4, "There has been 1 original change and 3 others")
+        self.assertEqual(
+            [cr.word_token_id for cr in sorted(crs, key=lambda t: t.word_token_id)], [1, 3, 4, 5],
+            "Changed record should be about the right records"
+        )
+        cr5 = [cr for cr in crs if cr.word_token_id == 5][0]
+        self.assertEqual(
+            (cr5.lemma, cr5.morph, cr5.POS, cr5.lemma_new, cr5.morph_new, cr5.POS_new),
+            ("celui", "mmn", "n", "cil", "mmn", "n"),
+            "Change record should be correct"
+        )
+        self.assertEqual(cr5.changed, ["lemma"])
+
+        cr4 = [cr for cr in crs if cr.word_token_id == 4][0]
+        self.assertEqual(
+            (cr4.lemma, cr4.morph, cr4.POS, cr4.lemma_new, cr4.morph_new, cr4.POS_new),
+            ("celui", "mmn", "p", "cil", "mmn", "u"),
+            "Change record should be correct"
+        )
+        self.assertCountEqual(cr4.changed, ["lemma", "POS"])
