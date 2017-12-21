@@ -152,8 +152,6 @@ class Corpus(db.Model):
         return data
 
 
-
-
 class AllowedLemma(db.Model):
     """ An allowed lemma is a lemma that is accepted
 
@@ -238,6 +236,7 @@ class AllowedMorph(db.Model):
             db.session.add(current)
         if _commit:
             db.session.commit()
+
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -502,7 +501,15 @@ class WordToken(db.Model):
             raise error
 
         # Updating
+        if not lemma:
+            lemma = token.lemma
+        if not POS:
+            POS = token.POS
+        if not morph:
+            morph = token.morph
+
         record = ChangeRecord.track(token, lemma, POS, morph)
+
         token.lemma = lemma
         token.label_uniform = unidecode.unidecode(lemma)
         token.POS = POS
@@ -520,16 +527,24 @@ class WordToken(db.Model):
         :return: Word tokens
         :rtype: db.BaseQuery
         """
+        changed = change_record.changed
+        # if we have changed more than the lemma, but lemma was changed
+        # We might want to include in the batch change corrected POS and/or Morph
+        if "lemma" in changed and len(changed) > 0:
+            lemma_match = db.or_(WordToken.lemma == change_record.lemma, WordToken.lemma == change_record.lemma_new)
+        else:
+            lemma_match = WordToken.lemma == change_record.lemma
+
         return db.session.query(WordToken).filter(
             db.and_(
                 WordToken.corpus == change_record.corpus,
+                WordToken.form == change_record.form,
+                lemma_match,
                 db.or_(
-                    db.and_(WordToken.form == change_record.form, WordToken.lemma == change_record.lemma,
-                            change_record.lemma != change_record.lemma_new),
-                    db.and_(WordToken.form == change_record.form, WordToken.POS == change_record.POS,
-                            change_record.POS != change_record.POS_new, change_record.POS_new is not None),
-                    db.and_(WordToken.form == change_record.form, WordToken.morph == change_record.morph,
-                            change_record.morph != change_record.morph_new, change_record.morph_new is not None),
+                    *[
+                        getattr(WordToken, attr) == getattr(change_record, attr)
+                        for attr in changed
+                    ]
                 )
             )
         )
@@ -647,3 +662,40 @@ class ChangeRecord(db.Model):
         )
         db.session.add(tracked)
         return tracked
+
+    @property
+    def changed(self):
+        """ Make a list of attributes names that were changed in the current record
+
+        :return: List of attributes changed
+        :rtype: [str]
+        """
+        return [
+            attr
+            for attr in ["lemma", "morph", "POS"]
+            if getattr(self, attr) != getattr(self, attr+"_new")
+        ]
+
+    def apply_changes_to(self, token_ids):
+        """ Apply the changes recorded by this instance to other tokens
+
+        :param token_ids: List of tokens ID to be updated
+        :type token_ids: [str]
+        :return: List of updated tokens
+        """
+        changed = []
+        if not len(token_ids):
+            return changed
+        watch = {attr: (getattr(self, attr), getattr(self, attr+"_new")) for attr in self.changed}
+        for token in db.session.query(WordToken).filter(
+            db.and_(
+                WordToken.id.in_(tuple([int(i) for i in token_ids])),
+                WordToken.corpus == self.corpus
+            )
+        ).all():
+            for attr, values in watch.items():
+                old, new = values
+                if old == getattr(token, attr):
+                    setattr(token, attr, new)
+            changed.append(token)
+        return changed

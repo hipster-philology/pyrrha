@@ -1,0 +1,121 @@
+from app.models import ChangeRecord, WordToken, Corpus
+from .base import TestModels
+import copy
+
+
+SimilarityFixtures = [
+    Corpus(id=1, name="Fixtures !"),
+    WordToken(corpus=1, form="Cil", lemma="celui", context="_", label_uniform="celui", morph="smn", POS="p"),  # 1
+    WordToken(corpus=1, form="Cil", lemma="celle", context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
+    WordToken(corpus=1, form="Cil", lemma="cil", context="_", label_uniform="cil", morph="smn", POS="p"),      # 3
+    WordToken(corpus=1, form="Cil", lemma="celui", context="_", label_uniform="celui", morph="mmn", POS="p"),  # 4
+    WordToken(corpus=1, form="Cil", lemma="celui", context="_", label_uniform="celui", morph="mmn", POS="n"),  # 5
+    WordToken(corpus=1, form="Cil", lemma="cel", context="_", label_uniform="cel", morph="smn", POS="p"),      # 6
+    WordToken(corpus=1, form="Cil", lemma="cel", context="_", label_uniform="cel", morph="smn", POS="p"),      # 7
+    WordToken(corpus=1, form="Cil", lemma="cel", context="_", label_uniform="cel", morph="smn", POS="p"),      # 8
+]
+
+
+class TestChangeRecord(TestModels):
+    def test_changed_property(self):
+        """ Ensure current change property is working correction """
+        record = ChangeRecord(
+            lemma="1", morph="2", POS="3",
+            lemma_new="1", morph_new="2", POS_new="3"
+        )
+        record.lemma_new = "2"
+        self.assertEqual(record.changed, ["lemma"])
+        record.lemma_new = "1"
+        record.morph_new = "3"
+        self.assertEqual(record.changed, ["morph"])
+        record.morph_new = "2"
+        record.POS_new = "2"
+        self.assertEqual(record.changed, ["POS"])
+        record.morph_new = "1"
+        self.assertCountEqual(record.changed, ["POS", "morph"])
+        record.morph_new = "2"
+        record.lemma_new = "2"
+        self.assertCountEqual(record.changed, ["POS", "lemma"])
+        record.morph_new = "4"
+        self.assertCountEqual(record.changed, ["POS", "lemma", "morph"])
+
+    def load_fixtures(self):
+        for fixture in SimilarityFixtures:
+            self.db.session.add(copy.deepcopy(fixture))
+        self.db.session.commit()
+
+    def tok_with_id(self, list_of_tokens, _id):
+        """ Return the token with given id
+
+        :param list_of_tokens:
+        :return:
+        """
+        return [t for t in list_of_tokens if t.id == _id][0]
+
+    def test_similar_lemma_single_change(self):
+        """ Ensure only similar features are fixed """
+        self.load_fixtures()
+        token, change_record = WordToken.update(
+            token_id=1, corpus_id=1,
+            lemma="cil", morph="smn", POS="p"
+        )
+        self.assertEqual(
+            (token.lemma, token.morph, token.POS),
+            ("cil", "smn", "p"),
+            "All that was None was not changed"
+        )
+        similar = WordToken.get_similar_to_record(change_record)
+        self.assertEqual(
+            [t.id for t in sorted(similar, key=lambda x:x.id)],
+            [4, 5],
+            "4 and 5 are similar"
+        )
+
+        tokens = change_record.apply_changes_to([4, 5])
+        tok_4 = self.tok_with_id(tokens, 4)
+        self.assertEqual(tok_4.lemma, "cil", "Lemma was updated")
+        self.assertEqual(tok_4.morph, "mmn", "Morph stayed the same as it was not changed")
+        self.assertEqual(tok_4.POS, "p", "POS stayed the same as it was not changed")
+
+        tok_5 = self.tok_with_id(tokens, 5)
+        self.assertEqual(tok_5.lemma, "cil", "Lemma was updated")
+        self.assertEqual(tok_5.morph, "mmn", "Morph stayed the same as it was not changed")
+        self.assertEqual(tok_5.POS, "n", "POS stayed the same as it was not changed")
+
+    def test_similar_lemma_double_change(self):
+        """ Ensure only similar features are fixed """
+        self.load_fixtures()
+        token, change_record = WordToken.update(
+            token_id=1, corpus_id=1,
+            lemma="cil", morph="smn", POS="u"
+        )
+        self.assertEqual(
+            (token.lemma, token.morph, token.POS),
+            ("cil", "smn", "u"),
+            "All that was different was changed"
+        )
+        similar = WordToken.get_similar_to_record(change_record)
+        self.assertEqual(
+            [t.id for t in sorted(similar, key=lambda x:x.id)],
+            [3, 4, 5],
+            "4 and 5 are similar; 3 has a common lemma with the new lemma created"
+        )
+
+        tokens = change_record.apply_changes_to([3, 4, 5])
+        # 3 : Common lemma new with already "cil" in this token, but different P that needs to be updated
+        tok_3 = self.tok_with_id(tokens, 3)
+        self.assertEqual(tok_3.lemma, "cil", "Lemma was already the same")
+        self.assertEqual(tok_3.morph, "smn", "Morph stayed the same as it was not changed")
+        self.assertEqual(tok_3.POS, "u", "POS was changed")
+
+        # 4 : Common old lemma, lemma updated + pos updated; morph ignored even if different
+        tok_4 = self.tok_with_id(tokens, 4)
+        self.assertEqual(tok_4.lemma, "cil", "Lemma was updated")
+        self.assertEqual(tok_4.morph, "mmn", "Morph stayed the same as it was not changed")
+        self.assertEqual(tok_4.POS, "u", "POS was updated")
+
+        # 4 : Common old lemma, lemma updated updated; morph + POS ignored even if different
+        tok_5 = self.tok_with_id(tokens, 5)
+        self.assertEqual(tok_5.lemma, "cil", "Lemma was updated")
+        self.assertEqual(tok_5.morph, "mmn", "Morph stayed the same as it was not changed")
+        self.assertEqual(tok_5.POS, "n", "POS stayed the same as it was not common with original token")
