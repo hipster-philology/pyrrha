@@ -2,6 +2,8 @@ from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, 
 from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant
 import copy
 import time
+import unidecode
+
 
 DB_CORPORA = {
     "wauchier": {
@@ -57,6 +59,9 @@ def add_corpus(
         else:
             add += DB_CORPORA[corpus]["POS"]
     for x in add:
-        db.session.add(copy.deepcopy(x))
+        z = copy.deepcopy(x)
+        if hasattr(z, "label_uniform"):
+            z.label_uniform = unidecode.unidecode(z.label_uniform)
+        db.session.add(z)
     db.session.commit()
     time.sleep(1)
