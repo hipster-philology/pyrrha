@@ -17,7 +17,8 @@ class TestBase(TestCase):
         """
         Will be called before every test
         """
-
+        self.app = self.create_app()
+        self.client = self.app.test_client()
         db.session.commit()
         db.drop_all()
         db.create_all()
@@ -37,5 +38,3 @@ class TestBase(TestCase):
             add_corpus("wauchier", db, *args, **kwargs)
         else:
             add_corpus("floovant", db, *args, **kwargs)
-        self.driver.get(self.get_server_url())
-        self.driver.refresh()

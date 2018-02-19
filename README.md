@@ -32,23 +32,6 @@ python manage.py create_db
 python manage.py run
 ```
 
-## ToDo
-
-- [x] Create a corpus
-- [x] Load a Tab file into a Corpus
-- [x] Edit a single token data
-- [x] Export to a tab file again
-- [x] Track changes
-- [x] Show history
-- [x] Find item with similar structure as corrected one and auto-edit them after approval
-- [ ] Add Tokens after corpus creation
-- [x] Register allowed lemmas
-- [x] Check for unallowed lemma
-- [x] Register allowed POS
-- [x] Check for unallowed POS
-- [ ] Register allowed Morph
-- [ ] Check for unallowed morph
-
 ## How to contribute
 
 - See [Contribute.md](contribute.md)
