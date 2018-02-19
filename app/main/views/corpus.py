@@ -30,7 +30,9 @@ def corpus_new():
             word_tokens_dict=StringDictReader(request.form.get("tsv")),
             allowed_lemma=allowed_lemma,
             allowed_POS=allowed_POS,
-            allowed_morph=allowed_morph
+            allowed_morph=allowed_morph,
+            context_left=request.form.get("context_left", None),
+            context_right=request.form.get("context_right", None)
         )
         flash("New corpus registered", category="success")
     return render_template_with_nav_info('main/corpus_new.html')
