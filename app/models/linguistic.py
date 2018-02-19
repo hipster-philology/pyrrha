@@ -345,6 +345,7 @@ class WordToken(db.Model):
         :type allowed_list: bool
         :return: BaseQuery
         """
+        normalised = unidecode.unidecode(form)
         if allowed_list is False:
             if type_like == "POS":
                 cls = WordToken
@@ -352,7 +353,13 @@ class WordToken(db.Model):
                 retrieve_field = WordToken.POS
             else:
                 cls = WordToken
-                type_like = WordToken.label_uniform
+                # If the normalisation is the same as the original form, we look in normalised label
+                if normalised == form:
+                    print(normalised +" is normalised")
+                    type_like = WordToken.label_uniform
+                # If there is accents however, we look into original accentued value
+                else:
+                    type_like = WordToken.lemma
                 retrieve_field = WordToken.lemma
         else:
             if type_like == "POS":
@@ -361,7 +368,11 @@ class WordToken(db.Model):
                 retrieve_field = AllowedPOS.label
             else:
                 cls = AllowedLemma
-                type_like = AllowedLemma.label_uniform
+                if normalised == form:
+                    type_like = AllowedLemma.label_uniform
+                # If there is accents however, we look into original accentued value
+                else:
+                    type_like = AllowedLemma.label
                 retrieve_field = AllowedLemma.label
 
         query = db.session.query(retrieve_field)
