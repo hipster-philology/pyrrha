@@ -9,6 +9,16 @@
         <small id="corpusNameHelp" class="form-text text-muted">This should be a clear name</small>
     </div>
     <div class="form-group">
+        <label for="context_left">Left Context</label>
+        <input name="context_left" type="number" class="form-control" id="context_left" aria-describedby="context_leftHelp" value="{% if name %}{{context_left}}{%else%}3{%endif%}" />
+        <small id="context_leftHelp" class="form-text text-muted">Number of words to display on the left of the word to annotate</small>
+    </div>
+    <div class="form-group">
+        <label for="context_right">Right Context</label>
+        <input name="context_right" type="number" class="form-control" id="context_right" aria-describedby="context_rightHelp" value="{% if name %}{{context_right}}{%else%}3{%endif%}" />
+        <small id="context_rightHelp" class="form-text text-muted">Number of words to display on the right of the word to annotate</small>
+    </div>
+    <div class="form-group">
         <label for="tokens">Tokens (as TSV content)</label>
         <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
         <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>

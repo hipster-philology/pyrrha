@@ -132,6 +132,7 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(saint.label_uniform, "saint", "It should be correctly saved and unidecoded")
         self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
         self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
+        self.assertEqual(saint.context, "De seint Martin mout doit")
 
         allowed = db.session.query(AllowedLemma).filter(AllowedLemma.corpus == corpus.id)
         self.assertEqual(allowed.count(), 3, "There should be 21 allowed token")
@@ -143,13 +144,10 @@ class TestCorpusRegistration(TestBase):
         )
 
     def test_registration_with_allowed_morph(self):
-        """
-        Test that a user can create a corpus with wrong lemmas and a list of allowed lemmas
-        and that this corpus has its data well recorded
-        """
 
         # Click register menu link
         self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
 
         # Fill in registration form
         self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
@@ -162,7 +160,6 @@ class TestCorpusRegistration(TestBase):
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
             "Result page is the corpus new page"
         )
-
         self.assertEqual(
             db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
             "There should be one well named corpus"
@@ -190,3 +187,40 @@ class TestCorpusRegistration(TestBase):
             corpus.get_unallowed("lemma").count(), 22,
             "There should be 22 unallowed value as only de saint martin are allowed"
         )
+
+    def test_registration_with_context(self):
+        """
+        Test that a user can create a corpus with wrong lemmas and a list of allowed lemmas
+        and that this corpus has its data well recorded
+        """
+
+        # Click register menu link
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Fill in registration form
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.driver.find_element_by_id("context_left").clear()
+        self.driver.find_element_by_id("context_left").send_keys("5")
+        self.driver.find_element_by_id("context_right").clear()
+        self.driver.find_element_by_id("context_right").send_keys("2")
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
+        self.driver.find_element_by_id("submit").click()
+        self.driver.implicitly_wait(15)
+
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
+
+        # De seint Martin mout doit on doucement et volentiers le bien oïr et entendre , car par le bien
+        # savoir et retenir puet l
+        saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "volentiers"))
+        self.assertEqual(saint.count(), 1, "There should be the saint lemma")
+        saint = saint.first()
+        self.assertEqual(saint.form, "volentiers", "It should be correctly saved")
+        self.assertEqual(saint.context, "mout doit on doucement et volentiers le bien")
