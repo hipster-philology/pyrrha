@@ -122,7 +122,7 @@ def tokens_edit_from_record(corpus_id, record_id):
     _ = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
     changed = record.apply_changes_to(request.json.get("word_tokens"))
-    return jsonify([token.to_dict() for token in changed])
+    return jsonify([word_token.to_dict() for word_token in changed])
 
 
 @main.route('/corpus/<int:corpus_id>/tokens')
