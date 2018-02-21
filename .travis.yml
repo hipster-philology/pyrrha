@@ -15,7 +15,6 @@ install:
   - pip install nose
 # command to run tests
 script:
-  - nosetests ./tests --with-coverage
+  - nosetests ./tests --with-coverage --cover-package=app --cover-xml
 after_success:
-  - coverage combine
   - coveralls
