@@ -142,7 +142,7 @@ def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
     else:
         format_message = "The TSV should at least have the header : label and could have a readable column for human"
         values = "\n".join(
-            ["label\treadable"] + ["{}+\t{}".format(d.label, d.readable) for d in values]
+            ["label\treadable"] + ["{}\t{}".format(d.label, d.readable) for d in values]
         )
     return render_template_with_nav_info(
         "main/corpus_edit_allowed_values.html",
