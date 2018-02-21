@@ -108,7 +108,7 @@ def tokens_edit_single(corpus_id, token_id):
         return response
     except WordToken.NothingChangedError as E:
         response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
-        response.status_code = 412
+        response.status_code = 400
         return response
 
 

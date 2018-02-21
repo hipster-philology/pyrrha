@@ -19,6 +19,7 @@ class TestBase(LiveServerTestCase):
     def create_app(self):
         config_name = 'test'
         app = create_app(config_name)
+        app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
         app.config.update(
             # Change the port that the liveserver listens on
             LIVESERVER_PORT=8943
@@ -145,11 +146,12 @@ class TokenEditBase(TestBase):
         # Save
         row.find_element_by_class_name("save").click()
         # It's safer to wait for the AJAX call to be completed
-        time.sleep(1.5)
+        time.sleep(1)
 
-        return self.db.session.query(WordToken).get(int(id_row)),\
-               row.find_elements_by_tag_name("td")[-1].text.strip(),\
-               row
+        return self.db.session.query(WordToken).get(int(id_row)), \
+               self.driver.find_element_by_id("token_" + id_row + "_row").\
+                    find_elements_by_tag_name("td")[-1].text.strip(), \
+               self.driver.find_element_by_id("token_" + id_row + "_row")
 
     def first_token_id(self, corpus_id):
         return self.db.session.query(WordToken.id).\
