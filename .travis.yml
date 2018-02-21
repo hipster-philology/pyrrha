@@ -12,9 +12,10 @@ install:
   - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
   - pip install -r requirements.txt
   - pip install coveralls
+  - pip install nose
 # command to run tests
 script:
-  - coverage run -m tests
+  - nose ./tests --with-coverage
 after_success:
   - coverage combine
   - coveralls
