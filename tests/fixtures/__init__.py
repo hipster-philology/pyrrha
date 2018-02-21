@@ -8,7 +8,7 @@ PLAINTEXT_CORPORA = {
         "partial_lemma": PARTIAL_CORPUS_ALLOWED_LEMMA,
         "POS": "",
         "partial_POS": "",
-        "morph": ""
+        "morph": MORPHS
     },
     "Floovant": {
         "name": CORPUS_2_NAME,
@@ -17,6 +17,6 @@ PLAINTEXT_CORPORA = {
         "partial_lemma": CORPUS_2_PARTIAL_LEMMA,
         "POS": CORPUS_2_FULL_POS,
         "partial_POS": CORPUS_2_PARTIAL_POS,
-        "morph": ""
+        "morph": CORPUS_2_PARTIAL_MORPH
     }
 }

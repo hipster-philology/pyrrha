@@ -14,14 +14,15 @@
         {% endblock %}
 
 
-        <div class="container">
-
-          <div class="starter-template">
+        <div class="container-fluid">
+            <div class="row">
+          <div class="starter-template col-lg-10 offset-lg-1">
             {% include 'partials/_flashes.html' %}
             {# When extended, the content block contains all the html of the webpage #}
             {% block content %}
             {% endblock %}
           </div>
+        </div>
         </div>
     </body>
 </html>

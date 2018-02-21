@@ -1,5 +1,5 @@
-from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier
-from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant
+from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier, WauchierAllowedMorph
+from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph
 import copy
 import time
 import unidecode
@@ -11,14 +11,14 @@ DB_CORPORA = {
         "tokens": WauchierTokens,
         "lemma": WauchierAllowedLemma,
         "POS": WauchierAllowedPOS,
-        "morph": []
+        "morph": WauchierAllowedMorph
     },
     "floovant": {
         "corpus": Floovant,
         "tokens": FloovantTokens,
         "lemma": FloovantAllowedLemma,
         "POS": FloovantAllowedPOS,
-        "morph": []
+        "morph": FloovantAllowedMorph
     }
 }
 
@@ -26,7 +26,8 @@ DB_CORPORA = {
 def add_corpus(
         corpus, db, with_token=True, tokens_up_to=None,
         with_allowed_lemma=False, partial_allowed_lemma=False,
-        with_allowed_pos=False, partial_allowed_pos=False
+        with_allowed_pos=False, partial_allowed_pos=False,
+        with_allowed_morph=False, partial_allowed_morph=False
 ):
     """ Add the Wauchier Corpus to fixtures
 
@@ -37,6 +38,8 @@ def add_corpus(
     :param partial_allowed_lemma: Restrict to first three allowed lemma (de saint martin)
     :param with_allowed_pos: Add allowed POS to db
     :param partial_allowed_pos: Restrict to first three allowed POS (ADJqua, NOMpro, CONcoo)
+    :param with_allowed_morph: Add allowed Morph to db
+    :param partial_allowed_morph: Restrict to first few Morphs
     """
     db.session.add(copy.deepcopy(DB_CORPORA[corpus]["corpus"]))
     db.session.commit()
@@ -58,6 +61,12 @@ def add_corpus(
             add += DB_CORPORA[corpus]["POS"][:3]
         else:
             add += DB_CORPORA[corpus]["POS"]
+
+    if with_allowed_morph is True:
+        if partial_allowed_morph:
+            add += DB_CORPORA[corpus]["morph"][:3]
+        else:
+            add += DB_CORPORA[corpus]["morph"]
     for x in add:
         z = copy.deepcopy(x)
         if hasattr(z, "label_uniform"):

@@ -50,11 +50,13 @@ def fixtures_to_db():
     add_corpus(
         "wauchier", db, with_token=True, tokens_up_to=None,
         with_allowed_lemma=True, partial_allowed_lemma=False,
-        with_allowed_pos=True, partial_allowed_pos=False)
+        with_allowed_pos=True, partial_allowed_pos=False,
+        with_allowed_morph=True)
     add_corpus(
         "floovant", db, with_token=True, tokens_up_to=None,
         with_allowed_lemma=True, partial_allowed_lemma=False,
-        with_allowed_pos=True, partial_allowed_pos=False)
+        with_allowed_pos=True, partial_allowed_pos=False,
+        with_allowed_morph=True)
 
 
 @manager.command
