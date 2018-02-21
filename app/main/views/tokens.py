@@ -74,7 +74,7 @@ def tokens_similar_to_token(corpus_id, token_id):
             return jsonify([
                 tok.to_dict() for tok in tokens.all()
             ])
-        return jsonify({"count" : tokens.count()})
+        return jsonify({"count": tokens.count()})
     return render_template_with_nav_info(
         # The Dict is a small hack to emulate paginate
         'main/tokens_similar_to_token.html',
@@ -108,7 +108,7 @@ def tokens_edit_single(corpus_id, token_id):
         return response
     except WordToken.NothingChangedError as E:
         response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
-        response.status_code = 412
+        response.status_code = 400
         return response
 
 
@@ -121,15 +121,8 @@ def tokens_edit_from_record(corpus_id, record_id):
     """
     _ = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
-    changed = []
-    for token_id in request.json.get("word_tokens"):
-        changed.append(
-            WordToken.update(
-                token_id=token_id, corpus_id=corpus_id,
-                lemma=record.lemma_new, POS=record.POS_new, morph=record.morph_new
-            )
-        )
-    return jsonify([token.to_dict() for token, _ in changed])
+    changed = record.apply_changes_to(request.json.get("word_tokens"))
+    return jsonify([word_token.to_dict() for word_token in changed])
 
 
 @main.route('/corpus/<int:corpus_id>/tokens')
