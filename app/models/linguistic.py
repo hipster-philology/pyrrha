@@ -364,7 +364,6 @@ class WordToken(db.Model):
                 cls = WordToken
                 # If the normalisation is the same as the original form, we look in normalised label
                 if normalised == form:
-                    print(normalised +" is normalised")
                     type_like = WordToken.label_uniform
                 # If there is accents however, we look into original accentued value
                 else:

@@ -145,9 +145,11 @@ class TokenEditBase(TestBase):
         # Save
         row.find_element_by_class_name("save").click()
         # It's safer to wait for the AJAX call to be completed
-        time.sleep(1)
+        time.sleep(1.5)
 
-        return self.db.session.query(WordToken).get(int(id_row)), row.find_elements_by_tag_name("td")[-1].text.strip(), row
+        return self.db.session.query(WordToken).get(int(id_row)),\
+               row.find_elements_by_tag_name("td")[-1].text.strip(),\
+               row
 
     def first_token_id(self, corpus_id):
         return self.db.session.query(WordToken.id).\
