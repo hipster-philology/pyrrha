@@ -92,9 +92,9 @@ def tokens_edit_single(corpus_id, token_id):
     try:
         token, change_record = WordToken.update(
             token_id=token_id, corpus_id=corpus_id,
-            lemma=request.form.get("lemma", ""),
-            POS=string_to_none(request.form.get("POS", "")),
-            morph=string_to_none(request.form.get("morph", ""))
+            lemma=request.form.get("lemma"),
+            POS=string_to_none(request.form.get("POS")),
+            morph=string_to_none(request.form.get("morph"))
         )
         return jsonify({
             "token": token.to_dict(),
