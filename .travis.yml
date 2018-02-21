@@ -17,4 +17,5 @@ install:
 script:
   - nosetests ./tests --with-coverage --cover-package=app --cover-xml
 after_success:
+  - coverage combine
   - coveralls
