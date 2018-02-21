@@ -1,4 +1,4 @@
-from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS
+from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph
 
 Wauchier = Corpus(name="Wauchier", id=1)
 
@@ -394,4 +394,22 @@ WauchierAllowedPOS = [
     AllowedPOS(label='VERcjg', corpus=Wauchier.id),
     AllowedPOS(label='PRE', corpus=Wauchier.id),
     AllowedPOS(label='VERinf', corpus=Wauchier.id)
+]
+
+WauchierAllowedMorph = [
+    AllowedMorph(corpus=Wauchier.id, label="_", readable="pas de morphologie"),
+    AllowedMorph(corpus=Wauchier.id, label="DEGRE=-", readable="non applicable"),
+    AllowedMorph(corpus=Wauchier.id, label="MODE=imp|PERS.=2|NOMB.=p", readable="impératif 2e personne pluriel"),
+    AllowedMorph(corpus=Wauchier.id, label="MODE=ind|TEMPS=psp|PERS.=3|NOMB.=s", readable="indicatif passé simple 3e personne singulier"),
+    AllowedMorph(corpus=Wauchier.id, label="MODE=ind|TEMPS=pst|PERS.=1|NOMB.=s", readable="indicatif présent 1re personne singulier"),
+    AllowedMorph(corpus=Wauchier.id, label="MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s", readable="subjonctif présent 3e personne singulier"),
+    AllowedMorph(corpus=Wauchier.id, label="NOMB.=p|GENRE=m|CAS=n", readable="pluriel masculin nominatif"),
+    AllowedMorph(corpus=Wauchier.id, label="NOMB.=p|GENRE=m|CAS=r", readable="pluriel masculin régime"),
+    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=f|CAS=r", readable="singulier féminin régime"),
+    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=f|CAS=r|DEGRE=p", readable="singulier féminin régime positif"),
+    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=m|CAS=n", readable="singulier masculin nominatif"),
+    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=m|CAS=r", readable="singulier masculin régime"),
+    AllowedMorph(corpus=Wauchier.id, label="PERS.=1|NOMB.=s|GENRE=m|CAS=n", readable="1re personne singulier masculin nominatif"),
+    AllowedMorph(corpus=Wauchier.id, label="PERS.=2|NOMB.=p|GENRE=m|CAS=r", readable="2e personne pluriel masculin régime"),
+    AllowedMorph(corpus=Wauchier.id, label="PERS.=3|NOMB.=p|GENRE=m|CAS=r", readable="3e personne pluriel masculin régime")
 ]

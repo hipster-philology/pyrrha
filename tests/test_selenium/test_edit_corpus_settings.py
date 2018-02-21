@@ -4,8 +4,11 @@ import random
 
 class TestCorpusSettingsUpdate(TestBase):
     def go_to(self, mode="lemma"):
-        self.addCorpus("wauchier", with_allowed_lemma=True, with_allowed_pos=True)
-        self.addCorpus("floovant", with_allowed_lemma=True, with_allowed_pos=True)
+        morph = False
+        if mode == "morph":
+            morph = True
+        self.addCorpus("wauchier", with_allowed_lemma=True, with_allowed_pos=True, with_allowed_morph=morph)
+        self.addCorpus("floovant", with_allowed_lemma=True, with_allowed_pos=True, with_allowed_morph=morph)
         self.driver.refresh()
         self.driver.find_element_by_id("toggle_corpus_2").click()
         self.driver.find_element_by_id("overview_2").click()
@@ -79,4 +82,20 @@ vos1"""
     def test_edit_allowed_morph(self):
         """ Ensure editing allowed morph works """
         #  todo
-        pass
+        allowed_values = self.go_to(mode="morph")
+        expected = "label\treadable\n_\tpas de morphologie\nDEGRE=-\tnon applicable"
+        expected_end = "PERS.=3|NOMB.=p|GENRE=m|CAS=r\t3e personne pluriel masculin régime"
+        self.assertEqual(allowed_values[:len(expected)], expected)
+        self.assertEqual(allowed_values[-len(expected_end):], expected_end)
+
+        added = "\nFOO\tBAR"
+
+        self.writeMultiline(
+            self.driver.find_element_by_id("allowed_values"),
+            allowed_values+added
+        )
+        self.driver.find_element_by_id("submit").click()
+
+        allowed_values = self.driver.find_element_by_id("allowed_values").get_attribute('value')
+        self.assertEqual(allowed_values[:len(expected)], expected)
+        self.assertEqual(allowed_values[-len(expected_end+added):], expected_end+added)

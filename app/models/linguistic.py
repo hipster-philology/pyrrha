@@ -235,7 +235,7 @@ class AllowedMorph(db.Model):
         for item in allowed_values:
             current = AllowedMorph(
                 label=item.get("label"),
-                readable=item.get("readable", default=item["label"]),
+                readable=item.get("readable", item["label"]),
                 corpus=corpus_id
             )
             db.session.add(current)
@@ -355,7 +355,11 @@ class WordToken(db.Model):
             if type_like == "POS":
                 cls = WordToken
                 type_like = WordToken.POS
-                retrieve_field = WordToken.POS
+                retrieve_field = WordToken.POS,
+            elif type_like == "morph":
+                cls = WordToken
+                type_like = WordToken.morph
+                retrieve_field = WordToken.morph,
             else:
                 cls = WordToken
                 # If the normalisation is the same as the original form, we look in normalised label
@@ -365,12 +369,16 @@ class WordToken(db.Model):
                 # If there is accents however, we look into original accentued value
                 else:
                     type_like = WordToken.lemma
-                retrieve_field = WordToken.lemma
+                retrieve_field = WordToken.lemma,
         else:
             if type_like == "POS":
                 cls = AllowedPOS
                 type_like = AllowedPOS.label
-                retrieve_field = AllowedPOS.label
+                retrieve_field = AllowedPOS.label,
+            elif type_like == "morph":
+                cls = AllowedMorph
+                type_like = [AllowedMorph.readable]
+                retrieve_field = (AllowedMorph.label, AllowedMorph.readable)
             else:
                 cls = AllowedLemma
                 if normalised == form:
@@ -378,23 +386,32 @@ class WordToken(db.Model):
                 # If there is accents however, we look into original accentued value
                 else:
                     type_like = AllowedLemma.label
-                retrieve_field = AllowedLemma.label
+                retrieve_field = AllowedLemma.label,
 
-        query = db.session.query(retrieve_field)
+        query = cls.query.with_entities(*retrieve_field)
         if form is None:
             query = query.filter(
             db.and_(
                 cls.corpus == corpus_id
             )
         )
+        elif isinstance(type_like, list):
+            query = query.filter(
+                db.and_(
+                    cls.corpus == corpus_id,
+                    *[type_like[0].ilike("%{}%".format(fsplitted)) for fsplitted in form.split()]
+                )
+            )
         else:
             query = query.filter(
-            db.and_(
-                cls.corpus == corpus_id,
-                type_like.ilike("{}%".format(form))
+                db.and_(
+                    cls.corpus == corpus_id,
+                    type_like.ilike("{}%".format(form))
+                )
             )
-        )
         if group_by is True:
+            if isinstance(type_like, list):
+                return query.group_by(type_like[0])
             return query.group_by(type_like)
         return query
 
@@ -471,7 +488,7 @@ class WordToken(db.Model):
                 lemma=token.get("lemma", token.get("lemmas")),
                 label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
                 POS=token.get("POS", token.get("pos")),
-                morph=token.get("morph"),
+                morph=token.get("morph", None),
                 context=" ".join(previous_token + [token.get("form", token.get("tokens"))] + next_token),
                 corpus=corpus_id,
                 order_id=i
@@ -610,12 +627,12 @@ class WordToken(db.Model):
                     WordToken.morph != token.morph,
                 )
         return db.session.query(WordToken).filter(
-            db.and_(
-                WordToken.corpus == token.corpus,
-                WordToken.id != token.id,
-                filtering
+                db.and_(
+                    WordToken.corpus == token.corpus,
+                    WordToken.id != token.id,
+                    filtering
+                )
             )
-        )
 
 
 class ChangeRecord(db.Model):
@@ -626,7 +643,7 @@ class ChangeRecord(db.Model):
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
     POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64))
+    morph = db.Column(db.String(64), nullable=True)
     lemma_new = db.Column(db.String(64))
     POS_new = db.Column(db.String(64))
     morph_new = db.Column(db.String(64))
