@@ -50,7 +50,6 @@
             event.preventDefault();
 
             var selected_tokens = $.map($(".word-token:checked"), function(elem) { return $(elem).val(); });
-            console.log(selected_tokens)
             jQuery.ajax({
                 url: event.target.href,
                 type: 'POST',
@@ -83,7 +82,7 @@
         $('td.token_lemma').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = term.toLowerCase(),
+                var term = $("<div>"+term+"</div>").text().toLowerCase(),
                     url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='lemma')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
