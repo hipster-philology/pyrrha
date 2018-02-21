@@ -1,6 +1,6 @@
-from flask import request, jsonify, flash
+from flask import request, jsonify, flash, redirect, url_for
 
-from .utils import render_template_with_nav_info
+from .utils import render_template_with_nav_info, format_api_like_reply
 from .. import main
 from ...utils.tsv import StringDictReader
 from werkzeug.exceptions import BadRequest
@@ -35,6 +35,7 @@ def corpus_new():
             context_right=request.form.get("context_right", None)
         )
         flash("New corpus registered", category="success")
+        return redirect(url_for(".corpus_get", corpus_id=corpus.id))
     return render_template_with_nav_info('main/corpus_new.html')
 
 
@@ -74,18 +75,17 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-
     return jsonify(
         [
-            token
-            for (token, ) in WordToken.get_like(
+            format_api_like_reply(result, allowed_type)
+            for result in WordToken.get_like(
                 corpus_id=corpus_id,
                 form=request.args.get("form"),
                 group_by=True,
                 type_like=allowed_type,
                 allowed_list=corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
             ).all()
-            if token is not None
+            if result is not None
         ]
     )
 
@@ -142,7 +142,7 @@ def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
     else:
         format_message = "The TSV should at least have the header : label and could have a readable column for human"
         values = "\n".join(
-            ["label\treadable"] + ["{}+\t{}".format(d.label, d.readable) for d in values]
+            ["label\treadable"] + ["{}\t{}".format(d.label, d.readable) for d in values]
         )
     return render_template_with_nav_info(
         "main/corpus_edit_allowed_values.html",

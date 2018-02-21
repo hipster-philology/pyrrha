@@ -46,6 +46,56 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
         self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
         self.assertEqual(status_text, "(Saved) Save")
 
+    def test_edit_morph(self):
+        """ Edit POS of a token """
+        self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
+        token, status_text, row = self.edith_nth_row_value(
+            "_", id_row="1", value_type="morph"
+        )
+        self.assertEqual(token.lemma, "de", "Lemma should not have been changed")
+        self.assertEqual(token.POS, "PRE", "POS should not have been changed")
+        self.assertEqual(token.morph, "_", "Morph has been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with an unallowed morph
+        token, status_text, row = self.edith_nth_row_value(
+            "Not Allowed", id_row="2", value_type="morph"
+        )
+        self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
+        self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
+        self.assertEqual(token.morph, "Not Allowed", "Morph should have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+    def test_edit_morph_with_allowed(self):
+        """ Edit POS of a token """
+        self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_morph=True, tokens_up_to=24)
+        token, status_text, row = self.edith_nth_row_value(
+            "_", id_row="1", value_type="morph"
+        )
+        self.assertEqual(token.lemma, "de", "Lemma should not have been changed")
+        self.assertEqual(token.POS, "PRE", "POS should not have been changed")
+        self.assertEqual(token.morph, "_", "Morph has been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # Try with an unallowed morph
+        token, status_text, row = self.edith_nth_row_value(
+            "Not Allowed", id_row="2", value_type="morph"
+        )
+        self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
+        self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
+        self.assertEqual(token.morph, "None", "Morph should not have been changed")
+        self.assertEqual(status_text, "(Invalid value in morph) Save")
+
+        # With auto complete
+        token, status_text, row = self.edith_nth_row_value(
+            "masc sing", id_row="3", corpus_id="1", value_type="morph",
+            autocomplete_selector=".autocomplete-suggestion[data-val='NOMB.=s|GENRE=m|CAS=n']"
+        )
+        self.assertEqual(token.lemma, "martin", "Lemma should have been changed")
+        self.assertEqual(token.POS, "NOMpro", "POS should not have been changed")
+        self.assertEqual(token.morph, "NOMB.=s|GENRE=m|CAS=n", "Morph should not have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
 
 class TestTokensEditFloovant(TokenEditBase):
     CORPUS = "floovant"
