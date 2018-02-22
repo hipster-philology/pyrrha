@@ -140,13 +140,13 @@ class TokenEditBase(TestBase):
         td.click(), td.clear(), td.send_keys(value)
 
         if autocomplete_selector is not None:
-            time.sleep(1.5)
+            time.sleep(0.5)
             self.driver.find_element_by_css_selector(autocomplete_selector).click()
         time.sleep(0.5)
         # Save
         row.find_element_by_class_name("save").click()
         # It's safer to wait for the AJAX call to be completed
-        time.sleep(1)
+        time.sleep(0.5)
 
         return self.db.session.query(WordToken).get(int(id_row)), \
                self.driver.find_element_by_id("token_" + id_row + "_row").\
