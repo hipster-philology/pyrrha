@@ -91,8 +91,18 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
             "masc sing", id_row="3", corpus_id="1", value_type="morph",
             autocomplete_selector=".autocomplete-suggestion[data-val='NOMB.=s|GENRE=m|CAS=n']"
         )
-        self.assertEqual(token.lemma, "martin", "Lemma should have been changed")
+        self.assertEqual(token.lemma, "martin", "Lemma should not have been changed")
         self.assertEqual(token.POS, "NOMpro", "POS should not have been changed")
+        self.assertEqual(token.morph, "NOMB.=s|GENRE=m|CAS=n", "Morph should not have been changed")
+        self.assertEqual(status_text, "(Saved) Save")
+
+        # With auto complete based on value and not label
+        token, status_text, row = self.edith_nth_row_value(
+            "NOMB.=s GENRE=m", id_row="4", corpus_id="1", value_type="morph",
+            autocomplete_selector=".autocomplete-suggestion[data-val='NOMB.=s|GENRE=m|CAS=n']"
+        )
+        self.assertEqual(token.lemma, "mout", "Lemma should not have been changed")
+        self.assertEqual(token.POS, "ADVgen", "POS should not have been changed")
         self.assertEqual(token.morph, "NOMB.=s|GENRE=m|CAS=n", "Morph should not have been changed")
         self.assertEqual(status_text, "(Saved) Save")
 

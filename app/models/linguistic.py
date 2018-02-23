@@ -351,67 +351,77 @@ class WordToken(db.Model):
         :return: BaseQuery
         """
         normalised = unidecode.unidecode(form)
+        split = False
+        retrieve_fields = []
         if allowed_list is False:
             if type_like == "POS":
                 cls = WordToken
-                type_like = WordToken.POS
-                retrieve_field = WordToken.POS,
+                query_fields = [WordToken.POS]
+                retrieve_fields = [WordToken.POS]
             elif type_like == "morph":
                 cls = WordToken
-                type_like = WordToken.morph
-                retrieve_field = WordToken.morph,
+                query_fields = [WordToken.morph]
+                retrieve_fields = [WordToken.morph]
             else:
                 cls = WordToken
                 # If the normalisation is the same as the original form, we look in normalised label
                 if normalised == form:
-                    type_like = WordToken.label_uniform
+                    query_fields = [WordToken.label_uniform]
                 # If there is accents however, we look into original accentued value
                 else:
-                    type_like = WordToken.lemma
-                retrieve_field = WordToken.lemma,
+                    query_fields = [WordToken.lemma]
+                retrieve_fields = [WordToken.lemma]
         else:
             if type_like == "POS":
                 cls = AllowedPOS
-                type_like = AllowedPOS.label
-                retrieve_field = AllowedPOS.label,
+                query_fields = [AllowedPOS.label]
+                retrieve_fields = [AllowedPOS.label]
             elif type_like == "morph":
                 cls = AllowedMorph
-                type_like = [AllowedMorph.readable]
-                retrieve_field = (AllowedMorph.label, AllowedMorph.readable)
+                split = True
+                query_fields = [AllowedMorph.readable, AllowedMorph.label]
+                retrieve_fields = [AllowedMorph.label, AllowedMorph.readable]
             else:
                 cls = AllowedLemma
                 if normalised == form:
-                    type_like = AllowedLemma.label_uniform
+                    query_fields = [AllowedLemma.label_uniform]
                 # If there is accents however, we look into original accentued value
                 else:
-                    type_like = AllowedLemma.label
-                retrieve_field = AllowedLemma.label,
+                    query_fields = [AllowedLemma.label]
+                retrieve_fields = [AllowedLemma.label]
 
-        query = cls.query.with_entities(*retrieve_field)
+        query = cls.query.with_entities(*retrieve_fields)
+
         if form is None:
             query = query.filter(
-            db.and_(
-                cls.corpus == corpus_id
+                db.and_(
+                    cls.corpus == corpus_id
+                )
             )
-        )
-        elif isinstance(type_like, list):
+        elif split:
+            form = form.split()
             query = query.filter(
                 db.and_(
                     cls.corpus == corpus_id,
-                    *[type_like[0].ilike("%{}%".format(fsplitted)) for fsplitted in form.split()]
+                    db.or_(*[
+                        query_field.ilike("%{}%".format(fsplitted))
+                        for fsplitted in form
+                        for query_field in query_fields
+                    ])
                 )
             )
         else:
             query = query.filter(
                 db.and_(
                     cls.corpus == corpus_id,
-                    type_like.ilike("{}%".format(form))
+                    *[
+                        query_field.ilike("{}%".format(form))
+                        for query_field in query_fields
+                    ]
                 )
             )
         if group_by is True:
-            if isinstance(type_like, list):
-                return query.group_by(type_like[0])
-            return query.group_by(type_like)
+            return query.group_by(retrieve_fields[0])
         return query
 
     @staticmethod
