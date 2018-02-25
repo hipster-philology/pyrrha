@@ -84,7 +84,7 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
                 group_by=True,
                 type_like=allowed_type,
                 allowed_list=corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
-            ).all()
+            ).limit(10)
             if result is not None
         ]
     )
