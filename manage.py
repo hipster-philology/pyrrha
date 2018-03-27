@@ -1,74 +1,67 @@
 #!/usr/bin/env python
-from flask_script import Manager
-from flask_migrate import MigrateCommand
+import click
+import unittest
 from config import Config
 
-from app import create_app, db, migrate
+
+from app import create_app, db
 # from app.models import Role, User
 
 
-app = create_app("dev")
-manager = Manager(app)
+app = None
 
 
-@manager.command
-def test():
-    """Run the unit tests."""
-    import unittest
+@click.group()
+@click.option('--config', default="dev")
+def cli(config):
+    click.echo("Loading the application")
+    global app, db
+    app = create_app(config)
 
-    tests = unittest.TestLoader().discover('tests')
-    unittest.TextTestRunner(verbosity=2).run(tests)
 
-
-@manager.command
-def create_db():
+@click.command("db-create")
+def db_create():
     """
     Recreates a local database. You probably should not use this on
     production.
     """
-    db.create_all()
-    db.session.commit()
+    with app.app_context():
+        db.create_all()
+        db.session.commit()
 
 
-@manager.command
-def recreate_db():
+@click.command("db-recreate")
+def db_recreate():
+    """ Recreates a local database. You probably should not use this on
+    production.
+    """
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        db.session.commit()
+
+
+@click.command("db-fixtures")
+def db_fixtures():
     """
     Recreates a local database. You probably should not use this on
     production.
     """
-    db.drop_all()
-    db.create_all()
-    db.session.commit()
+    with app.app_context():
+        from tests.db_fixtures import add_corpus
+        add_corpus(
+            "wauchier", db, with_token=True, tokens_up_to=None,
+            with_allowed_lemma=True, partial_allowed_lemma=False,
+            with_allowed_pos=True, partial_allowed_pos=False,
+            with_allowed_morph=True)
+        add_corpus(
+            "floovant", db, with_token=True, tokens_up_to=None,
+            with_allowed_lemma=True, partial_allowed_lemma=False,
+            with_allowed_pos=True, partial_allowed_pos=False,
+            with_allowed_morph=True)
 
 
-@manager.command
-def fixtures_to_db():
-    """
-    Recreates a local database. You probably should not use this on
-    production.
-    """
-    from tests.db_fixtures import add_corpus
-    add_corpus(
-        "wauchier", db, with_token=True, tokens_up_to=None,
-        with_allowed_lemma=True, partial_allowed_lemma=False,
-        with_allowed_pos=True, partial_allowed_pos=False,
-        with_allowed_morph=True)
-    add_corpus(
-        "floovant", db, with_token=True, tokens_up_to=None,
-        with_allowed_lemma=True, partial_allowed_lemma=False,
-        with_allowed_pos=True, partial_allowed_pos=False,
-        with_allowed_morph=True)
-
-
-@manager.command
-def test():
-    """ Run tests locally
-    """
-    import tests.__main__ as tests
-    tests.unittest.main()
-
-
-@manager.command
+@click.command("run")
 def run():
     """
     Recreates a local database. You probably should not use this on
@@ -77,5 +70,11 @@ def run():
     app.run()
 
 
+cli.add_command(db_create)
+cli.add_command(db_fixtures)
+cli.add_command(db_recreate)
+cli.add_command(run)
+
+
 if __name__ == '__main__':
-    manager.run()
+    cli()

@@ -23,7 +23,7 @@ Create a virtual environment, source it and run
 
 ```bash
 pip install -r requirements.txt
-python manage.py create_db
+python manage.py db-create
 ```
 
 ## Run
