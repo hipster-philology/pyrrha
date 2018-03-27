@@ -225,6 +225,11 @@ class TestTokensEditTwoCorpora(TokenEdit2CorporaBase):
         )
         self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
+        self.assertEqual(
+            row.find_elements_by_tag_name("b")[0].text,
+            token.form,
+            "Bold should be used to highlight in-context word"
+        )
 
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()

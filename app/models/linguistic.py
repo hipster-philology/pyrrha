@@ -277,7 +277,8 @@ class WordToken(db.Model):
     label_uniform = db.Column(db.String(64))
     POS = db.Column(db.String(64))
     morph = db.Column(db.String(64))
-    context = db.Column(db.String(512))
+    left_context = db.Column(db.String(512))
+    right_context = db.Column(db.String(512))
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
@@ -498,7 +499,9 @@ class WordToken(db.Model):
                 label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
                 POS=token.get("POS", token.get("pos")),
                 morph=token.get("morph", None),
-                context=" ".join(previous_token + [token.get("form", token.get("tokens"))] + next_token),
+                #context=" ".join(previous_token + [token.get("form")] + next_token),
+                left_context=" ".join(previous_token),
+                right_context=" ".join(next_token),
                 corpus=corpus_id,
                 order_id=i
             )
@@ -561,6 +564,15 @@ class WordToken(db.Model):
         db.session.add(token)
         db.session.commit()
         return token, record
+
+    @property
+    def context(self):
+        """ Reformed version of former code for the context column"""
+        return " ".join([
+            tok
+            for tok in [self.left_context, self.form, self.right_context]
+            if tok
+        ])
 
     @staticmethod
     def get_similar_to_record(change_record):

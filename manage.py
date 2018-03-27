@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from flask_script import Manager
+from flask_migrate import MigrateCommand
 from config import Config
-from tests.db_fixtures import add_corpus
 
-from app import create_app, db
+from app import create_app, db, migrate
 # from app.models import Role, User
 
 
@@ -47,6 +47,7 @@ def fixtures_to_db():
     Recreates a local database. You probably should not use this on
     production.
     """
+    from tests.db_fixtures import add_corpus
     add_corpus(
         "wauchier", db, with_token=True, tokens_up_to=None,
         with_allowed_lemma=True, partial_allowed_lemma=False,
