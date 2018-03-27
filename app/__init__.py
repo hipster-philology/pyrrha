@@ -2,11 +2,10 @@ import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import config
-from flask_migrate import Migrate
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 db = SQLAlchemy()
-migrate = Migrate(db=db)
+
 
 def create_app(config_name="dev"):
     """ Create the application """
@@ -23,7 +22,6 @@ def create_app(config_name="dev"):
 
     # Set up extensions
     db.init_app(app)
-    migrate.init_app(app)
     #assets_env = Environment(app)
 
     # Register Jinja template functions
