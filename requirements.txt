@@ -6,3 +6,4 @@ selenium>=3.6.0
 nose2==0.6.5
 cov-core==1.15.0
 click==6.7
+mock==2.0.0
