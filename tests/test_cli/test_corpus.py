@@ -4,121 +4,23 @@ function should be done in their respective test modules (see .test_collatinus)
 
 """
 
-from unittest import TestCase
-from click.testing import CliRunner
-import mock
 import os
-from nose.tools import nottest
+import shutil
+from csv import reader
+from unittest import TestCase
 
+from click.testing import CliRunner
+from nose.tools import nottest
 
 from app import create_app, db
 from app.cli import make_cli
 from app.models.linguistic import (
-    Corpus,
-    WordToken,
     AllowedLemma,
     AllowedMorph,
-    AllowedPOS
+    AllowedPOS,
+    WordToken
 )
-from csv import reader
-
 from tests.db_fixtures import add_corpus
-
-class TestGenericScript(TestCase):
-    """ Tests for the generic parts of Scripts
-     """
-
-    def clear_db(self, app):
-        with app.app_context():
-            try:
-                db.drop_all()
-            except:
-                pass
-
-    def setUp(self):
-        self.app = create_app("test")
-        self.clear_db(self.app)
-
-        # We create all cli to check that it does not overwrite anything
-        with self.app.app_context():
-            self.cli = make_cli()
-
-        self.runner = CliRunner()
-
-    def tearDown(self):
-        self.clear_db(self.app)
-
-    def invoke(self, commands):
-        return self.runner.invoke(self.cli, ["--config", "test"] + commands)
-
-    def test_db_create(self):
-        """ Test that db is created """
-
-        result = self.invoke(["db-create"])
-        self.assertIn("Created the database", result.output)
-        with self.app.app_context():
-            db.session.add(Corpus(name="Corpus1"))
-            db.session.commit()
-
-            self.assertEqual(
-                len(Corpus.query.all()), 1,
-                "There should have been an insert"
-            )
-
-    def test_db_recreate(self):
-        """ Test that db is recreated """
-
-        with self.app.app_context():
-            db.create_all()
-            db.session.commit()
-            db.session.add(Corpus(name="Corpus1"))
-            db.session.commit()
-
-            self.assertEqual(
-                len(Corpus.query.all()), 1,
-                "There should have been an insert"
-            )
-
-        result = self.invoke(["db-recreate"])
-
-        self.assertIn("Dropped then recreated the database", result.output)
-
-        with self.app.app_context():
-            self.assertEqual(
-                len(Corpus.query.all()), 0,
-                "There should have been 0 insert"
-            )
-
-    def test_db_fixtures(self):
-        """ Test that fixtures are put in the DB"""
-
-        with self.app.app_context():
-            db.create_all()
-            db.session.commit()
-
-        result = self.invoke(["db-fixtures"])
-        self.assertIn("Loaded fixtures to the database", result.output)
-
-        with self.app.app_context():
-            self.assertEqual(
-                len(Corpus.query.all()), 2,
-                "Both corpus should have been inserted"
-            )
-
-    def test_run(self):
-        """ Test run actually runs the application"""
-
-        with self.app.app_context():
-            db.create_all()
-            db.session.commit()
-
-        app_mock = mock.MagicMock(self.app)
-
-        with mock.patch("app.cli.create_app", return_value=app_mock) as create_app_mock:
-            result = self.invoke(["run"])
-
-            create_app_mock.assert_called()
-            app_mock.run.assert_called()
 
 
 class TestCorpusScript(TestCase):
@@ -160,7 +62,7 @@ class TestCorpusScript(TestCase):
                 len(POS), 14,
                 "There should be 14 allowed POS"
             )
-            with open(self.relPath("test_scripts_data", "POS.txt")) as pos:
+            with open(self.relPath("test_scripts_data", "allowed_pos.txt")) as pos:
                 self.assertEqual(
                     sorted(pos.read().strip().split(",")),
                     sorted([p.label for p in POS]),
@@ -168,11 +70,12 @@ class TestCorpusScript(TestCase):
                 )
 
     @nottest
-    def token_test(self, result):
+    def token_test(self, result, success_msg="Corpus created under the name Wauchier2 with 25 tokens"):
         self.assertIn(
-            "Corpus created under the name Wauchier2 with 25 tokens",
+            success_msg,
             result.output
         )
+
 
     @nottest
     def morph_test(self):
@@ -186,7 +89,7 @@ class TestCorpusScript(TestCase):
                 m.label + " " + m.readable
                 for m in morphs
             ]
-            with open(self.relPath("test_scripts_data", "morph.csv")) as f:
+            with open(self.relPath("test_scripts_data", "allowed_morph.csv")) as f:
                 data = [
                     " ".join(line)
                     for line in list(reader(f, dialect="excel-tab"))[1:]
@@ -203,7 +106,7 @@ class TestCorpusScript(TestCase):
             self.assertEqual(
                 len(output_data), 21, "There should be 21 Lemmas"
             )
-            with open(self.relPath("test_scripts_data", "lemmas.csv")) as f:
+            with open(self.relPath("test_scripts_data", "allowed_lemma.txt")) as f:
                 input_data = f.read().split()
 
             self.assertEqual(
@@ -227,7 +130,7 @@ class TestCorpusScript(TestCase):
             "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
-            "--POS", self.relPath("test_scripts_data", "POS.txt")
+            "--POS", self.relPath("test_scripts_data", "allowed_pos.txt")
         )
         self.token_test(result)
         self.pos_test()
@@ -238,7 +141,7 @@ class TestCorpusScript(TestCase):
             "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
-            "--morph", self.relPath("test_scripts_data", "morph.csv")
+            "--morph", self.relPath("test_scripts_data", "allowed_morph.csv")
         )
         self.token_test(result)
         self.morph_test()
@@ -249,7 +152,7 @@ class TestCorpusScript(TestCase):
             "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
-            "--lemma", self.relPath("test_scripts_data", "lemmas.csv")
+            "--lemma", self.relPath("test_scripts_data", "allowed_lemma.txt")
         )
         self.token_test(result)
         self.lemma_test()
@@ -260,8 +163,8 @@ class TestCorpusScript(TestCase):
             "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
-            "--morph", self.relPath("test_scripts_data", "morph.csv"),
-            "--POS", self.relPath("test_scripts_data", "POS.txt")
+            "--morph", self.relPath("test_scripts_data", "allowed_morph.csv"),
+            "--POS", self.relPath("test_scripts_data", "allowed_pos.txt")
         )
         self.token_test(result)
         self.morph_test()
@@ -273,9 +176,9 @@ class TestCorpusScript(TestCase):
             "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
-            "--morph", self.relPath("test_scripts_data", "morph.csv"),
-            "--POS", self.relPath("test_scripts_data", "POS.txt"),
-            "--lemma", self.relPath("test_scripts_data", "lemmas.csv")
+            "--morph", self.relPath("test_scripts_data", "allowed_morph.csv"),
+            "--POS", self.relPath("test_scripts_data", "allowed_pos.txt"),
+            "--lemma", self.relPath("test_scripts_data", "allowed_lemma.txt")
         )
         self.token_test(result)
         self.morph_test()
@@ -372,3 +275,72 @@ class TestCorpusScript(TestCase):
                 len(os.listdir(os.path.join(curr_dir, test_dir))), 0,
                 "There should be no files"
             )
+
+    @nottest
+    def make_test(self, tests, context):
+        print("Testing : {}".format(", ".join(tests)))
+        with self.app.app_context():
+            with self.runner.isolated_filesystem() as f:
+                cur_dir = str(f)
+
+                shutil.copy(
+                    self.relPath("test_scripts_data", "tokens.csv"),
+                    os.path.join(cur_dir, "tokens.csv")
+                )
+                extensions = {
+                    "lemma": "txt",
+                    "pos": "txt",
+                    "morph": "csv"
+                }
+                for test in tests:
+                    fname = "allowed_" + test + "." + extensions[test]
+                    shutil.copy(
+                        self.relPath("test_scripts_data", fname),
+                        os.path.join(cur_dir, fname)
+                    )
+                self.assertEqual(
+                    len(list(os.listdir(cur_dir))), len(tests) + 1,
+                    "There should be as many input file as tests"
+                )
+
+                args = ["corpus-from-dir", "Floovant2", "--path", cur_dir]
+                if context:
+                    args += ["--right", "2", "--left", "1"]
+
+                result = self.invoke(*args)
+
+                self.token_test(
+                    result,
+                    success_msg="Corpus 'Floovant2' (ID : 1) created"
+                )
+                for test in tests:
+                    getattr(self, test + "_test")()
+                    print("Running " + test + "_test")
+
+                if context:
+                    self.assertEqual(
+                        WordToken.query.get(context[0]).context, context[1],
+                        "Context should be right"
+                    )
+
+                self.clear_db(self.app)
+                db.create_all()
+
+    def test_corpus_from_dir(self):
+        """ Test that import from a directory works with autogenerated tests"""
+
+        # Automatically testing a list of different situation
+
+        tests = [
+            ["morph", "lemma", "pos"],
+            ["morph", "lemma"],
+            ["lemma", "pos"],
+            ["morph", "pos"],
+            ["morph"],
+            ["lemma"],
+            ["pos"],
+            []
+        ]
+        for context in [None, (9, "et volentiers le bien")]:
+            for combination in tests:
+                self.make_test(combination, context)

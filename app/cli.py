@@ -88,12 +88,12 @@ def make_cli():
     @click.option("--POS", "POS_file", type=click.File(), help="Path of the file containing the Allowed POS")
     @click.option("--morph", "morph_file", type=click.File(),
                   help="Path of the file containing the Allowed Morphological tags")
-    @click.option("-l", "--left_context", help="Number of words to keep on the left of each token")
-    @click.option("-r", "--right_context", help="Number of words to keep on the right of each token")
+    @click.option("--left", help="Number of words to keep on the left of each token")
+    @click.option("--right", help="Number of words to keep on the right of each token")
     def corpus_ingest(
             name, tokens,
             lemma_file=None, POS_file=None, morph_file=None,
-            left_context=None, right_context=None):
+            left=None, right=None):
 
         if lemma_file is not None:
             lemma_file = lemma_file.read()
@@ -112,8 +112,8 @@ def make_cli():
                 allowed_lemma=lemma,
                 allowed_POS=POS,
                 allowed_morph=morph,
-                context_left=left_context,
-                context_right=right_context
+                context_left=left,
+                context_right=right
             )
             click.echo(
                 "Corpus created under the name {} with {} tokens".format(
@@ -121,18 +121,16 @@ def make_cli():
                 )
             )
 
-    @click.command("corpus-from-dir", help="Create a corpus based on a folder. "
-                                           "File with following names ({}) should be in the folder."
-                                           "First parameter is the name".format(
-                                               ", ".join(DEFAULT_FILENAMES.values())
-                                           )
-                   )
+    @click.command("corpus-from-dir",
+                   help="Create a corpus based on a folder. File with following names ({}) "
+                        "should be in the folder. First parameter is the name".format(
+                            ", ".join(DEFAULT_FILENAMES.values())))
     @click.argument("name")
-    @click.option("--corpus", "tokens", type=click.File(), required=True,
+    @click.option("--path", type=click.Path(), required=True,
                   help="Path of the file containing the pre-annotated corpus tokens")
-    @click.option("-l", "--left_context", help="Number of words to keep on the left of each token")
-    @click.option("-r", "--right_context", help="Number of words to keep on the right of each token")
-    def corpus_import(name, path, left_context=None, right_context=None):
+    @click.option("--left", help="Number of words to keep on the left of each token")
+    @click.option("--right", help="Number of words to keep on the right of each token")
+    def corpus_import(name, path, left=None, right=None):
         # Set the list of paths
         token_path = os.path.join(path, DEFAULT_FILENAMES["tokens"])
         morph_path = os.path.join(path, DEFAULT_FILENAMES["morph"])
@@ -169,15 +167,15 @@ def make_cli():
             data = Corpus.create(
                 name=name, word_tokens_dict=input_tokens,
                 allowed_lemma=allowed_lemma, allowed_morph=allowed_morph,
-                allowed_POS=allowed_POS, context_left=left_context,
-                context_right=right_context
+                allowed_POS=allowed_POS, context_left=left,
+                context_right=right
             )
             click.echo("Corpus '{}' (ID : {}) created ".format(
                 name,
                 data.id
             ))
 
-        input_tokens.close()
+        tokens.close()
         if morph:
             morph.close()
 
