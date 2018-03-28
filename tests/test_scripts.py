@@ -20,8 +20,9 @@ from app.models.linguistic import (
     AllowedMorph,
     AllowedPOS
 )
-from csv import DictReader, reader
+from csv import reader
 
+from tests.db_fixtures import add_corpus
 
 class TestGenericScript(TestCase):
     """ Tests for the generic parts of Scripts
@@ -281,14 +282,93 @@ class TestCorpusScript(TestCase):
         self.lemma_test()
         self.pos_test()
 
+    def assertHasContents(self, file1, content):
+        with open(file1) as f1:
+            self.assertEqual(f1.read().replace("\r", ""), content)
+
+    def test_corpus_list(self):
+        with self.app.app_context():
+            add_corpus(
+                "floovant", db, tokens_up_to=3,
+                with_allowed_lemma=True, partial_allowed_lemma=True,
+                with_allowed_morph=True, partial_allowed_morph=True,
+                with_allowed_pos=True, partial_allowed_pos=True
+            )
+            add_corpus(
+                "wauchier", db, tokens_up_to=3,
+                with_allowed_lemma=True, partial_allowed_lemma=True,
+                with_allowed_morph=True, partial_allowed_morph=True,
+                with_allowed_pos=True, partial_allowed_pos=True
+            )
+        result = self.invoke("corpus-list")
+        self.assertIn("1\t| Wauchier", result.output)
+        self.assertIn("2\t| Floovant", result.output)
+
     def test_corpus_dump(self):
         """ Test that data export works correctly """
-        result = self.invoke(
-            "corpus-import",
-            "Wauchier2",
-            "--corpus", self.relPath("test_scripts_data", "tokens.csv")
-        )
-        self.assertIn(
-            "Corpus created under the name Wauchier2 with 25 tokens",
-            result.output
-        )
+        # Ingest data this way, not the best practice, but the shortest. Will allow file comparison down the lane
+        with self.app.app_context():
+            add_corpus(
+                "floovant", db, tokens_up_to=3,
+                with_allowed_lemma=True, partial_allowed_lemma=True,
+                with_allowed_morph=True, partial_allowed_morph=True,
+                with_allowed_pos=True, partial_allowed_pos=True
+            )
+
+        with self.runner.isolated_filesystem() as f:
+            curr_dir = str(f)
+            test_dir = "some_dir"
+            result = self.invoke("corpus-dump", "2", "--path", test_dir)
+
+            self.assertHasContents(
+                os.path.join(curr_dir, test_dir, "tokens.csv"),
+                "token_id	form	lemma	POS	morph\n"
+                "1	SOIGNORS	seignor	_	NOMB.=p|GENRE=m|CAS=n\n"
+                "2	or	or4	_	DEGRE=-\n"
+                "3	escoutez	escouter	_	MODE=imp|PERS.=2|NOMB.=p\n"
+            )
+            self.assertIn("--- Tokens dumped", result.output)
+
+            self.assertHasContents(
+                os.path.join(curr_dir, test_dir, "allowed_lemma.txt"),
+                "escouter\nor4\nseignor"
+            )
+            self.assertIn("--- Allowed Lemma Values dumped", result.output)
+
+            self.assertHasContents(
+                os.path.join(curr_dir, test_dir, "allowed_pos.txt"),
+                "ADVgen,VERcjg,NOMcom"
+            )
+            self.assertIn("--- Allowed POS Values dumped", result.output)
+
+            self.assertHasContents(
+                os.path.join(curr_dir, test_dir, "allowed_morph.csv"),
+                "label	readable\n"
+                "_	pas de morphologie\n"
+                "DEGRE=-	non applicable\n"
+                "MODE=imp|PERS.=2|NOMB.=p	impératif 2e personne pluriel\n"
+            )
+            self.assertIn("--- Allowed Morphological Values dumped", result.output)
+
+    def test_corpus_dump_not_found(self):
+        """ Test that data export works correctly by not raising an issue if Corpus does not exist """
+        # Ingest data this way, not the best practice, but the shortest. Will allow file comparison down the lane
+        with self.app.app_context():
+            add_corpus(
+                "floovant", db, tokens_up_to=3,
+                with_allowed_lemma=True, partial_allowed_lemma=True,
+                with_allowed_morph=True, partial_allowed_morph=True,
+                with_allowed_pos=True, partial_allowed_pos=True
+            )
+
+        with self.runner.isolated_filesystem() as f:
+            curr_dir = str(f)
+            test_dir = "some_dir"
+            result = self.invoke("corpus-dump", "1", "--path", test_dir)
+            self.assertIn(
+                "Corpus not found", result.output
+            )
+            self.assertEqual(
+                len(os.listdir(os.path.join(curr_dir, test_dir))), 0,
+                "There should be no files"
+            )

@@ -1,13 +1,26 @@
 import click
+import os
 
 from . import create_app, db
-from .models import Corpus
+from .models import (
+    Corpus,
+    AllowedPOS,
+    AllowedLemma,
+    AllowedMorph,
+    WordToken
+)
 from .main.views.utils import create_input_format_convertion
-from csv import DictReader
 
 
 app = None
 
+
+DEFAULT_FILENAMES = {
+    "tokens": "tokens.csv",
+    "POS": "allowed_pos.txt",
+    "lemma": "allowed_lemma.txt",
+    "morph": "allowed_morph.csv"
+}
 
 def make_cli():
     """ Creates a Command Line Interface for everydays tasks
@@ -116,8 +129,38 @@ def make_cli():
 
     @click.command("corpus-dump", help="Dump corpus identified by {corpus} id. Use corpus-list to have a list of IDs")
     @click.argument("corpus", type=click.INT)
-    def corpus_dump():
-        pass
+    @click.option("--path", type=click.Path(), required=True, help="Path where the corpus should be saved")
+    def corpus_dump(corpus, path):
+        with app.app_context():
+            if not os.path.exists(path):
+                os.makedirs(path)
+            corpus = Corpus.query.get(corpus)
+
+            # Check that the corpus exists
+            if not corpus:
+                click.echo("Corpus not found")
+                return
+
+            with open(os.path.join(path, DEFAULT_FILENAMES["tokens"]), "w") as file:
+                file.write(WordToken.to_input_format(
+                    WordToken.query.filter(WordToken.corpus == corpus.id)
+                ))
+                click.echo("--- Tokens dumped")
+            with open(os.path.join(path, DEFAULT_FILENAMES["lemma"]), "w") as file:
+                file.write(AllowedLemma.to_input_format(
+                    AllowedLemma.query.filter(AllowedLemma.corpus == corpus.id)
+                ))
+                click.echo("--- Allowed Lemma Values dumped")
+            with open(os.path.join(path, DEFAULT_FILENAMES["morph"]), "w") as file:
+                file.write(AllowedMorph.to_input_format(
+                    AllowedMorph.query.filter(AllowedMorph.corpus == corpus.id)
+                ))
+                click.echo("--- Allowed Morphological Values dumped")
+            with open(os.path.join(path, DEFAULT_FILENAMES["POS"]), "w") as file:
+                file.write(AllowedPOS.to_input_format(
+                    AllowedPOS.query.filter(AllowedPOS.corpus == corpus.id)
+                ))
+                click.echo("--- Allowed POS Values dumped")
 
     cli.add_command(db_create)
     cli.add_command(db_fixtures)
