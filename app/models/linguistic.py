@@ -473,8 +473,16 @@ class WordToken(db.Model):
         :param word_tokens_dict: Generator made of dicts of tokens with form, lemma, POS and morph key
         :type word_tokens_dict: list of dict
         """
-        context_left = int(context_left) or WordToken.CONTEXT_LEFT
-        context_right = int(context_right) or WordToken.CONTEXT_RIGHT
+        if context_right:
+            context_right = int(context_right)
+        else:
+            context_right = WordToken.CONTEXT_RIGHT
+
+        if context_left:
+            context_left = int(context_left)
+        else:
+            context_left = WordToken.CONTEXT_LEFT
+
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
         for i, token in enumerate(word_tokens_dict):

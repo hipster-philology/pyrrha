@@ -16,15 +16,15 @@ def corpus_new():
     """
     if request.method == "POST":
 
-        allowed_lemma = request.form.get("allowed_lemma")
+        allowed_lemma = request.form.get("allowed_lemma", None)
         if allowed_lemma is not None:
             allowed_lemma = [x.replace('\r', '') for x in allowed_lemma.split("\n") if len(x.replace('\r', '').strip()) > 0]
 
-        allowed_POS = request.form.get("allowed_POS")
+        allowed_POS = request.form.get("allowed_POS", None)
         if allowed_POS is not None:
             allowed_POS = [x.replace('\r', '') for x in allowed_POS.split(",") if len(x.replace('\r', '').strip()) > 0]
 
-        allowed_morph = request.form.get("allowed_morph")
+        allowed_morph = request.form.get("allowed_morph", None)
         if allowed_morph is not None:
             allowed_morph = list(StringDictReader(allowed_morph))
 
