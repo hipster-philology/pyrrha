@@ -81,8 +81,8 @@ def make_cli():
         lemma = None
         if lemma_file is not None:
             lemma = [
-                x.replace('\r', '')
-                for x in lemma_file.readline()
+                x.replace('\r', '').strip()
+                for x in lemma_file.readlines()
                 if len(x.replace('\r', '').strip()) > 0
             ]
 

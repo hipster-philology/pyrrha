@@ -8,6 +8,7 @@ from unittest import TestCase
 from click.testing import CliRunner
 import mock
 import os
+from nose.tools import nottest
 
 
 from app import create_app, db
@@ -150,6 +151,7 @@ class TestCorpusScript(TestCase):
     def invoke(self, *commands):
         return self.runner.invoke(self.cli, ["--config", "test"] + list(commands))
 
+    @nottest
     def pos_test(self):
         with self.app.app_context():
             POS = AllowedPOS.query.filter(AllowedPOS.corpus == 1).all()
@@ -164,12 +166,14 @@ class TestCorpusScript(TestCase):
                     "POS should be consistent with import file"
                 )
 
+    @nottest
     def token_test(self, result):
         self.assertIn(
             "Corpus created under the name Wauchier2 with 25 tokens",
             result.output
         )
 
+    @nottest
     def morph_test(self):
         with self.app.app_context():
             morphs = AllowedMorph.query.filter(AllowedMorph.corpus == 1).all()
@@ -189,6 +193,22 @@ class TestCorpusScript(TestCase):
             self.assertEqual(
                 sorted(morphs), sorted(data),
                 "Input allowed morphs should have been correctly inserted"
+            )
+
+    @nottest
+    def lemma_test(self):
+        with self.app.app_context():
+            output_data = AllowedLemma.query.filter(AllowedLemma.corpus == 1).all()
+            self.assertEqual(
+                len(output_data), 21, "There should be 21 Lemmas"
+            )
+            with open(self.relPath("test_scripts_data", "lemmas.csv")) as f:
+                input_data = f.read().split()
+
+            self.assertEqual(
+                sorted([t.label for t in output_data]),
+                sorted(input_data),
+                "Input data should be the same as output data"
             )
 
     def test_corpus_import(self):
@@ -222,9 +242,47 @@ class TestCorpusScript(TestCase):
         self.token_test(result)
         self.morph_test()
 
+    def test_corpus_import_lemmas(self):
+        """ Test that data ingestion works correctly with Allowed Lemmas"""
+        result = self.invoke(
+            "corpus-import",
+            "Wauchier2",
+            "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
+            "--lemma", self.relPath("test_scripts_data", "lemmas.csv")
+        )
+        self.token_test(result)
+        self.lemma_test()
+
+    def test_corpus_import_morph_and_POS(self):
+        """ Test that data ingestion works correctly with Allowed Morph AND Morph"""
+        result = self.invoke(
+            "corpus-import",
+            "Wauchier2",
+            "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
+            "--morph", self.relPath("test_scripts_data", "morph.csv"),
+            "--POS", self.relPath("test_scripts_data", "POS.txt")
+        )
+        self.token_test(result)
+        self.morph_test()
+        self.pos_test()
+
+    def test_corpus_import_morph_and_POS_and_lemma(self):
+        """ Test that data ingestion works correctly with Allowed Morph AND Morph"""
+        result = self.invoke(
+            "corpus-import",
+            "Wauchier2",
+            "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
+            "--morph", self.relPath("test_scripts_data", "morph.csv"),
+            "--POS", self.relPath("test_scripts_data", "POS.txt"),
+            "--lemma", self.relPath("test_scripts_data", "lemmas.csv")
+        )
+        self.token_test(result)
+        self.morph_test()
+        self.lemma_test()
+        self.pos_test()
+
     def test_corpus_dump(self):
         """ Test that data export works correctly """
-        """ Test that data ingestion works correctly"""
         result = self.invoke(
             "corpus-import",
             "Wauchier2",
