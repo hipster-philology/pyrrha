@@ -215,7 +215,7 @@ class TestCorpusScript(TestCase):
     def test_corpus_import(self):
         """ Test that data ingestion works correctly"""
         result = self.invoke(
-            "corpus-import",
+            "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv")
         )
@@ -224,7 +224,7 @@ class TestCorpusScript(TestCase):
     def test_corpus_import_POS(self):
         """ Test that data ingestion works correctly with Allowed POS"""
         result = self.invoke(
-            "corpus-import",
+            "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
             "--POS", self.relPath("test_scripts_data", "POS.txt")
@@ -235,7 +235,7 @@ class TestCorpusScript(TestCase):
     def test_corpus_import_morph(self):
         """ Test that data ingestion works correctly with Allowed Morph"""
         result = self.invoke(
-            "corpus-import",
+            "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
             "--morph", self.relPath("test_scripts_data", "morph.csv")
@@ -246,7 +246,7 @@ class TestCorpusScript(TestCase):
     def test_corpus_import_lemmas(self):
         """ Test that data ingestion works correctly with Allowed Lemmas"""
         result = self.invoke(
-            "corpus-import",
+            "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
             "--lemma", self.relPath("test_scripts_data", "lemmas.csv")
@@ -257,7 +257,7 @@ class TestCorpusScript(TestCase):
     def test_corpus_import_morph_and_POS(self):
         """ Test that data ingestion works correctly with Allowed Morph AND Morph"""
         result = self.invoke(
-            "corpus-import",
+            "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
             "--morph", self.relPath("test_scripts_data", "morph.csv"),
@@ -270,7 +270,7 @@ class TestCorpusScript(TestCase):
     def test_corpus_import_morph_and_POS_and_lemma(self):
         """ Test that data ingestion works correctly with Allowed Morph AND Morph"""
         result = self.invoke(
-            "corpus-import",
+            "corpus-from-file",
             "Wauchier2",
             "--corpus", self.relPath("test_scripts_data", "tokens.csv"),
             "--morph", self.relPath("test_scripts_data", "morph.csv"),

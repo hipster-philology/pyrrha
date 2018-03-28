@@ -79,13 +79,15 @@ def make_cli():
         """
         app.run()
 
-    @click.command("corpus-import", help="Creates a corpus named *name")
-    @click.argument("name") #, help="Corpus name")
+    @click.command("corpus-from-file", help="Creates a corpus based on file."
+                                         "First parameter is the name")
+    @click.argument("name")
     @click.option("--corpus", "tokens", type=click.File(), required=True,
                   help="Path of the file containing the pre-annotated corpus tokens")
     @click.option("--lemma", "lemma_file", type=click.File(), help="Path of the file containing the Allowed Lemma")
     @click.option("--POS", "POS_file", type=click.File(), help="Path of the file containing the Allowed POS")
-    @click.option("--morph", "morph_file", type=click.File(), help="Path of the file containing the Allowed Morphological tags")
+    @click.option("--morph", "morph_file", type=click.File(),
+                  help="Path of the file containing the Allowed Morphological tags")
     @click.option("-l", "--left_context", help="Number of words to keep on the left of each token")
     @click.option("-r", "--right_context", help="Number of words to keep on the right of each token")
     def corpus_ingest(
@@ -118,6 +120,66 @@ def make_cli():
                     name, corpus.tokens_count
                 )
             )
+
+    @click.command("corpus-from-dir", help="Create a corpus based on a folder. "
+                                           "File with following names ({}) should be in the folder."
+                                           "First parameter is the name".format(
+                                               ", ".join(DEFAULT_FILENAMES.values())
+                                           )
+                   )
+    @click.argument("name")
+    @click.option("--corpus", "tokens", type=click.File(), required=True,
+                  help="Path of the file containing the pre-annotated corpus tokens")
+    @click.option("-l", "--left_context", help="Number of words to keep on the left of each token")
+    @click.option("-r", "--right_context", help="Number of words to keep on the right of each token")
+    def corpus_import(name, path, left_context=None, right_context=None):
+        # Set the list of paths
+        token_path = os.path.join(path, DEFAULT_FILENAMES["tokens"])
+        morph_path = os.path.join(path, DEFAULT_FILENAMES["morph"])
+        lemma_path = os.path.join(path, DEFAULT_FILENAMES["lemma"])
+        pos_path = os.path.join(path, DEFAULT_FILENAMES["POS"])
+
+        # Set the default values
+        tokens, lemma, POS, morph = None, None, None, None
+
+        # If the token file does not exist, let's leave this city
+        if not os.path.isfile(token_path):
+            click.echo("Corpus not found")
+            return
+
+        tokens = open(token_path)
+        if os.path.isfile(morph_path):
+            morph = open(morph_path)
+            click.echo("-- Found Morphological Allowed Values")
+
+        if os.path.isfile(lemma_path):
+            with open(lemma_path) as file:
+                lemma = file.read()
+            click.echo("-- Found Lemma Allowed Values")
+
+        if os.path.isfile(pos_path):
+            with open(pos_path) as file:
+                POS = file.read()
+            click.echo("-- Found POS Allowed Values")
+
+        input_tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
+            tokens, lemma, morph, POS
+        )
+        with app.app_context():
+            data = Corpus.create(
+                name=name, word_tokens_dict=input_tokens,
+                allowed_lemma=allowed_lemma, allowed_morph=allowed_morph,
+                allowed_POS=allowed_POS, context_left=left_context,
+                context_right=right_context
+            )
+            click.echo("Corpus '{}' (ID : {}) created ".format(
+                name,
+                data.id
+            ))
+
+        input_tokens.close()
+        if morph:
+            morph.close()
 
     @click.command("corpus-list", help="Shows a list of corpus and their ID")
     def corpus_list():
@@ -167,6 +229,7 @@ def make_cli():
     cli.add_command(db_recreate)
     cli.add_command(run)
     cli.add_command(corpus_ingest)
+    cli.add_command(corpus_import)
     cli.add_command(corpus_dump)
     cli.add_command(corpus_list)
 
