@@ -1,5 +1,9 @@
+import csv
+import io
+
 import unidecode
 from werkzeug.exceptions import BadRequest
+
 from .. import db
 from ..utils.forms import strip_or_none
 
@@ -184,6 +188,23 @@ class AllowedLemma(db.Model):
         if _commit:
             db.session.commit()
 
+    @staticmethod
+    def to_input_format(query):
+        """ Transforms query results into the input format
+
+        .. note:: OrderBy is done inside the function
+
+        :param query: Query on AllowedLemma
+        :type query: AllowedLemma.query
+        :return: String representation of the data
+        """
+        return "\n".join(
+            [
+                allowed.label
+                for allowed in query.order_by(AllowedLemma.id).all()
+            ]
+        )
+
 
 class AllowedPOS(db.Model):
     """ An allowed POS is a POS that is accepted
@@ -209,6 +230,23 @@ class AllowedPOS(db.Model):
             db.session.add(current)
         if _commit:
             db.session.commit()
+
+    @staticmethod
+    def to_input_format(query):
+        """ Transforms query results into the input format
+
+        .. note:: OrderBy is done inside the function
+
+        :param query: Query on AllowedPOS
+        :type query: AllowedPOS.query
+        :return: String representation of the data
+        """
+        return ",".join(
+            [
+                allowed.label
+                for allowed in query.order_by(AllowedPOS.id).all()
+            ]
+        )
 
 
 class AllowedMorph(db.Model):
@@ -241,6 +279,24 @@ class AllowedMorph(db.Model):
             db.session.add(current)
         if _commit:
             db.session.commit()
+
+    @staticmethod
+    def to_input_format(query):
+        """ Transforms query results into the input format
+
+        .. note:: OrderBy is done inside the function
+
+        :param query: Query on AllowedMorph
+        :type query: AllowedMorph.query
+        :return: String representation of the data
+        """
+        csv_file = io.StringIO()
+        writer = csv.writer(csv_file, dialect="excel-tab")
+        writer.writerow(["label", "readable"])
+        for morph in query.order_by(AllowedMorph.id).all():
+            writer.writerow([morph.label, morph.readable])
+
+        return csv_file.getvalue()
 
 
 class WordToken(db.Model):
@@ -515,6 +571,24 @@ class WordToken(db.Model):
             )
             db.session.add(wt)
         db.session.commit()
+
+    @staticmethod
+    def to_input_format(query):
+        """ Transforms query results into the input format
+
+        .. note:: OrderBy is done inside the function
+
+        :param query: List of tokens from a query
+        :type query: WordToken.query
+        :return: String representation of the data
+        """
+        csv_file = io.StringIO()
+        writer = csv.writer(csv_file, dialect="excel-tab")
+        writer.writerow(["token_id", "form", "lemma", "POS", "morph"])
+        for token in query.order_by(WordToken.order_id).all():
+            writer.writerow([token.id, token.form, token.lemma, token.POS or "_", token.morph or "_"])
+
+        return csv_file.getvalue()
 
     @staticmethod
     def update(corpus_id, token_id, lemma=None, POS=None, morph=None):
