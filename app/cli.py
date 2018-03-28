@@ -2,6 +2,7 @@ import click
 
 from . import create_app, db
 from .models import Corpus
+from .main.views.utils import create_input_format_convertion
 from csv import DictReader
 
 
@@ -78,27 +79,16 @@ def make_cli():
             name, tokens,
             lemma_file=None, POS_file=None, morph_file=None,
             left_context=None, right_context=None):
-        lemma = None
+
         if lemma_file is not None:
-            lemma = [
-                x.replace('\r', '').strip()
-                for x in lemma_file.readlines()
-                if len(x.replace('\r', '').strip()) > 0
-            ]
+            lemma_file = lemma_file.read()
 
-        POS = None
         if POS_file is not None:
-            POS = [
-                x.replace('\r', '')
-                for x in POS_file.read().split(",")
-                if len(x.replace('\r', '').strip()) > 0
-            ]
+            POS_file = POS_file.read()
 
-        morph = None
-        if morph_file is not None:
-            morph = list(DictReader(morph_file, dialect="excel-tab"))
-
-        token_reader = DictReader(tokens, dialect="excel-tab")
+        token_reader, lemma, morph, POS = create_input_format_convertion(
+            tokens, lemma_file, morph_file, POS_file
+        )
 
         with app.app_context():
             corpus = Corpus.create(
@@ -116,7 +106,16 @@ def make_cli():
                 )
             )
 
-    @click.command("corpus-dump")
+    @click.command("corpus-list", help="Shows a list of corpus and their ID")
+    def corpus_list():
+        scheme = "{}\t| {}"   # Could use a 0 filling to allow for a nicer output
+        with app.app_context():
+            click.echo(scheme.format("ID", "Name"))
+            for corpus in Corpus.query.all():
+                click.echo(scheme.format(corpus.id, corpus.name))
+
+    @click.command("corpus-dump", help="Dump corpus identified by {corpus} id. Use corpus-list to have a list of IDs")
+    @click.argument("corpus", type=click.INT)
     def corpus_dump():
         pass
 
@@ -126,5 +125,6 @@ def make_cli():
     cli.add_command(run)
     cli.add_command(corpus_ingest)
     cli.add_command(corpus_dump)
+    cli.add_command(corpus_list)
 
     return cli

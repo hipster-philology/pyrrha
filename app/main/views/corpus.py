@@ -1,6 +1,6 @@
 from flask import request, jsonify, flash, redirect, url_for
 
-from .utils import render_template_with_nav_info, format_api_like_reply
+from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
 from .. import main
 from ...utils.tsv import StringDictReader
 from werkzeug.exceptions import BadRequest
@@ -15,22 +15,16 @@ def corpus_new():
     """ Register a new corpus
     """
     if request.method == "POST":
-
-        allowed_lemma = request.form.get("allowed_lemma", None)
-        if allowed_lemma is not None:
-            allowed_lemma = [x.replace('\r', '') for x in allowed_lemma.split("\n") if len(x.replace('\r', '').strip()) > 0]
-
-        allowed_POS = request.form.get("allowed_POS", None)
-        if allowed_POS is not None:
-            allowed_POS = [x.replace('\r', '') for x in allowed_POS.split(",") if len(x.replace('\r', '').strip()) > 0]
-
-        allowed_morph = request.form.get("allowed_morph", None)
-        if allowed_morph is not None:
-            allowed_morph = list(StringDictReader(allowed_morph))
+        tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
+            request.form.get("tsv"),
+            request.form.get("allowed_lemma", None),
+            request.form.get("allowed_morph", None),
+            request.form.get("allowed_POS", None)
+        )
 
         corpus = Corpus.create(
             request.form.get("name"),
-            word_tokens_dict=StringDictReader(request.form.get("tsv")),
+            word_tokens_dict=tokens,
             allowed_lemma=allowed_lemma,
             allowed_POS=allowed_POS,
             allowed_morph=allowed_morph,
