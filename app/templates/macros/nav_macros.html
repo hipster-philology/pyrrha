@@ -55,14 +55,29 @@
 {% endmacro %}
 
 {%- macro quick_nav(corpus) %}
-    {%- if request.path != url_for("main.tokens_edit", corpus_id=corpus.id) %}
+    {%- if request.endpoint != 'main.tokens_edit' %}
         <div class="container-fluid">
             <nav style="margin-bottom: 10px;">
+                <span class="btn btn-sm btn-link">Quick links :</span>
                 <a class="btn btn-sm btn-info" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}">
-                    <span class="fa fa-back"></span>
+                    <span class="fa fa-pencil"></span>
                     Edit tokens
+                </a>
+                <a class="btn btn-sm btn-info d-none" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}" id="last-edit-link">
+                    <span class="fa fa-history"></span>
+                    Last Edit tokens
                 </a>
             </nav>
         </div>
+        <script type="text/javascript">
+            $(document).ready(function() {
+               var last_page = localStorage.getItem("corpus-{{corpus.id}}");
+               if (last_page) {
+                   var lastLink = $("#last-edit-link");
+                   lastLink.removeClass("d-none");
+                   lastLink.attr("href", lastLink.attr("href")+"?page="+last_page);
+               }
+            });
+        </script>
     {% endif %}
 {%  endmacro %}
