@@ -11,6 +11,7 @@
         {% block nav %}
           {# add dropdown variable here to the render_nav method to render dropdowns #}
           {{ nav.render_nav(corpora=corpora) }}
+          {%  if corpus %}{{ nav.quick_nav(corpus) }}{%  endif %}
         {% endblock %}
 
 

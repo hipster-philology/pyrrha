@@ -53,3 +53,16 @@
   </ul>
 </nav>
 {% endmacro %}
+
+{%- macro quick_nav(corpus) %}
+    {%- if request.path != url_for("main.tokens_edit", corpus_id=corpus.id) %}
+        <div class="container-fluid">
+            <nav style="margin-bottom: 10px;">
+                <a class="btn btn-sm btn-info" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}">
+                    <span class="fa fa-back"></span>
+                    Edit tokens
+                </a>
+            </nav>
+        </div>
+    {% endif %}
+{%  endmacro %}
