@@ -1,0 +1,1 @@
+PROdem,ADVgen,NOMpro,ADJord,PROrel,CONsub,NOMcom,VERcjg,PROper,PRE,ADJqua,PRE.DETdef,ADVneg,DETcar

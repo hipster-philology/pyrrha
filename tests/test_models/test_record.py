@@ -5,14 +5,14 @@ import copy
 
 SimilarityFixtures = [
     Corpus(id=1, name="Fixtures !"),
-    WordToken(corpus=1, form="Cil", lemma="celui", context="_", label_uniform="celui", morph="smn", POS="p"),  # 1
-    WordToken(corpus=1, form="Cil", lemma="celle", context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
-    WordToken(corpus=1, form="Cil", lemma="cil", context="_", label_uniform="cil", morph="smn", POS="p"),      # 3
-    WordToken(corpus=1, form="Cil", lemma="celui", context="_", label_uniform="celui", morph="mmn", POS="p"),  # 4
-    WordToken(corpus=1, form="Cil", lemma="celui", context="_", label_uniform="celui", morph="mmn", POS="n"),  # 5
-    WordToken(corpus=1, form="Cil", lemma="cel", context="_", label_uniform="cel", morph="smn", POS="p"),      # 6
-    WordToken(corpus=1, form="Cil", lemma="cel", context="_", label_uniform="cel", morph="smn", POS="p"),      # 7
-    WordToken(corpus=1, form="Cil", lemma="cel", context="_", label_uniform="cel", morph="smn", POS="p"),      # 8
+    WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="smn", POS="p"),  # 1
+    WordToken(corpus=1, form="Cil", lemma="celle", left_context="_", right_context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
+    WordToken(corpus=1, form="Cil", lemma="cil", left_context="_", right_context="_", label_uniform="cil", morph="smn", POS="p"),      # 3
+    WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="mmn", POS="p"),  # 4
+    WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="mmn", POS="n"),  # 5
+    WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 6
+    WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 7
+    WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 8
 ]
 
 

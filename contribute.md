@@ -45,7 +45,7 @@ sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
 
 ### Run the tests
 
-To run the tests, you simply need run `nose2` at the root of the pandora-postcorrect-app folder. You can also run `python manage.py test`
+To run the tests, you simply need run `nose2` at the root of the pandora-postcorrect-app folder. 
 
 ## Writing a test
 
@@ -83,7 +83,7 @@ class TestCorpusRegistration(TestBase):
 A new test method should be added to the correct class regarding scope of each class.
 
 - A test method must have a name starting with `test_` and should be snake case (Test Edition of Token -> `test_edition_of_token`).
-- A class must have a doc string explaing what it does
+- A class must have a doc string explaining what it does
 - A class must have at least one self.assertEqual, self.assertCount, etc.
 - If you need to create fixtures (fake data), add it to `tests.fixtures`
 - A test should prefer to test new or updated database values using direct models queries instead of DOM parsing
@@ -231,7 +231,7 @@ Fixtures are mock-up data that can be drawn from real life corpora. To generate 
 fixture you can simply got to `/corpus/<id>/fixtures` and you will be able to get 
 python code printed to your page.
 
-To browse the application with data sample, you can run `python manage.py fixtures_to_db` after
+To browse the application with data sample, you can run `python manage.py db-fixtures` after
 having created or recreated the database.
 
 You can contribute fixtures by adding a corpus in db_fixtures and fixtures following the 

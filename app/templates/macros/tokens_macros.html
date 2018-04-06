@@ -1,4 +1,8 @@
 
+{%- macro token_context(token) %}
+{{ token.left_context }} <b>{{ token.form }}</b> {{ token.right_context }}
+{% endmacro -%}
+
 {% macro table(tokens, corpus, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
 {% if editable %}
     {%- if checkbox %}
@@ -25,7 +29,7 @@
                     </td>
                     <td {% if not checkbox %}contenteditable="true" class="token_pos"{% endif %}>{{token.POS}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
-                    <td class="small">{{token.context}}</td>
+                    <td class="small">{{token_context(token)}}</td>
                     {%- if similar %}<td><a class="similar-link" href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}"><span class="badge badge-secondary">{{token.similar}}</span></a></td>{% endif -%}
                     {%- if checkbox %}<td><input class="form-check word-token" type="checkbox" checked="checked" value="{{token.id}}" /></td>
                     {% else%}<td><a class="save" href="{{url_for("main.tokens_edit_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
@@ -172,7 +176,7 @@
                 <tr>
                     <td class="small">{{token.created_on}}</td>
                     <td>{{token.form}}</td>
-                    <td class="small">{{token.word_token.context}}</td>
+                    <td class="small">{{token_context(token.word_token)}}</td>
                     <td class="bg-warning">{{token.lemma}}</td>
                     <td class="bg-warning">{{token.POS}}</td>
                     <td class="bg-warning">{{token.morph}}</td>
@@ -199,7 +203,7 @@
                     <td class="token_lemma">{{token.lemma}}</td>
                     <td class="token_pos">{{token.POS}}</td>
                     <td class="token_morph">{{token.morph}}</td>
-                    <td class="small">{{token.context}}</td>
+                    <td class="small">{{token_context(token)}}</td>
                 </tr>
             {% endfor %}
         </tbody>
