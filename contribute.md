@@ -34,8 +34,10 @@ To run tests, you will need [chrome-webdriver](https://chromedriver.storage.goog
 
 ### Install webdriver on Linux
 
+**Note:** this script is also available as `chromedriver.sh` in the root directory of this repository
+
 ```shell
-wget -N https://chromedriver.storage.googleapis.com/2.32/chromedriver_linux64.zip -P ~/
+wget -N https://chromedriver.storage.googleapis.com/2.36/chromedriver_linux64.zip -P ~/
 unzip ~/chromedriver_linux64.zip -d ~/
 rm ~/chromedriver_linux64.zip
 sudo mv -f ~/chromedriver /usr/local/share/
