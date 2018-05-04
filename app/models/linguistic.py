@@ -460,9 +460,13 @@ class WordToken(db.Model):
             query = query.filter(
                 db.and_(
                     cls.corpus == corpus_id,
+                    # This or is applied on the different field : you can either have readable or label with a match
                     db.or_(*[
-                        query_field.ilike("%{}%".format(fsplitted))
-                        for fsplitted in form
+                        # But all the values that are given should match !
+                        db.and_(*[
+                            query_field.ilike("%{}%".format(fsplitted))
+                            for fsplitted in form
+                        ])
                         for query_field in query_fields
                     ])
                 )
