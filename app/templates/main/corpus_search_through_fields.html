@@ -1,0 +1,80 @@
+{% import 'macros/nav_macros.html' as nav %}
+{% import 'macros/tokens_macros.html' as tokens_macros %}
+
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+    <h1>Corpus {{ corpus.name }} - Search tokens within the corpus </h1>
+
+    <form id="search_form" method="POST"
+          action="{{ url_for("main.corpus_search_through_fields", corpus_id=corpus.id) }}">
+
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>
+                    <label id="formHelp" for="form">Form</label>
+                </th>
+                <th>
+                    <label id="lemma_help" for="lemma">Lemma</label>
+                </th>
+                <th>
+                    <label id="POS_help" for="POS">POS</label>
+                </th>
+                <th>
+                    <label id="morph_help" for="morph">Morph</label>
+                </th>
+            </thead>
+            <tbody>
+            <tr id="filter_row">
+                <td>
+                    <div class="form-group">
+                        <input name="form" type="text" class="form-control" id="form" aria-describedby="formHelp"
+                               placeholder="Enter form" value="{% if form %}{{ form }}{% endif %}"/>
+                    </div>
+                </td>
+                <td>
+                    <div class="form-group">
+                        <input type="text" aria-describedby="lemma_help" class="form-control" id="lemma" name="lemma"
+                               value="{% if lemma %}{{ lemma }}{% endif %}">
+                    </div>
+                </td>
+                <td>
+                    <div class="form-group">
+                        <input type="text" aria-describedby="POS_help" class="form-control" id="POS" name="POS"
+                               value="{% if POS %}{{ POS }}{% endif %}">
+                    </div>
+                </td>
+                <td>
+                    <div class="form-group">
+                        <input type="text" aria-describedby="morph_help" class="form-control" id="morph" name="morph"
+                               value="{% if morph %}{{ morph }}{% endif %}">
+                    </div>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="mb-3">
+            <small class="form-text text-muted">* can be used to match partial words, eg. <b>ADV*</b></small>
+            <small class="form-text text-muted">! can be used to negate a match, eg. <b>!PRE</b></small>
+        </div>
+
+        <button type="submit" id="submit_search" class="btn btn-primary ">Submit</button>
+
+
+        {% if tokens %}
+            <div id="result_table" class="mt-5">
+                {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.corpus_search_through_fields",
+                        lemma=lemma, morph=morph, POS=POS, form=form) }}
+
+                {{ tokens_macros.table(tokens, corpus=corpus, editable=True, similar=True) }}
+
+                {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.corpus_search_through_fields",
+                        lemma=lemma, morph=morph, POS=POS, form=form) }}
+            </div>
+
+        {% endif %}
+    </form>
+{% endblock %}

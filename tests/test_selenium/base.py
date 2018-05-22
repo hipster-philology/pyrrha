@@ -3,12 +3,13 @@ import os
 import signal
 import logging
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 import time
 
 from app import db, create_app
 from tests.db_fixtures import add_corpus
-from app.models import WordToken
+from app.models import WordToken, Corpus
 
 LIVESERVER_TIMEOUT = 1
 
@@ -176,3 +177,70 @@ class TokenEdit2CorporaBase(TokenEditBase):
     def addCorpus(self, *args, **kwargs):
         super(TokenEditBase, self).addCorpus("wauchier", *args, **kwargs)
         super(TokenEditBase, self).addCorpus("floovant", *args, **kwargs)
+
+
+class CorpusSearchThroughFieldsBase(TestBase):
+
+    CORPUS_ID = 1
+
+    def go_to_search_tokens_page(self, corpus_id, as_callback=True):
+        """ Go to the corpus's search token page """
+        def callback():
+            # Show the dropdown
+            self.driver.find_element_by_id("toggle_corpus_%s" % corpus_id).click()
+            # Click on the edit link
+            self.driver.find_element_by_id("corpus_%s_search_tokens" % corpus_id).click()
+        if as_callback:
+            return callback
+        return callback()
+
+    def fill_filter_row(self, form, lemma, pos, morph):
+        # Take the first row
+        row = self.driver.find_element_by_id("filter_row")
+
+        for field_name, field_value in (("lemma", lemma), ("form", form), ("POS", pos), ("morph", morph)):
+            # Take the td to edit
+            td = row.find_element_by_name(field_name)
+            # Click, clear the td and send a new value
+            if field_value is None:
+                field_value = 'None'
+            td.click(), td.clear(), td.send_keys(field_value)
+
+    def setUp(self):
+        super(CorpusSearchThroughFieldsBase, self).setUp()
+        self.addCorpus(corpus="wauchier")
+
+    def search(self, form="", lemma="", pos="", morph=""):
+
+        self.go_to_search_tokens_page(CorpusSearchThroughFieldsBase.CORPUS_ID, as_callback=False)
+
+        self.fill_filter_row(form, lemma, pos, morph)
+
+        self.driver.find_element_by_id("submit_search").click()
+
+        result = []
+
+        def get_field(row, f):
+            return row.find_element_by_class_name(f).text.strip()
+
+        # load each page to get the (partials) result tables
+        pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        for page_index in range(0, len(pagination)):
+            self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
+
+            # find the result in the result table
+            res_table = self.driver.find_element_by_id("result_table").find_element_by_tag_name("tbody")
+            try:
+                rows = res_table.find_elements_by_tag_name("tr")
+
+                for row in rows:
+                    result.append({
+                        "form": row.find_elements_by_tag_name("td")[0].text.strip(),
+                        "lemma": get_field(row, "token_lemma"),
+                        "morph": get_field(row, "token_morph"),
+                        "pos": get_field(row, "token_pos"),
+                    })
+            except NoSuchElementException as e:
+                print(e)
+
+        return result
