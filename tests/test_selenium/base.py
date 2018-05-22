@@ -209,6 +209,41 @@ class CorpusSearchThroughFieldsBase(TestBase):
     def setUp(self):
         super(CorpusSearchThroughFieldsBase, self).setUp()
         self.addCorpus(corpus="wauchier")
+        new_token = WordToken(
+            corpus=CorpusSearchThroughFieldsBase.CORPUS_ID,
+            order_id=1,
+            form="Testword*",
+            lemma="testword*",
+            POS="TEST*pos",
+            morph="test*morph",
+            left_context="This is a left context",
+            right_context="This is a left context"
+        )
+        db.session.add(new_token)
+        new_token = WordToken(
+            corpus=CorpusSearchThroughFieldsBase.CORPUS_ID,
+            order_id=2,
+            form="TestwordFake",
+            lemma="testwordFake",
+            POS="TESTposFake",
+            morph="testmorphFake",
+            left_context="This is a left context",
+            right_context="This is a left context"
+        )
+        db.session.add(new_token)
+
+        new_token = WordToken(
+            corpus=CorpusSearchThroughFieldsBase.CORPUS_ID,
+            order_id=3,
+            form="!TestwordFake",
+            lemma="!testwordFake",
+            POS="!TESTposFake",
+            morph="!testmorphFake",
+            left_context="This is a left context",
+            right_context="This is a left context"
+        )
+        db.session.add(new_token)
+        db.session.commit()
 
     def search(self, form="", lemma="", pos="", morph=""):
 

@@ -5,22 +5,20 @@ from tests.test_selenium.base import CorpusSearchThroughFieldsBase
 class TestCorpusSearchThroughFields(CorpusSearchThroughFieldsBase):
     """ Test searching tokens through fields (Form, Lemma, POS, Morph) within a corpus """
     def test_search_with_complete_form(self):
-        # Search a form
+        """ make a search based on all fields at once"""
         rows = self.search(form="Martin", lemma="martin", pos="NOMpro", morph="")
         self.assertEqual(rows, [{'form': 'Martin', 'lemma': 'martin', 'morph': 'None', 'pos': 'NOMpro'}])
 
     def test_search_with_pagination(self):
+        """ Test the count of returned results among the different pages"""
         # Search a morph
         rows = self.search(lemma='*e*')
-        pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
-        pagination[-1].click()
         tokens = WordToken.query.filter(WordToken.lemma.like('%e%')).all()
-        print(len(rows), len(tokens))
         self.assertEqual(len(rows), len(tokens))
 
     def test_search_with_partial_form(self):
         """
-            Successivelity Search values in different the fields (form, lemma, POS, morph)
+            Successively Search values in different fields (form, lemma, POS, morph)
             This is a partial search: when fields are empty they are not part of the search
         """
 
@@ -63,17 +61,55 @@ class TestCorpusSearchThroughFields(CorpusSearchThroughFieldsBase):
 
         # Search a morph
         rows = self.search(morph='*None*')
-        pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
-        pagination[-1].click()
         tokens = WordToken.query.filter(WordToken.morph == 'None').all()
-        print(len(rows), len(tokens))
         self.assertEqual(len(rows), len(tokens))
 
     def test_search_with_combinations(self):
-        raise NotImplementedError
+        """ Search through different fields at the same time"""
+        rows = self.search(form="Martin", lemma="martin", pos="NOMpro", morph="")
+        self.assertEqual(rows, [{'form': 'Martin', 'lemma': 'martin', 'morph': 'None', 'pos': 'NOMpro'}])
+        rows = self.search(lemma="martin", pos="NOMpro", morph="")
+        self.assertIn({'form': 'Martin', 'lemma': 'martin', 'morph': 'None', 'pos': 'NOMpro'}, rows)
+        rows = self.search(form="Martin",  pos="NOMpro", morph="")
+        self.assertIn({'form': 'Martin', 'lemma': 'martin', 'morph': 'None', 'pos': 'NOMpro'}, rows)
+        rows = self.search(form="Martin", lemma="martin", morph="")
+        self.assertIn({'form': 'Martin', 'lemma': 'martin', 'morph': 'None', 'pos': 'NOMpro'}, rows)
 
     def test_search_with_like_operator(self):
-        raise NotImplementedError
+        # search with wildcard escaped
+        rows = self.search(form="Testword\*")
+        self.assertEqual(rows, [{'form': 'Testword*', 'lemma': 'testword*', 'morph': 'test*morph', 'pos': 'TEST*pos'}])
+
+        # search with wildcard as a suffix
+        rows = self.search(form="Testword*")
+        self.assertEqual(rows, [
+            {'form': 'Testword*', 'lemma': 'testword*', 'morph': 'test*morph', 'pos': 'TEST*pos'},
+            {'form': 'TestwordFake', 'lemma': 'testwordFake', 'morph': 'testmorphFake', 'pos': 'TESTposFake'}
+        ])
+
+        # search with wildcard as a prefix
+        rows = self.search(lemma="*le")
+        tokens = WordToken.query.filter(WordToken.lemma.like('%le')).all()
+        self.assertEqual(len(rows), len(tokens))
+
+        # search with wildcard both as a prefix and a suffix
+        rows = self.search(lemma="*ai*")
+        tokens = WordToken.query.filter(WordToken.lemma.like('%ai%')).all()
+        self.assertEqual(len(rows), len(tokens))
 
     def test_search_with_negation_operator(self):
-        raise NotImplementedError
+        # search with negation operator escaped
+        rows = self.search(form="\!TestwordFake")
+        self.assertEqual(rows, [{
+            'form': '!TestwordFake', 'lemma': '!testwordFake', 'morph': '!testmorphFake', 'pos': '!TESTposFake'
+        }])
+
+        # search with negation operator
+        rows = self.search(form="!Testword")
+        tokens = WordToken.query.filter(WordToken.lemma.notlike('!Testword')).all()
+        self.assertEqual(len(rows), len(tokens))
+
+    def test_search_with_negation_and_like_operator(self):
+        # searchs forms which do not contain the 'e' character
+        rows = self.search(form="!*e*")
+        self.assertTrue('e' not in ''.join([r['form'] for r in rows]))

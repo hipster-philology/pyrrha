@@ -59,13 +59,17 @@
         <div class="mb-3">
             <small class="form-text text-muted">* can be used to match partial words, eg. <b>ADV*</b></small>
             <small class="form-text text-muted">! can be used to negate a match, eg. <b>!PRE</b></small>
+            <small class="form-text text-muted">To search forms which do not contain 'e': <b>!*e*</b></small>
         </div>
 
-        <button type="submit" id="submit_search" class="btn btn-primary ">Submit</button>
+        <button type="submit" id="submit_search" class="btn btn-primary ">Search</button>
 
 
         {% if tokens %}
-            <div id="result_table" class="mt-5">
+            <div class="mt-5">
+                <h2>{{ total_result }} match{% if total_result > 1 %}es {% endif %} found</h2>
+            </div>
+            <div id="result_table" class="mt-3">
                 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.corpus_search_through_fields",
                         lemma=lemma, morph=morph, POS=POS, form=form) }}
 
