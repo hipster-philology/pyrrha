@@ -1,7 +1,5 @@
 from flask import request, jsonify, flash, redirect, url_for
 
-from app.utils import int_or, string_to_none
-from app.utils.forms import strip_or_none
 from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
 from .. import main
 from ...utils.tsv import StringDictReader
@@ -149,63 +147,3 @@ def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
         allowed_type=allowed_type,
         corpus=corpus
     )
-
-
-@main.route('/corpus/<int:corpus_id>/search', methods=["POST", "GET"])
-def corpus_search_through_fields(corpus_id):
-    """ Page to search tokens through fields (Form, POS, Lemma, Morph) within a corpus
-
-    :param corpus_id: Id of the corpus
-    """
-    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    value_filters = [WordToken.corpus == corpus_id]
-    kargs = {}
-
-    for name in ("lemma", "form", "POS", "morph"):
-
-        if request.method == "POST":
-            value = strip_or_none(request.form.get(name))
-        else:
-            value = strip_or_none(request.args.get(name))
-        kargs[name] = value
-
-        if value is not None and len(value) > 0:
-            # escape search operators
-            value = value.replace('%', '\%')
-            value = value.replace('\*', '¤$¤')
-            value = value.replace('\!', '¤$$¤')
-
-            value = string_to_none(value)
-            field = getattr(WordToken, name)
-            if value is not None and "*" in value:
-                value = value.replace("*", "%")
-                # unescape '\*'
-                value = value.replace('¤$¤', '*')
-
-                if value.startswith("!") and len(value) > 1:
-                    value = value[1:]
-                    value_filters.append(field.notlike(value, escape='\\'))
-                else:
-                    # unescape '\!'
-                    value = value.replace('¤$$¤', '!')
-                    value_filters.append(field.like(value, escape='\\'))
-            else:
-                # unescape '\*'
-                value = value.replace('¤$¤', '*')
-
-                if value is not None and value.startswith("!") and len(value) > 1:
-                    value = value[1:]
-                    value_filters.append(field != value)
-                else:
-                    # unescape '\!'
-                    value = value.replace('¤$$¤', '!')
-                    value_filters.append(field == value)
-
-    page = int_or(request.args.get("page"), 1)
-    per_page = int_or(request.args.get("limit"), 100)
-    tokens = WordToken.query.filter(*value_filters).order_by(WordToken.order_id)
-    total_result = len(tokens.all())
-    tokens = tokens.paginate(page=page, per_page=per_page)
-
-    return render_template_with_nav_info('main/corpus_search_through_fields.html',
-                                         corpus=corpus, tokens=tokens, total_result=total_result, **kargs)

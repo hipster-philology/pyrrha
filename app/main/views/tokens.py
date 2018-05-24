@@ -1,9 +1,11 @@
+import pprint
 from flask import request, jsonify, url_for
+from sqlalchemy.sql.elements import or_, and_
 
 from .utils import render_template_with_nav_info, request_wants_json
 from .. import main
 from ...models import WordToken, Corpus, ChangeRecord
-from ...utils.forms import string_to_none
+from ...utils.forms import string_to_none, strip_or_none
 from ...utils.pagination import int_or
 
 
@@ -149,3 +151,98 @@ def tokens_history(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
     tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 20))
     return render_template_with_nav_info('main/tokens_history.html', corpus=corpus, tokens=tokens)
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/search', methods=["POST", "GET"])
+def tokens_search_through_fields(corpus_id):
+    """ Page to search tokens through fields (Form, POS, Lemma, Morph) within a corpus
+
+    :param corpus_id: Id of the corpus
+    """
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    kargs = {}
+
+    # make a dict with values splitted for each OR operator
+    fields = {}
+    for name in ("lemma", "form", "POS", "morph"):
+        if request.method == "POST":
+            value = strip_or_none(request.form.get(name))
+        else:
+            value = strip_or_none(request.args.get(name))
+        # split values with the '|' OR operator but keep escaped '\|' ones
+        if value is None:
+            fields[name] = ""
+        else:
+            value = value.replace('\|', '¤$¤')
+            fields[name] = [v.replace('¤$¤', '|') for v in value.split('|')]
+        kargs[name] = value
+
+    # all search combinations
+    search_branches = [
+        {"lemma": lemma, "form": form, "POS": pos, "morph": morph}
+        for lemma in fields["lemma"]
+        for form in fields["form"]
+        for pos in fields["POS"]
+        for morph in fields["morph"]
+    ]
+
+    value_filters = []
+    # for each branch filter (= OR clauses if any)
+    for search_branch in search_branches:
+
+        branch_filters = [WordToken.corpus == corpus_id]
+        # for each field (lemma, pos, form, morph)
+        for name, value in search_branch.items():
+
+            if len(value) > 0:
+                value = value.replace(" ", "")
+                # escape search operators
+                value = value.replace('%', '\%')
+                value = value.replace('\*', '¤$¤')
+                value = value.replace('\!', '¤$$¤')
+
+                value = string_to_none(value)
+                field = getattr(WordToken, name)
+                # distinguish LIKE from EQ
+                if value is not None and "*" in value:
+                    value = value.replace("*", "%")
+                    # unescape '\*'
+                    value = value.replace('¤$¤', '*')
+
+                    if value.startswith("!") and len(value) > 1:
+                        value = value[1:]
+                        branch_filters.append(field.notlike(value, escape='\\'))
+                    else:
+                        # unescape '\!'
+                        value = value.replace('¤$$¤', '!')
+                        branch_filters.append(field.like(value, escape='\\'))
+                else:
+                    # unescape '\*'
+                    value = value.replace('¤$¤', '*')
+
+                    if value is not None and value.startswith("!") and len(value) > 1:
+                        value = value[1:]
+                        branch_filters.append(field != value)
+                    else:
+                        # unescape '\!'
+                        value = value.replace('¤$$¤', '!')
+                        branch_filters.append(field == value)
+
+        value_filters.append(branch_filters)
+
+    # there is at least one OR clause
+    if len(value_filters) > 1:
+        and_filters = [and_(*branch_filters) for branch_filters in value_filters]
+        flattened_filters = or_(*and_filters)
+        tokens = WordToken.query.filter(flattened_filters).order_by(WordToken.order_id)
+    else:
+        if len(value_filters) == 1:
+            value_filters = value_filters[0]
+        tokens = WordToken.query.filter(*value_filters).order_by(WordToken.order_id)
+
+    page = int_or(request.args.get("page"), 1)
+    per_page = int_or(request.args.get("limit"), 100)
+    tokens = tokens.paginate(page=page, per_page=per_page)
+
+    return render_template_with_nav_info('main/tokens_search_through_fields.html',
+                                         corpus=corpus, tokens=tokens, **kargs)

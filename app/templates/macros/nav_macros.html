@@ -16,7 +16,7 @@
                 <div class="dropdown-menu">
                   <a class="dropdown-item" id="overview_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">Overview</a>
                   <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.corpus_search_through_fields", corpus_id=corpus.id)}}">Search tokens</a>
+                  <a class="dropdown-item" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">Search tokens</a>
                   <a class="dropdown-item" id="corpus_{{corpus.id}}_edit_tokens" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
