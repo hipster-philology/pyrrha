@@ -1,9 +1,63 @@
-{% macro render_nav(corpora=[]) %}
+{# This macro is called on the user dashboards. In this case the administrator dashboard
+   at the route admin.index
+#}
+
+{% macro render_menu_items(endpoints) %}
+    {% for endpoint, name, icon in endpoints %}
+        <span class="nav-item"><a class="navbar-brand {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for(endpoint) }}">
+            {% if icon %}
+                <i class="{{ icon }} icon"></i>
+            {% endif %}
+            {{ name | safe }}
+        </a></span>
+    {% endfor %}
+{% endmacro %}
+
+{# This is called for all users (including anonymous users). It renders the basic left side of the
+   navigation bar. In the default case, the left hand side will read 'Flask-Base'. In the logged in
+   admin case, there will also be an item that links to admin/ route. I have added an example use of
+   render_menu_items.
+#}
+
+{% macro header_items(current_user) %}
+    {% set endpoints = [
+      ('main.index', config.APP_NAME, 'Pandora Post-Correction Editor')
+    ]%}
+    {% set user = [] %}
+    {% if current_user.is_authenticated %}
+      {% set user = ([(current_user.role.index + '.index', current_user.role.name + ' Dashboard', 'user')]) %}
+    {% endif %}
+    {{ render_menu_items( endpoints +  user ) }}
+{% endmacro %}
+
+{# This renders the right hand side of the navigation bar. If the user is logged in, it links to
+   manage their account and logout (account routes). Otherwise, it links to register and login.
+#}
+{% macro account_items(current_user) %}
+    {% if current_user.is_authenticated %}
+      {% set endpoints = [
+        ('account.manage', 'Your Account', 'settings'),
+        ('account.logout', 'Log out', 'sign out')
+      ] %}
+      {{ render_menu_items(endpoints) }}
+    {% else %}
+      {% set endpoints = [
+        ('account.register', 'Register', 'list layout'),
+        ('account.login', 'Log In', 'sign in')
+      ] %}
+      {{ render_menu_items(endpoints) }}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_nav(current_user, corpora=[]) %}
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <!--
       <a class="navbar-brand" href="{{url_for("main.index")}}">Pandora Post-Correction Editor</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
+      -->
+      {{ header_items(current_user) }}
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
@@ -16,7 +70,7 @@
                 <div class="dropdown-menu">
                   <a class="dropdown-item" id="overview_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">Overview</a>
                   <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.corpus_search_through_fields", corpus_id=corpus.id)}}">Search tokens</a>
+                  <a class="dropdown-item" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">Search tokens</a>
                   <a class="dropdown-item" id="corpus_{{corpus.id}}_edit_tokens" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a>
                   <a class="dropdown-item" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
@@ -33,6 +87,9 @@
             {% endfor %}
         </ul>
       </div>
+
+      {{ account_items(current_user) }}
+
     </nav>
 {% endmacro %}
 

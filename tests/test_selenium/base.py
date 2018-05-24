@@ -179,7 +179,7 @@ class TokenEdit2CorporaBase(TokenEditBase):
         super(TokenEditBase, self).addCorpus("floovant", *args, **kwargs)
 
 
-class CorpusSearchThroughFieldsBase(TestBase):
+class TokensSearchThroughFieldsBase(TestBase):
 
     CORPUS_ID = 1
 
@@ -207,10 +207,10 @@ class CorpusSearchThroughFieldsBase(TestBase):
             td.click(), td.clear(), td.send_keys(field_value)
 
     def setUp(self):
-        super(CorpusSearchThroughFieldsBase, self).setUp()
+        super(TokensSearchThroughFieldsBase, self).setUp()
         self.addCorpus(corpus="wauchier")
         new_token = WordToken(
-            corpus=CorpusSearchThroughFieldsBase.CORPUS_ID,
+            corpus=TokensSearchThroughFieldsBase.CORPUS_ID,
             order_id=1,
             form="Testword*",
             lemma="testword*",
@@ -221,7 +221,7 @@ class CorpusSearchThroughFieldsBase(TestBase):
         )
         db.session.add(new_token)
         new_token = WordToken(
-            corpus=CorpusSearchThroughFieldsBase.CORPUS_ID,
+            corpus=TokensSearchThroughFieldsBase.CORPUS_ID,
             order_id=2,
             form="TestwordFake",
             lemma="testwordFake",
@@ -233,7 +233,7 @@ class CorpusSearchThroughFieldsBase(TestBase):
         db.session.add(new_token)
 
         new_token = WordToken(
-            corpus=CorpusSearchThroughFieldsBase.CORPUS_ID,
+            corpus=TokensSearchThroughFieldsBase.CORPUS_ID,
             order_id=3,
             form="!TestwordFake",
             lemma="!testwordFake",
@@ -247,7 +247,7 @@ class CorpusSearchThroughFieldsBase(TestBase):
 
     def search(self, form="", lemma="", pos="", morph=""):
 
-        self.go_to_search_tokens_page(CorpusSearchThroughFieldsBase.CORPUS_ID, as_callback=False)
+        self.go_to_search_tokens_page(TokensSearchThroughFieldsBase.CORPUS_ID, as_callback=False)
 
         self.fill_filter_row(form, lemma, pos, morph)
 

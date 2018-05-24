@@ -14,6 +14,22 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     template_folder = os.path.join(basedir, "app", "templates")
     static_folder = os.path.join(basedir, "app", "statics")
+    # SQLALCHEMY_ECHO = True
+
+    # Email
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or True
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') or False
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+
+    # Admin account
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'password'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'flask-base-admin@example.com'
+    EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
+    EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
     @staticmethod
     def init_app(app):

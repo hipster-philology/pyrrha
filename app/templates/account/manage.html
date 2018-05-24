@@ -1,0 +1,51 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form_macros.html' as f %}
+{% import 'macros/check_password.html' as check %}
+
+{% set endpoints = [
+    ('account.manage', 'Account information'),
+    ('account.change_email_request', 'Change email address'),
+    ('account.change_password', 'Change password'),
+    ('account.logout', 'Log out')
+] %}
+
+{% macro navigation(items) %}
+    <div class="list-group">
+        {% for route, name in items %}
+            {% set href = url_for(route) %}
+            <a class="list-group-item {% if request.endpoint == route %}active{% endif %}" href="{{ href }}">
+                {{ name }}
+            </a>
+        {% endfor %}
+    </div>
+{% endmacro %}
+
+{% macro user_info(user) %}
+    <table class="table">
+        <tr><td>Full name</td><td>{{ '%s %s' % (user.first_name, user.last_name) }}</td></tr>
+        <tr><td>Email address</td><td>{{ user.email }}</td></tr>
+        <tr><td>Account type</td><td>{{ user.role.name }}</td></tr>
+    </table>
+{% endmacro %}
+
+{% block content %}
+    <div class="container">
+        <div>
+            <h2 class="mt-3 mb-5">
+                Account Settings
+                <small class="form-text">Manage your account settings and change your login information.</small>
+            </h2>
+        </div>
+        <div class="row">
+            {{ navigation(endpoints) }}
+            <div class="ml-3 col-sm-6">
+                {% if form %}
+                    {{ f.render_form(form) }}
+                {% else %}
+                    {{ user_info(user) }}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {{ check.password_check('new_password', 0) }}
+{% endblock %}

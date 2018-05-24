@@ -1,8 +1,8 @@
 from app.models import WordToken
-from tests.test_selenium.base import CorpusSearchThroughFieldsBase
+from tests.test_selenium.base import TokensSearchThroughFieldsBase
 
 
-class TestCorpusSearchThroughFields(CorpusSearchThroughFieldsBase):
+class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
     """ Test searching tokens through fields (Form, Lemma, POS, Morph) within a corpus """
     def test_search_with_complete_form(self):
         """ make a search based on all fields at once"""
@@ -109,7 +109,29 @@ class TestCorpusSearchThroughFields(CorpusSearchThroughFieldsBase):
         tokens = WordToken.query.filter(WordToken.lemma.notlike('!Testword')).all()
         self.assertEqual(len(rows), len(tokens))
 
+        # check complementarity coherence
+        rows_neg = self.search(lemma="!*e*")
+        rows = self.search(lemma="*e*")
+        rows_all = self.search()
+        self.assertTrue(len(rows_all) == len(rows + rows_neg))
+
     def test_search_with_negation_and_like_operator(self):
         # searchs forms which do not contain the 'e' character
         rows = self.search(form="!*e*")
+        self.assertTrue(len(rows) > 0)
         self.assertTrue('e' not in ''.join([r['form'] for r in rows]))
+
+    def test_search_with_or_operator(self):
+        # search with OR operator
+        rows = self.search(form="seint|seinz|Seinz|seinte")
+        rows_wildcard = self.search(form="sein*")
+        rows_lemma = self.search(lemma="saint")
+        self.assertTrue(rows_lemma == rows and rows == rows_wildcard)
+
+        # test combination with an other field
+        rows = self.search(lemma="m*", pos="NOMcom|NOMpro")
+        self.assertTrue(len(rows) == 9)
+
+        # test combination with an other field
+        rows = self.search(form="Martins|mere", lemma="martin|mere")
+        self.assertTrue(len(rows) == 3)
