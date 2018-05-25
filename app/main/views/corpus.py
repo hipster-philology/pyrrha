@@ -6,7 +6,6 @@ from ...utils.tsv import StringDictReader
 from werkzeug.exceptions import BadRequest
 from ...models import Corpus, WordToken
 
-
 AUTOCOMPLETE_LIMIT = 20
 
 
@@ -76,12 +75,12 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
         [
             format_api_like_reply(result, allowed_type)
             for result in WordToken.get_like(
-                corpus_id=corpus_id,
-                form=request.args.get("form"),
-                group_by=True,
-                type_like=allowed_type,
-                allowed_list=corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
-            ).limit(AUTOCOMPLETE_LIMIT)
+            corpus_id=corpus_id,
+            form=request.args.get("form"),
+            group_by=True,
+            type_like=allowed_type,
+            allowed_list=corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
+        ).limit(AUTOCOMPLETE_LIMIT)
             if result is not None
         ]
     )
@@ -148,5 +147,3 @@ def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
         allowed_type=allowed_type,
         corpus=corpus
     )
-
-
