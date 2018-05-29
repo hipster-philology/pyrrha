@@ -3,8 +3,6 @@ from flask import (
     abort,
     flash,
     redirect,
-    render_template,
-    request,
     url_for,
 )
 from flask_login import current_user, login_required
@@ -20,17 +18,17 @@ from app.admin.forms import (
 from app.decorators import admin_required
 from app.email import send_email
 from app.main.views.utils import render_template_with_nav_info
-from app.models import EditableHTML, Role, User
+from app.models import Role, User
 
 admin = Blueprint('admin', __name__)
 
 
-@admin.route('/')
+@admin.route('/dashboard', methods=['GET', 'POST'])
 @login_required
 @admin_required
-def index():
-    """Admin dashboard page."""
-    return render_template_with_nav_info('admin/index.html')
+def dashboard():
+    """admin dashboard page."""
+    return render_template_with_nav_info('admin/dashboard.html', current_user=current_user)
 
 
 @admin.route('/new-user', methods=['GET', 'POST'])
@@ -83,7 +81,7 @@ def invite_user():
         )
         flash('User {} successfully invited'.format(user.full_name()),
               'form-success')
-    return render_template('admin/new_user.html', form=form)
+    return render_template_with_nav_info('admin/new_user.html', form=form)
 
 
 @admin.route('/users')
@@ -93,8 +91,8 @@ def registered_users():
     """View all registered users."""
     users = User.query.all()
     roles = Role.query.all()
-    return render_template(
-        'admin/registered_users.html', users=users, roles=roles)
+    return render_template_with_nav_info(
+        'admin/registered_users.html', current_user=current_user, users=users, roles=roles)
 
 
 @admin.route('/user/<int:user_id>')
@@ -178,22 +176,3 @@ def delete_user(user_id):
     return redirect(url_for('admin.registered_users'))
 
 
-@admin.route('/_update_editor_contents', methods=['POST'])
-@login_required
-@admin_required
-def update_editor_contents():
-    """Update the contents of an editor."""
-
-    edit_data = request.form.get('edit_data')
-    editor_name = request.form.get('editor_name')
-
-    editor_contents = EditableHTML.query.filter_by(
-        editor_name=editor_name).first()
-    if editor_contents is None:
-        editor_contents = EditableHTML(editor_name=editor_name)
-    editor_contents.value = edit_data
-
-    db.session.add(editor_contents)
-    db.session.commit()
-
-    return 'OK', 200

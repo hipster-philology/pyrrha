@@ -2,10 +2,30 @@ import csv
 import io
 
 import unidecode
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import backref
 from werkzeug.exceptions import BadRequest
 
+from app.models.user import User
 from .. import db
 from ..utils.forms import strip_or_none
+
+
+class CorpusUser(db.Model):
+    """
+        Association proxy that link users to corpora
+        :param corpus_id: a corpus ID
+        :param user_id: a user ID
+    """
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
+
+    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete-orphan"))
+    user = db.relationship(User)
+
+    def __init__(self, user=None, corpus=None):
+        self.user = user
+        self.corpus = corpus
 
 
 class Corpus(db.Model):
@@ -26,6 +46,15 @@ class Corpus(db.Model):
     name = db.Column(db.String(64), unique=True)
     context_left = db.Column(db.SmallInteger, default=3)
     context_right = db.Column(db.SmallInteger, default=3)
+
+    users = association_proxy('corpus_users', 'user')
+
+    def has_access(self, user):
+        cu = CorpusUser.query.filter(
+            CorpusUser.user_id == user.id,
+            CorpusUser.corpus_id == self.id
+        ).first()
+        return cu is not None
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part

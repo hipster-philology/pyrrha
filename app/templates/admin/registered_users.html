@@ -1,89 +1,24 @@
 {% extends 'layouts/base.html' %}
+{% import 'macros/dashboard_macros.html' as dashboard %}
 
 {% block content %}
     <div class="ui stackable grid container">
         <div class="sixteen wide tablet twelve wide computer centered column">
-            <a class="ui basic compact button" href="{{ url_for('admin.index') }}">
+            <a class="ui basic compact button" href="{{ url_for('admin.dashboard') }}">
                 <i class="caret left icon"></i>
                 Back to dashboard
             </a>
-            <h2 class="ui header mt-3 mb-5">
+            <h2 class="mt-3 mb-5">
                 Registered Users
                 <small class="form-text">
                     View and manage currently registered users.
                 </small>
             </h2>
 
-            <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <select class="custom-select" id="select-role">
-                        Account type
-
-                        <option class="dropdown-item" value="all">All account types</option>
-                        {% for r in roles %}
-                            <option value="{{ r.name }}">{{ r.name }}s</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                   <input id="search-users" type="text" class="form-control"
-                          aria-label="Text input with dropdown button" placeholder="Search users…">
-                </div>
-            </div>
-
-
-             <table class="table table-hover">
-                    <thead>
-                    <tr>
-                        <th scope="col">First name</th>
-                        <th scope="col">Last name</th>
-                        <th scope="col">Email address</th>
-                        <th scope="col">Account type</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {% for u in users | sort(attribute='last_name') %}
-                        <tr style="cursor: pointer" onclick="window.location.href = '{{ url_for('admin.user_info', user_id=u.id) }}';">
-
-                            <td>{{ u.first_name }}</td>
-                            <td>{{ u.last_name }}</td>
-                            <td>{{ u.email }}</td>
-                            <td class="user role">{{ u.role.name }}</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-             </table>
+            {{ dashboard.search_user(roles) }}
+            {{ dashboard.users_table(current_user, users, redirect=True) }}
         </div>
     </div>
 
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('#search-users').keyup(function () {
-                var searchText = $(this).val();
-                if (searchText.length > 0) {
-                    $('tbody td:contains(' + searchText + ')').addClass('positive');
-                    $('td.positive').not(':contains(' + searchText + ')').removeClass('positive');
-                    $('tbody td').not(':contains(' + searchText + ')').closest('tr').addClass('hidden').hide();
-                    $('tr.hidden:contains(' + searchText + ')').removeClass('hidden').show();
-                } else {
-                    $('td.positive').removeClass('positive');
-                    $('tr.hidden').removeClass('hidden').show();
-                }
-            });
-
-            $('#select-role').change( function() {
-                    var text = $(this).val();
-                    if (text === 'all') {
-                        $('tr').removeClass('hidden').show();
-                    }
-                    else {
-                        $('td.user.role').each(function() {
-                            if (text.indexOf($(this).text()) !== -1)
-                                $(this).closest('tr').removeClass('hidden').show();
-                            else
-                                $(this).closest('tr').addClass('hidden').hide();
-                        });
-                    }
-            });
-        });
-    </script>
+    {{ dashboard.insert_search_script() }}
 {% endblock %}

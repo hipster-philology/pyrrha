@@ -5,7 +5,7 @@ from flask import (
     render_template,
     request,
     url_for,
-)
+    abort)
 from flask_login import (
     current_user,
     login_required,
@@ -22,12 +22,55 @@ from app.account.forms import (
     LoginForm,
     RegistrationForm,
     RequestResetPasswordForm,
-    ResetPasswordForm,
-)
+    ResetPasswordForm)
 from app.email import send_email
-from app.models import User
+from app.main.views.utils import render_template_with_nav_info
+from app.models import User, Role
+from app.models.linguistic import CorpusUser, Corpus
 
 account = Blueprint('account', __name__)
+
+
+@account.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
+@login_required
+def manage_corpus_users(corpus_id):
+    """
+         Save or display corpus accesses
+     """
+    corpus = Corpus.query.filter(Corpus.id == corpus_id).first()
+
+    if corpus.has_access(current_user) or current_user.is_admin():
+        if request.method == "POST":
+            users = [
+                User.query.filter(User.id == user_id).first()
+                for user_id in [int(u) for u in request.form.getlist("user_id")]
+            ]
+            try:
+                for cu in CorpusUser.query.filter(CorpusUser.corpus_id == corpus_id).all():
+                    db.session.delete(cu)
+                for cu in [CorpusUser(corpus=corpus, user=user) for user in users]:
+                    db.session.add(cu)
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+
+            return redirect(url_for('%s.dashboard' % current_user.role.index))
+        else:
+            users = User.query.all()
+            roles = Role.query.all()
+            return render_template_with_nav_info(
+                'account/manage_corpus_users.html',
+                corpus=corpus, current_user=current_user, users=users, roles=roles
+            )
+    else:
+        return abort(403)
+
+
+@account.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    """user dashboard page."""
+    return render_template_with_nav_info('account/dashboard.html', current_user=current_user)
 
 
 @account.route('/login', methods=['GET', 'POST'])
@@ -43,7 +86,7 @@ def login():
             return redirect(request.args.get('next') or url_for('main.index'))
         else:
             flash('Invalid email or password.', 'form-error')
-    return render_template('account/login.html', form=form)
+    return render_template_with_nav_info('account/login.html', form=form)
 
 
 @account.route('/register', methods=['GET', 'POST'])
@@ -70,7 +113,7 @@ def register():
         flash('A confirmation link has been sent to {}.'.format(user.email),
               'warning')
         return redirect(url_for('main.index'))
-    return render_template('account/register.html', form=form)
+    return render_template_with_nav_info('account/register.html', form=form)
 
 
 @account.route('/logout')
@@ -86,7 +129,7 @@ def logout():
 @login_required
 def manage():
     """Display a user's account information."""
-    return render_template('account/manage.html', user=current_user, form=None)
+    return render_template_with_nav_info('account/manage.html', user=current_user, form=None)
 
 
 @account.route('/reset-password', methods=['GET', 'POST'])
@@ -112,7 +155,7 @@ def reset_password_request():
         flash('A password reset link has been sent to {}.'.format(
             form.email.data), 'warning')
         return redirect(url_for('account.login'))
-    return render_template('account/reset_password.html', form=form)
+    return render_template_with_nav_info('account/reset_password.html', form=form)
 
 
 @account.route('/reset-password/<token>', methods=['GET', 'POST'])
@@ -133,7 +176,7 @@ def reset_password(token):
             flash('The password reset link is invalid or has expired.',
                   'form-error')
             return redirect(url_for('main.index'))
-    return render_template('account/reset_password.html', form=form)
+    return render_template_with_nav_info('account/reset_password.html', form=form)
 
 
 @account.route('/manage/change-password', methods=['GET', 'POST'])
@@ -150,7 +193,7 @@ def change_password():
             return redirect(url_for('main.index'))
         else:
             flash('Original password is invalid.', 'form-error')
-    return render_template('account/manage.html', form=form)
+    return render_template_with_nav_info('account/manage.html', form=form)
 
 
 @account.route('/manage/change-email', methods=['GET', 'POST'])
@@ -171,14 +214,14 @@ def change_email_request():
                 template='account/email/change_email',
                 # current_user is a LocalProxy, we want the underlying user
                 # object
-                user=current_user._get_current_object(),
+                user=current_user.get_current_object(),
                 change_email_link=change_email_link)
             flash('A confirmation link has been sent to {}.'.format(new_email),
                   'warning')
             return redirect(url_for('main.index'))
         else:
             flash('Invalid email or password.', 'form-error')
-    return render_template('account/manage.html', form=form)
+    return render_template_with_nav_info('account/manage.html', form=form)
 
 
 @account.route('/manage/change-email/<token>', methods=['GET', 'POST'])
@@ -204,7 +247,7 @@ def confirm_request():
         subject='Confirm Your Account',
         template='account/email/confirm',
         # current_user is a LocalProxy, we want the underlying user object
-        user=current_user._get_current_object(),
+        user=current_user.get_current_object(),
         confirm_link=confirm_link)
     flash('A new confirmation link has been sent to {}.'.format(
         current_user.email), 'warning')
@@ -288,4 +331,4 @@ def unconfirmed():
     """Catch users with unconfirmed emails."""
     if current_user.is_anonymous or current_user.confirmed:
         return redirect(url_for('main.index'))
-    return render_template('account/unconfirmed.html')
+    return render_template_with_nav_info('account/unconfirmed.html')

@@ -5,7 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    APP_NAME = 'Pandora PostCorrection Editor'
+    APP_NAME = 'Pandora Post-Correction Editor'
     if os.environ.get('SECRET_KEY'):
         SECRET_KEY = os.environ.get('SECRET_KEY')
     else:
@@ -17,7 +17,7 @@ class Config:
     # SQLALCHEMY_ECHO = True
 
     # Email
-    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.gmail.com'
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
     MAIL_PORT = 587
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or True
     MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') or False
@@ -26,8 +26,8 @@ class Config:
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
 
     # Admin account
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'password'
-    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'flask-base-admin@example.com'
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
@@ -43,6 +43,20 @@ class DevelopmentConfig(Config):
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
+    # Email
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.sendgrid.net'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or True
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') or False
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'apikey'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or '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'
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'password'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'flask-base-admin@example.com'
+    EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
+    EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
+
 
 class TestConfig(Config):
     DEBUG = True
@@ -50,6 +64,21 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
+
+    # Email
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.sendgrid.net'
+    MAIL_PORT = 587
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or True
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') or False
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'apikey'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or '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'
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'password'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'flask-base-admin@example.com'
+    EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
+    EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
+
 
 
 config = {

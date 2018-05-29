@@ -1,0 +1,21 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/dashboard_macros.html' as dashboard %}
+
+
+{% block content %}
+    <div class="container">
+        <div class="list-group">
+            <a href="#" class="list-group-item active">
+                <h2>Admin Dashboard</h2>
+            </a>
+                    {{ dashboard.dashboard_option('Registered Users', 'admin.registered_users',
+                                    description='View and manage user accounts', icon='users icon') }}
+                    {{ dashboard.dashboard_option('Add New User', 'admin.new_user',
+                                    description='Create a new user account', icon='add user icon') }}
+                    {{ dashboard.dashboard_option('Invite New User', 'admin.invite_user',
+                                    description='Invites a new user to create their own account', icon='add user icon') }}
+
+        </div>
+        {{ dashboard.corpora_users(current_user, corpora) }}
+    </div>
+{% endblock %}

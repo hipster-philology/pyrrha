@@ -1,3 +1,4 @@
+from app.models import Role
 from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier, WauchierAllowedMorph
 from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph
 import copy
@@ -74,3 +75,11 @@ def add_corpus(
         db.session.add(z)
     db.session.commit()
     time.sleep(1)
+
+def add_default_roles(db):
+    """
+    add default roles to the db
+    :param db:
+    :return:
+    """
+    Role.insert_roles()

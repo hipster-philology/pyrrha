@@ -25,9 +25,9 @@
     ]%}
     {% set user = [] %}
     {% if current_user.is_authenticated %}
-      {% set user = ([(current_user.role.index + '.index', current_user.role.name + ' Dashboard', 'user')]) %}
+      {% set user = ([(current_user.role.index + '.dashboard', 'Dashboard', 'user')]) %}
     {% endif %}
-    {{ render_menu_items( endpoints +  user ) }}
+    {{ render_menu_items( endpoints + user ) }}
 {% endmacro %}
 
 {# This renders the right hand side of the navigation bar. If the user is logged in, it links to

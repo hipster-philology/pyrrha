@@ -1,0 +1,115 @@
+{% macro search_user(roles) %}
+    <div class="input-group mb-3">
+        <div class="input-group-prepend">
+            <select class="custom-select" id="select-role">
+                Account type
+
+                <option class="dropdown-item" value="all">All account types</option>
+                {% for r in roles %}
+                    <option value="{{ r.name }}">{{ r.name }}s</option>
+                {% endfor %}
+            </select>
+        </div>
+        <input id="search-users" type="text" class="form-control"
+               aria-label="Text input with dropdown button" placeholder="Search users…">
+    </div>
+{% endmacro %}
+
+{% macro users_table(current_user, users, redirect=False) %}
+    <table class="table table-hover" id="users-table">
+        <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">First name</th>
+            <th scope="col">Last name</th>
+            {% if current_user.is_admin() %}
+                <th scope="col">Email address</th>
+            {% endif %}
+            <th scope="col">Account type</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for u in users | sort(attribute='last_name') %}
+            <tr style="cursor: pointer"
+                    {% if current_user.is_admin() and redirect %}
+                onclick="window.location.href = '{{ url_for('admin.user_info', user_id=u.id) }}';"
+                    {% endif %} >
+                <td>{{ u.id }}</td>
+                <td>{{ u.first_name }}</td>
+                <td>{{ u.last_name }}</td>
+                {% if current_user.is_admin() %}
+                    <td>{{ u.email }}</td>
+                {% endif %}
+                <td class="user role">{{ u.role.name }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
+
+{% macro insert_search_script() %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('#search-users').keyup(function () {
+                var searchText = $(this).val();
+                if (searchText.length > 0) {
+                    $('#users-table tbody td:contains(' + searchText + ')').addClass('positive');
+                    $('#users-table td.positive').not(':contains(' + searchText + ')').removeClass('positive');
+                    $('#users-table tbody td').not(':contains(' + searchText + ')').closest('tr').addClass('hidden').hide();
+                    $('#users-table tr.hidden:contains(' + searchText + ')').removeClass('hidden').show();
+                } else {
+                    $('#users-table td.positive').removeClass('positive');
+                    $('#users-table tr.hidden').removeClass('hidden').show();
+                }
+            });
+
+            $('#select-role').change(function () {
+                var text = $(this).val();
+                if (text === 'all') {
+                    $('#users-table tr').removeClass('hidden').show();
+                }
+                else {
+                    $('#users-table td.user.role').each(function () {
+                        if (text.indexOf($(this).text()) !== -1)
+                            $(this).closest('tr').removeClass('hidden').show();
+                        else
+                            $(this).closest('tr').addClass('hidden').hide();
+                    });
+                }
+            });
+        });
+    </script>
+{% endmacro %}
+
+{% macro dashboard_option(title, endpoint, args={},description=None, icon=None) %}
+    <a href="{{ url_for(endpoint, **args) }}" class="list-group-item list-group-item-action">
+        <div class="content">
+            {{ title }}
+            {% if description is not none %}
+                <small class="form-text">
+                    {{ description }}
+                </small>
+            {% endif %}
+        </div>
+    </a>
+{% endmacro %}
+
+
+{% macro corpora_users(current_user, corpora) %}
+    <div class="mt-5">
+        <h2>View and manage corpora users</h2>
+        <p class="form-text">Add or remove corpus access for users</p>
+
+        <div class="list-group">
+            <a href="#" class="list-group-item active">
+                <h2>Corpora</h2>
+            </a>
+            {% for corpus in corpora %}
+                {% if corpus.has_access(current_user) or current_user.is_admin() %}
+                    {{ dashboard_option(corpus.name, 'account.manage_corpus_users', args={"corpus_id": corpus.id}) }}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+{% endmacro %}

@@ -1,0 +1,135 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/dashboard_macros.html' as dashboard %}
+
+{% block content %}
+    <div class="container" id="main-container">
+        <form method="POST" id="accesses-form"
+              action="{{ url_for("account.manage_corpus_users", corpus_id=corpus.id) }}">
+            <div class="mt-5">
+                <h2>View and manage corpus users</h2>
+                <p class="form-text">Add or remove corpus access for users</p>
+                <div class="container">
+                    <div>
+                        <h2 class="mt-3 mb-3">
+                            <a href="{{ url_for("main.corpus_get", corpus_id=corpus.id) }}">{{ corpus.name }}</a>
+                        </h2>
+                    </div>
+                    <table class="table" id="accesses-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">First name</th>
+                            <th scope="col">Last name</th>
+                            <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for corpus_user in corpus.users | sort(attribute='last_name') %}
+                            <tr>
+                                <td class="">
+                                    {{ corpus_user.id }}
+                                </td>
+                                <td class="">
+                                    {{ corpus_user.first_name }}
+                                </td>
+                                <td class="">
+                                    {{ corpus_user.last_name }}
+                                </td>
+                                <td>
+                                    <i class="fa fa-trash-o" aria-hidden="true" style="cursor: pointer"></i>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <div class="container mt-3">
+                        <div class="row">
+
+                            <div class="col-md-8" style="padding: 0;">
+                                <h3 class="mt-3">Add user</h3>
+                                {{ dashboard.search_user(roles) }}
+                                {{ dashboard.users_table(current_user, users, redirect=False) }}
+                            </div>
+                            <div class="col"></div>
+                            <div class="col"></div>
+                        </div>
+                    </div>
+
+
+                </div>
+            </div>
+            <div id="hidden-inputs"></div>
+            <input type="button" class="mt-5 mb-5 btn btn-primary" tabindex="-1" role="button" aria-disabled="true"
+                   value="Save modifications" id="accesses-form-submit"/>
+        </form>
+    </div>
+
+    {{ dashboard.insert_search_script() }}
+
+    <script type="text/javascript">
+        function add_access(user_data) {
+
+            const user_id = $(user_data[0]).html().trim();
+            let already_added = false;
+
+            for (const tr of $("#accesses-table tr")) {
+                const tds = $(tr).find('td');
+                if (tds.length > 0) {
+                    if ($(tds[0]).html().trim() === user_id) {
+                        already_added = true;
+                        break;
+                    }
+                }
+            }
+
+            // if clicked user is not already present in the users-table
+            if (!already_added) {
+                const firstname = $(user_data[1]).html().trim();
+                const lastname = $(user_data[2]).html().trim();
+
+                let new_row = "<tr>";
+                new_row += "<td>" + user_id + "</td>";
+                new_row += "<td>" + firstname + "</td>";
+                new_row += "<td>" + lastname + "</td>";
+                new_row += '<td><i class="fa fa-trash-o" aria-hidden="true" style="cursor: pointer"></i></td>';
+                new_row += "</tr>";
+                $("#accesses-table tr:last").after(new_row);
+
+                $("#accesses-table tr:last td i.fa-trash-o").click(function () {
+                    remove_access($(this).closest("tr"));
+                });
+            }
+        }
+
+        function remove_access(tr) {
+            $(tr).remove();
+        }
+
+        $(document).ready(function () {
+            $('#users-table tr').click(function () {
+                add_access($(this).find('td'));
+            });
+
+            $("#accesses-table td i.fa-trash-o").click(function () {
+                remove_access($(this).closest("tr"));
+            });
+
+            // set the hidden inputs with the users id
+            $('#accesses-form-submit').click(function () {
+                // reset the hidden inputs
+                $("#hidden-inputs").empty();
+                // add children
+                $('#accesses-table tr ').each(function () {
+                    const id_tds = $(this).find('td:first');
+                    for (const id of id_tds) {
+                        $("#hidden-inputs").append(
+                            "<input type='hidden' name='user_id' value='"+id.textContent+"'/>"
+                        );
+                    }
+                });
+                //submit
+                $('#accesses-form').submit();
+            });
+        });
+    </script>
+{% endblock %}
