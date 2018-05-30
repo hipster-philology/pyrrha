@@ -116,7 +116,7 @@
             {% for corpus in corpora %}
                 {% if corpus.has_access(current_user) %}
                     {{ dashboard_option(corpus.name,
-                                        'account.manage_corpus_users', args={"corpus_id": corpus.id},
+                                        'main.manage_corpus_users', args={"corpus_id": corpus.id},
                                         icon="fa fa-users") }}
                 {% endif %}
             {% endfor %}

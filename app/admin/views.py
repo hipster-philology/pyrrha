@@ -23,14 +23,6 @@ from app.models import Role, User
 admin = Blueprint('admin', __name__)
 
 
-@admin.route('/dashboard', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def dashboard():
-    """admin dashboard page."""
-    return render_template_with_nav_info('admin/dashboard.html', current_user=current_user)
-
-
 @admin.route('/new-user', methods=['GET', 'POST'])
 @login_required
 @admin_required

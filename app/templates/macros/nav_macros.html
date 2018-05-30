@@ -25,7 +25,7 @@
     ]%}
     {% set user = [] %}
     {% if current_user.is_authenticated %}
-      {% set user = ([(current_user.role.index + '.dashboard', 'Dashboard', 'fa fa-bars')]) %}
+      {% set user = ([('main.dashboard', 'Dashboard', 'fa fa-bars')]) %}
     {% endif %}
     {{ render_menu_items( endpoints + user ) }}
 {% endmacro %}

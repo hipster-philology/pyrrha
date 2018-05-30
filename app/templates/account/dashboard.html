@@ -1,8 +1,0 @@
-{% extends 'layouts/base.html' %}
-{% import 'macros/dashboard_macros.html' as dashboard %}
-
-{% block content %}
-    <div class="container">
-        {{ dashboard.corpora_users(current_user,  corpora) }}
-    </div>
-{% endblock %}

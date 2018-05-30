@@ -2,7 +2,6 @@ from flask import request, jsonify, flash, redirect, url_for, abort
 from flask_login import current_user, login_required
 
 from app import db
-from app.models.user import AnonymousUser
 from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
 from .. import main
 from ...utils.tsv import StringDictReader

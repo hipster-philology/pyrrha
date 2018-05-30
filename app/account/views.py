@@ -4,8 +4,7 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for,
-    abort)
+    url_for)
 from flask_login import (
     current_user,
     login_required,
@@ -25,53 +24,9 @@ from app.account.forms import (
     ResetPasswordForm)
 from app.email import send_email
 from app.main.views.utils import render_template_with_nav_info
-from app.models import User, Role
-from app.models.linguistic import CorpusUser, Corpus
+from app.models import User
 
 account = Blueprint('account', __name__)
-
-
-@account.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
-@login_required
-def manage_corpus_users(corpus_id):
-    """
-         Save or display corpus accesses
-     """
-    corpus = Corpus.query.filter(Corpus.id == corpus_id).first()
-
-    if corpus.has_access(current_user) or current_user.is_admin():
-        if request.method == "POST":
-            users = [
-                User.query.filter(User.id == user_id).first()
-                for user_id in [int(u) for u in request.form.getlist("user_id")]
-            ]
-            try:
-                for cu in CorpusUser.query.filter(CorpusUser.corpus_id == corpus_id).all():
-                    db.session.delete(cu)
-                for cu in [CorpusUser(corpus=corpus, user=user) for user in users]:
-                    db.session.add(cu)
-                db.session.commit()
-                flash('Modifications have been saved.', 'success')
-            except Exception as e:
-                db.session.rollback()
-
-            return redirect(url_for('%s.dashboard' % current_user.role.index))
-        else:
-            users = User.query.all()
-            roles = Role.query.all()
-            return render_template_with_nav_info(
-                'account/manage_corpus_users.html',
-                corpus=corpus, current_user=current_user, users=users, roles=roles
-            )
-    else:
-        return abort(403)
-
-
-@account.route('/dashboard', methods=['GET', 'POST'])
-@login_required
-def dashboard():
-    """user dashboard page."""
-    return render_template_with_nav_info('account/dashboard.html', current_user=current_user)
 
 
 @account.route('/login', methods=['GET', 'POST'])
@@ -248,10 +203,9 @@ def confirm_request():
         subject='Confirm Your Account',
         template='account/email/confirm',
         # current_user is a LocalProxy, we want the underlying user object
-        user=current_user.get_current_object(),
+        user=current_user._get_current_object(),
         confirm_link=confirm_link)
-    flash('A new confirmation link has been sent to {}.'.format(
-        current_user.email), 'warning')
+    flash('A new confirmation link has been sent to {}.'.format(current_user.email), 'warning')
     return redirect(url_for('main.index'))
 
 
@@ -325,6 +279,7 @@ def before_request():
             and request.endpoint[:8] != 'account.' \
             and request.endpoint != 'static':
         return redirect(url_for('account.unconfirmed'))
+
 
 
 @account.route('/unconfirmed')

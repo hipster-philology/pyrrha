@@ -5,8 +5,8 @@ from flask_mail import Message
 
 from app import mail, create_app
 
-
 def send_email(recipient, subject, template, **kwargs):
+    print(os.environ.get('FLASK_CONFIG'), os.environ.get('FLASK_CONFIG') or 'prod')
     app = create_app(os.environ.get('FLASK_CONFIG') or 'prod')
     with app.app_context():
         msg = Message(
