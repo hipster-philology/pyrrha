@@ -1,7 +1,7 @@
 import click
 import os
 
-from tests.db_fixtures import add_default_roles
+from app.models import Role, User
 from . import create_app, db
 from .models import (
     Corpus,
@@ -42,6 +42,10 @@ def make_cli():
         """
         with app.app_context():
             db.create_all()
+
+            Role.add_default_roles()
+            User.add_default_users()
+
             db.session.commit()
             click.echo("Created the database")
 
@@ -53,6 +57,10 @@ def make_cli():
         with app.app_context():
             db.drop_all()
             db.create_all()
+
+            Role.add_default_roles()
+            User.add_default_users()
+
             db.session.commit()
             click.echo("Dropped then recreated the database")
 
@@ -72,7 +80,6 @@ def make_cli():
                 with_allowed_lemma=True, partial_allowed_lemma=False,
                 with_allowed_pos=True, partial_allowed_pos=False,
                 with_allowed_morph=True)
-            add_default_roles(db)
             click.echo("Loaded fixtures to the database")
 
     @click.command("run")

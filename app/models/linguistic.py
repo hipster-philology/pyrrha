@@ -50,11 +50,19 @@ class Corpus(db.Model):
     users = association_proxy('corpus_users', 'user')
 
     def has_access(self, user):
-        cu = CorpusUser.query.filter(
-            CorpusUser.user_id == user.id,
-            CorpusUser.corpus_id == self.id
-        ).first()
-        return cu is not None
+        """
+        Can this corpus be accessed by the given user ?
+        :param user:
+        :return: True or False
+        """
+        access = True
+        if not user.is_admin():
+            cu = CorpusUser.query.filter(
+                CorpusUser.user_id == user.id,
+                CorpusUser.corpus_id == self.id
+            ).first()
+            access = cu is not None
+        return access
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
@@ -624,9 +632,11 @@ class WordToken(db.Model):
         return csv_file.getvalue()
 
     @staticmethod
-    def update(corpus_id, token_id, lemma=None, POS=None, morph=None):
+    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None):
         """ Update a given token with lemma, POS and morph value
 
+        :param user_id: ID of the user who performs the update
+        :type user_id: int
         :param corpus_id: Id of the corpus
         :type corpus_id: int
         :param token_id: Id of the token
@@ -640,6 +650,7 @@ class WordToken(db.Model):
         :return: Current token, Record Token
         :rtype: (WordToken, ChangeRecord)
         """
+        user = User.query.filter_by(**{"id": user_id}).first_or_404()
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
         # Strip if things are not None
@@ -670,7 +681,7 @@ class WordToken(db.Model):
         if not morph:
             morph = token.morph
 
-        record = ChangeRecord.track(token, lemma, POS, morph)
+        record = ChangeRecord.track(user, token, lemma, POS, morph)
 
         token.lemma = lemma
         token.label_uniform = unidecode.unidecode(lemma)
@@ -792,6 +803,7 @@ class ChangeRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
     word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
     POS = db.Column(db.String(64))
@@ -801,6 +813,7 @@ class ChangeRecord(db.Model):
     morph_new = db.Column(db.String(64))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     word_token = db.relationship('WordToken', lazy='select')
+    user = db.relationship(User, lazy='select')
 
     @property
     def similar_remaining(self):
@@ -812,7 +825,7 @@ class ChangeRecord(db.Model):
         return WordToken.get_similar_to_record(self).count()
 
     @staticmethod
-    def track(token, lemma_new, POS_new, morph_new):
+    def track(user, token, lemma_new, POS_new, morph_new):
         """ Save the history of change for the token
 
         :param token: Token that has been updated
@@ -827,6 +840,7 @@ class ChangeRecord(db.Model):
         :rtype: ChangeRecord
         """
         tracked = ChangeRecord(
+            user_id=user.id,
             corpus=token.corpus, word_token_id=token.id,
             form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph,
             lemma_new=lemma_new, POS_new=POS_new, morph_new=morph_new

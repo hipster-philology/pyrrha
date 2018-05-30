@@ -6,7 +6,7 @@
     {% for endpoint, name, icon in endpoints %}
         <span class="nav-item"><a class="navbar-brand {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for(endpoint) }}">
             {% if icon %}
-                <i class="{{ icon }} icon"></i>
+                <i class="{{ icon }}"  aria-hidden="true"></i>
             {% endif %}
             {{ name | safe }}
         </a></span>
@@ -21,11 +21,11 @@
 
 {% macro header_items(current_user) %}
     {% set endpoints = [
-      ('main.index', config.APP_NAME, 'Pandora Post-Correction Editor')
+      ('main.index', config.APP_NAME, 'fa fa-home')
     ]%}
     {% set user = [] %}
     {% if current_user.is_authenticated %}
-      {% set user = ([(current_user.role.index + '.dashboard', 'Dashboard', 'user')]) %}
+      {% set user = ([(current_user.role.index + '.dashboard', 'Dashboard', 'fa fa-bars')]) %}
     {% endif %}
     {{ render_menu_items( endpoints + user ) }}
 {% endmacro %}
@@ -36,14 +36,14 @@
 {% macro account_items(current_user) %}
     {% if current_user.is_authenticated %}
       {% set endpoints = [
-        ('account.manage', 'Your Account', 'settings'),
-        ('account.logout', 'Log out', 'sign out')
+        ('account.manage', 'Your Account', 'fa fa-user-circle'),
+        ('account.logout', 'Log out', 'fa fa-sign-out')
       ] %}
       {{ render_menu_items(endpoints) }}
     {% else %}
       {% set endpoints = [
-        ('account.register', 'Register', 'list layout'),
-        ('account.login', 'Log In', 'sign in')
+        ('account.register', 'Register', 'fa fa-user-plus'),
+        ('account.login', 'Log In', 'fa fa-sign-in')
       ] %}
       {{ render_menu_items(endpoints) }}
     {% endif %}
@@ -61,9 +61,11 @@
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
+          {% if current_user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link" id="new_corpus_link" href="{{url_for("main.corpus_new")}}">New Corpus</a>
           </li>
+          {% endif %}
             {% for corpus in corpora %}
               <li class="nav-item dropdown">
                 <a id="toggle_corpus_{{corpus.id}}" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{corpus.name}}</a>

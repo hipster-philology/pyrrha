@@ -3,10 +3,14 @@
 
 {% block content %}
     <div class="container" id="main-container">
+        <div class="mt-2" >
+            <a href="{{ url_for(".dashboard") }}">Back to dashboard</a>
+        </div>
+
         <form method="POST" id="accesses-form"
               action="{{ url_for("account.manage_corpus_users", corpus_id=corpus.id) }}">
-            <div class="mt-5">
-                <h2>View and manage corpus users</h2>
+            <div class="mt-3">
+                <h2><i class="fa fa-users mr-2"></i> View and manage corpus users</h2>
                 <p class="form-text">Add or remove corpus access for users</p>
                 <div class="container">
                     <div>
@@ -45,8 +49,10 @@
                     <div class="container mt-3">
                         <div class="row">
 
-                            <div class="col-md-8" style="padding: 0;">
-                                <h3 class="mt-3">Add user</h3>
+                            <div class="col-md-9" style="padding: 0;">
+                                <h3 class="mt-3"><i class="fa fa-user-plus mr-2"></i>Grant access to a user</h3>
+                                                            <p>The user will be able to use the post-correction tools but also grant and remove accesses for this corpus</p>
+
                                 {{ dashboard.search_user(roles) }}
                                 {{ dashboard.users_table(current_user, users, redirect=False) }}
                             </div>

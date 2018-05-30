@@ -51,6 +51,7 @@ def manage_corpus_users(corpus_id):
                 for cu in [CorpusUser(corpus=corpus, user=user) for user in users]:
                     db.session.add(cu)
                 db.session.commit()
+                flash('Modifications have been saved.', 'success')
             except Exception as e:
                 db.session.rollback()
 

@@ -83,13 +83,22 @@
 
 {% macro dashboard_option(title, endpoint, args={},description=None, icon=None) %}
     <a href="{{ url_for(endpoint, **args) }}" class="list-group-item list-group-item-action">
-        <div class="content">
+        <div class="content container">
+        <div class="row">
+            <div class="col-sm-0">
+                {% if icon %}
+                    <i class="{{ icon }}"></i>
+                {% endif %}
+            </div>
+            <div class="col">
             {{ title }}
             {% if description is not none %}
                 <small class="form-text">
                     {{ description }}
                 </small>
             {% endif %}
+            </div>
+        </div>
         </div>
     </a>
 {% endmacro %}
@@ -101,12 +110,14 @@
         <p class="form-text">Add or remove corpus access for users</p>
 
         <div class="list-group">
-            <a href="#" class="list-group-item active">
+            <a href="#" class="list-group-item active bg-dark" style="border-color: darkgrey;">
                 <h2>Corpora</h2>
             </a>
             {% for corpus in corpora %}
-                {% if corpus.has_access(current_user) or current_user.is_admin() %}
-                    {{ dashboard_option(corpus.name, 'account.manage_corpus_users', args={"corpus_id": corpus.id}) }}
+                {% if corpus.has_access(current_user) %}
+                    {{ dashboard_option(corpus.name,
+                                        'account.manage_corpus_users', args={"corpus_id": corpus.id},
+                                        icon="fa fa-users") }}
                 {% endif %}
             {% endfor %}
         </div>

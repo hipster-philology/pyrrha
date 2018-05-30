@@ -22,7 +22,7 @@ class Role(db.Model):
     users = db.relationship('User', backref='role', lazy='dynamic')
 
     @staticmethod
-    def insert_roles():
+    def add_default_roles():
         roles = {
             'User': (Permission.GENERAL, 'account', True),
             'Administrator': (
@@ -150,9 +150,10 @@ class User(UserMixin, db.Model):
         db.session.commit()
         return True
 
+    """
     @staticmethod
     def generate_fake(count=100, **kwargs):
-        """Generate a number of fake users for testing."""
+        #Generate a number of fake users for testing
         from sqlalchemy.exc import IntegrityError
         from random import seed, choice
         from faker import Faker
@@ -178,9 +179,29 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return '<User \'%s\'>' % self.full_name()
+    """
+
+    @staticmethod
+    def add_default_users():
+        """
+        add default users to the db
+        :param db:
+        :return:
+        """
+        default_user = User(
+            first_name="admin",
+            last_name="admin",
+            email="ppa-admin@example.com",
+            password="admin",
+            password_hash="pbkdf2:sha256:50000$ny4HJVBb$e2effd92d18140d2629d1f00bebbfbbd1544d8a81278e246b5c46e27f20daff4",
+            confirmed=True
+        )
+        db.session.add(default_user)
+        db.session.commit()
 
 
 class AnonymousUser(AnonymousUserMixin):
+    id = None
     def can(self, _):
         return False
 
@@ -193,4 +214,6 @@ login_manager.anonymous_user = AnonymousUser
 
 @login_manager.user_loader
 def load_user(user_id):
+    db.session.rollback()
     return User.query.get(int(user_id))
+
