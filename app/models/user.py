@@ -191,7 +191,7 @@ class User(UserMixin, db.Model):
         default_user = User(
             first_name="admin",
             last_name="admin",
-            email="ppa-admin@example.com",
+            email="ppa-admin@ppa.fr",
             password="admin",
             password_hash="pbkdf2:sha256:50000$ny4HJVBb$e2effd92d18140d2629d1f00bebbfbbd1544d8a81278e246b5c46e27f20daff4",
             confirmed=True

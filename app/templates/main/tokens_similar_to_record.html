@@ -14,6 +14,7 @@
 <table class="table table-bordered">
     <thead>
         <tr>
+            <th>User</th>
             <th>Edit</th><th>Form</th>
             <th>Context</th>
             <th>Lemma</th><th>POS</th><th>Morph</th>
@@ -23,6 +24,7 @@
     </thead>
     <tbody>
         <tr>
+            <td class="small">{{ record.user.first_name[0] }}.{{ record.user.last_name }}</td>
             <td class="small">{{record.created_on}}</td>
             <td>{{record.form}}</td>
             <td class="small">{{record.word_token.context}}</td>

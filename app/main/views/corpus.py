@@ -2,6 +2,7 @@ from flask import request, jsonify, flash, redirect, url_for, abort
 from flask_login import current_user, login_required
 
 from app import db
+from app.models.linguistic import CorpusUser
 from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
 from .. import main
 from ...utils.tsv import StringDictReader
@@ -36,7 +37,7 @@ def corpus_new():
                     context_left=request.form.get("context_left", None),
                     context_right=request.form.get("context_right", None)
                 )
-                corpus.users.append(current_user)
+                db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
                 db.session.commit()
                 flash("New corpus registered", category="success")
                 return redirect(url_for(".corpus_get", corpus_id=corpus.id))

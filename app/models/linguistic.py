@@ -19,13 +19,15 @@ class CorpusUser(db.Model):
     """
     corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
+    is_owner = db.Column(db.Boolean, default=False)
 
     corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete-orphan"))
     user = db.relationship(User)
 
-    def __init__(self, user=None, corpus=None):
+    def __init__(self, user, corpus, is_owner=False):
         self.user = user
         self.corpus = corpus
+        self.is_owner = is_owner
 
 
 class Corpus(db.Model):
@@ -63,6 +65,13 @@ class Corpus(db.Model):
             ).first()
             access = cu is not None
         return access
+
+    def is_owned_by(self, user):
+        cu = CorpusUser.query.filter(
+            CorpusUser.user_id == user.id,
+            CorpusUser.corpus_id == self.id
+        ).first()
+        return cu is not None and cu.is_owner
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part

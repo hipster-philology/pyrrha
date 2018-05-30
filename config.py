@@ -26,8 +26,8 @@ class Config:
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
 
     # Admin account
-    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
-    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL')
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
@@ -53,7 +53,7 @@ class DevelopmentConfig(Config):
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
 
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
-    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@example.com'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
@@ -75,7 +75,7 @@ class TestConfig(Config):
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
 
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
-    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@example.com'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
