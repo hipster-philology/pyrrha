@@ -20,6 +20,7 @@ class TestChangeRecord(TestModels):
     def test_changed_property(self):
         """ Ensure current change property is working correction """
         record = ChangeRecord(
+            user_id=1,
             lemma="1", morph="2", POS="3",
             lemma_new="1", morph_new="2", POS_new="3"
         )
@@ -56,6 +57,7 @@ class TestChangeRecord(TestModels):
         """ Ensure only similar features are fixed """
         self.load_fixtures()
         token, change_record = WordToken.update(
+            user_id=1,
             token_id=1, corpus_id=1,
             lemma="cil", morph="smn", POS="p"
         )
@@ -71,7 +73,7 @@ class TestChangeRecord(TestModels):
             "4 and 5 are similar"
         )
 
-        tokens = change_record.apply_changes_to([4, 5])
+        tokens = change_record.apply_changes_to(user_id=1, token_ids=[4, 5])
         tok_4 = self.tok_with_id(tokens, 4)
         self.assertEqual(tok_4.lemma, "cil", "Lemma was updated")
         self.assertEqual(tok_4.morph, "mmn", "Morph stayed the same as it was not changed")
@@ -86,6 +88,7 @@ class TestChangeRecord(TestModels):
         """ Ensure only similar features are fixed """
         self.load_fixtures()
         token, change_record = WordToken.update(
+            user_id=1,
             token_id=1, corpus_id=1,
             lemma="cil", morph="smn", POS="u"
         )
@@ -101,7 +104,7 @@ class TestChangeRecord(TestModels):
             "4 and 5 are similar; 3 has a common lemma with the new lemma created"
         )
 
-        tokens = change_record.apply_changes_to([3, 4, 5])
+        tokens = change_record.apply_changes_to(user_id=1, token_ids=[3, 4, 5])
         # 3 : Common lemma new with already "cil" in this token, but different P that needs to be updated
         tok_3 = self.tok_with_id(tokens, 3)
         self.assertEqual(tok_3.lemma, "cil", "Lemma was already the same")

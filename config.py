@@ -65,6 +65,9 @@ class TestConfig(Config):
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
+    # Disable CSRF for login purpose
+    WTF_CSRF_ENABLED = False
+
     # Email
     MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.mailgun.org'
     MAIL_PORT = 465

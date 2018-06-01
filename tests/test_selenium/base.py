@@ -8,8 +8,9 @@ from selenium.webdriver.chrome.options import Options
 import time
 
 from app import db, create_app
+from app.models.linguistic import CorpusUser, Corpus
 from tests.db_fixtures import add_corpus
-from app.models import WordToken, Corpus
+from app.models import WordToken, Role, User
 
 LIVESERVER_TIMEOUT = 1
 
@@ -21,6 +22,7 @@ class TestBase(LiveServerTestCase):
         config_name = 'test'
         app = create_app(config_name)
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+        app.client = app.test_client()
         app.config.update(
             # Change the port that the liveserver listens on
             LIVESERVER_PORT=8943
@@ -34,11 +36,17 @@ class TestBase(LiveServerTestCase):
         db.create_all()
         db.session.commit()
 
+        # add default roles & admin user
+        Role.add_default_roles()
+        User.add_default_users()
+
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get(self.get_server_url())
+
+        self.admin_login()
 
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
@@ -73,6 +81,49 @@ class TestBase(LiveServerTestCase):
             add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
         self.driver.refresh()
+
+    def addCorpusUser(self, corpus_name, email, is_owner=False):
+        corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
+        user = User.query.filter(User.email == email).first()
+        new_cu = CorpusUser(corpus=corpus, user=user, is_owner=is_owner)
+        self.db.session.add(new_cu)
+        self.db.session.commit()
+        return new_cu
+
+    def add_user(self, first_name, last_name, is_admin=False):
+        email = "%s.%s@ppa.fr" % (first_name, last_name)
+        new_user = User(confirmed=True,
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        password=self.app.config['ADMIN_PASSWORD'],
+                        role_id=2 if is_admin else 1)
+        self.db.session.add(new_user)
+        self.db.session.commit()
+        return email
+
+    def login(self, email, password):
+        self.driver.find_element_by_link_text('Log In').click()
+        self.driver.find_element_by_id("email").send_keys(email)
+        self.driver.find_element_by_id("password").send_keys(password)
+        self.driver.find_element_by_id("submit").click()
+        self.driver.implicitly_wait(5)
+
+    def logout(self):
+        self.driver.find_element_by_link_text('Log out').click()
+        self.driver.implicitly_wait(5)
+
+    def login_with_user(self, email):
+        try:
+            self.logout()
+        except NoSuchElementException as e:
+           pass
+        self.driver.implicitly_wait(5)
+        self.driver.set_window_size(1200,1000) # ??
+        self.login(email, self.app.config['ADMIN_PASSWORD'])
+
+    def admin_login(self):
+        self.login_with_user(self.app.config['ADMIN_EMAIL'])
 
 
 class TokenEditBase(TestBase):

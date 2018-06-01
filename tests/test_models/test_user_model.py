@@ -2,12 +2,12 @@ import time
 import unittest
 
 from app import create_app, db
-from app.models import AnonymousUser, Permission, Role, User
+from app.models import User, Permission, Role, AnonymousUser
 
 
 class UserModelTestCase(unittest.TestCase):
     def setUp(self):
-        self.app = create_app('testing')
+        self.app = create_app('test')
         self.app_context = self.app.app_context()
         self.app_context.push()
         db.create_all()
@@ -107,13 +107,13 @@ class UserModelTestCase(unittest.TestCase):
         self.assertTrue(u2.email == 'otheruser@example.org')
 
     def test_roles_and_permissions(self):
-        Role.insert_roles()
+        Role.add_default_roles()
         u = User(email='user@example.com', password='password')
         self.assertTrue(u.can(Permission.GENERAL))
         self.assertFalse(u.can(Permission.ADMINISTER))
 
     def test_make_administrator(self):
-        Role.insert_roles()
+        Role.add_default_roles()
         u = User(email='user@example.com', password='password')
         self.assertFalse(u.can(Permission.ADMINISTER))
         u.role = Role.query.filter_by(
@@ -121,9 +121,9 @@ class UserModelTestCase(unittest.TestCase):
         self.assertTrue(u.can(Permission.ADMINISTER))
 
     def test_administrator(self):
-        Role.insert_roles()
+        Role.add_default_roles()
         r = Role.query.filter_by(permissions=Permission.ADMINISTER).first()
-        u = User(email='user@example.com', password='password', role=r)
+        u = User(email=self.app.config['ADMIN_EMAIL'], password=self.app.config['ADMIN_PASSWORD'], role=r)
         self.assertTrue(u.can(Permission.ADMINISTER))
         self.assertTrue(u.can(Permission.GENERAL))
         self.assertTrue(u.is_admin())

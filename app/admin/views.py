@@ -4,9 +4,8 @@ from flask import (
     flash,
     redirect,
     url_for,
-)
+    current_app)
 from flask_login import current_user, login_required
-from flask_rq import get_queue
 
 from app import db
 from app.admin.forms import (
@@ -16,7 +15,7 @@ from app.admin.forms import (
     NewUserForm,
 )
 from app.decorators import admin_required
-from app.email import send_email
+from app.email import send_email_async
 from app.main.views.utils import render_template_with_nav_info
 from app.models import Role, User
 
@@ -63,8 +62,8 @@ def invite_user():
             user_id=user.id,
             token=token,
             _external=True)
-        get_queue().enqueue(
-            send_email,
+        send_email_async(
+            app=current_app._get_current_object(),
             recipient=user.email,
             subject='You Are Invited To Join',
             template='account/email/invite',

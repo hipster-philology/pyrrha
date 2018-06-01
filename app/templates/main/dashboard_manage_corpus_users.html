@@ -15,7 +15,7 @@
             <div class="mt-3">
                 {% if current_user.is_admin() or corpus.is_owned_by(current_user) %}
                     <h2><i class="fa fa-users mr-2"></i> View and manage corpus users</h2>
-                    <p class="form-text">Add or remove corpus access for users</p>
+                    <p class="form-text">Add or remove corpus access to users</p>
                 {% else %}
                     <h2><i class="fa fa-users mr-2"></i> View corpus users</h2>
                     <p class="form-text">

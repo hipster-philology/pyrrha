@@ -4,14 +4,13 @@ from flask import (
     redirect,
     render_template,
     request,
-    url_for)
+    url_for, current_app)
 from flask_login import (
     current_user,
     login_required,
     login_user,
     logout_user,
 )
-from flask_rq import get_queue
 
 from app import db
 from app.account.forms import (
@@ -22,7 +21,7 @@ from app.account.forms import (
     RegistrationForm,
     RequestResetPasswordForm,
     ResetPasswordForm)
-from app.email import send_email
+from app.email import send_email_async
 from app.main.views.utils import render_template_with_nav_info
 from app.models import User
 
@@ -59,8 +58,8 @@ def register():
         db.session.commit()
         token = user.generate_confirmation_token()
         confirm_link = url_for('account.confirm', token=token, _external=True)
-        get_queue().enqueue(
-            send_email,
+        send_email_async(
+            app=current_app._get_current_object(),
             recipient=user.email,
             subject='Confirm Your Account',
             template='account/email/confirm',
@@ -100,8 +99,8 @@ def reset_password_request():
             token = user.generate_password_reset_token()
             reset_link = url_for(
                 'account.reset_password', token=token, _external=True)
-            get_queue().enqueue(
-                send_email,
+            send_email_async(
+                app=current_app._get_current_object(),
                 recipient=user.email,
                 subject='Reset Your Password',
                 template='account/email/reset_password',
@@ -163,14 +162,14 @@ def change_email_request():
             token = current_user.generate_email_change_token(new_email)
             change_email_link = url_for(
                 'account.change_email', token=token, _external=True)
-            get_queue().enqueue(
-                send_email,
+            send_email_async(
+                app=current_app._get_current_object(),
                 recipient=new_email,
                 subject='Confirm Your New Email',
                 template='account/email/change_email',
                 # current_user is a LocalProxy, we want the underlying user
                 # object
-                user=current_user.get_current_object(),
+                user=current_user._get_current_object(),
                 change_email_link=change_email_link)
             flash('A confirmation link has been sent to {}.'.format(new_email),
                   'warning')
@@ -197,8 +196,8 @@ def confirm_request():
     """Respond to new user's request to confirm their account."""
     token = current_user.generate_confirmation_token()
     confirm_link = url_for('account.confirm', token=token, _external=True)
-    get_queue().enqueue(
-        send_email,
+    send_email_async(
+        app=current_app._get_current_object(),
         recipient=current_user.email,
         subject='Confirm Your Account',
         template='account/email/confirm',
@@ -261,8 +260,8 @@ def join_from_invite(user_id, token):
             user_id=user_id,
             token=token,
             _external=True)
-        get_queue().enqueue(
-            send_email,
+        send_email_async(
+            app=current_app._get_current_object(),
             recipient=new_user.email,
             subject='You Are Invited To Join',
             template='account/email/invite',

@@ -1,6 +1,5 @@
 import os
 from flask import Flask
-from flask_rq import RQ
 
 from config import config
 from flask_compress import Compress
@@ -45,7 +44,6 @@ def create_app(config_name="dev"):
     #csrf.init_app(app)
     compress.init_app(app)
     #assets_env = Environment(app)
-    RQ(app)
 
     # Register Jinja template functions
     from .main import main as main_blueprint

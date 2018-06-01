@@ -144,7 +144,7 @@ def tokens_edit_from_record(corpus_id, record_id):
     if not corpus.has_access(current_user):
         abort(403)
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
-    changed = record.apply_changes_to(request.json.get("word_tokens"))
+    changed = record.apply_changes_to(user_id=current_user.id, token_ids=request.json.get("word_tokens"))
     return jsonify([word_token.to_dict() for word_token in changed])
 
 
@@ -204,7 +204,7 @@ def tokens_search_through_fields(corpus_id):
         if value is None:
             fields[name] = ""
         else:
-            value = value.replace('\|', '¤$¤')
+            value = value.replace('\\|', '¤$¤')
             fields[name] = [v.replace('¤$¤', '|') for v in value.split('|')]
         kargs[name] = value
 
@@ -228,9 +228,9 @@ def tokens_search_through_fields(corpus_id):
             if len(value) > 0:
                 value = value.replace(" ", "")
                 # escape search operators
-                value = value.replace('%', '\%')
-                value = value.replace('\*', '¤$¤')
-                value = value.replace('\!', '¤$$¤')
+                value = value.replace('%', '\\%')
+                value = value.replace('\\*', '¤$¤')
+                value = value.replace('\\!', '¤$$¤')
 
                 value = string_to_none(value)
                 field = getattr(WordToken, name)

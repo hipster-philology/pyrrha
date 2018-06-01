@@ -6,7 +6,6 @@ Flask==0.12.2
 Flask-Compress==1.4.0
 Flask-Login==0.4.1
 Flask-Mail==0.9.1
-Flask-RQ==0.2
 Flask-SQLAlchemy==2.2
 Flask-Testing==0.7.1
 Flask-WTF==0.14.2

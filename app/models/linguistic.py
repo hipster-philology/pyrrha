@@ -870,9 +870,11 @@ class ChangeRecord(db.Model):
             if getattr(self, attr) != getattr(self, attr+"_new")
         ]
 
-    def apply_changes_to(self, token_ids):
+    def apply_changes_to(self, user_id, token_ids):
         """ Apply the changes recorded by this instance to other tokens
 
+        :param user_id: The ID of the user performing the change
+        :type user_id: int
         :param token_ids: List of tokens ID to be updated
         :type token_ids: [str]
         :return: List of updated tokens
@@ -887,7 +889,7 @@ class ChangeRecord(db.Model):
                 WordToken.corpus == self.corpus
             )
         ).all():
-            apply = {"token_id": token.id, "corpus_id": token.corpus}
+            apply = {"user_id": user_id, "token_id": token.id, "corpus_id": token.corpus}
             apply.update({attr: val[1] for attr, val in watch.items() if val[0] == getattr(token, attr)})
             WordToken.update(**apply)
             changed.append(token)
