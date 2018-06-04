@@ -110,16 +110,16 @@ class TestBase(LiveServerTestCase):
         self.driver.implicitly_wait(5)
 
     def logout(self):
-        self.driver.find_element_by_link_text('Log out').click()
-        self.driver.implicitly_wait(5)
-
-    def login_with_user(self, email):
         try:
-            self.logout()
+            self.driver.find_element_by_link_text('Log out').click()
+            self.driver.implicitly_wait(5)
         except NoSuchElementException as e:
            pass
-        self.driver.implicitly_wait(5)
+
+    def login_with_user(self, email):
         self.driver.set_window_size(1200,1000) # ??
+        self.logout()
+        self.driver.implicitly_wait(5)
         self.login(email, self.app.config['ADMIN_PASSWORD'])
 
     def admin_login(self):

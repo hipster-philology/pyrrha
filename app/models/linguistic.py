@@ -22,7 +22,7 @@ class CorpusUser(db.Model):
     is_owner = db.Column(db.Boolean, default=False)
 
     corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete-orphan"))
-    user = db.relationship(User)
+    user = db.relationship(User, backref=backref("corpus_users", cascade="all, delete-orphan"))
 
     def __init__(self, user, corpus, is_owner=False):
         self.user = user

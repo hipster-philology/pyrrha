@@ -166,11 +166,3 @@ class TestManageCorpusUser(TestBase):
 
         el = self.get_ownership_table()
         self.assertTrue(len([e for e in el if e.get_property("checked")]) == 1)
-
-
-    def test_change_ownership(self):
-        pass
-
-    def test_corpus_access(self):
-        pass
-
