@@ -1,4 +1,4 @@
-import unittest
+from flask import url_for
 
 from app.models import User, Corpus
 from app.models.linguistic import CorpusUser
@@ -44,7 +44,7 @@ class TestUserAccount(TestBase):
             User.email == "john.doe@ppa.fr",
             User.confirmed.is_(False)
         ).first()
-        self.assertTrue(user is not None)
+        self.assertIsNotNone(user)
 
     def test_reset_password(self):
         self.logout()
@@ -54,6 +54,23 @@ class TestUserAccount(TestBase):
         self.driver.find_element_by_id("submit").click()
         warning = self.driver.find_element_by_class_name("alert-warning").text
         self.assertTrue(warning == "A password reset link has been sent to %s." % self.app.config['ADMIN_EMAIL'])
+
+        # test not being anonymous, you are redirected to the index page
+        self.admin_login()
+        self.driver.get(url_for("account.reset_password_request", _external=True))
+        self.assertNotEqual(url_for("main.index", _external=True), self.driver.current_url)
+
+    def test_reset_password_token(self):
+        self.logout()
+        # test when you receive the mail and click on the link
+        url = self.url_for_with_port("account.reset_password", token="FAKE_TOKEN", _external=True)
+        self.driver.get(url)
+        self.driver.find_element_by_id("email").send_keys(self.app.config['ADMIN_EMAIL'])
+        self.driver.find_element_by_id("new_password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver.find_element_by_id("new_password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver.find_element_by_id("submit").click()
+        # wrong token so you are redirected to the index page
+        self.assertEqual(self.url_for_with_port("main.index", _external=True), self.driver.current_url)
 
     def test_change_email(self):
         foo_email = self.add_user("foo", "bar")
@@ -65,6 +82,67 @@ class TestUserAccount(TestBase):
         self.driver.find_element_by_id("submit").click()
         warning = self.driver.find_element_by_class_name("alert-warning").text
         self.assertTrue(warning == "A confirmation link has been sent to %s." % "bar.foo@ppa.fr")
+
+    def test_admin_change_user_email(self):
+        foo_email = self.add_user("foo", "bar")
+        self.admin_login()
+        self.driver.find_element_by_link_text('Dashboard').click()
+        self.driver.find_element_by_id('admin-dashboard').find_element_by_partial_link_text("Registered Users").click()
+        self.driver.find_elements_by_class_name("role")[1].click()
+        self.driver.find_element_by_link_text('Change email address').click()
+        self.driver.find_element_by_id("email").send_keys("bar.foo@ppa.fr")
+        self.driver.find_element_by_id("submit").click()
+        user = User.query.filter(
+            User.first_name == "foo",
+            User.last_name == "bar",
+            User.email == "bar.foo@ppa.fr"
+        ).first()
+        self.assertIsNotNone(user)
+
+    def test_admin_change_role(self):
+        foo_email = self.add_user("foo", "bar")
+        self.admin_login()
+        self.driver.find_element_by_link_text('Dashboard').click()
+        self.driver.find_element_by_id('admin-dashboard').find_element_by_partial_link_text("Registered Users").click()
+        self.driver.find_elements_by_class_name("role")[1].click()
+        self.driver.find_element_by_link_text('Change account type').click()
+        # change user role
+        self.driver.find_elements_by_tag_name("option")[1].click()
+        self.driver.find_element_by_id("submit").click()
+        # assert the change
+        user = User.query.filter(User.email == foo_email).first()
+        self.assertEqual(user.role_id, int(self.driver.find_elements_by_tag_name("option")[1].get_property("value")))
+
+        # try to change your own admin role
+        self.driver.find_element_by_link_text('Dashboard').click()
+        self.driver.find_element_by_id('admin-dashboard').find_element_by_partial_link_text("Registered Users").click()
+        self.driver.find_elements_by_class_name("role")[0].click()
+        self.driver.find_element_by_link_text('Change account type').click()
+        # assert that you cannot change your own role
+        self.assertTrue(len(self.driver.find_elements_by_tag_name("option")) == 0)
+
+    def test_change_email_token(self):
+        self.logout()
+        url = self.url_for_with_port("account.change_email", token="FAKE_TOKEN", _external=True)
+        self.driver.get(url)
+        self.driver.find_element_by_id("email").send_keys(self.app.config['ADMIN_EMAIL'])
+        self.driver.find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'])
+        self.driver.find_element_by_id("submit").click()
+        self.assertEqual(self.url_for_with_port("main.index", _external=True), self.driver.current_url)
+
+    def test_confirm_account(self):
+        foo_email = self.add_user("foo", "bar")
+        self.login_with_user(foo_email)
+        url = self.url_for_with_port("account.confirm_request", _external=True)
+        self.driver.get(url)
+        self.assertEqual(self.url_for_with_port("main.index", _external=True), self.driver.current_url)
+
+    def test_confirm_account_token(self):
+        foo_email = self.add_user("foo", "bar")
+        self.login_with_user(foo_email)
+        url = self.url_for_with_port("account.confirm", token="FAKE_TOKEN", _external=True)
+        self.driver.get(url)
+        self.assertEqual(self.url_for_with_port("main.index", _external=True), self.driver.current_url)
 
     def test_change_password(self):
         foo_email = self.add_user("foo", "bar")
@@ -85,7 +163,7 @@ class TestUserAccount(TestBase):
         foo_email = self.add_user("foo", "bar")
         self.addCorpusUser("Wauchier", foo_email, is_owner=True)
         # test that the used is correctly deleted
-        self.assertTrue(User.query.filter(User.email == foo_email).first() is not None)
+        self.assertIsNotNone(User.query.filter(User.email == foo_email).first())
 
         # test that corpora are not deleted when the user is deleted
         self.admin_login()
@@ -95,11 +173,20 @@ class TestUserAccount(TestBase):
         self.driver.find_element_by_link_text('Delete user').click()
         self.driver.find_element_by_class_name('hidden').click()
         self.driver.find_element_by_class_name("deletion").click()
-        self.assertTrue(User.query.filter(User.email == foo_email).first() is None)
+        self.assertIsNone(User.query.filter(User.email == foo_email).first())
 
         corpus = Corpus.query.filter(Corpus.name == "Wauchier").first()
-        self.assertTrue(corpus is not None)
-        self.assertTrue(CorpusUser.query.filter(CorpusUser.corpus_id == corpus.id).first() is None)
+        self.assertIsNotNone(corpus)
+        self.assertIsNone(CorpusUser.query.filter(CorpusUser.corpus_id == corpus.id).first())
+
+        # assert you cannot delete your own account
+        self.driver.find_element_by_link_text('Dashboard').click()
+        self.driver.find_element_by_id('admin-dashboard').find_element_by_partial_link_text("Registered Users").click()
+        self.driver.find_elements_by_class_name("role")[0].click()
+        self.driver.find_element_by_link_text('Delete user').click()
+        self.driver.find_element_by_class_name('hidden').click()
+        self.driver.find_element_by_class_name("deletion").click()
+        self.assertIsNotNone(User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first())
 
     def test_invalid_login(self):
         foo_email = self.add_user("foo", "bar")
@@ -130,14 +217,20 @@ class TestUserAccount(TestBase):
             User.confirmed.is_(False)
         ).first()
         self.assertTrue(user is not None)
+        return user
 
-    @unittest.skip("NotImplemented")
     def test_join_from_invite(self):
-        raise NotImplementedError
+        user = self.test_invite_new_user()
+        # being admin
+        url = self.url_for_with_port("account.join_from_invite", user_id=user.id, token="FAKE_TOKEN", _external=True)
+        self.driver.get(url)
 
-    @unittest.skip("NotImplemented")
-    def test_confirm_token(self):
-        raise NotImplementedError
+        # being anonymmous
+        self.logout()
+        self.driver.get(url)
+        alert = self.driver.find_element_by_class_name("alert").text
+        self.assertTrue(alert == "The confirmation link is invalid or has expired. Another invite email with a new "
+                                  "link has been sent to you.")
 
     def test_unconfirmed(self):
         self.addCorpus("wauchier")
@@ -157,6 +250,11 @@ class TestUserAccount(TestBase):
         self.driver.find_element_by_link_text('Dashboard').click()
         self.driver.find_element_by_link_text('Resend confirmation email')
 
+        self.logout()
+        url = self.url_for_with_port("account.unconfirmed", _external=True)
+        self.driver.get(url)
+        self.assertEqual(self.url_for_with_port("main.index", _external=True), self.driver.current_url)
+
     def test_admin_add_new_user(self):
         self.admin_login()
         self.driver.find_element_by_link_text('Dashboard').click()
@@ -175,4 +273,4 @@ class TestUserAccount(TestBase):
             User.email == "foo.bar@ppa.fr",
             User.confirmed.is_(False)
         ).first()
-        self.assertTrue(user is not None)
+        self.assertIsNotNone(user)

@@ -1,6 +1,7 @@
 
 from flask import render_template
 from flask_mail import Message
+from smtplib import SMTPDataError
 from threading import Thread
 
 from app import mail
@@ -8,7 +9,10 @@ from app import mail
 
 def _async(app, msg):
     with app.app_context():
-        sent_mail = mail.send(msg)
+        try:
+            mail.send(msg)
+        except SMTPDataError as e:
+            print(e)
 
 
 def send_email_async(app, recipient, subject, template, **kwargs):

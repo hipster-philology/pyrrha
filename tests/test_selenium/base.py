@@ -1,3 +1,4 @@
+from flask import url_for
 from flask_testing import LiveServerTestCase
 import os
 import signal
@@ -114,16 +115,24 @@ class TestBase(LiveServerTestCase):
             self.driver.find_element_by_link_text('Log out').click()
             self.driver.implicitly_wait(5)
         except NoSuchElementException as e:
-           pass
+            pass
 
     def login_with_user(self, email):
-        self.driver.set_window_size(1200,1000) # ??
+        self.driver.set_window_size(1200, 1000)  # ??
         self.logout()
         self.driver.implicitly_wait(5)
         self.login(email, self.app.config['ADMIN_PASSWORD'])
 
     def admin_login(self):
         self.login_with_user(self.app.config['ADMIN_EMAIL'])
+
+    def url_for_with_port(self, *args, **kwargs):
+        with self.app.test_request_context():
+            # With the test request context of the app
+            kwargs['_external'] = True
+            url = url_for(*args, **kwargs)  # Get the URL
+            url = url.replace('://localhost/', '://localhost:%d/' % (self.app.config["LIVESERVER_PORT"]))
+            return url
 
 
 class TokenEditBase(TestBase):
@@ -133,11 +142,13 @@ class TokenEditBase(TestBase):
 
     def go_to_edit_token_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's edit token page """
+
         def callback():
             # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_"+corpus_id).click()
+            self.driver.find_element_by_id("toggle_corpus_" + corpus_id).click()
             # Click on the edit link
-            self.driver.find_element_by_id("corpus_"+corpus_id+"_edit_tokens").click()
+            self.driver.find_element_by_id("corpus_" + corpus_id + "_edit_tokens").click()
+
         if as_callback:
             return callback
         return callback()
@@ -179,7 +190,7 @@ class TokenEditBase(TestBase):
             additional_action_before()
 
         # Take the first row
-        row = self.driver.find_element_by_id("token_"+id_row+"_row")
+        row = self.driver.find_element_by_id("token_" + id_row + "_row")
         # Take the td to edit
         if value_type == "POS":
             td = row.find_element_by_class_name("token_pos")
@@ -201,12 +212,12 @@ class TokenEditBase(TestBase):
         time.sleep(0.5)
 
         return self.db.session.query(WordToken).get(int(id_row)), \
-               self.driver.find_element_by_id("token_" + id_row + "_row").\
-                    find_elements_by_tag_name("td")[-1].text.strip(), \
+               self.driver.find_element_by_id("token_" + id_row + "_row"). \
+                   find_elements_by_tag_name("td")[-1].text.strip(), \
                self.driver.find_element_by_id("token_" + id_row + "_row")
 
     def first_token_id(self, corpus_id):
-        return self.db.session.query(WordToken.id).\
+        return self.db.session.query(WordToken.id). \
             filter_by(corpus=corpus_id).order_by(WordToken.order_id).limit(1).first()[0]
 
     def addCorpus(self, *args, **kwargs):
@@ -231,16 +242,17 @@ class TokenEdit2CorporaBase(TokenEditBase):
 
 
 class TokensSearchThroughFieldsBase(TestBase):
-
     CORPUS_ID = 1
 
     def go_to_search_tokens_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's search token page """
+
         def callback():
             # Show the dropdown
             self.driver.find_element_by_id("toggle_corpus_%s" % corpus_id).click()
             # Click on the edit link
             self.driver.find_element_by_id("corpus_%s_search_tokens" % corpus_id).click()
+
         if as_callback:
             return callback
         return callback()

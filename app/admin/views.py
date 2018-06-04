@@ -124,7 +124,7 @@ def change_account_type(user_id):
     """Change a user's account type."""
     if current_user.id == user_id:
         flash('You cannot change the type of your own account. Please ask '
-              'another administrator to do this.', 'error')
+              'another administrator to do this.', 'danger')
         return redirect(url_for('admin.user_info', user_id=user_id))
 
     user = User.query.get(user_id)
@@ -158,7 +158,7 @@ def delete_user(user_id):
     """Delete a user's account."""
     if current_user.id == user_id:
         flash('You cannot delete your own account. Please ask another '
-              'administrator to do this.', 'error')
+              'administrator to do this.', 'danger')
     else:
         user = User.query.filter_by(id=user_id).first()
         db.session.delete(user)
