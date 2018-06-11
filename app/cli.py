@@ -1,6 +1,7 @@
 import click
 import os
 
+from app.models import Role, User
 from . import create_app, db
 from .models import (
     Corpus,
@@ -41,6 +42,10 @@ def make_cli():
         """
         with app.app_context():
             db.create_all()
+
+            Role.add_default_roles()
+            User.add_default_users()
+
             db.session.commit()
             click.echo("Created the database")
 
@@ -52,6 +57,10 @@ def make_cli():
         with app.app_context():
             db.drop_all()
             db.create_all()
+
+            Role.add_default_roles()
+            User.add_default_users()
+
             db.session.commit()
             click.echo("Dropped then recreated the database")
 

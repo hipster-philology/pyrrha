@@ -1,0 +1,46 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form_macros.html' as f %}
+{% import 'macros/check_password.html' as check %}
+
+{% block content %}
+    <div class="container">
+        <div>
+            <h2 class="mt-3 mb-5">Create an account</h2>
+
+            {% set flashes = {
+                'error':   get_flashed_messages(category_filter=['form-error']),
+                'warning': get_flashed_messages(category_filter=['form-check-email']),
+                'info':    get_flashed_messages(category_filter=['form-info']),
+                'success': get_flashed_messages(category_filter=['form-success'])
+            } %}
+
+            <div class="ml-3 col-sm-5">
+                {{ f.begin_form(form, flashes) }}
+
+                <div class="two fields">
+                    {{ f.render_form_field(form.first_name) }}
+                    {{ f.render_form_field(form.last_name) }}
+                </div>
+
+                {{ f.render_form_field(form.email) }}
+
+                <div class="two fields">
+                    {{ f.render_form_field(form.password) }}
+                    {{ f.render_form_field(form.password2) }}
+                </div>
+
+                {{ f.form_message(flashes['error'], header='Something went wrong.', class='alert alert-danger') }}
+                {{ f.form_message(flashes['warning'], header='Check your email.', class='alert alert-warning') }}
+                {{ f.form_message(flashes['info'], header='Information', class='alert alert-info') }}
+                {{ f.form_message(flashes['success'], header='Success!', class='alert alert-success') }}
+
+                {% for field in form | selectattr('type', 'equalto', 'SubmitField') %}
+                    {{ f.render_form_field(field) }}
+                {% endfor %}
+
+                {{ f.end_form(form) }}
+            </div>
+        </div>
+    </div>
+    {{ check.password_check('password', 0) }}
+{% endblock %}

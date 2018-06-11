@@ -1,3 +1,5 @@
+from flask_login import current_user
+
 from ...models import Corpus
 from ...utils.tsv import StringDictReader
 from flask import render_template, request
@@ -46,7 +48,7 @@ def render_template_with_nav_info(template, **kwargs):
     :return:
     """
     kwargs.update(dict(
-        corpora=Corpus.query.all()
+        corpora=[corpus for corpus in Corpus.query.all() if corpus.has_access(current_user)]
     ))
     return render_template(template, **kwargs)
 

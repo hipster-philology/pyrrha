@@ -1,0 +1,190 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/dashboard_macros.html' as dashboard %}
+
+{% block content %}
+    <div class="container" id="main-container">
+        <div id="flash" class="">
+
+        </div>
+        <div class="mt-2">
+            <a href="{{ url_for("main.dashboard") }}">Back to dashboard</a>
+        </div>
+
+        <form method="POST" id="accesses-form"
+              action="{{ url_for("main.manage_corpus_users", corpus_id=corpus.id) }}">
+            <div class="mt-3">
+                {% if current_user.is_admin() or corpus.is_owned_by(current_user) %}
+                    <h2><i class="fa fa-users mr-2"></i> View and manage corpus users</h2>
+                    <p class="form-text">Add or remove corpus access to users</p>
+                {% else %}
+                    <h2><i class="fa fa-users mr-2"></i> View corpus users</h2>
+                    <p class="form-text">
+                        Corpus owners can manage user accesses
+                    </p>
+                {% endif %}
+                <div class="container">
+                    <div>
+                        <h2 class="mt-3 mb-3">
+                            <a href="{{ url_for("main.corpus_get", corpus_id=corpus.id) }}">{{ corpus.name }}</a>
+                        </h2>
+                    </div>
+                    <table class="table" id="accesses-table">
+                        <thead>
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">First name</th>
+                            <th scope="col">Last name</th>
+                            <th scope="col"><label for="ownership" class="mb-0">Owner</label></th>
+                            <th scope="col"></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for corpus_user in corpus.users | sort(attribute='last_name') %}
+                            <tr>
+                                <td class="">
+                                    {{ corpus_user.id }}
+                                </td>
+                                <td class="">
+                                    {{ corpus_user.first_name }}
+                                </td>
+                                <td class="">
+                                    {{ corpus_user.last_name }}
+                                </td>
+                                <td class="">
+                                    <input type="checkbox" name="ownership" value="{{ corpus_user.id }}"
+                                            {% if corpus.is_owned_by(corpus_user) %}
+                                           checked
+                                            {% endif %}
+                                            {% if not(current_user.is_admin() or corpus.is_owned_by(current_user)) %}
+                                           disabled
+                                            {% endif %}
+                                    />
+                                </td>
+                                <td>
+                                    {% if current_user.is_admin() or corpus.is_owned_by(current_user) %}
+                                        <i class="fa fa-trash-o" aria-hidden="true" style="cursor: pointer"></i>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if current_user.is_admin() or corpus.is_owned_by(current_user) %}
+                        <div class="container mt-3">
+                            <div class="row">
+
+                                <div class="col-md-9" style="padding: 0;">
+                                    <h3 class="mt-3"><i class="fa fa-user-plus mr-2"></i>Grant access to a user</h3>
+                                    <p>The user will be able to use the post-correction tools but also grant and remove
+                                        accesses to this corpus</p>
+
+                                    {{ dashboard.search_user(roles) }}
+                                    {{ dashboard.users_table(current_user, users, redirect=False) }}
+
+                                </div>
+                                <div class="col"></div>
+                                <div class="col"></div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                </div>
+            </div>
+            {% if current_user.is_admin() or corpus.is_owned_by(current_user) %}
+                <div id="hidden-inputs"></div>
+                <input type="button" class="mt-5 mb-5 btn btn-primary" tabindex="-1" role="button" aria-disabled="true"
+                       value="Save modifications" id="accesses-form-submit"/>
+            {% endif %}
+        </form>
+    </div>
+
+    {{ dashboard.insert_search_script() }}
+
+    <script type="text/javascript">
+        function add_access(user_data) {
+
+            const user_id = $(user_data[0]).html().trim();
+            let already_added = false;
+
+            for (const tr of $("#accesses-table tr")) {
+                const tds = $(tr).find('td');
+                if (tds.length > 0) {
+                    if ($(tds[0]).html().trim() === user_id) {
+                        already_added = true;
+                        break;
+                    }
+                }
+            }
+
+            // if clicked user is not already present in the users-table
+            if (!already_added) {
+                const firstname = $(user_data[1]).html().trim();
+                const lastname = $(user_data[2]).html().trim();
+
+                let new_row = "<tr>";
+                new_row += "<td>" + user_id + "</td>";
+                new_row += "<td>" + firstname + "</td>";
+                new_row += "<td>" + lastname + "</td>";
+                new_row += "<td><input type='checkbox' name='ownership' value='" + user_id + "'/></td>";
+                new_row += '<td><i class="fa fa-trash-o" aria-hidden="true" style="cursor: pointer"></i></td>';
+                new_row += "</tr>";
+                $("#accesses-table tr:last").after(new_row);
+
+                // forbid users to remove the last owner
+                $("#accesses-table tr:last td i.fa-trash-o").click(function () {
+                    remove_access($(this).closest("tr"));
+                });
+
+            }
+        }
+
+        function remove_access(tr) {
+            $(tr).remove();
+        }
+
+        function clear_flash() {
+            $("#flash").empty()
+        }
+
+        function set_flash(classes, msg) {
+            $("#flash").prop("class", classes).text(msg);
+        }
+
+        $(document).ready(function () {
+
+
+            $('#users-table tr').click(function () {
+                add_access($(this).find('td'));
+            });
+
+            // forbid users to remove the last owner
+            $("#accesses-table td i.fa-trash-o").click(function () {
+                remove_access($(this).closest("tr"));
+            });
+
+            // set the hidden inputs with the users id
+            $('#accesses-form-submit').click(function () {
+                if ($("input[name='ownership']:checked").length < 1) {
+                    set_flash("alert alert-danger mt-3 mb-3", "You cannot remove the last owner of a corpus. Please add an owner to this corpus.");
+                }
+                else {
+                    clear_flash();
+                    // reset the hidden inputs
+                    $("#hidden-inputs").empty();
+                    // add children
+                    $('#accesses-table tr ').each(function () {
+                        const id_tds = $(this).find('td:first');
+                        for (const id of id_tds) {
+                            $("#hidden-inputs").append(
+                                "<input type='hidden' name='user_id' value='" + id.textContent + "'/>"
+                            );
+                        }
+                    });
+                    //submit
+                    $('#accesses-form').submit();
+                }
+
+            });
+        });
+    </script>
+{% endblock %}

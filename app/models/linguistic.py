@@ -2,10 +2,32 @@ import csv
 import io
 
 import unidecode
+from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.orm import backref
 from werkzeug.exceptions import BadRequest
 
+from app.models.user import User
 from .. import db
 from ..utils.forms import strip_or_none
+
+
+class CorpusUser(db.Model):
+    """
+        Association proxy that link users to corpora
+        :param corpus_id: a corpus ID
+        :param user_id: a user ID
+    """
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
+    is_owner = db.Column(db.Boolean, default=False)
+
+    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete-orphan"))
+    user = db.relationship(User, backref=backref("corpus_users", cascade="all, delete-orphan"))
+
+    def __init__(self, user, corpus, is_owner=False):
+        self.user = user
+        self.corpus = corpus
+        self.is_owner = is_owner
 
 
 class Corpus(db.Model):
@@ -26,6 +48,30 @@ class Corpus(db.Model):
     name = db.Column(db.String(64), unique=True)
     context_left = db.Column(db.SmallInteger, default=3)
     context_right = db.Column(db.SmallInteger, default=3)
+
+    users = association_proxy('corpus_users', 'user')
+
+    def has_access(self, user):
+        """
+        Can this corpus be accessed by the given user ?
+        :param user:
+        :return: True or False
+        """
+        access = True
+        if not user.is_admin():
+            cu = CorpusUser.query.filter(
+                CorpusUser.user_id == user.id,
+                CorpusUser.corpus_id == self.id
+            ).first()
+            access = cu is not None
+        return access
+
+    def is_owned_by(self, user):
+        cu = CorpusUser.query.filter(
+            CorpusUser.user_id == user.id,
+            CorpusUser.corpus_id == self.id
+        ).first()
+        return cu is not None and cu.is_owner
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
@@ -595,9 +641,11 @@ class WordToken(db.Model):
         return csv_file.getvalue()
 
     @staticmethod
-    def update(corpus_id, token_id, lemma=None, POS=None, morph=None):
+    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None):
         """ Update a given token with lemma, POS and morph value
 
+        :param user_id: ID of the user who performs the update
+        :type user_id: int
         :param corpus_id: Id of the corpus
         :type corpus_id: int
         :param token_id: Id of the token
@@ -611,6 +659,7 @@ class WordToken(db.Model):
         :return: Current token, Record Token
         :rtype: (WordToken, ChangeRecord)
         """
+        user = User.query.filter_by(**{"id": user_id}).first_or_404()
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
         # Strip if things are not None
@@ -641,7 +690,7 @@ class WordToken(db.Model):
         if not morph:
             morph = token.morph
 
-        record = ChangeRecord.track(token, lemma, POS, morph)
+        record = ChangeRecord.track(user, token, lemma, POS, morph)
 
         token.lemma = lemma
         token.label_uniform = unidecode.unidecode(lemma)
@@ -763,6 +812,7 @@ class ChangeRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
     word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
     POS = db.Column(db.String(64))
@@ -772,6 +822,7 @@ class ChangeRecord(db.Model):
     morph_new = db.Column(db.String(64))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     word_token = db.relationship('WordToken', lazy='select')
+    user = db.relationship(User, lazy='select')
 
     @property
     def similar_remaining(self):
@@ -783,7 +834,7 @@ class ChangeRecord(db.Model):
         return WordToken.get_similar_to_record(self).count()
 
     @staticmethod
-    def track(token, lemma_new, POS_new, morph_new):
+    def track(user, token, lemma_new, POS_new, morph_new):
         """ Save the history of change for the token
 
         :param token: Token that has been updated
@@ -798,6 +849,7 @@ class ChangeRecord(db.Model):
         :rtype: ChangeRecord
         """
         tracked = ChangeRecord(
+            user_id=user.id,
             corpus=token.corpus, word_token_id=token.id,
             form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph,
             lemma_new=lemma_new, POS_new=POS_new, morph_new=morph_new
@@ -818,9 +870,11 @@ class ChangeRecord(db.Model):
             if getattr(self, attr) != getattr(self, attr+"_new")
         ]
 
-    def apply_changes_to(self, token_ids):
+    def apply_changes_to(self, user_id, token_ids):
         """ Apply the changes recorded by this instance to other tokens
 
+        :param user_id: The ID of the user performing the change
+        :type user_id: int
         :param token_ids: List of tokens ID to be updated
         :type token_ids: [str]
         :return: List of updated tokens
@@ -835,7 +889,7 @@ class ChangeRecord(db.Model):
                 WordToken.corpus == self.corpus
             )
         ).all():
-            apply = {"token_id": token.id, "corpus_id": token.corpus}
+            apply = {"user_id": user_id, "token_id": token.id, "corpus_id": token.corpus}
             apply.update({attr: val[1] for attr, val in watch.items() if val[0] == getattr(token, attr)})
             WordToken.update(**apply)
             changed.append(token)

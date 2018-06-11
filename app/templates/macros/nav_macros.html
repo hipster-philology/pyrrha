@@ -1,15 +1,71 @@
-{% macro render_nav(corpora=[]) %}
+{# This macro is called on the user dashboards. In this case the administrator dashboard
+   at the route admin.index
+#}
+
+{% macro render_menu_items(endpoints) %}
+    {% for endpoint, name, icon in endpoints %}
+        <span class="nav-item"><a class="navbar-brand {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for(endpoint) }}">
+            {% if icon %}
+                <i class="{{ icon }}"  aria-hidden="true"></i>
+            {% endif %}
+            {{ name | safe }}
+        </a></span>
+    {% endfor %}
+{% endmacro %}
+
+{# This is called for all users (including anonymous users). It renders the basic left side of the
+   navigation bar. In the default case, the left hand side will read 'Flask-Base'. In the logged in
+   admin case, there will also be an item that links to admin/ route. I have added an example use of
+   render_menu_items.
+#}
+
+{% macro header_items(current_user) %}
+    {% set endpoints = [
+      ('main.index', config.APP_NAME, 'fa fa-home')
+    ]%}
+    {% set user = [] %}
+    {% if current_user.is_authenticated %}
+      {% set user = ([('main.dashboard', 'Dashboard', 'fa fa-bars')]) %}
+    {% endif %}
+    {{ render_menu_items( endpoints + user ) }}
+{% endmacro %}
+
+{# This renders the right hand side of the navigation bar. If the user is logged in, it links to
+   manage their account and logout (account routes). Otherwise, it links to register and login.
+#}
+{% macro account_items(current_user) %}
+    {% if current_user.is_authenticated %}
+      {% set endpoints = [
+        ('account.manage', 'Your Account', 'fa fa-user-circle'),
+        ('account.logout', 'Log out', 'fa fa-sign-out')
+      ] %}
+      {{ render_menu_items(endpoints) }}
+    {% else %}
+      {% set endpoints = [
+        ('account.register', 'Register', 'fa fa-user-plus'),
+        ('account.login', 'Log In', 'fa fa-sign-in')
+      ] %}
+      {{ render_menu_items(endpoints) }}
+    {% endif %}
+{% endmacro %}
+
+{% macro render_nav(current_user, corpora=[]) %}
     <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
+      <!--
       <a class="navbar-brand" href="{{url_for("main.index")}}">Pandora Post-Correction Editor</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
+      -->
+      {{ header_items(current_user) }}
 
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
+          {% if current_user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link" id="new_corpus_link" href="{{url_for("main.corpus_new")}}">New Corpus</a>
           </li>
+          {% endif %}
             {% for corpus in corpora %}
               <li class="nav-item dropdown">
                 <a id="toggle_corpus_{{corpus.id}}" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{corpus.name}}</a>
@@ -33,6 +89,9 @@
             {% endfor %}
         </ul>
       </div>
+
+      {{ account_items(current_user) }}
+
     </nav>
 {% endmacro %}
 

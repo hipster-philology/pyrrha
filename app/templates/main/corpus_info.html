@@ -8,7 +8,7 @@
     <p class="container">
     {{ header_macros.render_corpus(corpus) }}
     <p>This corpus has <em>{{corpus.tokens_count|thousands}} tokens</em>.</p>
-        <div>
+    <div>
             <p>
                 <a class="btn btn-primary" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a> -
                 <a class="btn btn-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a> -
@@ -23,6 +23,5 @@
                 <a class="btn btn-warning settings-POS" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='POS')}}">Edit POS allowed values</a>
                 <a class="btn btn-warning settings-morph" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='morph')}}">Edit morph allowed values</a>
             </p>
-        </div>
     </div>
 {% endblock %}

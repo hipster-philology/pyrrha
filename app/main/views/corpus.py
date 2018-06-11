@@ -1,5 +1,8 @@
-from flask import request, jsonify, flash, redirect, url_for
+from flask import request, jsonify, flash, redirect, url_for, abort
+from flask_login import current_user, login_required
 
+from app import db
+from app.models.linguistic import CorpusUser
 from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
 from .. import main
 from ...utils.tsv import StringDictReader
@@ -10,32 +13,44 @@ AUTOCOMPLETE_LIMIT = 20
 
 
 @main.route('/corpus/new', methods=["POST", "GET"])
+@login_required
 def corpus_new():
     """ Register a new corpus
     """
     if request.method == "POST":
-        tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
-            request.form.get("tsv"),
-            request.form.get("allowed_lemma", None),
-            request.form.get("allowed_morph", None),
-            request.form.get("allowed_POS", None)
-        )
+        if not current_user.is_authenticated:
+            abort(403)
+        else:
+            tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
+                request.form.get("tsv"),
+                request.form.get("allowed_lemma", None),
+                request.form.get("allowed_morph", None),
+                request.form.get("allowed_POS", None)
+            )
+            try:
+                corpus = Corpus.create(
+                    request.form.get("name"),
+                    word_tokens_dict=tokens,
+                    allowed_lemma=allowed_lemma,
+                    allowed_POS=allowed_POS,
+                    allowed_morph=allowed_morph,
+                    context_left=request.form.get("context_left", None),
+                    context_right=request.form.get("context_right", None)
+                )
+                db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
+                db.session.commit()
+                flash("New corpus registered", category="success")
+                return redirect(url_for(".corpus_get", corpus_id=corpus.id))
+            except Exception as e:
+                db.session.rollback()
+                flash("The corpus cannot be registered", category="errors")
+                return redirect(url_for(".index"))
 
-        corpus = Corpus.create(
-            request.form.get("name"),
-            word_tokens_dict=tokens,
-            allowed_lemma=allowed_lemma,
-            allowed_POS=allowed_POS,
-            allowed_morph=allowed_morph,
-            context_left=request.form.get("context_left", None),
-            context_right=request.form.get("context_right", None)
-        )
-        flash("New corpus registered", category="success")
-        return redirect(url_for(".corpus_get", corpus_id=corpus.id))
     return render_template_with_nav_info('main/corpus_new.html')
 
 
 @main.route('/corpus/get/<int:corpus_id>')
+@login_required
 def corpus_get(corpus_id):
     """ Read information about the corpus
 
@@ -43,10 +58,13 @@ def corpus_get(corpus_id):
     :return:
     """
     corpus = Corpus.query.get_or_404(corpus_id)
+    if not corpus.has_access(current_user):
+        abort(403)
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
 
 
 @main.route('/corpus/<int:corpus_id>/allowed/<allowed_type>')
+@login_required
 def corpus_allowed_values(corpus_id, allowed_type):
     """ Find allowed values
 
@@ -54,7 +72,8 @@ def corpus_allowed_values(corpus_id, allowed_type):
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-
+    if not corpus.has_access(current_user):
+        abort(403)
     return render_template_with_nav_info(
         "main/corpus_allowed_values.html",
         allowed_type=allowed_type,
@@ -89,6 +108,8 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
 @main.route('/corpus/<int:corpus_id>/fixtures')
 def generate_fixtures(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
+    if not corpus.has_access(current_user):
+        abort(403)
     tokens = corpus.get_tokens().all()
     allowed_lemma = corpus.get_allowed_values(allowed_type="lemma")
     allowed_POS = corpus.get_allowed_values(allowed_type="POS")
@@ -99,6 +120,7 @@ def generate_fixtures(corpus_id):
 
 
 @main.route('/corpus/<int:corpus_id>/settings/edit/allowed_<allowed_type>', methods=["GET", "POST"])
+@login_required
 def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
     """ Find allowed values and allow their edition
 
@@ -108,6 +130,9 @@ def corpus_edit_allowed_values_setting(corpus_id, allowed_type):
     if allowed_type not in ["lemma", "POS", "morph"]:
         raise BadRequest("Unknown type of resource.")
     corpus = Corpus.query.get_or_404(corpus_id)
+
+    if not corpus.has_access(current_user):
+        abort(403)
 
     # In case of Post
     if request.method == "POST":

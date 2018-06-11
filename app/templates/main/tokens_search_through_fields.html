@@ -5,7 +5,7 @@
 
 {% block content %}
 
-    <h1>Corpus {{ corpus.name }} - Search tokens within the corpus </h1>
+    <h1 class="mt-3"><i class="fa fa-search mr-2"></i>Corpus {{ corpus.name }} - Search tokens within the corpus </h1>
 
     <form id="search_form" method="POST"
           action="{{ url_for("main.tokens_search_through_fields", corpus_id=corpus.id) }}">

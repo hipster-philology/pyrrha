@@ -1,3 +1,4 @@
+from flask import url_for
 from flask_testing import LiveServerTestCase
 import os
 import signal
@@ -8,8 +9,9 @@ from selenium.webdriver.chrome.options import Options
 import time
 
 from app import db, create_app
+from app.models.linguistic import CorpusUser, Corpus
 from tests.db_fixtures import add_corpus
-from app.models import WordToken, Corpus
+from app.models import WordToken, Role, User
 
 LIVESERVER_TIMEOUT = 1
 
@@ -21,6 +23,7 @@ class TestBase(LiveServerTestCase):
         config_name = 'test'
         app = create_app(config_name)
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+        app.client = app.test_client()
         app.config.update(
             # Change the port that the liveserver listens on
             LIVESERVER_PORT=8943
@@ -34,11 +37,17 @@ class TestBase(LiveServerTestCase):
         db.create_all()
         db.session.commit()
 
+        # add default roles & admin user
+        Role.add_default_roles()
+        User.add_default_users()
+
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         self.driver = webdriver.Chrome(chrome_options=options)
         self.driver.get(self.get_server_url())
+
+        self.admin_login()
 
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
@@ -74,6 +83,57 @@ class TestBase(LiveServerTestCase):
         self.driver.get(self.get_server_url())
         self.driver.refresh()
 
+    def addCorpusUser(self, corpus_name, email, is_owner=False):
+        corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
+        user = User.query.filter(User.email == email).first()
+        new_cu = CorpusUser(corpus=corpus, user=user, is_owner=is_owner)
+        self.db.session.add(new_cu)
+        self.db.session.commit()
+        return new_cu
+
+    def add_user(self, first_name, last_name, is_admin=False):
+        email = "%s.%s@ppa.fr" % (first_name, last_name)
+        new_user = User(confirmed=True,
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        password=self.app.config['ADMIN_PASSWORD'],
+                        role_id=2 if is_admin else 1)
+        self.db.session.add(new_user)
+        self.db.session.commit()
+        return email
+
+    def login(self, email, password):
+        self.driver.find_element_by_link_text('Log In').click()
+        self.driver.find_element_by_id("email").send_keys(email)
+        self.driver.find_element_by_id("password").send_keys(password)
+        self.driver.find_element_by_id("submit").click()
+        self.driver.implicitly_wait(5)
+
+    def logout(self):
+        try:
+            self.driver.find_element_by_link_text('Log out').click()
+            self.driver.implicitly_wait(5)
+        except NoSuchElementException as e:
+            pass
+
+    def login_with_user(self, email):
+        self.driver.set_window_size(1200, 1000)  # ??
+        self.logout()
+        self.driver.implicitly_wait(5)
+        self.login(email, self.app.config['ADMIN_PASSWORD'])
+
+    def admin_login(self):
+        self.login_with_user(self.app.config['ADMIN_EMAIL'])
+
+    def url_for_with_port(self, *args, **kwargs):
+        with self.app.test_request_context():
+            # With the test request context of the app
+            kwargs['_external'] = True
+            url = url_for(*args, **kwargs)  # Get the URL
+            url = url.replace('://localhost/', '://localhost:%d/' % (self.app.config["LIVESERVER_PORT"]))
+            return url
+
 
 class TokenEditBase(TestBase):
     """ Base class with helpers to test token edition page """
@@ -82,11 +142,13 @@ class TokenEditBase(TestBase):
 
     def go_to_edit_token_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's edit token page """
+
         def callback():
             # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_"+corpus_id).click()
+            self.driver.find_element_by_id("toggle_corpus_" + corpus_id).click()
             # Click on the edit link
-            self.driver.find_element_by_id("corpus_"+corpus_id+"_edit_tokens").click()
+            self.driver.find_element_by_id("corpus_" + corpus_id + "_edit_tokens").click()
+
         if as_callback:
             return callback
         return callback()
@@ -128,7 +190,7 @@ class TokenEditBase(TestBase):
             additional_action_before()
 
         # Take the first row
-        row = self.driver.find_element_by_id("token_"+id_row+"_row")
+        row = self.driver.find_element_by_id("token_" + id_row + "_row")
         # Take the td to edit
         if value_type == "POS":
             td = row.find_element_by_class_name("token_pos")
@@ -150,12 +212,12 @@ class TokenEditBase(TestBase):
         time.sleep(0.5)
 
         return self.db.session.query(WordToken).get(int(id_row)), \
-               self.driver.find_element_by_id("token_" + id_row + "_row").\
-                    find_elements_by_tag_name("td")[-1].text.strip(), \
+               self.driver.find_element_by_id("token_" + id_row + "_row"). \
+                   find_elements_by_tag_name("td")[-1].text.strip(), \
                self.driver.find_element_by_id("token_" + id_row + "_row")
 
     def first_token_id(self, corpus_id):
-        return self.db.session.query(WordToken.id).\
+        return self.db.session.query(WordToken.id). \
             filter_by(corpus=corpus_id).order_by(WordToken.order_id).limit(1).first()[0]
 
     def addCorpus(self, *args, **kwargs):
@@ -180,16 +242,17 @@ class TokenEdit2CorporaBase(TokenEditBase):
 
 
 class TokensSearchThroughFieldsBase(TestBase):
-
     CORPUS_ID = 1
 
     def go_to_search_tokens_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's search token page """
+
         def callback():
             # Show the dropdown
             self.driver.find_element_by_id("toggle_corpus_%s" % corpus_id).click()
             # Click on the edit link
             self.driver.find_element_by_id("corpus_%s_search_tokens" % corpus_id).click()
+
         if as_callback:
             return callback
         return callback()

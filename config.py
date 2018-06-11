@@ -5,7 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    APP_NAME = 'Pandora PostCorrection Editor'
+    APP_NAME = 'Pandora Post-Correction Editor'
     if os.environ.get('SECRET_KEY'):
         SECRET_KEY = os.environ.get('SECRET_KEY')
     else:
@@ -14,6 +14,22 @@ class Config:
     SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     template_folder = os.path.join(basedir, "app", "templates")
     static_folder = os.path.join(basedir, "app", "statics")
+    # SQLALCHEMY_ECHO = True
+
+    # Email
+    MAIL_SERVER = os.environ.get('MAIL_SERVER')
+    MAIL_PORT = 587
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or True
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') or False
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+
+    # Admin account
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
+    EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
+    EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
     @staticmethod
     def init_app(app):
@@ -27,6 +43,20 @@ class DevelopmentConfig(Config):
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
+    # Email
+    MAIL_SERVER = 'smtp.mailgun.org'
+    MAIL_PORT = 465
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True
+    MAIL_USERNAME = 'postmaster@sandboxfa7a873303c1425f8fda7947aa195696.mailgun.org'
+    MAIL_PASSWORD = 'c3c7cc3c785815a8728a6266745a70db-b6183ad4-c78d7487'
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
+    EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
+    EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
+
 
 class TestConfig(Config):
     DEBUG = True
@@ -34,6 +64,24 @@ class TestConfig(Config):
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
+
+    # Disable CSRF for login purpose
+    WTF_CSRF_ENABLED = False
+
+    # Email
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.mailgun.org'
+    MAIL_PORT = 465
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or False
+    MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') or True
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'postmaster@sandboxfa7a873303c1425f8fda7947aa195696.mailgun.org'
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'c3c7cc3c785815a8728a6266745a70db-b6183ad4-c78d7487'
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+
+    ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
+    ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
+    EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
+    EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
+
 
 
 config = {
