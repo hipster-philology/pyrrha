@@ -76,7 +76,6 @@ class TestCorpusScript(TestCase):
             result.output
         )
 
-
     @nottest
     def morph_test(self):
         with self.app.app_context():
