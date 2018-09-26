@@ -4,6 +4,7 @@ import io
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
+from sqlalchemy import func
 from werkzeug.exceptions import BadRequest
 
 from app.models.user import User
@@ -394,6 +395,8 @@ class WordToken(db.Model):
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
+    _changes = db.relationship("ChangeRecord")
+
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
 
@@ -775,45 +778,48 @@ class WordToken(db.Model):
             raise BadRequest(description="Mode is not from the list partial, complete, "
                                          "lemma, POS, morph, lemma_ex, morph_ex, POS_ex")
         elif mode == "partial":
-            filtering = db.or_(
-                    db.and_(WordToken.form == token.form, WordToken.lemma == token.lemma),
-                    db.and_(WordToken.form == token.form, WordToken.POS == token.POS),
-                    db.and_(WordToken.form == token.form, WordToken.morph == token.morph),
+            filtering = (
+                WordToken.form == token.form,
+                db.or_(
+                    WordToken.lemma == token.lemma,
+                    WordToken.POS == token.POS,
+                    WordToken.morph == token.morph,
                 )
+            )
         elif mode == "complete":
-            filtering = db.and_(
+            filtering = (
                     WordToken.form == token.form,
                     WordToken.lemma == token.lemma,
                     WordToken.POS == token.POS,
                     WordToken.morph == token.morph
                 )
         elif mode == "lemma":
-            filtering = db.and_(
+            filtering = (
                     WordToken.form == token.form,
                     WordToken.lemma == token.lemma,
                 )
         elif mode == "lemma_ex":
-            filtering = db.and_(
+            filtering = (
                     WordToken.form == token.form,
                     WordToken.lemma != token.lemma,
                 )
         elif mode == "POS":
-            filtering = db.and_(
+            filtering = (
                     WordToken.form == token.form,
                     WordToken.POS == token.POS,
                 )
         elif mode == "POS_ex":
-            filtering = db.and_(
+            filtering = (
                     WordToken.form == token.form,
                     WordToken.POS != token.POS,
                 )
         elif mode == "morph":
-            filtering = db.and_(
+            filtering = (
                     WordToken.form == token.form,
                     WordToken.morph == token.morph,
                 )
         elif mode == "morph_ex":
-            filtering = db.and_(
+            filtering = (
                     WordToken.form == token.form,
                     WordToken.morph != token.morph,
                 )
@@ -821,7 +827,7 @@ class WordToken(db.Model):
                 db.and_(
                     WordToken.corpus == token.corpus,
                     WordToken.id != token.id,
-                    filtering
+                    *filtering
                 )
             )
 
