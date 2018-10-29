@@ -23,6 +23,47 @@
         <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
         <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
     </div>
+    <div class="form-group row">
+        <div class="col-md-3">
+            <label for="language-model" id="config_loader_help" class="form-text text-muted">
+                Lemmatize
+            </label>
+            <small class="form-text text-muted">If your text is not lemmatized, select the language and click on lemmatize.</small>
+        </div>
+        <div class="col-md-9">
+            <div class="input-group">
+              <select class="form-control" id="language-model">
+                <option value="http://localhost:5001">Ancien Français</option>
+              </select>
+              <div class="input-group-append">
+                <button id="submit-model" class="btn btn-outline-secondary" type="button">Lemmatize</button>
+              </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group row">
+        <div  class="col-md-3"><label for="config" class="form-text text-muted">Load a configuration</label>
+            <small id="config_loader_help" class="form-text text-muted">If your language is part of the following option, we recommend using the default configuration</small>
+       </div>
+
+        <div class="col-md-9">
+            <div class="input-group">
+              <select class="form-control" id="config">
+                <option value="old_french">Ancien Français</option>
+              </select>
+              <div class="input-group-append">
+                <button id="get-config" class="btn btn-outline-secondary" type="button">Load</button>
+              </div>
+            </div>
+            <div>
+                <ul>
+                    <li style="display: none;" id="config_loader_lemma">Lemma loaded</li>
+                    <li style="display: none;" id="config_loader_POS">POS loaded</li>
+                    <li style="display: none;" id="config_loader_morph">Morphology loaded</li>
+                </ul>
+            </div>
+        </div>
+    </div>
     <div class="form-group">
         <label for="allowed_lemma">Allowed lemma</label>
         <small id="allowed_lemma_help" class="form-text text-muted">This should be formatted as a list of lemma separated by new line</small>
@@ -40,4 +81,49 @@
     </div>
     <button type="submit" id="submit" class="btn btn-primary">Submit</button>
 </form>
+<script type="text/javascript">
+$(document).ready(function() {
+    $("#submit-model").on("click", function(event) {
+        event.preventDefault();
+        var uri = $("#language-model").val(),
+            text_data = $("#tokens");
+        $.ajax(
+            uri,
+            {
+                data: {data: text_data.val()},
+                method: "POST",
+
+            }
+        ).done(function(response) {
+            text_data.val(response.replace("token\tlemma\tmorph\tpos", "form\tlemma\tmorph\tPOS"));
+        }).fail(function() {
+            alert("Something went wrong...");
+        });
+    });
+    $("#get-config").on("click", function(event) {
+        event.preventDefault();
+        var uri = "{{ url_for("configurations.static", filename='folder') }}".replace("folder", $("#config").val())+"/";
+
+        $.ajax(uri+"lemma.txt").done(function(response) {
+                        $("#allowed_lemma").val(response);
+                        $("#config_loader_lemma").show();
+                    }).fail(function() {
+                        alert("Something went wrong...");
+                    });
+
+        $.ajax(uri+"POS.txt").done(function(response) {
+                        $("#allowed_POS").val(response);
+                        $("#config_loader_POS").show();
+                    }).fail(function() {
+                        alert("Something went wrong...");
+                    });
+        $.ajax(uri+"morph.txt").done(function(response) {
+                        $("#allowed_morph").val(response);
+                        $("#config_loader_morph").show();
+                    }).fail(function() {
+                        alert("Something went wrong...");
+                    });
+    });
+});
+</script>
 {% endblock %}

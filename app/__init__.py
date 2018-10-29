@@ -55,4 +55,7 @@ def create_app(config_name="dev"):
     from .admin import admin as admin_blueprint
     app.register_blueprint(admin_blueprint, url_prefix='/admin')
 
+    from .configurations import configuration as configurations_blueprint
+    app.register_blueprint(configurations_blueprint)
+
     return app
