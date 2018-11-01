@@ -5,7 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    APP_NAME = 'Pandora Post-Correction Editor'
+    APP_NAME = 'Pyrrha'
     if os.environ.get('SECRET_KEY'):
         SECRET_KEY = os.environ.get('SECRET_KEY')
     else:
