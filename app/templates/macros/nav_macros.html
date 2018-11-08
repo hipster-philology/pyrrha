@@ -4,12 +4,12 @@
 
 {% macro render_menu_items(endpoints) %}
     {% for endpoint, name, icon in endpoints %}
-        <span class="nav-item"><a class="navbar-brand {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for(endpoint) }}">
+        <li class="nav-item"><a class="nav-link {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for(endpoint) }}">
             {% if icon %}
                 <i class="{{ icon }}"  aria-hidden="true"></i>
             {% endif %}
             {{ name | safe }}
-        </a></span>
+        </a></li>
     {% endfor %}
 {% endmacro %}
 
@@ -20,14 +20,11 @@
 #}
 
 {% macro header_items(current_user) %}
-    {% set endpoints = [
-      ('main.index', config.APP_NAME, 'fa fa-home')
-    ]%}
     {% set user = [] %}
     {% if current_user.is_authenticated %}
       {% set user = ([('main.dashboard', 'Dashboard', 'fa fa-bars')]) %}
     {% endif %}
-    {{ render_menu_items( endpoints + user ) }}
+    {{ render_menu_items( user ) }}
 {% endmacro %}
 
 {# This renders the right hand side of the navigation bar. If the user is logged in, it links to
@@ -50,48 +47,44 @@
 {% endmacro %}
 
 {% macro render_nav(current_user, corpora=[]) %}
-    <nav class="navbar navbar-expand-md navbar-dark bg-dark fixed-top">
-      <!--
-      <a class="navbar-brand" href="{{url_for("main.index")}}">Pandora Post-Correction Editor</a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark">
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarTogglerDemo01" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
-      -->
-      {{ header_items(current_user) }}
+      <div class="collapse navbar-collapse" id="navbarTogglerDemo01">
+         <a class="navbar-brand {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for('main.index') }}">
+                <i class="fa fa-home"  aria-hidden="true"></i> {{ config.APP_NAME | safe }}
+        </a>
+            <ul class="navbar-nav mr-auto">
+                {{ header_items(current_user) }}
 
-      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
-        <ul class="navbar-nav mr-auto">
-          {% if current_user.is_authenticated %}
-          <li class="nav-item">
-            <a class="nav-link" id="new_corpus_link" href="{{url_for("main.corpus_new")}}">New Corpus</a>
-          </li>
-          {% endif %}
-            {% for corpus in corpora %}
-              <li class="nav-item dropdown">
-                <a id="toggle_corpus_{{corpus.id}}" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{corpus.name}}</a>
-                <div class="dropdown-menu">
-                  <a class="dropdown-item" id="overview_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">Overview</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">Search tokens</a>
-                  <a class="dropdown-item" id="corpus_{{corpus.id}}_edit_tokens" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a>
-                  <a class="dropdown-item" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a>
-                  <a class="dropdown-item" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Edit tokens with unallowed lemma</a>
-                  <a class="dropdown-item" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Edit tokens with unallowed POS</a>
-                  <a class="dropdown-item" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Edit tokens with unallowed morph</a>
-                  <div class="dropdown-divider"></div>
-                  <a class="dropdown-item" href="{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='lemma')}}">Allowed lemma</a>
-                  <a class="dropdown-item" href="{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='POS')}}">Allowed POS</a>
-                  <a class="dropdown-item" href="{{url_for("main.corpus_allowed_values", corpus_id=corpus.id, allowed_type='morph')}}">Allowed morph</a>
-                </div>
+              {% if current_user.is_authenticated %}
+              <li class="nav-item">
+                <a class="nav-link" id="new_corpus_link" href="{{url_for("main.corpus_new")}}">New Corpus</a>
               </li>
-            {% endfor %}
-        </ul>
-      </div>
-
-      {{ account_items(current_user) }}
-
+              {% endif %}
+              {%- if corpora %}
+              <li class="nav-item dropdown">
+                <a id="toggle_corpus_corpora"
+                   class="nav-link dropdown-toggle"
+                   data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
+                    Corpora
+                </a>
+                <div class="dropdown-menu">
+                    {% for corpus in corpora %}
+                        <a class="dropdown-item"
+                           id="overview_{{corpus.id}}" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">
+                            {{ corpus.name | safe }}
+                        </a>
+                    {% endfor %}
+                    </div>
+                  </li>
+            {% endif -%}
+            </ul>
+            <ul class="navbar-nav">
+                {{ account_items(current_user) }}
+            </ul>
+          </div>
     </nav>
 {% endmacro %}
 
@@ -115,29 +108,50 @@
 {% endmacro %}
 
 {%- macro quick_nav(corpus) %}
-    {%- if request.endpoint != 'main.tokens_edit' %}
-        <div class="container-fluid">
-            <nav style="margin-bottom: 10px;">
-                <span class="btn btn-sm btn-link">Quick links :</span>
-                <a class="btn btn-sm btn-info" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}">
-                    <span class="fa fa-pencil"></span>
-                    Edit tokens
-                </a>
-                <a class="btn btn-sm btn-info d-none" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}" id="last-edit-link">
-                    <span class="fa fa-history"></span>
-                    Last Edit tokens
-                </a>
-            </nav>
-        </div>
-        <script type="text/javascript">
-            $(document).ready(function() {
-               var last_page = localStorage.getItem("corpus-{{corpus.id}}");
-               if (last_page) {
-                   var lastLink = $("#last-edit-link");
-                   lastLink.removeClass("d-none");
-                   lastLink.attr("href", lastLink.attr("href")+"?page="+last_page);
-               }
-            });
-        </script>
-    {% endif %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+           var last_page = localStorage.getItem("corpus-{{corpus.id}}");
+           if (last_page) {
+               var lastLink = $("#last-edit-link");
+               lastLink.removeClass("d-none");
+               lastLink.attr("href", lastLink.attr("href")+"?page="+last_page);
+           }
+        });
+    </script>
 {%  endmacro %}
+
+{% macro single_corpus_nav(corpus) %}
+<header>
+    <a id="overview_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
+        {{corpus.name}}</a>
+</header>
+Quick links
+<ul class="nav flex-column">
+    <li class="nav-item"><a class="nav-link" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">
+        <i class="fa fa-search"></i> Search tokens</a></li>
+    <li class="nav-item"><a class="nav-link" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}">
+        <i class="fa fa-pencil"></i> Edit tokens
+    </a></li>
+   <li class="nav-item"> <a class="nav-link " href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}" id="last-edit-link">
+        <i class="fa fa-history"></i> Last edited tokens
+   </a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">
+      <i class="fa fa-download"></i> Export tokens</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">
+      <i class="fa fa-list"></i> History</a></li>
+</ul>
+Edit tokens with
+<ul class="nav flex-column">
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Unallowed lemma</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Unallowed POS</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Unallowed morph</a></li>
+</ul>
+Edit Configuration Lists
+<ul class="nav flex-column">
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.corpus_edit_allowed_values_setting", corpus_id=corpus.id, allowed_type='lemma')}}">Allowed lemma</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.corpus_edit_allowed_values_setting", corpus_id=corpus.id, allowed_type='POS')}}">Allowed POS</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.corpus_edit_allowed_values_setting", corpus_id=corpus.id, allowed_type='morph')}}">Allowed morph</a></li>
+
+</ul>
+</nav>
+{% endmacro %}

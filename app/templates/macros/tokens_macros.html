@@ -18,12 +18,13 @@
 
     <table class="table table-bordered">
         <thead>
-            <tr><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+            <tr><th>Id</th><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
                 {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th></tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr class="editable{% if token.changed %} table-changed{% endif %}" id="token_{{token.id}}_row">
+                <tr class="editable{% if token.changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
+                    <td class="tok-anc"><a href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}
                     </td>
