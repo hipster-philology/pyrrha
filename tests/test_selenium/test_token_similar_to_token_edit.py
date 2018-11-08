@@ -36,7 +36,7 @@ class TokenEditBase(TokenEdit2CorporaBase):
         self.assertEqual(token.POS, "NOMcom", "POS has been changed")
         self.assertEqual(text, "(Saved) Save 2 similar to see", "POS has been changed")
         # Go to find similar
-        row.find_elements_by_tag_name("a")[1].click()
+        row.find_element_by_class_name("similar-link").click()
         # Count the number of similar case
         self.assertEqual(len(self.get_main_table_body_rows()), 2, "There is two similar POS to edit")
         # Apply changes to the two others

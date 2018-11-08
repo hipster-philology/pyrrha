@@ -613,11 +613,10 @@ class WordToken(db.Model):
                 label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
                 POS=token.get("POS", token.get("pos")),
                 morph=token.get("morph", None),
-                #context=" ".join(previous_token + [token.get("form")] + next_token),
                 left_context=" ".join(previous_token),
                 right_context=" ".join(next_token),
                 corpus=corpus_id,
-                order_id=i
+                order_id=i+1  # Asked by JB Camps...
             )
             db.session.add(wt)
         db.session.commit()

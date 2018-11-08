@@ -63,8 +63,9 @@ class TestDashboard(TestBase):
         self.addCorpus("floovant")
         self.driver.find_element_by_link_text("Dashboard").click()
 
-        navbars = self.driver.find_element_by_id("navbarsExampleDefault")
-        header_items = navbars.find_elements_by_class_name("dropdown-toggle")
+        navbars = self.driver.find_element_by_id("main-nav")
+        navbars.find_element_by_id("toggle_corpus_corpora").click()
+        header_items = navbars.find_elements_by_class_name("dd-corpus")
         header_names = [item.text for item in header_items]
 
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
@@ -80,8 +81,9 @@ class TestDashboard(TestBase):
         self.driver.implicitly_wait(3)
         self.driver.find_element_by_link_text("Dashboard").click()
 
-        navbars = self.driver.find_element_by_id("navbarsExampleDefault")
-        header_items = navbars.find_elements_by_class_name("dropdown-toggle")
+        navbars = self.driver.find_element_by_id("main-nav")
+        navbars.find_element_by_id("toggle_corpus_corpora").click()
+        header_items = navbars.find_elements_by_class_name("dd-corpus")
         header_names = [item.text for item in header_items]
 
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")

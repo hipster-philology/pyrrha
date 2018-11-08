@@ -10,8 +10,9 @@ class TestCorpusSettingsUpdate(TestBase):
         self.addCorpus("wauchier", with_allowed_lemma=True, with_allowed_pos=True, with_allowed_morph=morph)
         self.addCorpus("floovant", with_allowed_lemma=True, with_allowed_pos=True, with_allowed_morph=morph)
         self.driver.refresh()
-        self.driver.find_element_by_id("toggle_corpus_2").click()
-        self.driver.find_element_by_id("overview_2").click()
+        self.driver.find_element_by_id("toggle_corpus_corpora").click()
+        self.driver.find_element_by_id("dropdown_link_2").click()
+        self.driver.find_element_by_css_selector("header > a").click()
         self.driver.find_element_by_css_selector(".settings-"+mode).click()
         return self.driver.find_element_by_id("allowed_values").get_attribute('value')
 

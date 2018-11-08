@@ -145,9 +145,9 @@ class TokenEditBase(TestBase):
 
         def callback():
             # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_" + corpus_id).click()
+            self.driver.find_element_by_id("toggle_corpus_corpora").click()
             # Click on the edit link
-            self.driver.find_element_by_id("corpus_" + corpus_id + "_edit_tokens").click()
+            self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
 
         if as_callback:
             return callback
@@ -249,7 +249,8 @@ class TokensSearchThroughFieldsBase(TestBase):
 
         def callback():
             # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_%s" % corpus_id).click()
+            self.driver.find_element_by_id("toggle_corpus_corpora").click()
+            self.driver.find_element_by_id("dropdown_link_%s" % corpus_id).click()
             # Click on the edit link
             self.driver.find_element_by_id("corpus_%s_search_tokens" % corpus_id).click()
 
@@ -333,7 +334,7 @@ class TokensSearchThroughFieldsBase(TestBase):
 
                 for row in rows:
                     result.append({
-                        "form": row.find_elements_by_tag_name("td")[0].text.strip(),
+                        "form": row.find_elements_by_tag_name("td")[1].text.strip(),
                         "lemma": get_field(row, "token_lemma"),
                         "morph": get_field(row, "token_morph"),
                         "pos": get_field(row, "token_pos"),
