@@ -441,7 +441,9 @@ class WordToken(db.Model):
         :return: If the token has been edited
         :rtype: bool
         """
-        return 0 < db.session.query(ChangeRecord).filter_by(**{"word_token_id": self.id, "corpus": self.corpus}).limit(1).count()
+        return db.session.query(ChangeRecord.query.filter(
+                ChangeRecord.word_token_id == self.id
+        ).exists()).scalar()
 
     @property
     def similar(self):
@@ -450,7 +452,18 @@ class WordToken(db.Model):
         :return: Number of partial match this token has
         :rtype: int
         """
-        return WordToken.get_nearly_similar_to(self, mode="partial").count()
+        cnt, *_ = db.session.query(func.count(1)).filter(
+            db.and_(
+                WordToken.corpus == self.corpus,
+                WordToken.form == self.form,
+                db.or_(
+                    WordToken.lemma == self.lemma,
+                    WordToken.POS == self.POS,
+                    WordToken.morph == self.morph,
+                )
+            )
+        ).first()
+        return cnt - 1
 
     @staticmethod
     def get_like(corpus_id, form, group_by, type_like="lemma", allowed_list=False):
