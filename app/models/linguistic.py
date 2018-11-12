@@ -445,21 +445,16 @@ class WordToken(db.Model):
                 ChangeRecord.word_token_id == self.id
         ).exists()).scalar()
 
-    @property
-    def similar(self):
-        """ Number of partial match this token has
-
-        :return: Number of partial match this token has
-        :rtype: int
-        """
+    @classmethod
+    def similar_as(cls, corpus: int, form: str, lemma: str, POS: str, morph: str):
         cnt, *_ = db.session.query(func.count(1)).filter(
             db.and_(
-                WordToken.corpus == self.corpus,
-                WordToken.form == self.form,
+                WordToken.corpus == corpus,
+                WordToken.form == form,
                 db.or_(
-                    WordToken.lemma == self.lemma,
-                    WordToken.POS == self.POS,
-                    WordToken.morph == self.morph,
+                    WordToken.lemma == lemma,
+                    WordToken.POS == POS,
+                    WordToken.morph == morph,
                 )
             )
         ).first()

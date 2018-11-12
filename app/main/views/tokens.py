@@ -23,6 +23,15 @@ def tokens_edit(corpus_id):
     tokens = corpus\
         .get_tokens()\
         .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
+
+    maps = {}
+    for token in tokens.items:
+        key = (token.form, token.lemma, token.POS, token.morph)
+        if key not in maps:
+            maps[key] = \
+                WordToken.similar_as(corpus.id, *key)
+        token.similar = maps[key]
+
     return render_template_with_nav_info('main/tokens_edit.html', corpus=corpus, tokens=tokens)
 
 
