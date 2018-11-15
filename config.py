@@ -31,6 +31,11 @@ class Config:
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
+    # Lemmatizer (until Deucalion client)
+    LEMMATIZERS = [
+        ("Ancien Français", "http://localhost:5000/models-fro")
+    ]
+
     @staticmethod
     def init_app(app):
         pass

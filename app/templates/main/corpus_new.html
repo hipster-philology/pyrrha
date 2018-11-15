@@ -23,6 +23,7 @@
         <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
         <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
     </div>
+    {% if lemmatizers %}
     <div class="form-group row">
         <div class="col-md-3">
             <label for="language-model" id="language-model-label" class="form-text text-muted">
@@ -33,7 +34,9 @@
         <div class="col-md-9">
             <div class="input-group">
               <select class="form-control" id="language-model">
-                <option value="http://localhost:5001">Ancien Français</option>
+                  {%- for lang, address in lemmatizers %}
+                <option value="{{ address }}">{{ lang }}</option>
+                  {% endfor -%}
               </select>
               <div class="input-group-append">
                 <button id="submit-model" class="btn btn-outline-secondary" type="button">Lemmatize</button>
@@ -41,6 +44,7 @@
             </div>
         </div>
     </div>
+    {% endif %}
     <div class="form-group row">
         <div class="col-md-3">
             <label for="tokenize" id="tokenize-label" class="form-text text-muted">

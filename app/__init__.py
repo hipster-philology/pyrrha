@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, g
 
 from config import config
 from flask_compress import Compress
