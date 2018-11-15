@@ -6,22 +6,24 @@
         {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
         {% block custom_head_tags %}{% endblock %}
     </head>
-    <body style="padding-top: 5rem;">
+    <body>
         {% block nav %}
-          {# add dropdown variable here to the render_nav method to render dropdowns #}
-          {{ nav.render_nav(current_user, corpora=corpora) }}
-          {%  if corpus %}{{ nav.quick_nav(corpus) }}{%  endif %}
-        {% endblock %}
-
-
-        <div class="container-fluid">
+            {{ nav.render_nav(current_user, corpora=corpora) }}
+        {%  endblock %}
+        <div class="container-fluid" id="main-container">
             <div class="row">
-          <div class="starter-template col-lg-10 offset-lg-1">
-            {% include 'partials/_flashes.html' %}
-            {# When extended, the content block contains all the html of the webpage #}
-            {% block content %}{% endblock %}
-          </div>
-        </div>
+              <div class="col-lg-2 bg-light" id="left-menu">
+                  {%  if corpus %}
+                      {{ nav.quick_nav(corpus) }}
+                      {{ nav.single_corpus_nav(corpus) }}
+                  {%  endif %}
+              </div>
+              <div class="col-lg-10">
+                {% include 'partials/_flashes.html' %}
+                {# When extended, the content block contains all the html of the webpage #}
+                {% block content %}{% endblock %}
+              </div>
+            </div>
         </div>
     </body>
 </html>

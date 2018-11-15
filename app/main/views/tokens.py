@@ -167,11 +167,21 @@ def tokens_export(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
-    tokens = corpus.get_tokens().all()
+    format = request.args.get("format")
+    if format in ["tsv"]:
+        tokens = corpus.get_tokens().all()
+        if format == "tsv":
+            headers = ["\t".join(["form", "lemma", "POS", "morph"])]
+            return "\n".join(headers+[tok.tsv for tok in tokens]), \
+                   200, \
+                   {
+                       "Content-Type": "text/tab-separated-values; charset= utf-8",
+                       "Content-Disposition": 'attachment; filename="pyrrha-correction.tsv"'
+                   }
+
     return render_template_with_nav_info(
         template="main/tokens_view.html",
-        corpus=corpus, tokens=tokens,
-        headers="\t".join(["form", "lemma", "POS", "morph"])
+        corpus=corpus
     )
 
 
