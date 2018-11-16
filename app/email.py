@@ -5,6 +5,10 @@ from smtplib import SMTPDataError
 from threading import Thread
 
 from app import mail
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def _async(app, msg):
@@ -12,7 +16,7 @@ def _async(app, msg):
         try:
             mail.send(msg)
         except SMTPDataError as e:
-            print(e)
+            logger.warning(str(e))
 
 
 def send_email_async(app, recipient, subject, template, **kwargs):

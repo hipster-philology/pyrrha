@@ -242,7 +242,7 @@ class TestTokensEditTwoCorpora(TokenEdit2CorporaBase):
 
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()
-        with self.assertRaises(selenium.common.exceptions.NoSuchElementException):
+        with self.assertRaises(selenium.common.exceptions.TimeoutException):
             _ = self.edith_nth_row_value(
                 "s", id_row=str(self.first_token_id(2)+1), corpus_id="2",
                 autocomplete_selector=".autocomplete-suggestion[data-val='saint']"

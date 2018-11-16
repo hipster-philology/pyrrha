@@ -47,7 +47,6 @@ def corpus_new():
                 return redirect(url_for(".index"))
 
     lemmatizers = current_app.config.get("LEMMATIZERS", [])
-    print(lemmatizers)
     return render_template_with_nav_info('main/corpus_new.html', lemmatizers=lemmatizers)
 
 

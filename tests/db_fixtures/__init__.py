@@ -73,4 +73,3 @@ def add_corpus(
             z.label_uniform = unidecode.unidecode(z.label_uniform)
         db.session.add(z)
     db.session.commit()
-    time.sleep(1)
