@@ -1,4 +1,4 @@
-from flask import request, jsonify, flash, redirect, url_for, abort
+from flask import request, jsonify, flash, redirect, url_for, abort, current_app
 from flask_login import current_user, login_required
 
 from app import db
@@ -46,7 +46,9 @@ def corpus_new():
                 flash("The corpus cannot be registered", category="errors")
                 return redirect(url_for(".index"))
 
-    return render_template_with_nav_info('main/corpus_new.html')
+    lemmatizers = current_app.config.get("LEMMATIZERS", [])
+    print(lemmatizers)
+    return render_template_with_nav_info('main/corpus_new.html', lemmatizers=lemmatizers)
 
 
 @main.route('/corpus/get/<int:corpus_id>')
