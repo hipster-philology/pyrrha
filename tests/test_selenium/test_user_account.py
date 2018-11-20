@@ -6,6 +6,7 @@ from tests.test_selenium.base import TestBase
 
 
 class TestUserAccount(TestBase):
+    AUTO_LOG_IN = False
 
     def test_user_info(self):
         foo_email = self.add_user("foo", "bar")
