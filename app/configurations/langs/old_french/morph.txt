@@ -84,7 +84,7 @@ PERS.=3|NOMB.=s|GENRE=m|CAS=n	3e personne singulier masculin nominatif PROper, P
 PERS.=3|NOMB.=s|GENRE=m|CAS=r	3e personne singulier masculin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
 PERS.=3|NOMB.=s|GENRE=n|CAS=i	3e personne singulier neutre régime indirect PROper, PROper.PROper
 PERS.=3|NOMB.=s|GENRE=n|CAS=n	3e personne singulier neutre nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
-PERS.=3|NOMB.=s|GENRE=n|CAS=r	3e personne singulier neutre régime
+PERS.=3|NOMB.=s|GENRE=n|CAS=r	3e personne singulier neutre régime 
 NOMB.=p|GENRE=f|CAS=i	pluriel féminin régime indirect PROrel
 NOMB.=p|GENRE=f|CAS=n|DEGRE=c	pluriel féminin nominatif comparatif ADJqua
 NOMB.=p|GENRE=f|CAS=n|DEGRE=p	pluriel féminin nominatif positif ADJqua
@@ -144,3 +144,4 @@ DEGRE=-	non applicable ADVgen
 DEGRE=c	comparatif ADVgen
 DEGRE=p	positif ADVgen
 DEGRE=s	superlatif ADVgen
+MORPH=empty	pas de morphologie PROadv,ADVgen.PROadv,ADVneg,ADVint,ADVsub,PRE,CONcoo,CONsub,INJ,PON,ETR,ABR,RED,OUT
