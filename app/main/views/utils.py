@@ -1,7 +1,7 @@
 from flask_login import current_user
 
 from ...models import Corpus
-from ...utils.tsv import StringDictReader
+from ...utils.tsv import StringDictReader, TSV_CONFIG
 from flask import render_template, request
 from csv import DictReader
 
@@ -35,7 +35,7 @@ def create_input_format_convertion(tokens, allowed_lemma, allowed_morph, allowed
     if isinstance(tokens, str):
         tokens = StringDictReader(tokens)
     else:
-        tokens = DictReader(tokens, dialect="excel-tab")
+        tokens = DictReader(tokens, **TSV_CONFIG)
 
     return tokens, allowed_lemma, allowed_morph, allowed_POS
 
