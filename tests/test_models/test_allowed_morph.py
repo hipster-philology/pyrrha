@@ -8,7 +8,7 @@ class TestAllowedMorph(TestModels):
         self.addCorpus("floovant", tokens_up_to=3, with_allowed_morph=True)
         self.assertEqual(
             AllowedMorph.to_input_format(
-                AllowedMorph.query.filter(AllowedMorph.corpus == 2)
+                AllowedMorph.query.filter(AllowedMorph.control_list == 2)
             ).replace("\r", ""),
             """label	readable
 _	pas de morphologie

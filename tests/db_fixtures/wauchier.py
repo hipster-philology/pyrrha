@@ -1,6 +1,8 @@
 from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph
+from app.models import ControlLists, ControlListsUser
 
-Wauchier = Corpus(name="Wauchier", id=1)
+Wauchier = Corpus(name="Wauchier", id=1, control_lists_id=1)
+WCL = ControlLists(id=1)
 WauchierTokens = [
     WordToken(corpus=Wauchier.id, form="De", lemma="de", POS="PRE", left_context="", right_context="seint Martin mout", label_uniform="de", morph="None"),
     WordToken(corpus=Wauchier.id, form="seint", lemma="saint", POS="ADJqua", left_context="De", right_context="Martin mout doit", label_uniform="saint", morph="None"),
@@ -360,56 +362,56 @@ WauchierTokens = [
 
 
 WauchierAllowedLemma = [
-    AllowedLemma(label="de", label_uniform="de", corpus=Wauchier.id),
-    AllowedLemma(label="saint", label_uniform="saint", corpus=Wauchier.id),
-    AllowedLemma(label="martin", label_uniform="martin", corpus=Wauchier.id),
-    AllowedLemma(label="öir", label_uniform="öir", corpus=Wauchier.id),
-    AllowedLemma(label="car", label_uniform="car", corpus=Wauchier.id),
-    AllowedLemma(label="devoir", label_uniform="devoir", corpus=Wauchier.id),
-    AllowedLemma(label="entendre", label_uniform="entendre", corpus=Wauchier.id),
-    AllowedLemma(label=",", label_uniform=",", corpus=Wauchier.id),
-    AllowedLemma(label="par", label_uniform="par", corpus=Wauchier.id),
-    AllowedLemma(label="un", label_uniform="un", corpus=Wauchier.id),
-    AllowedLemma(label="pöoir", label_uniform="pöoir", corpus=Wauchier.id),
-    AllowedLemma(label="il", label_uniform="il", corpus=Wauchier.id),
-    AllowedLemma(label="doucement", label_uniform="doucement", corpus=Wauchier.id),
-    AllowedLemma(label="en1", label_uniform="en1", corpus=Wauchier.id),
-    AllowedLemma(label="le", label_uniform="le", corpus=Wauchier.id),
-    AllowedLemma(label="mout", label_uniform="mout", corpus=Wauchier.id),
-    AllowedLemma(label="bien", label_uniform="bien", corpus=Wauchier.id),
-    AllowedLemma(label="retenir", label_uniform="retenir", corpus=Wauchier.id),
-    AllowedLemma(label="volentiers", label_uniform="volentiers", corpus=Wauchier.id),
-    AllowedLemma(label="et", label_uniform="et", corpus=Wauchier.id),
-    AllowedLemma(label="savoir", label_uniform="savoir", corpus=Wauchier.id)
+    AllowedLemma(label="de", label_uniform="de", control_list=WCL.id),
+    AllowedLemma(label="saint", label_uniform="saint", control_list=WCL.id),
+    AllowedLemma(label="martin", label_uniform="martin", control_list=WCL.id),
+    AllowedLemma(label="öir", label_uniform="öir", control_list=WCL.id),
+    AllowedLemma(label="car", label_uniform="car", control_list=WCL.id),
+    AllowedLemma(label="devoir", label_uniform="devoir", control_list=WCL.id),
+    AllowedLemma(label="entendre", label_uniform="entendre", control_list=WCL.id),
+    AllowedLemma(label=",", label_uniform=",", control_list=WCL.id),
+    AllowedLemma(label="par", label_uniform="par", control_list=WCL.id),
+    AllowedLemma(label="un", label_uniform="un", control_list=WCL.id),
+    AllowedLemma(label="pöoir", label_uniform="pöoir", control_list=WCL.id),
+    AllowedLemma(label="il", label_uniform="il", control_list=WCL.id),
+    AllowedLemma(label="doucement", label_uniform="doucement", control_list=WCL.id),
+    AllowedLemma(label="en1", label_uniform="en1", control_list=WCL.id),
+    AllowedLemma(label="le", label_uniform="le", control_list=WCL.id),
+    AllowedLemma(label="mout", label_uniform="mout", control_list=WCL.id),
+    AllowedLemma(label="bien", label_uniform="bien", control_list=WCL.id),
+    AllowedLemma(label="retenir", label_uniform="retenir", control_list=WCL.id),
+    AllowedLemma(label="volentiers", label_uniform="volentiers", control_list=WCL.id),
+    AllowedLemma(label="et", label_uniform="et", control_list=WCL.id),
+    AllowedLemma(label="savoir", label_uniform="savoir", control_list=WCL.id)
 ]
 
 WauchierAllowedPOS = [
-    AllowedPOS(label='ADJqua', corpus=Wauchier.id),
-    AllowedPOS(label='NOMpro', corpus=Wauchier.id),
-    AllowedPOS(label='CONcoo', corpus=Wauchier.id),
-    AllowedPOS(label='DETdef', corpus=Wauchier.id),
-    AllowedPOS(label='PROper', corpus=Wauchier.id),
-    AllowedPOS(label='ADVgen', corpus=Wauchier.id),
-    AllowedPOS(label='PONfbl', corpus=Wauchier.id),
-    AllowedPOS(label='VERcjg', corpus=Wauchier.id),
-    AllowedPOS(label='PRE', corpus=Wauchier.id),
-    AllowedPOS(label='VERinf', corpus=Wauchier.id)
+    AllowedPOS(label='ADJqua', control_list=WCL.id),
+    AllowedPOS(label='NOMpro', control_list=WCL.id),
+    AllowedPOS(label='CONcoo', control_list=WCL.id),
+    AllowedPOS(label='DETdef', control_list=WCL.id),
+    AllowedPOS(label='PROper', control_list=WCL.id),
+    AllowedPOS(label='ADVgen', control_list=WCL.id),
+    AllowedPOS(label='PONfbl', control_list=WCL.id),
+    AllowedPOS(label='VERcjg', control_list=WCL.id),
+    AllowedPOS(label='PRE', control_list=WCL.id),
+    AllowedPOS(label='VERinf', control_list=WCL.id)
 ]
 
 WauchierAllowedMorph = [
-    AllowedMorph(corpus=Wauchier.id, label="_", readable="pas de morphologie"),
-    AllowedMorph(corpus=Wauchier.id, label="DEGRE=-", readable="non applicable"),
-    AllowedMorph(corpus=Wauchier.id, label="MODE=imp|PERS.=2|NOMB.=p", readable="impératif 2e personne pluriel"),
-    AllowedMorph(corpus=Wauchier.id, label="MODE=ind|TEMPS=psp|PERS.=3|NOMB.=s", readable="indicatif passé simple 3e personne singulier"),
-    AllowedMorph(corpus=Wauchier.id, label="MODE=ind|TEMPS=pst|PERS.=1|NOMB.=s", readable="indicatif présent 1re personne singulier"),
-    AllowedMorph(corpus=Wauchier.id, label="MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s", readable="subjonctif présent 3e personne singulier"),
-    AllowedMorph(corpus=Wauchier.id, label="NOMB.=p|GENRE=m|CAS=n", readable="pluriel masculin nominatif"),
-    AllowedMorph(corpus=Wauchier.id, label="NOMB.=p|GENRE=m|CAS=r", readable="pluriel masculin régime"),
-    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=f|CAS=r", readable="singulier féminin régime"),
-    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=f|CAS=r|DEGRE=p", readable="singulier féminin régime positif"),
-    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=m|CAS=n", readable="singulier masculin nominatif"),
-    AllowedMorph(corpus=Wauchier.id, label="NOMB.=s|GENRE=m|CAS=r", readable="singulier masculin régime"),
-    AllowedMorph(corpus=Wauchier.id, label="PERS.=1|NOMB.=s|GENRE=m|CAS=n", readable="1re personne singulier masculin nominatif"),
-    AllowedMorph(corpus=Wauchier.id, label="PERS.=2|NOMB.=p|GENRE=m|CAS=r", readable="2e personne pluriel masculin régime"),
-    AllowedMorph(corpus=Wauchier.id, label="PERS.=3|NOMB.=p|GENRE=m|CAS=r", readable="3e personne pluriel masculin régime")
+    AllowedMorph(control_list=WCL.id, label="_", readable="pas de morphologie"),
+    AllowedMorph(control_list=WCL.id, label="DEGRE=-", readable="non applicable"),
+    AllowedMorph(control_list=WCL.id, label="MODE=imp|PERS.=2|NOMB.=p", readable="impératif 2e personne pluriel"),
+    AllowedMorph(control_list=WCL.id, label="MODE=ind|TEMPS=psp|PERS.=3|NOMB.=s", readable="indicatif passé simple 3e personne singulier"),
+    AllowedMorph(control_list=WCL.id, label="MODE=ind|TEMPS=pst|PERS.=1|NOMB.=s", readable="indicatif présent 1re personne singulier"),
+    AllowedMorph(control_list=WCL.id, label="MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s", readable="subjonctif présent 3e personne singulier"),
+    AllowedMorph(control_list=WCL.id, label="NOMB.=p|GENRE=m|CAS=n", readable="pluriel masculin nominatif"),
+    AllowedMorph(control_list=WCL.id, label="NOMB.=p|GENRE=m|CAS=r", readable="pluriel masculin régime"),
+    AllowedMorph(control_list=WCL.id, label="NOMB.=s|GENRE=f|CAS=r", readable="singulier féminin régime"),
+    AllowedMorph(control_list=WCL.id, label="NOMB.=s|GENRE=f|CAS=r|DEGRE=p", readable="singulier féminin régime positif"),
+    AllowedMorph(control_list=WCL.id, label="NOMB.=s|GENRE=m|CAS=n", readable="singulier masculin nominatif"),
+    AllowedMorph(control_list=WCL.id, label="NOMB.=s|GENRE=m|CAS=r", readable="singulier masculin régime"),
+    AllowedMorph(control_list=WCL.id, label="PERS.=1|NOMB.=s|GENRE=m|CAS=n", readable="1re personne singulier masculin nominatif"),
+    AllowedMorph(control_list=WCL.id, label="PERS.=2|NOMB.=p|GENRE=m|CAS=r", readable="2e personne pluriel masculin régime"),
+    AllowedMorph(control_list=WCL.id, label="PERS.=3|NOMB.=p|GENRE=m|CAS=r", readable="3e personne pluriel masculin régime")
 ]

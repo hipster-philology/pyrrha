@@ -57,7 +57,7 @@ class TestCorpusScript(TestCase):
     @nottest
     def pos_test(self):
         with self.app.app_context():
-            POS = AllowedPOS.query.filter(AllowedPOS.corpus == 1).all()
+            POS = AllowedPOS.query.filter(AllowedPOS.control_list == 1).all()
             self.assertEqual(
                 len(POS), 14,
                 "There should be 14 allowed POS"
@@ -79,7 +79,7 @@ class TestCorpusScript(TestCase):
     @nottest
     def morph_test(self):
         with self.app.app_context():
-            morphs = AllowedMorph.query.filter(AllowedMorph.corpus == 1).all()
+            morphs = AllowedMorph.query.filter(AllowedMorph.control_list == 1).all()
             self.assertEqual(
                 len(morphs), 145,
                 "There should be 145 allowed Morphs"
@@ -101,7 +101,7 @@ class TestCorpusScript(TestCase):
     @nottest
     def lemma_test(self):
         with self.app.app_context():
-            output_data = AllowedLemma.query.filter(AllowedLemma.corpus == 1).all()
+            output_data = AllowedLemma.query.filter(AllowedLemma.control_list == 1).all()
             self.assertEqual(
                 len(output_data), 21, "There should be 21 Lemmas"
             )
@@ -277,7 +277,6 @@ class TestCorpusScript(TestCase):
 
     @nottest
     def make_test(self, tests, context):
-        print("Testing : {}".format(", ".join(tests)))
         with self.app.app_context():
             with self.runner.isolated_filesystem() as f:
                 cur_dir = str(f)

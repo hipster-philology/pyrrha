@@ -71,6 +71,7 @@ class TestBase(LiveServerTestCase):
         config_name = 'test'
         app = create_app(config_name)
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+        app.DEBUG = True
         app.client = app.test_client()
         app.config.update(
             # Change the port that the liveserver listens on

@@ -160,6 +160,15 @@ class TestManageCorpusUser(TestBase):
         self.addCorpus("wauchier")
         self.driver.find_element_by_link_text("New Corpus").click()
         self.driver.find_element_by_id("corpusName").send_keys("FreshNewCorpus")
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            """tokens	lemmas	pos
+De	de	PRE
+seint	saint	ADJqua
+Martin	martin	NOMpro
+mout	mout	ADVgen
+doit	devoir	VERcjg"""
+        )
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
         self.go_to_corpus_management("FreshNewCorpus")

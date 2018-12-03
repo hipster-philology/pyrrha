@@ -1,7 +1,6 @@
-from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier, WauchierAllowedMorph
-from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph
+from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier, WauchierAllowedMorph, WCL
+from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph, FCL
 import copy
-import time
 import unidecode
 
 
@@ -11,14 +10,16 @@ DB_CORPORA = {
         "tokens": WauchierTokens,
         "lemma": WauchierAllowedLemma,
         "POS": WauchierAllowedPOS,
-        "morph": WauchierAllowedMorph
+        "morph": WauchierAllowedMorph,
+        "control_list": WCL
     },
     "floovant": {
         "corpus": Floovant,
         "tokens": FloovantTokens,
         "lemma": FloovantAllowedLemma,
         "POS": FloovantAllowedPOS,
-        "morph": FloovantAllowedMorph
+        "morph": FloovantAllowedMorph,
+        "control_list": FCL
     }
 }
 
@@ -41,6 +42,8 @@ def add_corpus(
     :param with_allowed_morph: Add allowed Morph to db
     :param partial_allowed_morph: Restrict to first few Morphs
     """
+    db.session.add(copy.deepcopy(DB_CORPORA[corpus]["control_list"]))
+    db.session.flush()
     db.session.add(copy.deepcopy(DB_CORPORA[corpus]["corpus"]))
     db.session.commit()
     add = []

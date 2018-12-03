@@ -21,7 +21,7 @@ class TestCorpusRegistration(TestBase):
         self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
-
+        self.driver.get_screenshot_as_file("here.png")
         self.assertIn(
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
             "Result page is the corpus new page"
@@ -89,7 +89,7 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
         self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
 
-        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.corpus == corpus.id)
+        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
         self.assertEqual(allowed.count(), 21, "There should be 21 allowed token")
 
         # Checking the model
@@ -134,7 +134,7 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
         self.assertEqual(saint.context, "De seint Martin mout doit")
 
-        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.corpus == corpus.id)
+        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
         self.assertEqual(allowed.count(), 3, "There should be 21 allowed token")
 
         # Checking the model
@@ -176,10 +176,10 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
         self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
 
-        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.corpus == corpus.id)
+        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
         self.assertEqual(allowed.count(), 3, "There should be 3 allowed lemma")
 
-        allowed = db.session.query(AllowedMorph).filter(AllowedMorph.corpus == corpus.id)
+        allowed = db.session.query(AllowedMorph).filter(AllowedMorph.control_list == corpus.control_lists_id)
         self.assertEqual(allowed.count(), 145, "There should be 145 different possible Morphs")
 
         # Checking the model
