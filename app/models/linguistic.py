@@ -10,6 +10,7 @@ from werkzeug.exceptions import BadRequest
 from app.models.user import User
 from .. import db
 from ..utils.forms import strip_or_none
+from ..utils.tsv import TSV_CONFIG
 
 
 class CorpusUser(db.Model):
@@ -662,7 +663,7 @@ class WordToken(db.Model):
         :return: String representation of the data
         """
         csv_file = io.StringIO()
-        writer = csv.writer(csv_file, dialect="excel-tab")
+        writer = csv.writer(csv_file, **TSV_CONFIG)
         writer.writerow(["token_id", "form", "lemma", "POS", "morph"])
         for token in query.order_by(WordToken.order_id).all():
             writer.writerow([token.id, token.form, token.lemma, token.POS or "_", token.morph or "_"])
