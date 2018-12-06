@@ -40,6 +40,14 @@ class ControlLists(db.Model):
 
     users = association_proxy('control_lists_user', 'user')
 
+    @property
+    def owners(self):
+        return db.session.query(User.first_name, User.last_name, User.id, User.email).filter(
+            ControlListsUser.user_id == User.id,
+            ControlListsUser.control_lists_id == self.id,
+            ControlListsUser.is_owner == True
+        ).all()
+
     @staticmethod
     def link(corpus, user, is_owner=False):
         db.session.add(ControlListsUser(
@@ -47,6 +55,59 @@ class ControlLists(db.Model):
             control_lists_id=corpus.control_lists_id,
             is_owner=is_owner
         ))
+
+    @staticmethod
+    def get_linked_or_404(control_list_id: int, user: User):
+        if user.is_admin():
+            return (
+                ControlLists.query.get_or_404(control_list_id),
+                db.session.query(ControlListsUser.query.filter(
+                    ControlListsUser.user_id == user.id,
+                    ControlListsUser.control_lists_id == control_list_id,
+                    ControlListsUser.is_owner == True
+                ).exists()).scalar()
+            )
+        element, is_owner = db.session.query(ControlLists, ControlListsUser.is_owner).filter(
+            db.and_(
+                ControlLists.id == control_list_id,
+                ControlListsUser.user_id == user.id,
+                ControlListsUser.control_lists_id == ControlLists.id
+            )
+        ).first()
+        if not element:
+            raise BadRequest(description="You have no right to access the Control List")
+        return element, is_owner
+
+    @staticmethod
+    def for_user(current_user):
+        return db.session.query(ControlLists).filter(
+            db.and_(
+                ControlListsUser.user_id == current_user.id,
+                ControlListsUser.control_lists_id == ControlLists.id
+            )
+        ).all()
+
+    def get_allowed_values(self, allowed_type="lemma", order_by="label"):
+        """ List values that are allowed (without label) or checks that given label is part
+        of the existing corpus
+
+        :param allowed_type: A value from the set "lemma", "POS", "morph"
+        :return: Flask SQL Alchemy Query
+        :rtype: BaseQuery
+        """
+        if allowed_type == "lemma":
+            cls = AllowedLemma
+            order_by = getattr(cls, order_by)
+        elif allowed_type == "POS":
+            cls = AllowedPOS
+            order_by = getattr(cls, order_by)
+        elif allowed_type == "morph":
+            cls = AllowedMorph
+            order_by = getattr(cls, order_by)
+        else:
+            raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
+
+        return db.session.query(cls).filter(cls.control_list == self.id).order_by(order_by)
 
 
 class ControlListsUser(db.Model):
@@ -100,6 +161,15 @@ class Corpus(db.Model):
             ).first()
             access = cu is not None
         return access
+
+    @staticmethod
+    def for_user(current_user):
+        return db.session.query(Corpus).filter(
+            db.and_(
+                CorpusUser.corpus_id == Corpus.id,
+                CorpusUser.user_id == current_user.id
+            )
+        ).all()
 
     def is_owned_by(self, user):
         cu = CorpusUser.query.filter(
