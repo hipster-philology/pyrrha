@@ -99,6 +99,24 @@ class TestBase(LiveServerTestCase):
         self.driver.set_window_size(1920, 1080)  # ??
         self.driver.get(self.get_server_url())
 
+    LOREM_IPSUM = """form	lemma	POS	morph
+Lorem			
+ipsum			
+dolor			
+sit			
+amet			
+,			
+consectetur			
+adipiscing			
+elit			
+.			"""
+
+    def write_lorem_impsum_tokens(self):
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            self.LOREM_IPSUM
+        )
+
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
 

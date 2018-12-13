@@ -89,8 +89,8 @@
                 </a>
                 <div class="dropdown-menu">
                     {% for control_list in control_lists %}
-                        <a class="dropdown-item dd-corpus"
-                           id="dropdown_link_{{control_list.id}}" href="{{url_for("control_lists_bp.get", control_list_id=control_list.id)}}">
+                        <a class="dropdown-item dd-control_list"
+                           id="dropdown_link_cl_{{control_list.id}}" href="{{url_for("control_lists_bp.get", control_list_id=control_list.id)}}">
                             {{ control_list.name | safe }}
                         </a>
                     {% endfor %}

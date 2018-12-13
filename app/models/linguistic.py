@@ -164,12 +164,6 @@ class Corpus(db.Model):
 
     @staticmethod
     def for_user(current_user):
-        print(db.session.query(Corpus).filter(
-            db.and_(
-                CorpusUser.corpus_id == Corpus.id,
-                CorpusUser.user_id == current_user.id
-            )
-        ).all())
         return db.session.query(Corpus).filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,

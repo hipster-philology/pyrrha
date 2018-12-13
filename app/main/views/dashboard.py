@@ -12,7 +12,15 @@ from .. import main
 @login_required
 def dashboard():
     """admin dashboard page."""
-    return render_template_with_nav_info('main/dashboard.html', current_user=current_user)
+    if current_user.is_admin():
+        corpora = db.session.query(Corpus).all()
+    else:
+        corpora = Corpus.for_user(current_user)
+    return render_template_with_nav_info(
+        'main/dashboard.html',
+        current_user=current_user,
+        dashboard_corpora=corpora
+    )
 
 
 @main.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
