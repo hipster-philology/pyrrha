@@ -37,7 +37,7 @@ def manage_corpus_users(corpus_id):
                 User.query.filter(User.id == user_id).first()
                 for user_id in [int(u) for u in request.form.getlist("user_id")]
             ]
-            ownerships = [int(u) for u in request.form.getlist("ownership")]
+            ownerships = [int(u) for u in request.form.getlist("ownership") if u.isdigit()]
 
             # previous rights
             prev_cu = CorpusUser.query.filter(CorpusUser.corpus_id == corpus_id).all()

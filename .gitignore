@@ -3,7 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 # usual name I choose for driver screenshot with Selenium
-here.png
+here*.png
 # SQLITE
 *.sqlite
 

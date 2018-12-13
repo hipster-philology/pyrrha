@@ -40,7 +40,7 @@
                         </thead>
                         <tbody>
                         {% for corpus_user in corpus.users | sort(attribute='last_name') %}
-                            <tr>
+                            <tr id="access-u-{{ corpus_user.id }}">
                                 <td class="">
                                     {{ corpus_user.id }}
                                 </td>

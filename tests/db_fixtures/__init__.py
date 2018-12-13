@@ -28,7 +28,8 @@ def add_corpus(
         corpus, db, with_token=True, tokens_up_to=None,
         with_allowed_lemma=False, partial_allowed_lemma=False,
         with_allowed_pos=False, partial_allowed_pos=False,
-        with_allowed_morph=False, partial_allowed_morph=False
+        with_allowed_morph=False, partial_allowed_morph=False,
+        **nobodycares
 ):
     """ Add the Wauchier Corpus to fixtures
 

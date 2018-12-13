@@ -23,11 +23,13 @@ class TestManageCorpusUser(TestBase):
     def submit(self):
         self.driver.find_element_by_id("accesses-form-submit").click()
 
-    def grant_access_to_user(self, corpus_name, user_index):
+    def grant_access_to_user(self, corpus_name, user_id):
         # grant access
         users_table = self.driver.find_element_by_id("users-table")
-        user_rows = users_table.find_elements_by_tag_name("tr")
-        user_rows[1+user_index].click()
+        for row in users_table.find_elements_by_tag_name("tr"):
+            print(row.get_attribute("id"))
+        user_row = users_table.find_element_by_id("access-u-"+str(user_id))
+        user_row.click()
         # toggle ownership to the last added user
         el = self.get_ownership_table()
         self.toggle_ownership(len(el)-1)
@@ -123,16 +125,22 @@ class TestManageCorpusUser(TestBase):
         self.assertTrue(len(el) == 1)
 
     def test_corpus_has_at_least_one_owner(self):
-        self.addCorpus("wauchier")
-        self.addCorpus("floovant")
-
+        self.addCorpus("wauchier", is_owner=False)
+        self.addCorpus("floovant", is_owner=False)
+        print(self.AUTO_LOG_IN)
         foo_email = self.add_user("foo", "bar")
-        self.addCorpusUser("Wauchier", foo_email, is_owner=True)
-        self.go_to_corpus_management("Wauchier")
-        self.grant_access_to_user("Wauchier", 0)
+        cu = self.addCorpusUser("Wauchier", foo_email, is_owner=False)
+        print(cu.is_owner)
 
+        self.go_to_corpus_management("Wauchier")
+        self.driver.get_screenshot_as_file("here0.png")
+        self.grant_access_to_user("Wauchier", 1)
+
+        self.driver.refresh()
         el = self.get_ownership_table()
-        self.assertTrue(len(el) == 2)
+        self.driver.get_screenshot_as_file("here1.png")
+        self.assertEqual(len(el), 2, "There should be two accessors : Admin and Foo")
+        self.assertEqual(len([e for e in el if e.get_property("checked")]), 2, "Both should be admin")
 
         # cannot save all ownership removing
         self.toggle_ownership(0)
@@ -140,7 +148,12 @@ class TestManageCorpusUser(TestBase):
         self.submit()
         self.go_to_corpus_management("Wauchier")
         el = self.get_ownership_table()
-        self.assertTrue(len([e for e in el if e.get_property("checked")]) == 2)
+        self.driver.save_screenshot("here2.png")
+        self.assertEqual(
+            len([e for e in el if e.get_property("checked")]),
+            2,
+            "Cannot save all ownership removing"
+        )
 
         # can save partial ownership removing
         self.toggle_ownership(0)

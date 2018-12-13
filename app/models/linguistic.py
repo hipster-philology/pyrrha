@@ -318,6 +318,7 @@ class Corpus(db.Model):
             cls = AllowedMorph
         else:
             raise BadRequest("The type is not of lemma, morph or POS")
+
         data = db.session.query(cls).filter_by(control_list=self.control_lists_id).delete()
         cls.add_batch(allowed_values, self.id, _commit=True)
         return data
