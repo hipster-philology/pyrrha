@@ -164,6 +164,12 @@ class Corpus(db.Model):
 
     @staticmethod
     def for_user(current_user):
+        print(db.session.query(Corpus).filter(
+            db.and_(
+                CorpusUser.corpus_id == Corpus.id,
+                CorpusUser.user_id == current_user.id
+            )
+        ).all())
         return db.session.query(Corpus).filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,
@@ -224,6 +230,7 @@ class Corpus(db.Model):
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
 
+        # Todo: Make sure this is optimized.
         allowed = db.session.query(cls.label).filter(cls.control_list == self.control_lists_id)
         return db.session.query(WordToken).filter(
             db.and_(
