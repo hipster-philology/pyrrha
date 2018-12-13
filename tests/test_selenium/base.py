@@ -150,7 +150,6 @@ elit
             corpus = add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
-            print("Adding ownership", self.app.config['ADMIN_EMAIL'], kwargs.get("is_owner", True))
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         return corpus
 

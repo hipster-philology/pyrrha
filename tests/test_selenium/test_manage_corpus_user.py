@@ -16,23 +16,29 @@ class TestManageCorpusUser(TestBase):
         accesses_table = self.driver.find_element_by_id("accesses-table")
         return accesses_table.find_elements_by_class_name("fa-trash-o")
 
-    def toggle_ownership(self, user_index):
-        el = self.get_ownership_table()
-        el[user_index].click()
+    def toggle_ownership(self, user_id):
+        el = self.driver.find_element_by_id("accesses-table")
+        checkbox = el.find_element_by_css_selector("input[type='checkbox'][value='"+str(user_id)+"']")
+        checkbox.click()
 
     def submit(self):
         self.driver.find_element_by_id("accesses-form-submit").click()
 
     def grant_access_to_user(self, corpus_name, user_id):
+        """ Gives ownering access to a specific user
+
+        Returns automatically to the edited corpus management page
+
+        :param corpus_name: Name of the corpus
+        :param user_id: Id of the user to select
+        """
         # grant access
         users_table = self.driver.find_element_by_id("users-table")
-        for row in users_table.find_elements_by_tag_name("tr"):
-            print(row.get_attribute("id"))
-        user_row = users_table.find_element_by_id("access-u-"+str(user_id))
+        user_row = users_table.find_element_by_class_name("u-"+str(user_id))
         user_row.click()
         # toggle ownership to the last added user
         el = self.get_ownership_table()
-        self.toggle_ownership(len(el)-1)
+        self.toggle_ownership(user_id)
 
         # submit form
         self.submit()
@@ -40,10 +46,11 @@ class TestManageCorpusUser(TestBase):
         # come back to the management page
         self.go_to_corpus_management(corpus_name)
 
-    def revoke_access_to_user(self, corpus_name, user_index):
+    def revoke_access_to_user(self, corpus_name, user_id):
         # revoke access
-        el = self.get_trash_table()
-        el[user_index].click()
+        accesses_table = self.driver.find_element_by_id("accesses-table")
+        el = accesses_table.find_element_by_css_selector(".fa-trash-o.u-"+str(user_id))
+        el.click()
         self.submit()
         self.driver.implicitly_wait(3)
         # come back to the management page
@@ -56,6 +63,7 @@ class TestManageCorpusUser(TestBase):
         # there is no user on this corpus
         self.go_to_corpus_management("Wauchier")
         el = self.get_ownership_table()
+        self.driver.save_screenshot("display.png")
         self.assertTrue(len(el) == 0)
 
         # add admin as the owner
@@ -78,13 +86,13 @@ class TestManageCorpusUser(TestBase):
         self.assertTrue(len(el) == 2)
 
     def test_grant_access(self):
-        self.addCorpus("wauchier")
-        self.addCorpus("floovant")
+        self.addCorpus("wauchier", no_corpus_user=True)
+        self.addCorpus("floovant", no_corpus_user=True)
 
         self.go_to_corpus_management("Wauchier")
 
         # grant access to admin
-        self.grant_access_to_user("Wauchier", 0)
+        self.grant_access_to_user("Wauchier", 1)
         el = self.get_ownership_table()
         self.assertTrue(len(el) == 1)
 
@@ -96,78 +104,81 @@ class TestManageCorpusUser(TestBase):
         self.assertTrue(len(el) == 2)
 
         # test you can't add duplicates
-        self.grant_access_to_user("Wauchier", 0)
         self.grant_access_to_user("Wauchier", 1)
+        self.grant_access_to_user("Wauchier", 2)
         el = self.get_ownership_table()
         self.assertTrue(len(el) == 2)
 
     def test_revoke_access(self):
-        self.addCorpus("wauchier")
-        self.addCorpus("floovant")
+        self.addCorpus("wauchier", no_corpus_user=True)
+        self.addCorpus("floovant", no_corpus_user=True)
 
         foo_email = self.add_user("foo", "bar")
         self.addCorpusUser("Wauchier", foo_email, is_owner=True)
         self.go_to_corpus_management("Wauchier")
-        self.grant_access_to_user("Wauchier", 0)
+        self.grant_access_to_user("Wauchier", 1)
 
         el = self.get_ownership_table()
         self.assertTrue(len(el) == 2)
 
         # revoke access to admin
-        self.revoke_access_to_user("Wauchier", 0)
-        el = self.get_ownership_table()
-        self.assertTrue(len(el) == 1)
-
-        # revoke access to foo
-        self.grant_access_to_user("Wauchier", 0)
         self.revoke_access_to_user("Wauchier", 1)
         el = self.get_ownership_table()
         self.assertTrue(len(el) == 1)
 
-    def test_corpus_has_at_least_one_owner(self):
-        self.addCorpus("wauchier", is_owner=False)
-        self.addCorpus("floovant", is_owner=False)
-        print(self.AUTO_LOG_IN)
-        foo_email = self.add_user("foo", "bar")
-        cu = self.addCorpusUser("Wauchier", foo_email, is_owner=False)
-        print(cu.is_owner)
+        # revoke access to foo
+        self.grant_access_to_user("Wauchier", 1)
+        self.revoke_access_to_user("Wauchier", 2)
+        el = self.get_ownership_table()
+        self.assertTrue(len(el) == 1)
 
+    def test_corpus_has_at_least_one_owner(self):
+        self.addCorpus("wauchier", no_corpus_user=True)
+        self.addCorpus("floovant", no_corpus_user=True)
+
+        foo_email = self.add_user("foo", "bar")
+        cu = self.addCorpusUser("Wauchier", foo_email, is_owner=True)
         self.go_to_corpus_management("Wauchier")
-        self.driver.get_screenshot_as_file("here0.png")
         self.grant_access_to_user("Wauchier", 1)
 
         self.driver.refresh()
         el = self.get_ownership_table()
-        self.driver.get_screenshot_as_file("here1.png")
         self.assertEqual(len(el), 2, "There should be two accessors : Admin and Foo")
         self.assertEqual(len([e for e in el if e.get_property("checked")]), 2, "Both should be admin")
 
         # cannot save all ownership removing
-        self.toggle_ownership(0)
         self.toggle_ownership(1)
+        self.toggle_ownership(2)
         self.submit()
         self.go_to_corpus_management("Wauchier")
         el = self.get_ownership_table()
-        self.driver.save_screenshot("here2.png")
         self.assertEqual(
             len([e for e in el if e.get_property("checked")]),
             2,
-            "Cannot save all ownership removing"
+            "Cannot remove ownership from everyone "
         )
 
         # can save partial ownership removing
-        self.toggle_ownership(0)
-        self.submit()
-        self.go_to_corpus_management("Wauchier")
-        el = self.get_ownership_table()
-        self.assertTrue(len([e for e in el if e.get_property("checked")]) == 1)
-
-        # cannot save ownership removing (last owner remaining)
         self.toggle_ownership(1)
         self.submit()
         self.go_to_corpus_management("Wauchier")
         el = self.get_ownership_table()
-        self.assertTrue(len([e for e in el if e.get_property("checked")]) == 1)
+        self.assertEqual(
+            len([e for e in el if e.get_property("checked")]),
+            1,
+            "There should be one remaining admin only"
+        )
+
+        # cannot save ownership removing (last owner remaining)
+        self.toggle_ownership(2)
+        self.submit()
+        self.go_to_corpus_management("Wauchier")
+        el = self.get_ownership_table()
+        self.assertEqual(
+            len([e for e in el if e.get_property("checked")]),
+            1,
+            "Last admin can't be removed"
+        )
 
     def test_corpus_creator_is_owner(self):
         self.addCorpus("wauchier")
