@@ -145,16 +145,15 @@ elit
 
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":
-            add_corpus("wauchier", db, *args, **kwargs)
+            corpus = add_corpus("wauchier", db, *args, **kwargs)
         else:
-            add_corpus("floovant", db, *args, **kwargs)
+            corpus = add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
         if self.AUTO_LOG_IN:
             user = User.query.first()
-            for corpus in Corpus.query.all():
-                new_cu = CorpusUser(corpus=corpus, user=user, is_owner=True)
-                self.db.session.add(new_cu)
-                self.db.session.commit()
+            new_cu = CorpusUser(corpus=corpus, user=user, is_owner=True)
+            self.db.session.add(new_cu)
+            self.db.session.commit()
 
     def addCorpusUser(self, corpus_name, email, is_owner=False):
         corpus = Corpus.query.filter(Corpus.name == corpus_name).first()

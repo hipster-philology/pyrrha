@@ -44,7 +44,8 @@ def add_corpus(
     """
     db.session.add(copy.deepcopy(DB_CORPORA[corpus]["control_list"]))
     db.session.flush()
-    db.session.add(copy.deepcopy(DB_CORPORA[corpus]["corpus"]))
+    corpus_object = copy.deepcopy(DB_CORPORA[corpus]["corpus"])
+    db.session.add(corpus_object)
     db.session.commit()
     add = []
     if with_token is True:
@@ -76,3 +77,4 @@ def add_corpus(
             z.label_uniform = unidecode.unidecode(z.label_uniform)
         db.session.add(z)
     db.session.commit()
+    return corpus_object
