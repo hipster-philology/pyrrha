@@ -48,8 +48,8 @@ class TestManageCorpusUser(TestBase):
         self.go_to_corpus_management(corpus_name)
 
     def test_display_corpus_users(self):
-        self.addCorpus("wauchier")
-        self.addCorpus("floovant")
+        self.addCorpus("wauchier", no_corpus_user=True)
+        self.addCorpus("floovant", no_corpus_user=True)
 
         # there is no user on this corpus
         self.go_to_corpus_management("Wauchier")

@@ -149,7 +149,7 @@ elit
         else:
             corpus = add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
-        if self.AUTO_LOG_IN:
+        if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             user = User.query.first()
             new_cu = CorpusUser(corpus=corpus, user=user, is_owner=True)
             self.db.session.add(new_cu)
@@ -315,6 +315,7 @@ class TokenEditBase(TestBase):
     def test_edit_token(self):
         """ Test the edition of a token """
         self.addCorpus(with_token=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
