@@ -1,0 +1,147 @@
+label	readable
+MODE=con|PERS.=1|NOMB.=p	conditionnel 1re personne pluriel
+MODE=con|PERS.=1|NOMB.=s	conditionnel 1re personne singulier
+MODE=con|PERS.=2|NOMB.=p	conditionnel 2e personne pluriel
+MODE=con|PERS.=2|NOMB.=s	conditionnel 2e personne singulier
+MODE=con|PERS.=3|NOMB.=p	conditionnel 3e personne pluriel
+MODE=con|PERS.=3|NOMB.=s	conditionnel 3e personne singulier
+MODE=imp|PERS.=1|NOMB.=p	impératif 1re personne pluriel
+MODE=imp|PERS.=2|NOMB.=p	impératif 2e personne pluriel
+MODE=imp|PERS.=2|NOMB.=s	impératif 2e personne singulier
+MODE=ind|TEMPS=fut|PERS.=1|NOMB.=p	indicatif futur 1re personne pluriel
+MODE=ind|TEMPS=fut|PERS.=1|NOMB.=s	indicatif futur 1re personne singulier
+MODE=ind|TEMPS=fut|PERS.=2|NOMB.=p	indicatif futur 2e personne pluriel
+MODE=ind|TEMPS=fut|PERS.=2|NOMB.=s	indicatif futur 2e personne singulier
+MODE=ind|TEMPS=fut|PERS.=3|NOMB.=p	indicatif futur 3e personne pluriel
+MODE=ind|TEMPS=fut|PERS.=3|NOMB.=s	indicatif futur 3e personne singulier
+MODE=ind|TEMPS=ipf|PERS.=1|NOMB.=p	indicatif imparfait 1re personne pluriel
+MODE=ind|TEMPS=ipf|PERS.=1|NOMB.=s	indicatif imparfait 1re personne singulier
+MODE=ind|TEMPS=ipf|PERS.=2|NOMB.=p	indicatif imparfait 2e personne pluriel
+MODE=ind|TEMPS=ipf|PERS.=2|NOMB.=s	indicatif imparfait 2e personne singulier
+MODE=ind|TEMPS=ipf|PERS.=3|NOMB.=p	indicatif imparfait 3e personne pluriel
+MODE=ind|TEMPS=ipf|PERS.=3|NOMB.=s	indicatif imparfait 3e personne singulier
+MODE=ind|TEMPS=psp|PERS.=1|NOMB.=p	indicatif passé simple 1re personne pluriel
+MODE=ind|TEMPS=psp|PERS.=1|NOMB.=s	indicatif passé simple 1re personne singulier
+MODE=ind|TEMPS=psp|PERS.=2|NOMB.=p	indicatif passé simple 2e personne pluriel
+MODE=ind|TEMPS=psp|PERS.=2|NOMB.=s	indicatif passé simple 2e personne singulier
+MODE=ind|TEMPS=psp|PERS.=3|NOMB.=p	indicatif passé simple 3e personne pluriel
+MODE=ind|TEMPS=psp|PERS.=3|NOMB.=s	indicatif passé simple 3e personne singulier
+MODE=ind|TEMPS=pst|PERS.=1|NOMB.=p	indicatif présent 1re personne pluriel
+MODE=ind|TEMPS=pst|PERS.=1|NOMB.=s	indicatif présent 1re personne singulier
+MODE=ind|TEMPS=pst|PERS.=2|NOMB.=p	indicatif présent 2e personne pluriel
+MODE=ind|TEMPS=pst|PERS.=2|NOMB.=s	indicatif présent 2e personne singulier
+MODE=ind|TEMPS=pst|PERS.=3|NOMB.=p	indicatif présent 3e personne pluriel
+MODE=ind|TEMPS=pst|PERS.=3|NOMB.=s	indicatif présent 3e personne singulier
+MODE=sub|TEMPS=ipf|PERS.=1|NOMB.=p	subjonctif imparfait 1re personne pluriel
+MODE=sub|TEMPS=ipf|PERS.=1|NOMB.=s	subjonctif imparfait 1re personne singulier
+MODE=sub|TEMPS=ipf|PERS.=2|NOMB.=p	subjonctif imparfait 2e personne pluriel
+MODE=sub|TEMPS=ipf|PERS.=2|NOMB.=s	subjonctif imparfait 2e personne singulier
+MODE=sub|TEMPS=ipf|PERS.=3|NOMB.=p	subjonctif imparfait 3e personne pluriel
+MODE=sub|TEMPS=ipf|PERS.=3|NOMB.=s	subjonctif imparfait 3e personne singulier
+MODE=sub|TEMPS=pst|PERS.=1|NOMB.=p	subjonctif présent 1re personne pluriel
+MODE=sub|TEMPS=pst|PERS.=1|NOMB.=s	subjonctif présent 1re personne singulier
+MODE=sub|TEMPS=pst|PERS.=2|NOMB.=p	subjonctif présent 2e personne pluriel
+MODE=sub|TEMPS=pst|PERS.=2|NOMB.=s	subjonctif présent 2e personne singulier
+MODE=sub|TEMPS=pst|PERS.=3|NOMB.=p	subjonctif présent 3e personne pluriel
+MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s	subjonctif présent 3e personne singulier
+PERS.=0|NOMB.=s|GENRE=n|CAS=n	impersonnel singulier neutre nominatif PROimp
+PERS.=0|NOMB.=s|GENRE=n|CAS=r	impersonnel singulier neutre regime PROimp
+PERS.=1|NOMB.=p|GENRE=f|CAS=i	1re personne pluriel féminin régime indirect PROper, PROper.PROper
+PERS.=1|NOMB.=p|GENRE=f|CAS=n	1re personne pluriel féminin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=1|NOMB.=p|GENRE=f|CAS=r	1re personne pluriel féminin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=1|NOMB.=p|GENRE=m|CAS=i	1re personne pluriel masculin régime indirect PROper, PROper.PROper
+PERS.=1|NOMB.=p|GENRE=m|CAS=n	1re personne pluriel masculin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=1|NOMB.=p|GENRE=m|CAS=r	1re personne pluriel masculin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=1|NOMB.=s|GENRE=f|CAS=i	1re personne singulier féminin régime indirect PROper, PROper.PROper
+PERS.=1|NOMB.=s|GENRE=f|CAS=n	1re personne singulier féminin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=1|NOMB.=s|GENRE=f|CAS=r	1re personne singulier féminin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=1|NOMB.=s|GENRE=m|CAS=i	1re personne singulier masculin régime indirect PROper, PROper.PROper
+PERS.=1|NOMB.=s|GENRE=m|CAS=n	1re personne singulier masculin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=1|NOMB.=s|GENRE=m|CAS=r	1re personne singulier masculin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=p|GENRE=f|CAS=i	2e personne pluriel féminin régime indirect PROper, PROper.PROper
+PERS.=2|NOMB.=p|GENRE=f|CAS=n	2e personne pluriel féminin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=p|GENRE=f|CAS=r	2e personne pluriel féminin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=p|GENRE=m|CAS=i	2e personne pluriel masculin régime indirect PROper, PROper.PROper
+PERS.=2|NOMB.=p|GENRE=m|CAS=n	2e personne pluriel masculin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=p|GENRE=m|CAS=r	2e personne pluriel masculin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=s|GENRE=f|CAS=i	2e personne singulier féminin régime indirect PROper, PROper.PROper
+PERS.=2|NOMB.=s|GENRE=f|CAS=n	2e personne singulier féminin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=s|GENRE=f|CAS=r	2e personne singulier féminin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=s|GENRE=m|CAS=i	2e personne singulier masculin régime indirect PROper, PROper.PROper
+PERS.=2|NOMB.=s|GENRE=m|CAS=n	2e personne singulier masculin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=2|NOMB.=s|GENRE=m|CAS=r	2e personne singulier masculin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=p|GENRE=f|CAS=i	3e personne pluriel féminin régime indirect PROper, PROper.PROper
+PERS.=3|NOMB.=p|GENRE=f|CAS=n	3e personne pluriel féminin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=p|GENRE=f|CAS=r	3e personne pluriel féminin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=p|GENRE=m|CAS=i	3e personne pluriel masculin régime indirect PROper, PROper.PROper
+PERS.=3|NOMB.=p|GENRE=m|CAS=n	3e personne pluriel masculin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=p|GENRE=m|CAS=r	3e personne pluriel masculin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=s|GENRE=f|CAS=i	3e personne singulier féminin régime indirect PROper, PROper.PROper
+PERS.=3|NOMB.=s|GENRE=f|CAS=n	3e personne singulier féminin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=s|GENRE=f|CAS=r	3e personne singulier féminin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=s|GENRE=m|CAS=i	3e personne singulier masculin régime indirect PROper, PROper.PROper
+PERS.=3|NOMB.=s|GENRE=m|CAS=n	3e personne singulier masculin nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=s|GENRE=m|CAS=r	3e personne singulier masculin régime PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=s|GENRE=n|CAS=i	3e personne singulier neutre régime indirect PROper, PROper.PROper
+PERS.=3|NOMB.=s|GENRE=n|CAS=n	3e personne singulier neutre nominatif PROper, PROper.PROper,ADJpos,PROpos,DETpos
+PERS.=3|NOMB.=s|GENRE=n|CAS=r	3e personne singulier neutre régime 
+NOMB.=p|GENRE=f|CAS=i	pluriel féminin régime indirect PROrel
+NOMB.=p|GENRE=f|CAS=n|DEGRE=c	pluriel féminin nominatif comparatif ADJqua
+NOMB.=p|GENRE=f|CAS=n|DEGRE=p	pluriel féminin nominatif positif ADJqua
+NOMB.=p|GENRE=f|CAS=n|DEGRE=s	pluriel féminin nominatif superlatif ADJqua
+NOMB.=p|GENRE=f|CAS=n	pluriel féminin nominatif PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=p|GENRE=f|CAS=r|DEGRE=c	pluriel féminin régime comparatif ADJqua
+NOMB.=p|GENRE=f|CAS=r|DEGRE=p	pluriel féminin régime positif ADJqua
+NOMB.=p|GENRE=f|CAS=r|DEGRE=s	pluriel féminin régime superlatif ADJqua
+NOMB.=p|GENRE=f|CAS=r	pluriel féminin régime PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=p|GENRE=m|CAS=i	pluriel masculin régime indirect PROrel
+NOMB.=p|GENRE=m|CAS=n|DEGRE=c	pluriel masculin nominatif comparatif ADJqua
+NOMB.=p|GENRE=m|CAS=n|DEGRE=p	pluriel masculin nominatif positif ADJqua
+NOMB.=p|GENRE=m|CAS=n|DEGRE=s	pluriel masculin nominatif superlatif ADJqua
+NOMB.=p|GENRE=m|CAS=n	pluriel masculin nominatif PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=p|GENRE=m|CAS=r|DEGRE=c	pluriel masculin régime comparatif ADJqua
+NOMB.=p|GENRE=m|CAS=r|DEGRE=p	pluriel masculin régime positif ADJqua
+NOMB.=p|GENRE=m|CAS=r|DEGRE=s	pluriel masculin régime superlatif ADJqua
+NOMB.=p|GENRE=m|CAS=r	pluriel masculin régime PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=p|GENRE=n|CAS=i	pluriel neutre régime indirect PROrel
+NOMB.=p|GENRE=n|CAS=n|DEGRE=c	pluriel neutre nominatif comparatif ADJqua
+NOMB.=p|GENRE=n|CAS=n|DEGRE=p	pluriel neutre nominatif positif ADJqua
+NOMB.=p|GENRE=n|CAS=n|DEGRE=s	pluriel neutre nominatif superlatif ADJqua
+NOMB.=p|GENRE=n|CAS=n	pluriel neutre nominatif PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom
+NOMB.=p|GENRE=n|CAS=r|DEGRE=c	pluriel neutre régime comparatif ADJqua
+NOMB.=p|GENRE=n|CAS=r|DEGRE=p	pluriel neutre régime positif ADJqua
+NOMB.=p|GENRE=n|CAS=r|DEGRE=s	pluriel neutre régime superlatif ADJqua
+NOMB.=p|GENRE=n|CAS=r	pluriel neutre régime PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom
+NOMB.=s|GENRE=f|CAS=i	singulier féminin régime indirect PROrel
+NOMB.=s|GENRE=f|CAS=n|DEGRE=c	singulier féminin nominatif comparatif ADJqua
+NOMB.=s|GENRE=f|CAS=n|DEGRE=p	singulier féminin nominatif positif ADJqua
+NOMB.=s|GENRE=f|CAS=n|DEGRE=s	singulier féminin nominatif superlatif ADJqua
+NOMB.=s|GENRE=f|CAS=n	singulier féminin nominatif PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=s|GENRE=f|CAS=r|DEGRE=c	singulier féminin régime comparatif ADJqua
+NOMB.=s|GENRE=f|CAS=r|DEGRE=p	singulier féminin régime positif ADJqua
+NOMB.=s|GENRE=f|CAS=r|DEGRE=s	singulier féminin régime superlatif ADJqua
+NOMB.=s|GENRE=f|CAS=r	singulier féminin régime PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=s|GENRE=m|CAS=i	singulier masculin régime indirect PROrel
+NOMB.=s|GENRE=m|CAS=n|DEGRE=c	singulier masculin nominatif comparatif ADJqua
+NOMB.=s|GENRE=m|CAS=n|DEGRE=p	singulier masculin nominatif positif ADJqua
+NOMB.=s|GENRE=m|CAS=n|DEGRE=s	singulier masculin nominatif superlatif ADJqua
+NOMB.=s|GENRE=m|CAS=n	singulier masculin nominatif PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=s|GENRE=m|CAS=r|DEGRE=c	singulier masculin régime comparatif ADJqua
+NOMB.=s|GENRE=m|CAS=r|DEGRE=p	singulier masculin régime positif ADJqua
+NOMB.=s|GENRE=m|CAS=r|DEGRE=s	singulier masculin régime superlatif ADJqua
+NOMB.=s|GENRE=m|CAS=r	singulier masculin régime PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom,VERppe,VERppa,NOMcom,NOMpro,DETdef,DETndf,DETdem,DETind,DETcar,DETrel,DETint,DETcom
+NOMB.=s|GENRE=n|CAS=i	singulier neutre régime indirect PROrel
+NOMB.=s|GENRE=n|CAS=n|DEGRE=c	singulier neutre nominatif comparatif ADJqua
+NOMB.=s|GENRE=n|CAS=n|DEGRE=p	singulier neutre nominatif positif ADJqua
+NOMB.=s|GENRE=n|CAS=n|DEGRE=s	singulier neutre nominatif superlatif ADJqua
+NOMB.=s|GENRE=n|CAS=n	singulier neutre nominatif PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom
+NOMB.=s|GENRE=n|CAS=r|DEGRE=c	singulier neutre régime comparatif ADJqua
+NOMB.=s|GENRE=n|CAS=r|DEGRE=p	singulier neutre régime positif ADJqua
+NOMB.=s|GENRE=n|CAS=r|DEGRE=s	singulier neutre régime superlatif ADJqua
+NOMB.=s|GENRE=n|CAS=r	singulier neutre régime PROrel,ADJind,ADJcar,ADJord,PROdem,PROind,PROcar,PROord,PROint,PROcom
+NOMB.=x|GENRE=x|CAS=x	non applicable non applicable non applicable VERppa (gérondif seul)
+DEGRE=-	non applicable ADVgen
+DEGRE=c	comparatif ADVgen
+DEGRE=p	positif ADVgen
+DEGRE=s	superlatif ADVgen
+MORPH=empty	pas de morphologie PROadv,ADVgen.PROadv,ADVneg,ADVint,ADVsub,PRE,CONcoo,CONsub,INJ,PON,ETR,ABR,RED,OUT

@@ -3,16 +3,19 @@ python:
   - "3.5"
 addons:
   chrome: stable
+  apt:
+    packages:
+      - chromium-chromedriver
+
+before_script:
+  # include ChromeDriver in PATH
+  - ln --symbolic /usr/lib/chromium-browser/chromedriver "${HOME}/bin/chromedriver"
+
 install:
-  - wget -N https://chromedriver.storage.googleapis.com/2.35/chromedriver_linux64.zip -P ~/
-  - unzip ~/chromedriver_linux64.zip -d ~/
-  - rm ~/chromedriver_linux64.zip
-  - sudo mv -f ~/chromedriver /usr/local/share/
-  - sudo chmod +x /usr/local/share/chromedriver
-  - sudo ln -s /usr/local/share/chromedriver /usr/local/bin/chromedriver
   - pip install -r requirements.txt
   - pip install coveralls
   - pip install nose
+
 # command to run tests
 script:
   - nosetests ./tests --with-coverage --cover-package=app --cover-xml

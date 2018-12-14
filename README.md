@@ -1,8 +1,11 @@
-Pandora TAB Post-correction App
-===============================
+Pyrrha
+======
 
 [![Coverage Status](https://coveralls.io/repos/github/hipster-philology/pandora-postcorrect-app/badge.svg?branch=master)](https://coveralls.io/github/hipster-philology/pandora-postcorrect-app?branch=master)
 [![Build Status](https://travis-ci.org/hipster-philology/pandora-postcorrect-app.svg?branch=master)](https://travis-ci.org/hipster-philology/pandora-postcorrect-app)
+
+Pyrrha is a simple Python Flask WebApp to fasten the post-correction
+of lemmatized and morpho-syntactic tagged corpora.
 
 ![Pandora Post-Correction Editor](./readme.png)
 

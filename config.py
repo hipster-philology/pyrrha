@@ -5,7 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
-    APP_NAME = 'Pandora Post-Correction Editor'
+    APP_NAME = 'Pyrrha'
     if os.environ.get('SECRET_KEY'):
         SECRET_KEY = os.environ.get('SECRET_KEY')
     else:
@@ -30,6 +30,11 @@ class Config:
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
+
+    # Lemmatizer (until Deucalion client)
+    LEMMATIZERS = [
+        ("Ancien Français", "http://localhost:5000/models-fro")
+    ]
 
     @staticmethod
     def init_app(app):

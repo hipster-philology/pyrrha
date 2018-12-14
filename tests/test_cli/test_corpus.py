@@ -76,7 +76,6 @@ class TestCorpusScript(TestCase):
             result.output
         )
 
-
     @nottest
     def morph_test(self):
         with self.app.app_context():
@@ -224,7 +223,7 @@ class TestCorpusScript(TestCase):
             result = self.invoke("corpus-dump", "2", "--path", test_dir)
 
             self.assertHasContents(
-                os.path.join(curr_dir, test_dir, "tokens.csv"),
+                os.path.join(curr_dir, test_dir, "tokens.csv").replace("\r", ""),
                 "token_id	form	lemma	POS	morph\n"
                 "1	SOIGNORS	seignor	_	NOMB.=p|GENRE=m|CAS=n\n"
                 "2	or	or4	_	DEGRE=-\n"
@@ -245,7 +244,7 @@ class TestCorpusScript(TestCase):
             self.assertIn("--- Allowed POS Values dumped", result.output)
 
             self.assertHasContents(
-                os.path.join(curr_dir, test_dir, "allowed_morph.csv"),
+                os.path.join(curr_dir, test_dir, "allowed_morph.csv").replace("\r", ""),
                 "label	readable\n"
                 "_	pas de morphologie\n"
                 "DEGRE=-	non applicable\n"

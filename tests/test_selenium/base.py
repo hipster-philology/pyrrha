@@ -1,12 +1,15 @@
-from flask import url_for
+from flask import url_for, current_app, Flask
 from flask_testing import LiveServerTestCase
+import flask_login
 import os
 import signal
 import logging
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
-import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from app import db, create_app
 from app.models.linguistic import CorpusUser, Corpus
@@ -16,8 +19,53 @@ from app.models import WordToken, Role, User
 LIVESERVER_TIMEOUT = 1
 
 
+COOKIE = None
+__all__ = [
+    "TestBase",
+    "TokenEdit2CorporaBase",
+    "TokenEditBase",
+    "TokensSearchThroughFieldsBase"
+]
+
+
+class _element_has_count(object):
+    """ An expectation for checking that an element has a particular css class.
+
+    locator - used to find the element
+    returns the WebElement once it has the particular css class
+    """
+    def __init__(self, element, cnt: int):
+        self.element = element
+        self.cnt = cnt
+
+    def __call__(self, driver):
+        if self.cnt == len(driver.find_elements_by_css_selector(self.element)):
+            return self.element
+        else:
+            return False
+
+
+class _AuthenticatedUser(flask_login.UserMixin):
+    def __init__(self, app: Flask):
+        self._app = app
+        self._user = None
+
+    def __getattr__(self, item):
+        if not self._user:
+            self._user = User.query.get(1)
+        return getattr(self._user, item)
+
+
+def _force_authenticated(app):
+    @app.before_request
+    def set_identity():
+        user = _AuthenticatedUser(app)
+        flask_login.login_user(user)
+
+
 class TestBase(LiveServerTestCase):
     db = db
+    AUTO_LOG_IN = True
 
     def create_app(self):
         config_name = 'test'
@@ -28,6 +76,8 @@ class TestBase(LiveServerTestCase):
             # Change the port that the liveserver listens on
             LIVESERVER_PORT=8943
         )
+        if self.AUTO_LOG_IN:
+            _force_authenticated(app)
         return app
 
     def setUp(self):
@@ -44,10 +94,9 @@ class TestBase(LiveServerTestCase):
         options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
-        self.driver = webdriver.Chrome(chrome_options=options)
+        self.driver = webdriver.Chrome(options=options)
+        self.driver.set_window_size(1920, 1080)  # ??
         self.driver.get(self.get_server_url())
-
-        self.admin_login()
 
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
@@ -81,7 +130,6 @@ class TestBase(LiveServerTestCase):
         else:
             add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
-        self.driver.refresh()
 
     def addCorpusUser(self, corpus_name, email, is_owner=False):
         corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
@@ -104,7 +152,7 @@ class TestBase(LiveServerTestCase):
         return email
 
     def login(self, email, password):
-        self.driver.find_element_by_link_text('Log In').click()
+        self.driver.get(self.url_for_with_port("account.login"))
         self.driver.find_element_by_id("email").send_keys(email)
         self.driver.find_element_by_id("password").send_keys(password)
         self.driver.find_element_by_id("submit").click()
@@ -112,13 +160,12 @@ class TestBase(LiveServerTestCase):
 
     def logout(self):
         try:
-            self.driver.find_element_by_link_text('Log out').click()
+            self.driver.get(self.url_for_with_port("account.logout"))
             self.driver.implicitly_wait(5)
         except NoSuchElementException as e:
             pass
 
     def login_with_user(self, email):
-        self.driver.set_window_size(1200, 1000)  # ??
         self.logout()
         self.driver.implicitly_wait(5)
         self.login(email, self.app.config['ADMIN_PASSWORD'])
@@ -145,9 +192,9 @@ class TokenEditBase(TestBase):
 
         def callback():
             # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_" + corpus_id).click()
+            self.driver.find_element_by_id("toggle_corpus_corpora").click()
             # Click on the edit link
-            self.driver.find_element_by_id("corpus_" + corpus_id + "_edit_tokens").click()
+            self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
 
         if as_callback:
             return callback
@@ -203,18 +250,35 @@ class TokenEditBase(TestBase):
         td.click(), td.clear(), td.send_keys(value)
 
         if autocomplete_selector is not None:
-            time.sleep(0.5)
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
+            )
             self.driver.find_element_by_css_selector(autocomplete_selector).click()
-        time.sleep(0.5)
+
         # Save
         row.find_element_by_class_name("save").click()
         # It's safer to wait for the AJAX call to be completed
-        time.sleep(0.5)
+        row = self.driver.find_element_by_id("token_" + id_row + "_row")
+        self.wait_until_text(selector=(By.CSS_SELECTOR, "#token_"+id_row+"_row > td:last-child"), text="(")
 
-        return self.db.session.query(WordToken).get(int(id_row)), \
-               self.driver.find_element_by_id("token_" + id_row + "_row"). \
-                   find_elements_by_tag_name("td")[-1].text.strip(), \
-               self.driver.find_element_by_id("token_" + id_row + "_row")
+        return (
+            self.db.session.query(WordToken).get(int(id_row)),
+            row.find_elements_by_tag_name("td")[-1].text.strip(),
+            row
+        )
+
+    def wait_until_text(self, selector, text):
+        WebDriverWait(self.driver, 5).until(
+            EC.text_to_be_present_in_element(
+                selector,
+                text
+            )
+        )
+
+    def wait_until_count(self, element, cnt):
+        WebDriverWait(self.driver, 5).until(
+            _element_has_count(element, cnt)
+        )
 
     def first_token_id(self, corpus_id):
         return self.db.session.query(WordToken.id). \
@@ -249,9 +313,8 @@ class TokensSearchThroughFieldsBase(TestBase):
 
         def callback():
             # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_%s" % corpus_id).click()
-            # Click on the edit link
-            self.driver.find_element_by_id("corpus_%s_search_tokens" % corpus_id).click()
+            self.driver.get(self.url_for_with_port("main.tokens_search_through_fields", corpus_id=corpus_id))
+            self.driver.implicitly_wait(1)
 
         if as_callback:
             return callback
@@ -333,7 +396,7 @@ class TokensSearchThroughFieldsBase(TestBase):
 
                 for row in rows:
                     result.append({
-                        "form": row.find_elements_by_tag_name("td")[0].text.strip(),
+                        "form": row.find_elements_by_tag_name("td")[1].text.strip(),
                         "lemma": get_field(row, "token_lemma"),
                         "morph": get_field(row, "token_morph"),
                         "pos": get_field(row, "token_pos"),

@@ -4,6 +4,7 @@ from tests.test_selenium.base import TestBase
 
 
 class TestDashboard(TestBase):
+    AUTO_LOG_IN = False
 
     def test_admin_dashboard(self):
         """
@@ -13,6 +14,7 @@ class TestDashboard(TestBase):
         self.addCorpus("wauchier")
         self.addCorpus("floovant")
 
+        self.admin_login()
         self.driver.find_element_by_link_text("Dashboard").click()
         # admin dashboard  displayed & corpora dashboard displayed
         self.assertTrue(self.driver.find_element_by_id("admin-dashboard").is_displayed())
@@ -61,10 +63,13 @@ class TestDashboard(TestBase):
         """
         self.addCorpus("wauchier")
         self.addCorpus("floovant")
+
+        self.admin_login()
         self.driver.find_element_by_link_text("Dashboard").click()
 
-        navbars = self.driver.find_element_by_id("navbarsExampleDefault")
-        header_items = navbars.find_elements_by_class_name("dropdown-toggle")
+        navbars = self.driver.find_element_by_id("main-nav")
+        navbars.find_element_by_id("toggle_corpus_corpora").click()
+        header_items = navbars.find_elements_by_class_name("dd-corpus")
         header_names = [item.text for item in header_items]
 
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
@@ -80,8 +85,9 @@ class TestDashboard(TestBase):
         self.driver.implicitly_wait(3)
         self.driver.find_element_by_link_text("Dashboard").click()
 
-        navbars = self.driver.find_element_by_id("navbarsExampleDefault")
-        header_items = navbars.find_elements_by_class_name("dropdown-toggle")
+        navbars = self.driver.find_element_by_id("main-nav")
+        navbars.find_element_by_id("toggle_corpus_corpora").click()
+        header_items = navbars.find_elements_by_class_name("dd-corpus")
         header_names = [item.text for item in header_items]
 
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")

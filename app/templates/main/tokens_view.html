@@ -1,14 +1,16 @@
-{% extends 'layouts/base.html' %}<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css" integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous">
+{% extends 'layouts/base.html' %}
 
 {% block content %}
 
-<h1>Corpus {{corpus.name}} - List of tokens </h1>
+<h1>Corpus {{corpus.name}} - Download </h1>
 
-<p><em>Just click to copy</em></p>
-
-<textarea class="form-control" onClick="this.select();">{{headers}}
-{% for token in tokens %}{{token.tsv}}
-{% endfor %}
-</textarea>
+<p>
+    <a class="btn btn-outline-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id, format="tsv")}}">
+    <i class="fa fa-th-list"></i> Pandora/Pie CSV
+    </a>
+    <a class="btn btn-outline-primary disabled" href="{{url_for("main.tokens_export", corpus_id=corpus.id, format="csv")}}">
+    <i class="fa fa-code"></i> TEI
+    </a>
+</p>
 
 {% endblock %}

@@ -1,5 +1,4 @@
 from tests.test_selenium.base import TokenEdit2CorporaBase
-import time
 
 
 class TokenEditBase(TokenEdit2CorporaBase):
@@ -36,12 +35,15 @@ class TokenEditBase(TokenEdit2CorporaBase):
         self.assertEqual(token.POS, "NOMcom", "POS has been changed")
         self.assertEqual(text, "(Saved) Save 2 similar to see", "POS has been changed")
         # Go to find similar
-        row.find_elements_by_tag_name("a")[1].click()
+        row.find_element_by_class_name("similar-link").click()
         # Count the number of similar case
         self.assertEqual(len(self.get_main_table_body_rows()), 2, "There is two similar POS to edit")
         # Apply changes to the two others
         self.driver.find_element_by_css_selector(".save-lemma").click()
-        time.sleep(0.2)
+        try:
+            self.wait_until_count(".main tbody tr", 0)
+        except Exception:
+            pass
         self.assertEqual(len(self.get_main_table_body_rows()), 0, "There is two similar POS to edit")
 
     def test_filters_links(self):
