@@ -109,6 +109,10 @@ def add_corpus(
             add = DB_CORPORA[corpus]["tokens"][:tokens_up_to]
         else:
             add = DB_CORPORA[corpus]["tokens"]
-        db.session.bulk_save_objects(add)
+        for x in add:
+            z = copy.deepcopy(x)
+            if hasattr(z, "label_uniform"):
+                z.label_uniform = unidecode.unidecode(z.label_uniform)
+            db.session.add(z)
     db.session.commit()
     return corpus_object
