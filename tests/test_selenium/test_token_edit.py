@@ -7,6 +7,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
         """ Test the edition of a token """
         # Try first with an edit that would word
         self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", id_row="1")
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -28,6 +29,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
         """ Test the edition of a token """
         # Try first with an edit that would word
         self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value(
             "d", id_row="1",
             autocomplete_selector=".autocomplete-suggestion[data-val='devoir']"
@@ -39,6 +41,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
     def test_edit_POS(self):
         """ Edit POS of a token """
         self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value(
             "ADJqua", id_row="1", value_type="POS"
         )
@@ -49,6 +52,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
     def test_edit_morph(self):
         """ Edit POS of a token """
         self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value(
             "_", id_row="1", value_type="morph"
         )
@@ -69,6 +73,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
     def test_edit_morph_with_allowed(self):
         """ Edit POS of a token """
         self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_morph=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value(
             "_", id_row="1", value_type="morph"
         )
@@ -114,6 +119,7 @@ class TestTokensEditFloovant(TokenEditBase):
     def test_edit_POS(self):
         """ Edit POS of a token """
         self.addCorpus(with_token=True, with_allowed_lemma=True)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value(
             "ADJqua", id_row="1", value_type="POS"
         )
@@ -125,6 +131,7 @@ class TestTokensEditFloovant(TokenEditBase):
         """ Test the edition of a token """
         # Try first with an edit that would word
         self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_pos=True)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("estoire1", id_row="1")
         self.assertEqual(token.lemma, "estoire1", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -146,6 +153,7 @@ class TestTokensEditFloovant(TokenEditBase):
         """ Test the edition of a token's lemma and POS with allowed_lemma """
         # Try first with an edit that would word
         self.addCorpus(with_token=True, with_allowed_lemma=True)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("estoire1", id_row="1")
         self.assertEqual(token.lemma, "estoire1", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -167,6 +175,7 @@ class TestTokensEditFloovant(TokenEditBase):
         """ Test the edition of a token's morph  with allowed_lemma """
         # Try first with an edit that would word
         self.addCorpus(with_token=True, with_allowed_lemma=True)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("SomeMorph", id_row="1", value_type="morph")
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
         self.assertEqual(token.morph, "SomeMorph", "Lemma should have been changed")
@@ -176,6 +185,7 @@ class TestTokensEditFloovant(TokenEditBase):
         """ Test the edition of a token's morph"""
         # Try first with an edit that would word
         self.addCorpus(with_token=True)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("SomeMorph", id_row="1", value_type="morph")
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
         self.assertEqual(token.morph, "SomeMorph", "Lemma should have been changed")
@@ -185,6 +195,7 @@ class TestTokensEditFloovant(TokenEditBase):
         """ Test the edition of a token's morph"""
         # Try first with an edit that would word
         self.addCorpus(with_token=True)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("seignor", id_row="1", value_type="lemma")
         self.assertEqual(status_text, "(No value where changed) Save")
         self.assertNotIn("table-changed", row.get_attribute("class"))

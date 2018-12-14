@@ -71,6 +71,7 @@ class TestBase(LiveServerTestCase):
         config_name = 'test'
         app = create_app(config_name)
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+        app.DEBUG = True
         app.client = app.test_client()
         app.config.update(
             # Change the port that the liveserver listens on
@@ -97,6 +98,24 @@ class TestBase(LiveServerTestCase):
         self.driver = webdriver.Chrome(options=options)
         self.driver.set_window_size(1920, 1080)  # ??
         self.driver.get(self.get_server_url())
+
+    LOREM_IPSUM = """form	lemma	POS	morph
+Lorem			
+ipsum			
+dolor			
+sit			
+amet			
+,			
+consectetur			
+adipiscing			
+elit			
+.			"""
+
+    def write_lorem_impsum_tokens(self):
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            self.LOREM_IPSUM
+        )
 
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
@@ -126,10 +145,13 @@ class TestBase(LiveServerTestCase):
 
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":
-            add_corpus("wauchier", db, *args, **kwargs)
+            corpus = add_corpus("wauchier", db, *args, **kwargs)
         else:
-            add_corpus("floovant", db, *args, **kwargs)
+            corpus = add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
+        if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
+            self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        return corpus
 
     def addCorpusUser(self, corpus_name, email, is_owner=False):
         corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
@@ -192,6 +214,7 @@ class TokenEditBase(TestBase):
 
         def callback():
             # Show the dropdown
+            self.driver.get_screenshot_as_file("here2.png")
             self.driver.find_element_by_id("toggle_corpus_corpora").click()
             # Click on the edit link
             self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
@@ -290,6 +313,7 @@ class TokenEditBase(TestBase):
     def test_edit_token(self):
         """ Test the edition of a token """
         self.addCorpus(with_token=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")

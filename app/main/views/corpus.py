@@ -2,7 +2,7 @@ from flask import request, jsonify, flash, redirect, url_for, abort, current_app
 from flask_login import current_user, login_required
 
 from app import db
-from app.models.linguistic import CorpusUser
+from app.models.linguistic import CorpusUser, ControlLists
 from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
 from .. import main
 from ...utils.tsv import StringDictReader
@@ -38,6 +38,7 @@ def corpus_new():
                     context_right=request.form.get("context_right", None)
                 )
                 db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
+                ControlLists.link(corpus=corpus, user=current_user, is_owner=True)
                 db.session.commit()
                 flash("New corpus registered", category="success")
                 return redirect(url_for(".corpus_get", corpus_id=corpus.id))
@@ -91,16 +92,20 @@ def corpus_allowed_values_api(corpus_id, allowed_type):
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
     corpus = Corpus.query.get_or_404(corpus_id)
+    allowed_list = corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
+    filter_id = corpus.id
+    if allowed_list:
+        filter_id = corpus.control_lists_id
     return jsonify(
         [
             format_api_like_reply(result, allowed_type)
             for result in WordToken.get_like(
-            corpus_id=corpus_id,
-            form=request.args.get("form"),
-            group_by=True,
-            type_like=allowed_type,
-            allowed_list=corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
-        ).limit(AUTOCOMPLETE_LIMIT)
+                filter_id=filter_id,
+                form=request.args.get("form"),
+                group_by=True,
+                type_like=allowed_type,
+                allowed_list=allowed_list
+            ).limit(AUTOCOMPLETE_LIMIT)
             if result is not None
         ]
     )

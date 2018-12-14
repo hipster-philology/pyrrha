@@ -1,0 +1,18 @@
+{% extends 'layouts/base.html' %}
+
+{% block page_title %}Control List {{control_list.name}}{% endblock %}
+
+{% block content %}
+    <div>
+        <h1>{{control_list.name}}</h1>
+        {%- if is_owner %}
+            <p class="text-info">You are an owner of this control list</p>
+            <dl>
+                <dt>Owners</dt>
+                {% for owner_first_name, owner_last_name, owner_id, owner_mail in control_list.owners %}
+                    <dd>{{ owner_last_name }}, {{ owner_first_name }} [{{ owner_mail }}]</dd>
+                {% endfor %}
+            </dl>
+        {% endif -%}
+    </div>
+{% endblock %}

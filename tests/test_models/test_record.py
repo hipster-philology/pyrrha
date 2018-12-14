@@ -1,10 +1,11 @@
-from app.models import ChangeRecord, WordToken, Corpus
+from app.models import ChangeRecord, WordToken, Corpus, ControlLists
 from .base import TestModels
 import copy
 
 
 SimilarityFixtures = [
-    Corpus(id=1, name="Fixtures !"),
+    ControlLists(id=1, name="CL Fixture"),
+    Corpus(id=1, name="Fixtures !", control_lists_id=1),
     WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="smn", POS="p"),  # 1
     WordToken(corpus=1, form="Cil", lemma="celle", left_context="_", right_context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
     WordToken(corpus=1, form="Cil", lemma="cil", left_context="_", right_context="_", label_uniform="cil", morph="smn", POS="p"),      # 3

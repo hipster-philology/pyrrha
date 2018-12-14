@@ -40,7 +40,7 @@
                         </thead>
                         <tbody>
                         {% for corpus_user in corpus.users | sort(attribute='last_name') %}
-                            <tr>
+                            <tr class="u-{{ corpus_user.id }}">
                                 <td class="">
                                     {{ corpus_user.id }}
                                 </td>
@@ -62,7 +62,7 @@
                                 </td>
                                 <td>
                                     {% if current_user.is_admin() or corpus.is_owned_by(current_user) %}
-                                        <i class="fa fa-trash-o" aria-hidden="true" style="cursor: pointer"></i>
+                                        <i class="fa fa-trash-o u-{{ corpus_user.id }}" aria-hidden="true" style="cursor: pointer"></i>
                                     {% endif %}
                                 </td>
                             </tr>
@@ -82,6 +82,7 @@
                                     {{ dashboard.users_table(current_user, users, redirect=False) }}
 
                                 </div>
+                                <!-- Next needed ??? -->
                                 <div class="col"></div>
                                 <div class="col"></div>
                             </div>
@@ -126,7 +127,7 @@
                 new_row += "<td>" + firstname + "</td>";
                 new_row += "<td>" + lastname + "</td>";
                 new_row += "<td><input type='checkbox' name='ownership' value='" + user_id + "'/></td>";
-                new_row += '<td><i class="fa fa-trash-o" aria-hidden="true" style="cursor: pointer"></i></td>';
+                new_row += '<td><i class="fa fa-trash-o u-'+user_id+'" aria-hidden="true" style="cursor: pointer"></i></td>';
                 new_row += "</tr>";
                 $("#accesses-table tr:last").after(new_row);
 

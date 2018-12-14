@@ -1,7 +1,7 @@
 from flask_login import current_user
 
-from ...models import Corpus
 from ...utils.tsv import StringDictReader, TSV_CONFIG
+from ...models import Corpus, ControlLists
 from flask import render_template, request
 from csv import DictReader
 
@@ -48,7 +48,12 @@ def render_template_with_nav_info(template, **kwargs):
     :return:
     """
     kwargs.update(dict(
-        corpora=[corpus for corpus in Corpus.query.all() if corpus.has_access(current_user)]
+        corpora=[corpus for corpus in Corpus.for_user(current_user)]
+    ))
+    kwargs.update(dict(
+        control_lists=[
+            control_list for control_list in ControlLists.for_user(current_user)
+        ]
     ))
     return render_template(template, **kwargs)
 
