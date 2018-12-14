@@ -6,6 +6,7 @@ from app.models.linguistic import CorpusUser, ControlLists
 from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
 from .. import main
 from ...utils.tsv import StringDictReader
+from ...utils.forms import strip_or_none
 from werkzeug.exceptions import BadRequest
 from ...models import Corpus, WordToken
 
@@ -17,9 +18,17 @@ AUTOCOMPLETE_LIMIT = 20
 def corpus_new():
     """ Register a new corpus
     """
+    lemmatizers = current_app.config.get("LEMMATIZERS", [])
     if request.method == "POST":
         if not current_user.is_authenticated:
             abort(403)
+        elif not len(strip_or_none(request.form.get("name", ""))):
+            flash("You forgot to give a name to your corpus", category="error")
+            return render_template_with_nav_info(
+                'main/corpus_new.html',
+                lemmatizers=lemmatizers,
+                tsv=request.form.get("tsv")
+            )
         else:
             tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
                 request.form.get("tsv"),
@@ -44,10 +53,13 @@ def corpus_new():
                 return redirect(url_for(".corpus_get", corpus_id=corpus.id))
             except Exception as e:
                 db.session.rollback()
-                flash("The corpus cannot be registered", category="errors")
-                return redirect(url_for(".index"))
+                flash("The corpus cannot be registered. Check your data", category="error")
+                return render_template_with_nav_info(
+                    'main/corpus_new.html',
+                    lemmatizers=lemmatizers,
+                    tsv=request.form.get("tsv")
+                )
 
-    lemmatizers = current_app.config.get("LEMMATIZERS", [])
     return render_template_with_nav_info('main/corpus_new.html', lemmatizers=lemmatizers)
 
 

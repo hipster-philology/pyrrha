@@ -9,7 +9,7 @@ from werkzeug.exceptions import BadRequest
 
 from app.models.user import User
 from .. import db
-from ..utils.forms import strip_or_none
+from ..utils.forms import strip_or_none, prepare_search_string, column_search_filter
 from ..utils.tsv import TSV_CONFIG
 
 
@@ -60,14 +60,8 @@ class ControlLists(db.Model):
     @staticmethod
     def get_linked_or_404(control_list_id: int, user: User):
         if user.is_admin():
-            return (
-                ControlLists.query.get_or_404(control_list_id),
-                db.session.query(ControlListsUser.query.filter(
-                    ControlListsUser.user_id == user.id,
-                    ControlListsUser.control_lists_id == control_list_id,
-                    ControlListsUser.is_owner == True
-                ).exists()).scalar()
-            )
+            cl = ControlLists.query.get_or_404(control_list_id)
+            return cl, cl.is_owned_by(user)
         element, is_owner = db.session.query(ControlLists, ControlListsUser.is_owner).filter(
             db.and_(
                 ControlLists.id == control_list_id,
@@ -88,14 +82,17 @@ class ControlLists(db.Model):
             )
         ).all()
 
-    def get_allowed_values(self, allowed_type="lemma", order_by="label"):
+    def get_allowed_values(self, allowed_type="lemma", order_by="label", kw=None):
         """ List values that are allowed (without label) or checks that given label is part
         of the existing corpus
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
+        :param order_by: Column to use for ordering
+        :param kw: Search keyword
         :return: Flask SQL Alchemy Query
         :rtype: BaseQuery
         """
+        filters = []
         if allowed_type == "lemma":
             cls = AllowedLemma
             order_by = getattr(cls, order_by)
@@ -108,7 +105,18 @@ class ControlLists(db.Model):
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
 
-        return db.session.query(cls).filter(cls.control_list == self.id).order_by(order_by)
+        filters = cls.control_list == self.id
+        if kw:
+            filters = db.and_(
+                filters,
+                db.or_(
+                    *(
+                        db.and_(*tuple(column_search_filter(AllowedLemma.label_uniform, search_string)))
+                        for search_string in prepare_search_string(kw)
+                    )
+                )
+            )
+        return db.session.query(cls).filter(filters).order_by(order_by)
 
     def has_access(self, user):
         """

@@ -1,11 +1,10 @@
-from flask import request, flash, redirect, url_for, abort, current_app, Blueprint
+from flask import request, flash, redirect, url_for, Blueprint
 from flask_login import current_user, login_required
 
-from app import db
 from app.main.views.utils import render_template_with_nav_info
-from app.utils.tsv import StringDictReader
-from werkzeug.exceptions import BadRequest
-from app.models import Corpus, ControlLists, ControlListsUser
+from app.models import ControlLists
+from ..utils.forms import strip_or_none
+
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -38,14 +37,21 @@ def read_allowed_values(control_list_id, allowed_type):
         redirect(url_for(".get", control_list_id=control_list_id))
 
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
+    kwargs = {}
 
     if allowed_type == "lemma":
-        template = "control_lists/read.html"
+        page = request.args.get("page", "1")
+        page = (page.isnumeric()) and int(page) or 1
+
+        limit = request.args.get("limit", "1000")
+        limit = (limit.isnumeric()) and int(limit) or 1
+        kw = strip_or_none(request.args.get("kw", ""))
+        template = "control_lists/read_lemma.html"
         allowed_values = control_list.get_allowed_values(
             allowed_type=allowed_type,
-            page=request.args.get("page", 1),
-            limit=request.args.get("limit", 1000)
-        ).paginate()
+            kw=kw
+        ).paginate(page=page, per_page=limit)
+        kwargs["kw"] = kw
     else:
         template = "control_lists/read.html"
         allowed_values = control_list.get_allowed_values(allowed_type=allowed_type).all()
@@ -56,5 +62,6 @@ def read_allowed_values(control_list_id, allowed_type):
         is_owner=is_owner,
         allowed_type=allowed_type,
         allowed_values=allowed_values,
-        readable=allowed_type == "morph"
+        readable=allowed_type == "morph",
+        **kwargs
     )

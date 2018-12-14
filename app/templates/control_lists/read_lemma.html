@@ -1,4 +1,5 @@
 {% extends 'layouts/base.html' %}
+{% import 'macros/nav_macros.html' as nav %}
 
 {% block page_title %}Control List {{control_list.name}}{% endblock %}
 
@@ -6,24 +7,50 @@
 <h1>{{control_list.name}}</h1>
 <h2>Allowed values for {{allowed_type}}</h2>
 
-<nav aria-label="Page navigation example">
-  <ul class="pagination">
-  {%- for page in allowed_values.iter_pages() %}
-    {% if page %}
-      {% if page != allowed_values.page %}
-        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, corpus_id=corpus_id, limit=pagination.per_page, **kwargs) }}">{{ page }}</a></li>
-      {% else %}
-        <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
-      {% endif %}
-    {% else %}
-        <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
-    {% endif %}
-  {%- endfor %}
-  </ul>
-</nav>
+<div class="form container-fluid" style="padding-bottom: 10px;">
+  <form class="row" method="GET">
+    <div class="col-md-6">
+      <div class="input-group">
+        <div class="input-group-prepend">
+          <button type="submit" class="btn btn-primary" id="searchLemma">Search</button>
+        </div>
+        <input type="text" name="kw" class="form-control" value="{{kw}}" placeholder="Search a lemma" aria-label="Search Lemma" aria-describedby="searchLemma">
+        <div class="input-group-append">
+          <button type="button" class="btn btn-info" id="searchHelp">Show help</button>
+        </div>
+      </div>
+      <div class="text-muted small" id="searchHelpBox" style="display: none;">
+        Options :
+        <ul>
+          <li>* can be used to match partial words, eg. <b>ADV*</b></li>
+          <li>! can be used to negate a match, eg. <b>!PRE</b></b></li>
+          <li>| can be used to perform an OR operation, eg. <b>s*t | s*s</b></li>
+          <li>To search forms which do not contain 'e': <b>! *e*</b></li>
+        </ul>
+      </div>
+    </div>
+  </form>
+</div>
+{{ nav.render_pagination(pagination=allowed_values, endpoint='control_lists_bp.read_allowed_values', control_list_id=control_list.id, allowed_type='lemma', kw=kw)}}
+
 <ul>
-{%- for token in allowed_values %}
-    <li><i class="fa-remove"></i>&nbsp;{{token.label}}</li>
+{%- if can_edit %}
+{%- for token in allowed_values.items %}
+    <li><i class="fa fa-trash-o"></i>&nbsp;{{token.label}}</li>
 {% endfor -%}
+{% else %}
+{%- for token in allowed_values.items %}
+    <li>{{token.label}}</li>
+{% endfor -%}
+{% endif -%}
 </ul>
+
+<script type="text/javascript">
+  $(document).ready(function() {
+      $("#searchHelp").on("click", function(event) {
+          event.preventDefault();
+          $("#searchHelpBox").toggle();
+      });
+  });
+</script>
 {% endblock %}

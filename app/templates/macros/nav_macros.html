@@ -106,13 +106,13 @@
 {% endmacro %}
 
 
-{% macro render_pagination(pagination, endpoint, corpus_id) %}
+{% macro render_pagination(pagination, endpoint) %}
 <nav aria-label="Page navigation example">
   <ul class="pagination">
   {%- for page in pagination.iter_pages() %}
     {% if page %}
       {% if page != pagination.page %}
-        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, corpus_id=corpus_id, limit=pagination.per_page, **kwargs) }}">{{ page }}</a></li>
+        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, limit=pagination.per_page, **kwargs) }}">{{ page }}</a></li>
       {% else %}
         <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
       {% endif %}
