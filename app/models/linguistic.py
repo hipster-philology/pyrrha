@@ -4,7 +4,7 @@ import io
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func
+from sqlalchemy import func, literal
 from werkzeug.exceptions import BadRequest
 
 from app.models.user import User
@@ -110,6 +110,33 @@ class ControlLists(db.Model):
 
         return db.session.query(cls).filter(cls.control_list == self.id).order_by(order_by)
 
+    def has_access(self, user):
+        """
+        Can this corpus be accessed by the given user ?
+        :param user:
+        :return: True or False
+        """
+        # Todo:
+        #if self.public:
+        #   return True
+        if not user.is_admin():
+            return db.session.query(literal(True)).filter(
+                ControlListsUser.query.filter(
+                    ControlListsUser.user_id == user.id,
+                    ControlListsUser.control_lists_id == self.id
+                ).exists()
+            ).scalar()
+        return True
+
+    def is_owned_by(self, user):
+        return db.session.query(literal(True)).filter(
+            ControlListsUser.query.filter(
+                ControlListsUser.user_id == user.id,
+                ControlListsUser.control_lists_id == self.id,
+                ControlListsUser.is_owner == True
+            ).exists()
+        ).scalar()
+
 
 class ControlListsUser(db.Model):
     """ Association proxy that link users to ControlLists
@@ -154,14 +181,16 @@ class Corpus(db.Model):
         :param user:
         :return: True or False
         """
-        access = True
         if not user.is_admin():
-            cu = CorpusUser.query.filter(
-                CorpusUser.user_id == user.id,
-                CorpusUser.corpus_id == self.id
-            ).first()
-            access = cu is not None
-        return access
+            return db.session.query(literal(True)).filter(
+                CorpusUser.query.filter(
+                    db.and_(
+                        CorpusUser.user_id == user.id,
+                        CorpusUser.corpus_id == self.id
+                    )
+                ).exists()
+            ).scalar()
+        return True
 
     @staticmethod
     def for_user(current_user):
@@ -173,11 +202,15 @@ class Corpus(db.Model):
         ).all()
 
     def is_owned_by(self, user):
-        cu = CorpusUser.query.filter(
-            CorpusUser.user_id == user.id,
-            CorpusUser.corpus_id == self.id
-        ).first()
-        return cu is not None and cu.is_owner
+        return db.session.query(literal(True)).filter(
+            CorpusUser.query.filter(
+                db.and_(
+                    CorpusUser.user_id == user.id,
+                    CorpusUser.corpus_id == self.id,
+                    CorpusUser.is_owner == True
+                )
+            ).exists()
+        ).scalar()
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
