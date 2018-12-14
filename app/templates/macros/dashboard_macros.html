@@ -30,7 +30,7 @@
         </thead>
         <tbody>
         {% for u in users | sort(attribute='last_name') %}
-            <tr style="cursor: pointer"
+            <tr style="cursor: pointer" class="u-{{ u.id }}"
                     {% if current_user.is_admin() and redirect %}
                 onclick="window.location.href = '{{ url_for('admin.user_info', user_id=u.id) }}';"
                     {% endif %} >
