@@ -12,7 +12,15 @@ from .. import main
 @login_required
 def dashboard():
     """admin dashboard page."""
-    return render_template_with_nav_info('main/dashboard.html', current_user=current_user)
+    if current_user.is_admin():
+        corpora = db.session.query(Corpus).all()
+    else:
+        corpora = Corpus.for_user(current_user)
+    return render_template_with_nav_info(
+        'main/dashboard.html',
+        current_user=current_user,
+        dashboard_corpora=corpora
+    )
 
 
 @main.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
@@ -29,7 +37,7 @@ def manage_corpus_users(corpus_id):
                 User.query.filter(User.id == user_id).first()
                 for user_id in [int(u) for u in request.form.getlist("user_id")]
             ]
-            ownerships = [int(u) for u in request.form.getlist("ownership")]
+            ownerships = [int(u) for u in request.form.getlist("ownership") if u.isdigit()]
 
             # previous rights
             prev_cu = CorpusUser.query.filter(CorpusUser.corpus_id == corpus_id).all()

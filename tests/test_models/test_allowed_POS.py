@@ -9,7 +9,7 @@ class TestAllowedPOS(TestModels):
                        with_allowed_pos=True, partial_allowed_pos=True)
         self.assertEqual(
             AllowedPOS.to_input_format(
-                AllowedPOS.query.filter(AllowedPOS.corpus == 2)
+                AllowedPOS.query.filter(AllowedPOS.control_list == 2)
             ),
             "ADVgen,VERcjg,NOMcom"
         )

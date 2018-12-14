@@ -1,0 +1,35 @@
+{% extends 'layouts/base.html' %}
+
+{% block page_title %}Control List {{control_list.name}}{% endblock %}
+
+{% block content %}
+<h1>{{control_list.name}}</h1>
+<h2>Allowed values for {{allowed_type}}</h2>
+
+<nav aria-label="Page navigation example">
+  <ul class="pagination">
+  {%- for page in pagination.iter_pages() %}
+    {% if page %}
+      {% if page != pagination.page %}
+        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, corpus_id=corpus_id, limit=pagination.per_page, **kwargs) }}">{{ page }}</a></li>
+      {% else %}
+        <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+      {% endif %}
+    {% else %}
+        <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+    {% endif %}
+  {%- endfor %}
+  </ul>
+</nav>
+<table class="table table-sm small">
+    <thead><tr><th>Label</th><th>Delete</th></tr></thead>
+    <tbody>
+        {%- for token in allowed_values %}
+        <tr>
+            <td>{{token.label}}</td>
+            <td><i class="fa-remove"></i></td>
+        </tr>
+        {% endfor -%}
+    </tbody>
+</table>
+{% endblock %}
