@@ -15,10 +15,10 @@ install:
   - pip install -r requirements.txt
   - pip install coveralls
   - pip install nose
-  - chromedriver --version
 
 # command to run tests
 script:
+  - chromedriver --version
   - nosetests ./tests --with-coverage --cover-package=app --cover-xml
 after_success:
   - coverage combine
