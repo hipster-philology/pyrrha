@@ -12,8 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from app import db, create_app
-from app.models.linguistic import CorpusUser, Corpus
-from tests.db_fixtures import add_corpus
+from app.models.linguistic import CorpusUser, Corpus, ControlListsUser, ControlLists
+from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
 LIVESERVER_TIMEOUT = 1
@@ -160,6 +160,22 @@ elit
         self.db.session.add(new_cu)
         self.db.session.commit()
         return new_cu
+
+    def addControlLists(self, cl_name, *args, **kwargs):
+        cl = add_control_lists(cl_name, db, *args, **kwargs)
+        print(cl)
+        self.driver.get(self.get_server_url())
+        if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
+            self.addControlListsUser(cl.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        return cl
+
+    def addControlListsUser(self, cl_name, email, is_owner=False):
+        cl = ControlLists.query.filter(ControlLists.name == cl_name).first()
+        user = User.query.filter(User.email == email).first()
+        new_clu = ControlListsUser(control_lists_id=cl.id, user_id=user.id, is_owner=is_owner)
+        self.db.session.add(new_clu)
+        self.db.session.commit()
+        return new_clu
 
     def add_user(self, first_name, last_name, is_admin=False):
         email = "%s.%s@ppa.fr" % (first_name, last_name)

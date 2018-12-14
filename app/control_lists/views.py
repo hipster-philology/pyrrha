@@ -39,11 +39,22 @@ def read_allowed_values(control_list_id, allowed_type):
 
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
 
+    if allowed_type == "lemma":
+        template = "control_lists/read.html"
+        allowed_values = control_list.get_allowed_values(
+            allowed_type=allowed_type,
+            page=request.args.get("page", 1),
+            limit=request.args.get("limit", 1000)
+        ).paginate()
+    else:
+        template = "control_lists/read.html"
+        allowed_values = control_list.get_allowed_values(allowed_type=allowed_type).all()
+
     return render_template_with_nav_info(
-        "control_lists/read.html",
+        template=template,
         control_list=control_list,
         is_owner=is_owner,
         allowed_type=allowed_type,
-        allowed_values=control_list.get_allowed_values(allowed_type=allowed_type).all(),
-        readable=allowed_type=="morph"
+        allowed_values=allowed_values,
+        readable=allowed_type == "morph"
     )

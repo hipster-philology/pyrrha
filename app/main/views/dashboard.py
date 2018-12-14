@@ -47,7 +47,7 @@ def manage_control_lists_user(cl_id):
             ownerships = [int(u) for u in request.form.getlist("ownership") if u.isdigit()]
 
             # previous rights
-            prev_cu = ControlListsUser.query.filter(CorpusUser.corpus_id == cl_id).all()
+            prev_cu = ControlListsUser.query.filter(ControlListsUser.control_lists_id == cl_id).all()
 
             # should not be able to delete the last owner
             if len(prev_cu) > 0 and True not in set([user.id in ownerships for user in users]):
@@ -58,7 +58,7 @@ def manage_control_lists_user(cl_id):
                 for cu in prev_cu:
                     db.session.delete(cu)
                 for cu in [
-                    ControlListsUser(control_list_id=control_list.id, user_id=user.id, is_owner=user.id in ownerships)
+                    ControlListsUser(control_lists_id=control_list.id, user_id=user.id, is_owner=user.id in ownerships)
                     for user in users
                 ]:
                     db.session.add(cu)
@@ -66,7 +66,8 @@ def manage_control_lists_user(cl_id):
                 flash('Modifications have been saved.', 'success')
             except Exception as e:
                 db.session.rollback()
-            return redirect(url_for('main.dashboard'))
+                raise e
+            return redirect(url_for('main.manage_control_lists_user', cl_id=cl_id))
 
         else:
             # GET method

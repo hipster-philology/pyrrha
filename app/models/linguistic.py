@@ -309,7 +309,7 @@ class Corpus(db.Model):
         :return:
         """
 
-        control_list = ControlLists()
+        control_list = ControlLists(name="Control List {}".format(name))
         db.session.add(control_list)
         db.session.flush()
 
