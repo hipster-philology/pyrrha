@@ -326,7 +326,7 @@ class TokenEditBase(TestBase):
         return super(TokenEditBase, self).addCorpus(self.CORPUS, *args, **kwargs)
 
     def test_edit_token(self):
-        """ Test the edition of a token """
+        """ [Generic] Test the edition of a token """
         self.addCorpus(with_token=True, tokens_up_to=24)
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
