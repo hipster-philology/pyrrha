@@ -63,7 +63,6 @@ class TestManageControlListsUser(TestBase):
         # there is no user on this corpus
         self.go_to_control_lists_management("Wauchier")
         el = self.get_ownership_table()
-        self.driver.save_screenshot("display.png")
         self.assertTrue(len(el) == 0)
 
         # add admin as the owner

@@ -44,7 +44,7 @@ def add_control_lists(
     """
     cl = copy.deepcopy(DB_CORPORA[corpus]["control_list"])
     db.session.add(cl)
-    db.session.flush()
+    db.session.commit()
     add = []
 
     if with_allowed_lemma is True:

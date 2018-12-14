@@ -20,7 +20,7 @@ install:
 script:
   - chromedriver --version
   - pip freeze
-  - nosetests ./tests --with-coverage --cover-package=app --cover-xml --verbose --nologcapture
+  - nosetests ./tests/test_selenium/test_token_edit.py --with-coverage --cover-package=app --cover-xml --verbose --nologcapture
 after_success:
   - coverage combine
   - coveralls
