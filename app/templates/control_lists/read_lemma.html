@@ -5,51 +5,114 @@
 
 {% block content %}
 <h1>{{control_list.name}}</h1>
-<h2>Allowed values for {{allowed_type}}</h2>
+<h2>Control List for Lemmas</h2>
 
-<div class="form container-fluid" style="padding-bottom: 10px;">
-  <form class="row" method="GET">
-    <div class="col-md-6">
-      <div class="input-group">
-        <div class="input-group-prepend">
-          <button type="submit" class="btn btn-primary" id="searchLemma">Search</button>
+<div class="form" style="padding-bottom: 10px;">
+  <form id="lemma_update" class="form" style="margin-top:1em;" method="POST" action="{{url_for('control_lists_bp.lemma_list', control_list_id=control_list.id)}}">
+    <div class="form-group row">
+      <div class="col-md-3">
+        <button class="btn btn-outline-info" id="show_lemma"><i class="fa fa-pencil-square-o"></i> Add new lemma</button></div>
+      <div class="col-md-3" style="display: none;" id="show_lemma_container">
+        <textarea name="lemmas" class="form-control" placeholder="One lemma per line" aria-label="Add new lemma" id="submit_lemma_textarea"></textarea>
+        <button type="submit" class="btn btn-primary" style="margin-top: 1em;" id="submit_lemma">Save the new lemmas</button>
+        <div>
+          <span id="lemma_saving" class="hidden-default lemma_badge text-secondary border-secondary border rounded badge"><i class="fa fa-spinner fa-spin"></i> Saving</span>
+          <span id="lemma_saved" class="hidden-default lemma_badge text-success border-success border rounded badge"><i class="fa fa-check-circle-o"></i> Saved</span>
+          <span id="lemma_error" class="hidden-default lemma_badge text-danger border-danger border rounded badge"><i class="fa fa-check-circle-o"></i> Error: <span class="message"></span> </span>
         </div>
-        <input type="text" name="kw" class="form-control" value="{{kw}}" placeholder="Search a lemma" aria-label="Search Lemma" aria-describedby="searchLemma">
-        <div class="input-group-append">
-          <button type="button" class="btn btn-info" id="searchHelp">Show help</button>
-        </div>
-      </div>
-      <div class="text-muted small" id="searchHelpBox" style="display: none;">
-        Options :
-        <ul>
-          <li>* can be used to match partial words, eg. <b>ADV*</b></li>
-          <li>! can be used to negate a match, eg. <b>!PRE</b></b></li>
-          <li>| can be used to perform an OR operation, eg. <b>s*t | s*s</b></li>
-          <li>To search forms which do not contain 'e': <b>! *e*</b></li>
-        </ul>
       </div>
     </div>
   </form>
 </div>
-{{ nav.render_pagination(pagination=allowed_values, endpoint='control_lists_bp.read_allowed_values', control_list_id=control_list.id, allowed_type='lemma', kw=kw)}}
 
-<ul>
-{%- if can_edit %}
-{%- for token in allowed_values.items %}
-    <li><i class="fa fa-trash-o"></i>&nbsp;{{token.label}}</li>
-{% endfor -%}
-{% else %}
-{%- for token in allowed_values.items %}
-    <li>{{token.label}}</li>
-{% endfor -%}
-{% endif -%}
-</ul>
-
+<div class="row">
+  <div class="col-sm-12">
+    <h3>Results</h3>
+    <small class="text-muted">There is {{allowed_values.total}} lemma{% if kw %} for this query{% endif %}.</small>
+    <form method="GET" class="col-md-3">
+        <div class="input-group input-group-sm">
+          <div class="input-group-prepend">
+            <button type="submit" class="btn btn-outline-primary" id="searchLemma">Search for</button>
+          </div>
+          <input type="text" name="kw" class="form-control-sm form-control" value="{{kw}}" placeholder="Search a lemma" aria-label="Search Lemma" aria-describedby="searchLemma">
+          <div class="input-group-append">
+            <button type="button" class="btn btn-outline-info" id="searchHelp"><i class="fa fa-plus-circle"></i> Show help </button>
+          </div>
+        </div>
+        <div class="text-muted small" id="searchHelpBox" style="display: none;">
+          Options :
+          <ul>
+            <li>* can be used to match partial words, eg. <b>ADV*</b></li>
+            <li>! can be used to negate a match, eg. <b>!PRE</b></li>
+            <li>| can be used to perform an OR operation, eg. <b>s*t | s*s</b></li>
+            <li>To search forms which do not contain 'e': <b>! *e*</b></li>
+          </ul>
+        </div>
+    </form>
+    <ul>
+    {%- if can_edit %}
+    {%- for token in allowed_values.items %}
+        <li><i class="fa fa-trash-o"></i>&nbsp;{{token.label}}</li>
+    {% endfor -%}
+    {% else %}
+    {%- for token in allowed_values.items %}
+        <li>{{token.label}}</li>
+    {% endfor -%}
+    {% endif -%}
+    </ul>
+    {{ nav.render_pagination(pagination=allowed_values, endpoint='control_lists_bp.lemma_list', control_list_id=control_list.id, kw=kw)}}
+  </div>
+</div>
 <script type="text/javascript">
   $(document).ready(function() {
+      var use_badge = function(badges, show, message) {
+          /** Display a badge of the Lemma form
+           *
+           * badges : jQuery selector of badges
+           * show : suffix of the badge id (what's after #badge_
+           * message : Error message to show [Optional]
+           */
+          if (message === undefined) { message = "Erreur inconnue"; }
+          // Hide all the badges !
+          badges.hide();
+          // Select the one badge to deal with
+          var single = $("#lemma_"+show);
+          // If there is an error message
+          if (show === "error") { single.find(".message").text(message); }
+          // Show it
+          single.show();
+      };
       $("#searchHelp").on("click", function(event) {
           event.preventDefault();
           $("#searchHelpBox").toggle();
+      });
+      $("#show_lemma").on("click", function(event) {
+          event.preventDefault();
+          $("#show_lemma_container").toggle();
+      });
+      $("#lemma_update").on("submit", function(e) {
+         e.preventDefault();
+         var badges = $(".lemma_badge"),
+             form = $(this),
+             value= $("#submit_lemma_textarea").val(),
+             error = false;
+
+         use_badge(badges, "saving");
+
+         if (value.trim().length == 0) {
+             use_badge(badges, "error", "Form input is empty.");
+             error = true;
+         }
+         if (error === false){
+             $.ajax({
+                 url:form.attr("action"),
+                 data: JSON.stringify({"lemmas": value}),
+                 method:"UPDATE",
+                 contentType: 'application/json'
+             }).done(function() { use_badge(badges, "saved"); })
+               .fail(function(data) { use_badge(badges, "error", data.responseJSON.message); });
+         }
+
       });
   });
 </script>

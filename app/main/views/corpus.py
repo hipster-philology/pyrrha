@@ -9,6 +9,8 @@ from ...utils.tsv import StringDictReader
 from ...utils.forms import strip_or_none
 from werkzeug.exceptions import BadRequest
 from ...models import Corpus, WordToken
+import sqlalchemy.exc
+
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -51,8 +53,28 @@ def corpus_new():
                 db.session.commit()
                 flash("New corpus registered", category="success")
                 return redirect(url_for(".corpus_get", corpus_id=corpus.id))
+            except sqlalchemy.exc.StatementError as e:
+                db.session.rollback()
+                flash("The corpus cannot be registered. Check your data", category="error")
+                if str(e.orig) == "UNIQUE constraint failed: corpus.name":
+                    flash("You have already a corpus going by the name {}".format(request.form.get("name")),
+                          category="error")
+                return render_template_with_nav_info(
+                    'main/corpus_new.html',
+                    lemmatizers=lemmatizers,
+                    tsv=request.form.get("tsv")
+                )
+            except ValueError as e:
+                db.session.rollback()
+                flash(str(e), category="error")
+                return render_template_with_nav_info(
+                    'main/corpus_new.html',
+                    lemmatizers=lemmatizers,
+                    tsv=request.form.get("tsv")
+                )
             except Exception as e:
                 db.session.rollback()
+                print(e)
                 flash("The corpus cannot be registered. Check your data", category="error")
                 return render_template_with_nav_info(
                     'main/corpus_new.html',

@@ -1,10 +1,11 @@
 import csv
 import io
+from collections import Counter
 
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func, literal
+from sqlalchemy import func, literal, Index
 from werkzeug.exceptions import BadRequest
 
 from app.models.user import User
@@ -322,10 +323,9 @@ class Corpus(db.Model):
         db.session.flush()
 
         c = Corpus(name=name, control_lists_id=control_list.id)
-
-
         db.session.add(c)
         db.session.flush()
+
         token_count = WordToken.add_batch(
             corpus_id=c.id, word_tokens_dict=word_tokens_dict,
             context_left=context_left, context_right=context_right
@@ -342,7 +342,6 @@ class Corpus(db.Model):
 
         if allowed_morph is not None and len(allowed_morph) > 0:
             AllowedMorph.add_batch(allowed_morph, control_list.id)
-        db.session.commit()
         return c
 
     def update_allowed_values(self, allowed_type, allowed_values):
@@ -375,9 +374,13 @@ class AllowedLemma(db.Model):
     :param corpus: ID of the corpus this AllowedLemma is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(64), nullable=False)
     label_uniform = db.Column(db.String(64))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
+
+    __table_args__ = (
+        db.Index('unique_label_per_control', 'label', 'control_list', unique=True),
+    )
 
     @staticmethod
     def add_batch(allowed_values, control_lists_id, _commit=False):
@@ -387,6 +390,14 @@ class AllowedLemma(db.Model):
         :param control_lists_id: Id of the Control List
         :param _commit: Force commit (Default: false)
         """
+        if len(allowed_values) != len(set(allowed_values)):
+            raise Exception("Following values are duplicated: " + ", ".join(
+                [
+                    lemma
+                    for lemma, cnt in Counter(allowed_values).items()
+                    if cnt > 1
+                ]
+            ))
         db.session.bulk_insert_mappings(
             AllowedLemma,
             [
@@ -809,7 +820,6 @@ class WordToken(db.Model):
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
-        db.session.commit()
         return len(tokens)
 
     @staticmethod

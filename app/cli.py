@@ -124,6 +124,7 @@ def make_cli():
                 context_left=left,
                 context_right=right
             )
+            db.session.commit()
             click.echo(
                 "Corpus created under the name {} with {} tokens".format(
                     name, corpus.tokens_count
@@ -180,6 +181,7 @@ def make_cli():
                     allowed_POS=allowed_POS, context_left=left,
                     context_right=right
                 )
+                db.session.commit()
                 click.echo(data.control_lists_id)
                 click.echo("Corpus '{}' (ID : {}) created ".format(
                     name,
