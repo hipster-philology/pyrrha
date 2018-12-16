@@ -130,10 +130,11 @@
         $('.editable a.save').on("click", function (event) {
             event.preventDefault();
             var link = $(this),
-                parent = link.parents("tr.editable");
+                parent = link.parents("tr.editable"),
+                spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>');
 
-
-            link.text("(Saving) Save");
+            link.before(spinner);
+            //link.text("(Saving) Save");
             jQuery.ajax({
                 url: event.target.href,
                 type: 'POST',
@@ -141,20 +142,23 @@
                     lemma: parent.find(".token_lemma").text(),
                     POS: parent.find(".token_pos").text(),
                     morph: parent.find(".token_morph").text()
-                }}).done(function(response){
+                }
+            }).done(function(response){
                     if(response.similar.count > 0) {
                         link.parent().append("<a class='similar-link' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
                     }
                     parent.addClass("table-changed");
                     link.text("(Saved) Save");
-                }).fail(function(jqXHR){
-                    link.text("(" + jqXHR.responseJSON.message + ") Save");
-                    $.each(jqXHR.responseJSON.details, function(key, status) {
-                        var selector = ".token_"+key.toLowerCase();
-                        if (status === false) { parent.find(selector).addClass("table-danger"); }
-                        else { parent.find(selector).removeClass("table-danger");  }
-                    });
+            }).fail(function(jqXHR){
+                link.text("(" + jqXHR.responseJSON.message + ") Save");
+                $.each(jqXHR.responseJSON.details, function(key, status) {
+                    var selector = ".token_"+key.toLowerCase();
+                    if (status === false) { parent.find(selector).addClass("table-danger"); }
+                    else { parent.find(selector).removeClass("table-danger");  }
                 });
+            }).always(function() {
+                spinner.remove();
+            });
         });
     });
     </script>

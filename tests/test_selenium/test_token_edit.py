@@ -200,6 +200,7 @@ class TestTokensEditTwoCorpora(TokenEdit2CorporaBase):
         # Try with a POS update but keeping the lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
+        print(status_text)
         self.assertEqual(token.lemma, "martin", "Lemma should have not been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
         self.assertEqual(status_text, "(Saved) Save")
