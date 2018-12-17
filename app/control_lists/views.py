@@ -1,14 +1,17 @@
 from flask import request, flash, redirect, url_for, Blueprint, abort, jsonify, make_response
 from flask_login import current_user, login_required
+import sqlalchemy.exc
+from werkzeug.exceptions import BadRequest
+
 
 from app.main.views.utils import render_template_with_nav_info
 from app.models import ControlLists, AllowedLemma
 from app import db
 from ..utils.forms import strip_or_none
-import sqlalchemy.exc
-
+from ..utils.tsv import StringDictReader
 
 AUTOCOMPLETE_LIMIT = 20
+
 
 # Create the current blueprint
 control_lists_bp = Blueprint('control_lists_bp', __name__)
@@ -35,7 +38,8 @@ def get(control_list_id):
 @login_required
 def lemma_list(control_list_id):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
-    if request.method == "UPDATE" and request.mimetype == "application/json":
+    can_edit = is_owner or current_user.is_admin()
+    if request.method == "UPDATE" and request.mimetype == "application/json" and can_edit:
         form = request.get_json().get("lemmas", None)
         if not form:
             abort(400, jsonify({"message": "No lemma were passed."}))
@@ -105,4 +109,62 @@ def read_allowed_values(control_list_id, allowed_type):
         allowed_values=allowed_values,
         readable=allowed_type == "morph",
         **kwargs
+    )
+
+
+@control_lists_bp.route('/controls/<int:cl_id>/edit/<allowed_type>', methods=["GET", "POST"])
+@login_required
+def edit(cl_id, allowed_type):
+    """ Find allowed values and allow their edition
+
+    :param cl_id: Id of the corpus
+    :param allowed_type: Type of allowed value (lemma, morph, POS)
+    """
+    if allowed_type not in ["lemma", "POS", "morph"]:
+        raise BadRequest("Unknown type of resource.")
+    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=cl_id, user=current_user)
+
+    can_edit = is_owner or current_user.is_admin()
+
+    # In case of Post
+    if request.method == "POST":
+        allowed_values = request.form.get("allowed_values")
+        if allowed_type == "lemma":
+            allowed_values = [
+                x.replace('\r', '')
+                for x in allowed_values.split("\n")
+                if len(x.replace('\r', '').strip()) > 0
+            ]
+        elif allowed_type == "POS":
+            allowed_values = [
+                x.replace('\r', '')
+                for x in allowed_values.split(",")
+                if len(x.replace('\r', '').strip()) > 0
+            ]
+        else:
+            allowed_values = list(StringDictReader(allowed_values))
+        success = control_list.update_allowed_values(allowed_type, allowed_values)
+        if success:
+            flash("Control List Updated", category="success")
+        else:
+            flash("An error occured", category="errors")
+
+    values = control_list.get_allowed_values(allowed_type=allowed_type, order_by="id")
+    if allowed_type == "lemma":
+        format_message = "This should be formatted as a list of lemma separated by new line"
+        values = "\n".join([d.label for d in values])
+    elif allowed_type == "POS":
+        format_message = "This should be formatted as a list of POS separated by comma and no space"
+        values = ",".join([d.label for d in values])
+    else:
+        format_message = "The TSV should at least have the header : label and could have a readable column for human"
+        values = "\n".join(
+            ["label\treadable"] + ["{}\t{}".format(d.label, d.readable) for d in values]
+        )
+    return render_template_with_nav_info(
+        "control_lists/edit.html",
+        format_message=format_message,
+        values=values,
+        allowed_type=allowed_type,
+        control_list=control_list
     )

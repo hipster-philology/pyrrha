@@ -3,10 +3,16 @@
     <header>
         <a id="overview_{{control_list.id}}">{{control_list.name}}</a>
     </header>
-    Read Lists
+    Manage Lists
     <ul class="nav flex-column">
-      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='lemma')}}">Allowed lemma</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='POS')}}">Allowed POS</a></li>
-      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='morph')}}">Allowed morph</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='lemma')}}">Lemma</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='POS')}}">POS</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='morph')}}">Morphologies</a></li>
+    </ul>
+    Rewrite Lists
+    <ul class="nav flex-column">
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.edit", cl_id=control_list.id, allowed_type='lemma')}}">Lemma</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.edit", cl_id=control_list.id, allowed_type='POS')}}">POS</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.edit", cl_id=control_list.id, allowed_type='morph')}}">Morphologies</a></li>
     </ul>
 {% endmacro -%}

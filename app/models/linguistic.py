@@ -146,6 +146,31 @@ class ControlLists(db.Model):
             ).exists()
         ).scalar()
 
+    def update_allowed_values(self, allowed_type, allowed_values):
+        """ Update allowed values of the current corpus
+
+        :param allowed_type: Allowed Value Type (lemma, morph, POS)
+        :param allowed_values: New values
+        :return: Bool of success
+        """
+        if allowed_type == "lemma":
+            cls = AllowedLemma
+        elif allowed_type == "POS":
+            cls = AllowedPOS
+        elif allowed_type == "morph":
+            cls = AllowedMorph
+        else:
+            raise BadRequest("The type is not of lemma, morph or POS")
+
+        try:
+            data = db.session.query(cls).filter_by(control_list=self.id).delete()
+            cls.add_batch(allowed_values, self.id, _commit=True)
+        except Exception as E:
+            print(E)
+            db.session.rollback()
+            return False
+        return True
+
 
 class ControlListsUser(db.Model):
     """ Association proxy that link users to ControlLists
