@@ -30,7 +30,8 @@ def get(control_list_id):
     return render_template_with_nav_info(
         "control_lists/control_list.html",
         control_list=control_list,
-        is_owner=is_owner
+        is_owner=is_owner,
+        can_edit=is_owner or current_user.is_admin(),
     )
 
 
@@ -81,6 +82,7 @@ def lemma_list(control_list_id):
             control_list=control_list,
             is_owner=is_owner,
             allowed_type="lemma",
+            can_edit=is_owner or current_user.is_admin(),
             allowed_values=allowed_values,
             readable=False,
             **kwargs
@@ -105,6 +107,7 @@ def read_allowed_values(control_list_id, allowed_type):
         template=template,
         control_list=control_list,
         is_owner=is_owner,
+        can_edit=is_owner or current_user.is_admin(),
         allowed_type=allowed_type,
         allowed_values=allowed_values,
         readable=allowed_type == "morph",
@@ -125,6 +128,9 @@ def edit(cl_id, allowed_type):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=cl_id, user=current_user)
 
     can_edit = is_owner or current_user.is_admin()
+
+    if not can_edit:
+        abort(403)
 
     # In case of Post
     if request.method == "POST":

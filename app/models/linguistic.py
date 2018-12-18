@@ -1,5 +1,6 @@
 import csv
 import io
+import datetime
 from collections import Counter
 
 import unidecode
@@ -39,6 +40,11 @@ class ControlLists(db.Model):
     name = db.Column(db.String(64), default="Control List")
     public = db.Column(db.Boolean, default=False)
     parent_id = db.Column(db.Integer, db.ForeignKey("control_lists.id"), nullable=True)
+
+    # For caching purposes, we record the last time these fields were edited
+    #last_lemma_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    #last_morph_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    #last_POS_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
     users = association_proxy('control_lists_user', 'user')
 

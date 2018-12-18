@@ -14,5 +14,12 @@
                 {% endfor %}
             </dl>
         {% endif -%}
+        {%- if can_edit %}
+            <h2>Rewrite</h2>
+            <p class="text-muted">The following pages are made to completely rewrite control lists. Use with caution !</p>
+            <a class="btn btn-warning settings-lemma" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='lemma')}}">Rewrite Lemma List</a>
+            <a class="btn btn-warning settings-POS" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='POS')}}">Rewrite POS List</a>
+            <a class="btn btn-warning settings-morph" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='morph')}}">Rewrite Morphology List</a>
+        {% endif -%}
     </div>
 {% endblock %}

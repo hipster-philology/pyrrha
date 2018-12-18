@@ -1,5 +1,6 @@
-from tests.test_selenium.base import TestBase
 import random
+
+from tests.test_selenium.base import TestBase
 
 
 class TestCorpusSettingsUpdate(TestBase):
@@ -7,11 +8,16 @@ class TestCorpusSettingsUpdate(TestBase):
         morph = False
         if mode == "morph":
             morph = True
-        self.addCorpus("wauchier", with_allowed_lemma=True, with_allowed_pos=True, with_allowed_morph=morph)
-        self.addCorpus("floovant", with_allowed_lemma=True, with_allowed_pos=True, with_allowed_morph=morph)
+        self.addControlLists("wauchier", with_allowed_lemma=True, partial_allowed_lemma=False,
+                             partial_allowed_pos=False, partial_allowed_morph=False,
+                             with_allowed_pos=True, with_allowed_morph=morph)
+        self.addControlLists("floovant", with_allowed_lemma=True, partial_allowed_lemma=False,
+                             partial_allowed_pos=False, partial_allowed_morph=False,
+                             with_allowed_pos=True, with_allowed_morph=morph)
         self.driver.refresh()
-        self.driver.find_element_by_id("toggle_corpus_corpora").click()
-        self.driver.find_element_by_id("dropdown_link_2").click()
+        self.driver.save_screenshot("here.here.png")
+        self.driver.find_element_by_id("toggle_controllists").click()
+        self.driver.find_element_by_id("dropdown_link_cl_2").click()
         self.driver.find_element_by_css_selector("header > a").click()
         self.driver.find_element_by_css_selector(".settings-"+mode).click()
         return self.driver.find_element_by_id("allowed_values").get_attribute('value')
@@ -19,7 +25,7 @@ class TestCorpusSettingsUpdate(TestBase):
     def test_edit_allowed_lemma(self):
         """ Ensure editing allowed lemma works """
         # Show the dropdown
-        allowed_values = self.go_to()
+        allowed_values = self.go_to("lemma")
         original_lemma = """escouter
 or4
 seignor
