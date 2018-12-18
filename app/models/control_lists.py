@@ -49,19 +49,25 @@ class ControlLists(db.Model):
 
     @staticmethod
     def get_linked_or_404(control_list_id: int, user: User):
+        if not user:
+            raise BadRequest(description="You have no right to access the Control List")
         if user.is_admin():
             cl = ControlLists.query.get_or_404(control_list_id)
             return cl, cl.is_owned_by(user)
-        element, is_owner = db.session.query(ControlLists, ControlListsUser.is_owner).filter(
+        data = db.session.query(ControlLists, ControlListsUser.is_owner).filter(
             db.and_(
                 ControlLists.id == control_list_id,
-                ControlListsUser.user_id == user.id,
-                ControlListsUser.control_lists_id == ControlLists.id
+                ControlListsUser.control_lists_id == ControlLists.id,
+                ControlListsUser.user_id == user.id
             )
         ).first()
-        if not element:
+        if data is None:
             raise BadRequest(description="You have no right to access the Control List")
-        return element, is_owner
+
+        control_list, is_owner = data
+        if control_list is None:
+            raise BadRequest(description="You have no right to access the Control List")
+        return control_list, is_owner
 
     @staticmethod
     def for_user(current_user):
