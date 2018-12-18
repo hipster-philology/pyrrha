@@ -1,5 +1,5 @@
 from .base import TestModels
-from app.models.linguistic import AllowedPOS
+from app.models import AllowedPOS
 
 
 class TestAllowedPOS(TestModels):

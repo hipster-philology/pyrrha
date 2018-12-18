@@ -5,10 +5,11 @@ from werkzeug.exceptions import BadRequest
 
 
 from app.main.views.utils import render_template_with_nav_info
-from app.models import ControlLists, AllowedLemma
+from app.models import ControlLists, AllowedLemma, WordToken
 from app import db
 from ..utils.forms import strip_or_none
 from ..utils.tsv import StringDictReader
+from ..utils.response import format_api_like_reply
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -120,7 +121,7 @@ def read_allowed_values(control_list_id, allowed_type):
 def edit(cl_id, allowed_type):
     """ Find allowed values and allow their edition
 
-    :param cl_id: Id of the corpus
+    :param cl_id: Id of the Control List
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
     if allowed_type not in ["lemma", "POS", "morph"]:
@@ -173,4 +174,26 @@ def edit(cl_id, allowed_type):
         values=values,
         allowed_type=allowed_type,
         control_list=control_list
+    )
+
+
+@control_lists_bp.route('/controls/<int:control_list_id>/api/<allowed_type>')
+def search_api(control_list_id, allowed_type):
+    """ Find allowed values
+
+    :param control_list_id: Id of the Control List
+    :param allowed_type: Type of allowed value (lemma, morph, POS)
+    """
+    return jsonify(
+        [
+            format_api_like_reply(result, allowed_type)
+            for result in WordToken.get_like(
+                filter_id=control_list_id,
+                form=request.args.get("form"),
+                group_by=True,
+                type_like=allowed_type,
+                allowed_list=True
+            ).limit(AUTOCOMPLETE_LIMIT)
+            if result is not None
+        ]
     )

@@ -1,14 +1,15 @@
-from flask import request, jsonify, flash, redirect, url_for, abort, current_app
+from flask import request, flash, redirect, url_for, abort, current_app, jsonify
 from flask_login import current_user, login_required
 import sqlalchemy.exc
 
 
 from app import db
-from app.models.linguistic import CorpusUser, ControlLists
-from .utils import render_template_with_nav_info, format_api_like_reply, create_input_format_convertion
+from app.models import CorpusUser, ControlLists, WordToken
+from .utils import render_template_with_nav_info, create_input_format_convertion
 from .. import main
 from ...utils.forms import strip_or_none
-from ...models import Corpus, WordToken
+from ...models import Corpus
+from ...utils.response import format_api_like_reply
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -86,42 +87,14 @@ def corpus_new():
 @main.route('/corpus/get/<int:corpus_id>')
 @login_required
 def corpus_get(corpus_id):
-    """ Read information about the corpus
+    """ Main page about the corpus
 
     :param corpus_id: ID of the corpus
-    :return:
     """
     corpus = Corpus.query.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
-
-
-@main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
-def corpus_allowed_values_api(corpus_id, allowed_type):
-    """ Find allowed values
-
-    :param corpus_id: Id of the corpus
-    :param allowed_type: Type of allowed value (lemma, morph, POS)
-    """
-    corpus = Corpus.query.get_or_404(corpus_id)
-    allowed_list = corpus.get_allowed_values(allowed_type=allowed_type).count() > 0
-    filter_id = corpus.id
-    if allowed_list:
-        filter_id = corpus.control_lists_id
-    return jsonify(
-        [
-            format_api_like_reply(result, allowed_type)
-            for result in WordToken.get_like(
-                filter_id=filter_id,
-                form=request.args.get("form"),
-                group_by=True,
-                type_like=allowed_type,
-                allowed_list=allowed_list
-            ).limit(AUTOCOMPLETE_LIMIT)
-            if result is not None
-        ]
-    )
 
 
 @main.route('/corpus/<int:corpus_id>/fixtures')
@@ -135,4 +108,29 @@ def generate_fixtures(corpus_id):
     return render_template_with_nav_info(
         template="main/corpus_generate_fixtures.html", tokens=tokens,
         allowed_lemma=allowed_lemma, allowed_pos=allowed_POS
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
+def search_value_api(corpus_id, allowed_type):
+    """ Find allowed values
+
+    :param corpus_id: Id of the Corpus
+    :param allowed_type: Type of allowed value (lemma, morph, POS)
+    """
+    corpus = Corpus.query.get_or_404(corpus_id)
+    if not corpus.has_access(current_user):
+        abort(403)
+    return jsonify(
+        [
+            format_api_like_reply(result, allowed_type)
+            for result in WordToken.get_like(
+                filter_id=corpus_id,
+                form=request.args.get("form"),
+                group_by=True,
+                type_like=allowed_type,
+                allowed_list=False
+            ).limit(AUTOCOMPLETE_LIMIT)
+            if result is not None
+        ]
     )

@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from app import db, create_app
-from app.models.linguistic import CorpusUser, Corpus, ControlListsUser, ControlLists
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 

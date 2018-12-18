@@ -1,5 +1,5 @@
 from .base import TestModels
-from app.models.linguistic import WordToken
+from app.models import WordToken
 
 
 class TestWordToken(TestModels):

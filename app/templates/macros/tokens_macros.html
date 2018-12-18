@@ -91,7 +91,7 @@
             minChars: 1,
             source: function(term, suggest){
                 var term = $("<div>"+term+"</div>").text().toLowerCase(),
-                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='lemma')}}?form="+term;
+                    url = "{{corpus.allowed_search_route('lemma')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
@@ -102,7 +102,7 @@
             minChars: 1,
             source: function(term, suggest){
                 var term = term.toLowerCase(),
-                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='POS')}}?form="+term;
+                    url = "{{corpus.allowed_search_route('POS')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
@@ -113,7 +113,7 @@
             minChars: 1,
             source: function(term, suggest){
                 var term = sanitize(term),
-                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='morph')}}?form="+term;
+                    url = "{{corpus.allowed_search_route('morph')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });

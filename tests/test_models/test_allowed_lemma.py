@@ -1,5 +1,5 @@
 from .base import TestModels
-from app.models.linguistic import AllowedLemma
+from app.models import AllowedLemma
 
 
 class TestAllowedLemma(TestModels):
