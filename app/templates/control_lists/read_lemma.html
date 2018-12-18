@@ -49,10 +49,10 @@
           </ul>
         </div>
     </form>
-    <ul>
+    <ul id="lemma-list">
     {%- if can_edit %}
     {%- for token in allowed_values.items %}
-        <li><i class="fa fa-trash-o"></i>&nbsp;{{token.label}}</li>
+        <li><a class="rm-lem" href="{{url_for('control_lists_bp.lemma_list', control_list_id=control_list.id, id=token.id)}}"><i aria-label="Remove" class="fa fa-trash-o"></i></a>&nbsp;{{token.label}}</li>
     {% endfor -%}
     {% else %}
     {%- for token in allowed_values.items %}
@@ -65,6 +65,12 @@
 </div>
 <script type="text/javascript">
   $(document).ready(function() {
+      $("#searchHelp").on("click", function(event) {
+          event.preventDefault();
+          $("#searchHelpBox").toggle();
+      });
+
+      {%- if can_edit %}
       var use_badge = function(badges, show, message) {
           /** Display a badge of the Lemma form
            *
@@ -82,10 +88,6 @@
           // Show it
           single.show();
       };
-      $("#searchHelp").on("click", function(event) {
-          event.preventDefault();
-          $("#searchHelpBox").toggle();
-      });
       $("#show_lemma").on("click", function(event) {
           event.preventDefault();
           $("#show_lemma_container").toggle();
@@ -114,6 +116,18 @@
          }
 
       });
+      $(".rm-lem").on("click", function(event) {
+          event.preventDefault();
+          var that = $(this),
+              parent = that.parent()
+          $.ajax({
+            url:that.attr("href"),
+            method:"DELETE"
+          })
+              .done(function() { parent.remove(); })
+              .fail(function() { alert("Error while removing the value"); });
+      });
+      {% endif -%}
   });
 </script>
 {% endblock %}

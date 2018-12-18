@@ -36,12 +36,25 @@ def get(control_list_id):
     )
 
 
-@control_lists_bp.route('/controls/<int:control_list_id>/read/lemma', methods=["GET", "UPDATE"])
+@control_lists_bp.route('/controls/<int:control_list_id>/read/lemma', methods=["GET", "UPDATE", "DELETE"])
 @login_required
 def lemma_list(control_list_id):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
     can_edit = is_owner or current_user.is_admin()
-    if request.method == "UPDATE" and request.mimetype == "application/json" and can_edit:
+    if request.method == "DELETE" and can_edit:
+        value = request.args.get("id")
+        lemma = AllowedLemma.query.get_or_404(value)
+        try:
+            AllowedLemma.query.filter(
+                AllowedLemma.id == lemma.id,
+                AllowedLemma.control_list == control_list_id
+            ).delete()
+            db.session.commit()
+            return "", 200
+        except Exception as E:
+            db.session.rollback()
+            abort(403)
+    elif request.method == "UPDATE" and request.mimetype == "application/json" and can_edit:
         form = request.get_json().get("lemmas", None)
         if not form:
             abort(400, jsonify({"message": "No lemma were passed."}))

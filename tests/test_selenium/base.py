@@ -111,6 +111,11 @@ adipiscing
 elit			
 .			"""
 
+    def wait_until_shown(self, selector):
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, selector))
+        )
+
     def write_lorem_impsum_tokens(self):
         self.writeMultiline(
             self.driver.find_element_by_id("tokens"),

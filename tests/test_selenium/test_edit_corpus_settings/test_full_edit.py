@@ -15,7 +15,6 @@ class TestCorpusSettingsUpdate(TestBase):
                              partial_allowed_pos=False, partial_allowed_morph=False,
                              with_allowed_pos=True, with_allowed_morph=morph)
         self.driver.refresh()
-        self.driver.save_screenshot("here.here.png")
         self.driver.find_element_by_id("toggle_controllists").click()
         self.driver.find_element_by_id("dropdown_link_cl_2").click()
         self.driver.find_element_by_css_selector("header > a").click()
