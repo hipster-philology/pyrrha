@@ -5,7 +5,8 @@ import sqlalchemy.exc
 
 from app import db
 from app.models import CorpusUser, ControlLists, WordToken
-from .utils import render_template_with_nav_info, create_input_format_convertion
+from .utils import render_template_with_nav_info
+from app.utils.forms import create_input_format_convertion
 from .. import main
 from ...utils.forms import strip_or_none
 from ...models import Corpus
@@ -81,7 +82,11 @@ def corpus_new():
                     tsv=request.form.get("tsv")
                 )
 
-    return render_template_with_nav_info('main/corpus_new.html', lemmatizers=lemmatizers)
+    return render_template_with_nav_info(
+        'main/corpus_new.html',
+        public_control_lists=ControlLists.get_available(current_user),
+        lemmatizers=lemmatizers
+    )
 
 
 @main.route('/corpus/get/<int:corpus_id>')

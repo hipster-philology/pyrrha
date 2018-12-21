@@ -1,28 +1,41 @@
 # Base Python
 import datetime
 import csv
+import enum
+import os.path
 import io
+import glob
 from collections import Counter
 # PIP Packages
 import unidecode
-from flask import url_for
+import yaml
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
 from sqlalchemy import literal
 from werkzeug.exceptions import BadRequest
 # APP Logic
 from .. import db
-from ..utils.forms import prepare_search_string, column_search_filter
+from ..utils.forms import prepare_search_string, column_search_filter, read_input_POS, read_input_morph, \
+    read_input_lemma
 # Models
 from .user import User
+
+
+class PublicationStatus(enum.Enum):
+    public = 1
+    submitted = 0
+    private = -1
 
 
 class ControlLists(db.Model):
     __tablename__ = "control_lists"
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(64), default="Control List")
-    public = db.Column(db.Boolean, default=False)
+    public = db.Column(db.Enum(PublicationStatus), default=PublicationStatus.private)
     parent_id = db.Column(db.Integer, db.ForeignKey("control_lists.id"), nullable=True)
+    description = db.Column(db.String(255), nullable=True)
+    bibliography = db.Column(db.Text, nullable=True)
+    language = db.Column(db.String(10), nullable=True)
 
     # For caching purposes, we record the last time these fields were edited
     #last_lemma_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
@@ -75,6 +88,27 @@ class ControlLists(db.Model):
             db.and_(
                 ControlListsUser.user_id == current_user.id,
                 ControlListsUser.control_lists_id == ControlLists.id
+            )
+        ).all()
+
+    @staticmethod
+    def get_available(user):
+        """ Get available ControlLists a corpus creation for a given user.
+        This includes public and privately accessible lists.
+
+        Note : Admin status does not change this.
+
+        :param user: User to check for
+        :return: List of available control lists
+        """
+
+        return db.session.query(ControlLists).outerjoin(
+            ControlListsUser,
+            ControlListsUser.control_lists_id == ControlLists.id
+        ).filter(
+            db.or_(
+                ControlLists.public == PublicationStatus.public,
+                ControlListsUser.user_id == user.id
             )
         ).all()
 
@@ -184,6 +218,36 @@ class ControlLists(db.Model):
                 cls.control_list == self.id
             ).exists()
         ).scalar()
+
+    @staticmethod
+    def add_default_lists(path=None):
+        """ Loads the default lists from the config folder
+
+        """
+        if not path:
+            current = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.join(current, "..", "configurations", "langs", "**")
+
+        for directory in glob.glob(path):
+            with open(os.path.join(directory, "metadata.yaml")) as f:
+                data = yaml.safe_load(f)
+            print("[ControlLists] Adding %s " % data["name"])
+            cl = ControlLists(**data, public=PublicationStatus.public)
+            db.session.add(cl)
+            db.session.flush()  # Get the AutoIncrement ID
+            configs = [
+                ("lemma.txt", AllowedLemma, read_input_lemma),
+                ("POS.txt", AllowedPOS, read_input_POS),
+                ("morph.txt", AllowedMorph, read_input_morph)
+            ]
+            for file, model, parser in configs:
+                filepath = os.path.join(directory, file)
+                if os.path.exists(filepath):
+                    with open(filepath) as f:
+                        model.add_batch(parser(f.read()), control_lists_id=cl.id)
+
+                    print("[ControlLists] [%s] Loading %s " % (data["name"], os.path.basename(filepath)))
+            db.session.commit()
 
 
 class ControlListsUser(db.Model):
