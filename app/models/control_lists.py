@@ -54,11 +54,15 @@ class ControlLists(db.Model):
 
     @staticmethod
     def link(corpus, user, is_owner=False):
-        db.session.add(ControlListsUser(
-            user_id=user.id,
-            control_lists_id=corpus.control_lists_id,
-            is_owner=is_owner
-        ))
+        if db.session.query(ControlLists.id).filter(
+                                                ControlListsUser.user_id == user.id,
+                                                ControlListsUser.control_lists_id == corpus.control_lists_id
+                                            ).count() == 0:
+            db.session.add(ControlListsUser(
+                user_id=user.id,
+                control_lists_id=corpus.control_lists_id,
+                is_owner=is_owner
+            ))
 
     @staticmethod
     def get_linked_or_404(control_list_id: int, user: User):

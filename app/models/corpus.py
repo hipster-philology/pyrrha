@@ -193,7 +193,7 @@ class Corpus(db.Model):
     def create(
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
-            context_left=None, context_right=None
+            context_left=None, context_right=None, control_list=None
     ):
         """ Create a corpus
 
@@ -204,10 +204,19 @@ class Corpus(db.Model):
         :param allowed_morph: list of Allowed Morph in the form of dict with keys (label, readable)
         :return:
         """
+        if not control_list:
+            control_list = ControlLists(name="Control List {}".format(name))
+            db.session.add(control_list)
+            db.session.flush()
 
-        control_list = ControlLists(name="Control List {}".format(name))
-        db.session.add(control_list)
-        db.session.flush()
+            if allowed_lemma is not None and len(allowed_lemma) > 0:
+                AllowedLemma.add_batch(allowed_lemma, control_list.id)
+
+            if allowed_POS is not None and len(allowed_POS) > 0:
+                AllowedPOS.add_batch(allowed_POS, control_list.id)
+
+            if allowed_morph is not None and len(allowed_morph) > 0:
+                AllowedMorph.add_batch(allowed_morph, control_list.id)
 
         c = Corpus(name=name, control_lists_id=control_list.id)
         db.session.add(c)
@@ -221,14 +230,6 @@ class Corpus(db.Model):
         if token_count == 0:
             raise ValueError("No tokens were given")
 
-        if allowed_lemma is not None and len(allowed_lemma) > 0:
-            AllowedLemma.add_batch(allowed_lemma, control_list.id)
-
-        if allowed_POS is not None and len(allowed_POS) > 0:
-            AllowedPOS.add_batch(allowed_POS, control_list.id)
-
-        if allowed_morph is not None and len(allowed_morph) > 0:
-            AllowedMorph.add_batch(allowed_morph, control_list.id)
         return c
 
     def update_allowed_values(self, allowed_type, allowed_values):

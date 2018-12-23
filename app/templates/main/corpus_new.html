@@ -79,7 +79,7 @@
             <div class="col-md-3">
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" id="checkbox_reuse" type="radio" name="control_list" value="reuse" checked/>
-                    <label class="form-check-label" data-toggle="#use_public" for="checkbox_reuse">Use a shared control list</label>
+                    <label class="form-check-label hide-toggle" data-toggle="#use_public" for="checkbox_reuse" id="label_checkbox_reuse">Use a shared control list</label>
                 </div>
 
                 <p class="small text-muted">By using shared control lists, you ensure that you stick to accepted values in
@@ -87,9 +87,9 @@
                 </p>
             </div>
             <div class="col-md-9" id="use_public">
-              <select class="form-control" id="control_list">
+              <select class="form-control" id="control_list_select" name="control_list_select">
                   {% for cl in public_control_lists %}
-                    <option value="{{ cl.id }}">{{ cl.name }}</option>
+                    <option id="cl_opt_{{ cl.id }}" value="{{ cl.id }}">{{ cl.name }}</option>
                   {% endfor %}
               </select>
             </div>
@@ -98,14 +98,14 @@
             <div class="col-md-3">
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" id="checkbox_create" type="radio" name="control_list" value="create"/>
-                    <label class="form-check-label" data-toggle="#write_your_own" for="checkbox_create">Write your own</label>
+                    <label class="form-check-label hide-toggle" data-toggle="#write_your_own" for="checkbox_create" id="label_checkbox_create">Write your own</label>
                 </div>
                 <p class="small text-muted">In case the configurations provided do not fit your need, you can create your own configuration.
                     You will be able to share it with collaborators, propose it as a canon setting for the whole base of users.
                     You can also later add bibliographic information about your settings.
                 </p>
             </div>
-            <div class="col-md-9" id="write_your_own">
+            <div class="col-md-9" id="write_your_own" style="display: none;">
                 <div class="form-group row">
                     <div  class="col-md-3"><label for="config" class="form-text text-muted">Load a configuration</label>
                         <small id="config_loader_help" class="form-text text-muted">This helps kickstarting configuration</small>
@@ -160,7 +160,7 @@ $(document).ready(function() {
             uri,
             {
                 data: {data: text_data.val()},
-                method: "POST",
+                method: "POST"
 
             }
         ).done(function(response) {
@@ -187,9 +187,10 @@ $(document).ready(function() {
        text = text.split(/\s+/);
 
        var output = "form\tlemma\tPOS\tmorph\n";
-       console.log(text);
-       for (var token_index = 1; token_index < text.length; token_index++) {
-            output += text[token_index] + "\t\t\t\n";
+       for (var token_index = 0; token_index < text.length; token_index++) {
+           if (text[token_index]) {
+               output += text[token_index] + "\t\t\t\n";
+           }
        }
        $("#tokens").val(output);
     });
@@ -216,6 +217,16 @@ $(document).ready(function() {
                     }).fail(function() {
                         alert("Something went wrong...");
                     });
+    });
+    var toggle = function(element, fn) {
+        console.log(element, fn);
+        $($(element).attr("data-toggle"))[fn]();
+    };
+    $(".hide-toggle").on("click", function(e) {
+        $(".hide-toggle").each(function(index, el) {
+            toggle(el, "hide");
+        });
+        toggle(this, "show");
     });
 });
 </script>

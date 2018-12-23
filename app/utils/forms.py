@@ -89,6 +89,13 @@ def read_input_POS(values):
     return [x.replace('\r', '') for x in values.split(",") if len(x.replace('\r', '').strip()) > 0]
 
 
+def read_input_tokens(tokens):
+    if isinstance(tokens, str):
+        return StringDictReader(tokens)
+    else:
+        return DictReader(tokens, **TSV_CONFIG)
+
+
 def create_input_format_convertion(tokens, allowed_lemma, allowed_morph, allowed_POS):
     """ Convert input data into Corpus.create formats
 
@@ -113,9 +120,6 @@ def create_input_format_convertion(tokens, allowed_lemma, allowed_morph, allowed
         allowed_morph = read_input_morph(allowed_morph)
 
     if tokens:
-        if isinstance(tokens, str):
-            tokens = StringDictReader(tokens)
-        else:
-            tokens = DictReader(tokens, **TSV_CONFIG)
+        tokens = read_input_tokens(tokens)
 
     return tokens, allowed_lemma, allowed_morph, allowed_POS

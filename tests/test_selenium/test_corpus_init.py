@@ -1,5 +1,5 @@
 from flask import url_for
-from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph
+from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS, ControlLists
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
@@ -19,9 +19,9 @@ class TestCorpusRegistration(TestBase):
         # Fill in registration form
         self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
-        self.driver.get_screenshot_as_file("here.png")
         self.assertIn(
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
             "Result page is the corpus new page"
@@ -63,6 +63,7 @@ class TestCorpusRegistration(TestBase):
         # Fill in registration form
         self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["lemma"])
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
@@ -108,6 +109,7 @@ class TestCorpusRegistration(TestBase):
         # Fill in registration form
         self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
@@ -152,6 +154,7 @@ class TestCorpusRegistration(TestBase):
         # Fill in registration form
         self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
         self.writeMultiline(self.driver.find_element_by_id("allowed_morph"), PLAINTEXT_CORPORA["Wauchier"]["morph"])
         self.driver.find_element_by_id("submit").click()
@@ -205,6 +208,7 @@ class TestCorpusRegistration(TestBase):
         self.driver.find_element_by_id("context_right").clear()
         self.driver.find_element_by_id("context_right").send_keys("2")
         self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
@@ -298,6 +302,7 @@ class TestCorpusRegistration(TestBase):
             "《\t《\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
             "》\t》\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
         )
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
@@ -327,4 +332,46 @@ class TestCorpusRegistration(TestBase):
             "9\t„\t„\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
             "10\t《\t《\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
             "11\t》\t》\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
+        )
+
+    def test_registration_with_existing_control_list(self):
+        self.add_control_lists()
+        # Click register menu link
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Target control list
+        target_cl = db.session.query(ControlLists).\
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # Fill in registration form
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_"+str(target_cl.id)).click()
+        self.driver.find_element_by_id("submit").click()
+
+        self.assertIn(
+            url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
+            "Result page is the corpus new page"
+        )
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
+
+        control_list = db.session.query(ControlLists).filter(ControlLists.id == corpus.control_lists_id).first()
+        self.assertEqual(
+            "Ancien Français - École des Chartes", control_list.name,
+            "The control list has been reused"
+        )
+        self.driver.find_element_by_id("toggle_controllists").click()
+        self.assertEqual(
+            self.driver.find_element_by_class_name("dd-control_list").text,
+            "Ancien Français - École des Chartes",
+            "The control list is available from the top menu"
         )
