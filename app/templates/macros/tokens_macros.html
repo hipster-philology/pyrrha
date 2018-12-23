@@ -76,6 +76,9 @@
     {% else %}
     <script type="text/javascript">
     $(document).ready(function(){
+        var clear_br = function (elem) {
+            elem.find("br").remove();
+        };
         var sanitize = function (val) {
             val = val.replace(/[<]br[^>]*[>]/gi,"").replace(/[&]nbsp[;]/gi," ");
             return val.toLowerCase();
@@ -97,6 +100,9 @@
                 });
 
             }
+        });
+        $('td[contenteditable="true"]').on("keyup", function(){
+            clear_br($(this));
         });
         $('td.token_pos').autoComplete({
             minChars: 1,
@@ -123,7 +129,10 @@
                 return '<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>';
             },
             onSelect: function(e, term, item){
-                $(this).val(item.data("value"));
+                var elem = $(this);
+                elem.val(item.data("value"));
+                clean_br(elem)
+
             }
         });
 
