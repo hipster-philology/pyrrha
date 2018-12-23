@@ -225,6 +225,52 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(saint.form, "volentiers", "It should be correctly saved")
         self.assertEqual(saint.context, "mout doit on doucement et volentiers le bien")
 
+    def test_tokenization(self):
+        """ Ensure that tokenisation is working as expected """
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon seignor")
+        self.driver.find_element_by_id("tokenize").click()
+        self.assertEqual(
+            "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n",
+            self.driver.find_element_by_id("tokens").get_property("value"),
+            "Tokenization tokenizes"
+        )
+        self.assertEqual(
+            True,
+            self.driver.find_element_by_id("punct-keep").get_property("checked"),
+            "The punctuation is checked by default"
+        )
+        # Check with punctuation
+        self.driver.find_element_by_id("tokens").clear()
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon seignor...")
+        self.driver.find_element_by_id("tokenize").click()
+        self.assertEqual(
+            "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n.\t\t\t\n.\t\t\t\n.\t\t\t\n",
+            self.driver.find_element_by_id("tokens").get_property("value"),
+            "Tokenization keeps punctuation"
+        )
+        # Check with punctuation removed
+        self.driver.find_element_by_id("tokens").clear()
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon seignor...")
+        self.driver.find_element_by_id("punct-keep").click()
+        self.driver.find_element_by_id("tokenize").click()
+        self.assertEqual(
+            "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n",
+            self.driver.find_element_by_id("tokens").get_property("value"),
+            "Tokenization removed punctuation"
+        )
+        # Check with punctuation removed and hyphens
+        self.driver.find_element_by_id("tokens").clear()
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon sei- gnor...")
+        self.driver.find_element_by_id("hyphens-remove").click()
+        self.driver.find_element_by_id("tokenize").click()
+        self.assertEqual(
+            "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n",
+            self.driver.find_element_by_id("tokens").get_property("value"),
+            "Tokenization removed punctuation and glued back hyphens"
+        )
+
     def test_corpus_with_quotes(self):
         """
         Test that a user can create a corpus and that this corpus has its data well recorded
