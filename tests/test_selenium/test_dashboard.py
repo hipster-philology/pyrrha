@@ -83,6 +83,7 @@ class TestDashboard(TestBase):
         self.driver.find_element_by_link_text("New Corpus").click()
         self.driver.find_element_by_id("corpusName").send_keys("FreshNewCorpus")
         self.write_lorem_impsum_tokens()
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
         self.driver.find_element_by_link_text("Dashboard").click()
