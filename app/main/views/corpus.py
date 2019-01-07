@@ -26,6 +26,7 @@ def corpus_new():
             return render_template_with_nav_info(
                 'main/corpus_new.html',
                 lemmatizers=lemmatizers,
+                public_control_lists=ControlLists.get_available(current_user),
                 tsv=request.form.get("tsv")
             )
         if not current_user.is_authenticated:
@@ -82,7 +83,6 @@ def corpus_new():
                 return go_back()
             except Exception as e:
                 db.session.rollback()
-                raise e
                 print(e)
                 flash("The corpus cannot be registered. Check your data", category="error")
                 return go_back()
