@@ -1,5 +1,4 @@
-import pprint
-from flask import request, jsonify, url_for, abort
+from flask import request, jsonify, url_for, abort, render_template
 from flask_login import current_user, login_required
 from sqlalchemy.sql.elements import or_, and_
 
@@ -178,6 +177,14 @@ def tokens_export(corpus_id):
                        "Content-Type": "text/tab-separated-values; charset= utf-8",
                        "Content-Disposition": 'attachment; filename="pyrrha-correction.tsv"'
                    }
+    elif format in ["tei", "tei-geste"]:
+        tokens = corpus.get_tokens().all()
+        #if format == "tei-geste": Right now only 1 format
+        response = render_template("tei/geste.xml", tokens=tokens)
+        return response, 200, {
+           "Content-Type": "text/xml; charset= utf-8",
+           "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
+        }
 
     return render_template_with_nav_info(
         template="main/tokens_view.html",
