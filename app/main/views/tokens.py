@@ -179,8 +179,9 @@ def tokens_export(corpus_id):
                    }
     elif format in ["tei", "tei-geste"]:
         tokens = corpus.get_tokens().all()
+        base = tokens[0].id - 1
         #if format == "tei-geste": Right now only 1 format
-        response = render_template("tei/geste.xml", tokens=tokens)
+        response = render_template("tei/geste.xml", base=base, tokens=tokens)
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
            "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
