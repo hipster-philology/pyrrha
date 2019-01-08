@@ -205,7 +205,7 @@ class Corpus(db.Model):
         :return:
         """
         if not control_list:
-            control_list = ControlLists(name="Control List {}".format(name), )
+            control_list = ControlLists(name="Control List {}".format(name))
             db.session.add(control_list)
             db.session.flush()
 

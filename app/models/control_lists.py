@@ -116,19 +116,17 @@ class ControlLists(db.Model):
             )
         ).all()
 
-    def get_allowed_values(self, allowed_type="lemma", order_by="label", kw=None, user=None, all=False):
+    def get_allowed_values(self, allowed_type="lemma", order_by="label", kw=None):
         """ List values that are allowed (without label) or checks that given label is part
         of the existing corpus
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
         :param order_by: Column to use for ordering
         :param kw: Search keyword
-        :param user: User making the query (if there is one)
-        :param all: Force showing all values
         :return: Flask SQL Alchemy Query
         :rtype: BaseQuery
         """
-
+        filters = []
         if allowed_type == "lemma":
             cls = AllowedLemma
             order_by = getattr(cls, order_by)
@@ -142,26 +140,6 @@ class ControlLists(db.Model):
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
 
         filters = cls.control_list == self.id
-
-        # We can force, for admin purposes, showing all values
-        if not all:
-            # If we have a user, the AllowedValues should be limited to the one they proposed or the one that have
-            # been made public
-            if user:
-                filters = db.and_(
-                    filters,
-                    db.or_(
-                        cls.user_id == user.id,
-                        cls.status == PublicationStatus.public
-                    )
-                )
-            # Otherwise, we restrict to public values
-            else:
-                filters = db.and_(
-                    filters,
-                    cls.status == PublicationStatus.public
-                )
-
         if kw:
             filters = db.and_(
                 filters,
@@ -303,20 +281,16 @@ class AllowedLemma(db.Model):
     label_uniform = db.Column(db.String(64))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
-    status = db.Column(db.Enum(PublicationStatus), default=PublicationStatus.public, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id), default=None, nullable=True)
-
     __table_args__ = (
         db.Index('unique_label_per_control', 'label', 'control_list', unique=True),
     )
 
     @staticmethod
-    def add_batch(allowed_values, control_lists_id, status=PublicationStatus.public, _commit=False):
+    def add_batch(allowed_values, control_lists_id, _commit=False):
         """ Add a batch of allowed values
 
         :param allowed_values: List of dictionary with label and readable keys
         :param control_lists_id: Id of the Control List
-        :param status: Status of the value proposition
         :param _commit: Force commit (Default: false)
         """
         if len(allowed_values) != len(set(allowed_values)):
@@ -330,7 +304,7 @@ class AllowedLemma(db.Model):
         db.session.bulk_insert_mappings(
             AllowedLemma,
             [
-                dict(label=item, control_list=control_lists_id, label_uniform=unidecode.unidecode(item), status=status)
+                dict(label=item, control_list=control_lists_id, label_uniform=unidecode.unidecode(item))
                 for item in allowed_values
             ]
         )
@@ -361,28 +335,23 @@ class AllowedPOS(db.Model):
     :param id: ID of the Allowed POS (Optional)
     :param label: Allowed POS Value
     :param corpus: ID of the corpus this AllowedPOS is related to
-    :param status: Status of the value proposition
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     label = db.Column(db.String(64))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
-    status = db.Column(db.Enum(PublicationStatus), default=PublicationStatus.public, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id), default=None, nullable=True)
-
     @staticmethod
-    def add_batch(allowed_values, control_lists_id: int, status=PublicationStatus.public, _commit: bool = False):
+    def add_batch(allowed_values, control_lists_id: int, _commit: bool=False):
         """ Add a batch of allowed values
 
         :param allowed_values: List of dictionary with label and readable keys
         :param control_lists_id: Id of the ControlLists
-        :param status: Status of the proposed registration
         :param _commit: Force commit (Default: false)
         """
         db.session.bulk_insert_mappings(
             AllowedPOS,
             [
-                dict(label=item, control_list=control_lists_id, status=status)
+                dict(label=item, control_list=control_lists_id)
                 for item in allowed_values
             ]
         )
@@ -413,7 +382,6 @@ class AllowedMorph(db.Model):
     :param id: ID of the Allowed Morph (Optional)
     :param label: Allowed Morph Value
     :param readable: Human Readable value of the label. *iei* v--1s-pi becomes Verb, 1st Singular Present Indicative
-    :param status: Status of the value proposition
     :param control_list: ID of the ControlLists this AllowedMorph is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -421,16 +389,12 @@ class AllowedMorph(db.Model):
     readable = db.Column(db.String(256))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
-    status = db.Column(db.Enum(PublicationStatus), default=PublicationStatus.public, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id), default=None, nullable=True)
-
     @staticmethod
-    def add_batch(allowed_values, control_lists_id, status=PublicationStatus.public, _commit=False):
+    def add_batch(allowed_values, control_lists_id, _commit=False):
         """ Add a batch of allowed values
 
         :param allowed_values: List of dictionary with label and readable keys
         :param control_lists_id: Id of the control list
-        :param status: Status of the value proposition
         :param _commit: Force commit (Default: false)
         """
         db.session.bulk_insert_mappings(
@@ -439,8 +403,7 @@ class AllowedMorph(db.Model):
                 dict(
                     label=item.get("label"),
                     readable=item.get("readable", item["label"]),
-                    control_list=control_lists_id,
-                    status=status
+                    control_list=control_lists_id
                 )
                 for item in allowed_values
             ]
