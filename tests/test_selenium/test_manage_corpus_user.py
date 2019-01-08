@@ -192,6 +192,7 @@ Martin	martin	NOMpro
 mout	mout	ADVgen
 doit	devoir	VERcjg"""
         )
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
         self.go_to_corpus_management("FreshNewCorpus")

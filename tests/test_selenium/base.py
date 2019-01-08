@@ -67,6 +67,14 @@ class TestBase(LiveServerTestCase):
     db = db
     AUTO_LOG_IN = True
 
+    def add_control_lists(self):
+        """ Loads a control list from a folder as a public one
+
+        :param folder_name: Name of the folder in app/configurations/langs
+        """
+        ControlLists.add_default_lists()
+        db.session.commit()
+
     def create_app(self):
         config_name = 'test'
         app = create_app(config_name)

@@ -1,7 +1,7 @@
 import click
 import os
 
-from app.models import Role, User
+from app.models import Role, User, ControlLists
 from . import create_app, db
 from .models import (
     Corpus,
@@ -10,8 +10,7 @@ from .models import (
     AllowedMorph,
     WordToken
 )
-from .main.views.utils import create_input_format_convertion
-
+from app.utils.forms import create_input_format_convertion
 
 app = None
 
@@ -45,6 +44,7 @@ def make_cli():
 
             Role.add_default_roles()
             User.add_default_users()
+            ControlLists.add_default_lists()
 
             db.session.commit()
             click.echo("Created the database")
@@ -60,6 +60,7 @@ def make_cli():
 
             Role.add_default_roles()
             User.add_default_users()
+            ControlLists.add_default_lists()
 
             db.session.commit()
             click.echo("Dropped then recreated the database")

@@ -5,7 +5,8 @@ import sqlalchemy.exc
 
 from app import db
 from app.models import CorpusUser, ControlLists, WordToken
-from .utils import render_template_with_nav_info, create_input_format_convertion
+from .utils import render_template_with_nav_info
+from app.utils.forms import create_input_format_convertion, read_input_tokens
 from .. import main
 from ...utils.forms import strip_or_none
 from ...models import Corpus
@@ -21,34 +22,51 @@ def corpus_new():
     """
     lemmatizers = current_app.config.get("LEMMATIZERS", [])
     if request.method == "POST":
+        def go_back():
+            return render_template_with_nav_info(
+                'main/corpus_new.html',
+                lemmatizers=lemmatizers,
+                public_control_lists=ControlLists.get_available(current_user),
+                tsv=request.form.get("tsv")
+            )
         if not current_user.is_authenticated:
             abort(403)
         elif not len(strip_or_none(request.form.get("name", ""))):
             flash("You forgot to give a name to your corpus", category="error")
-            return render_template_with_nav_info(
-                'main/corpus_new.html',
-                lemmatizers=lemmatizers,
-                tsv=request.form.get("tsv")
-            )
+            return go_back()
         else:
-            tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
-                request.form.get("tsv"),
-                request.form.get("allowed_lemma", None),
-                request.form.get("allowed_morph", None),
-                request.form.get("allowed_POS", None)
-            )
-            try:
-                corpus = Corpus.create(
-                    request.form.get("name"),
-                    word_tokens_dict=tokens,
-                    allowed_lemma=allowed_lemma,
-                    allowed_POS=allowed_POS,
-                    allowed_morph=allowed_morph,
-                    context_left=request.form.get("context_left", None),
-                    context_right=request.form.get("context_right", None)
+            form_kwargs = {
+                "name": request.form.get("name"),
+                "context_left": request.form.get("context_left", None),
+                "context_right": request.form.get("context_right", None)
+            }
+
+            if request.form.get("control_list") == "reuse":
+                tokens = read_input_tokens(request.form.get("tsv"))
+                try:
+                    control_list = ControlLists.query.get_or_404(request.form.get("control_list_select"))
+                except Exception as E:
+                    flash("This control list does not exist", category="errors")
+                    return go_back()
+                form_kwargs.update({"word_tokens_dict": tokens,
+                                    "control_list": control_list})
+                cl_owner = False
+            else:
+                tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
+                    request.form.get("tsv"),
+                    request.form.get("allowed_lemma", None),
+                    request.form.get("allowed_morph", None),
+                    request.form.get("allowed_POS", None)
                 )
+                cl_owner = True
+                form_kwargs.update({"word_tokens_dict": tokens, "allowed_lemma": allowed_lemma,
+                                    "allowed_POS": allowed_POS, "allowed_morph": allowed_morph})
+
+            try:
+                corpus = Corpus.create(**form_kwargs)
                 db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
-                ControlLists.link(corpus=corpus, user=current_user, is_owner=True)
+                # Add a link to the control list
+                ControlLists.link(corpus=corpus, user=current_user, is_owner=cl_owner)
                 db.session.commit()
                 flash("New corpus registered", category="success")
                 return redirect(url_for(".corpus_get", corpus_id=corpus.id))
@@ -58,30 +76,22 @@ def corpus_new():
                 if str(e.orig) == "UNIQUE constraint failed: corpus.name":
                     flash("You have already a corpus going by the name {}".format(request.form.get("name")),
                           category="error")
-                return render_template_with_nav_info(
-                    'main/corpus_new.html',
-                    lemmatizers=lemmatizers,
-                    tsv=request.form.get("tsv")
-                )
+                return go_back()
             except ValueError as e:
                 db.session.rollback()
                 flash(str(e), category="error")
-                return render_template_with_nav_info(
-                    'main/corpus_new.html',
-                    lemmatizers=lemmatizers,
-                    tsv=request.form.get("tsv")
-                )
+                return go_back()
             except Exception as e:
                 db.session.rollback()
                 print(e)
                 flash("The corpus cannot be registered. Check your data", category="error")
-                return render_template_with_nav_info(
-                    'main/corpus_new.html',
-                    lemmatizers=lemmatizers,
-                    tsv=request.form.get("tsv")
-                )
+                return go_back()
 
-    return render_template_with_nav_info('main/corpus_new.html', lemmatizers=lemmatizers)
+    return render_template_with_nav_info(
+        'main/corpus_new.html',
+        public_control_lists=ControlLists.get_available(current_user),
+        lemmatizers=lemmatizers
+    )
 
 
 @main.route('/corpus/get/<int:corpus_id>')
