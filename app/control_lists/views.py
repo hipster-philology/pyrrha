@@ -6,7 +6,7 @@ from werkzeug.exceptions import BadRequest
 
 
 from app.main.views.utils import render_template_with_nav_info
-from app.models import ControlLists, AllowedLemma, WordToken
+from app.models import ControlLists, AllowedLemma, WordToken, User
 from app import db, email
 from ..utils.forms import strip_or_none
 from ..utils.tsv import StringDictReader
@@ -240,3 +240,36 @@ def contact(control_list_id):
         flash('The email has been sent to the control list administrators.', 'success')
         return redirect(url_for('control_lists_bp.contact', control_list_id=control_list_id))
     return render_template_with_nav_info('control_lists/contact.html', form=form, control_list=control_list)
+
+
+@control_lists_bp.route('/controls/<int:control_list_id>/propose_as_public', methods=["GET", "POST"])
+@login_required
+def propose_as_public(control_list_id):
+    """ This routes allows user to send email to application administrators
+    to propose a list as public for everyone to use
+
+    """
+    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
+
+    if not is_owner:
+        flash("You are not an owner of the list", category="danger")
+        redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
+    form = SendMailToAdmin()
+    if form.validate_on_submit():
+        admins = User.get_admins()
+        control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
+        email.send_email_async(
+            app=current_app._get_current_object(),
+            bcc=[u[3] for u in admins] + [current_user.email],
+            recipient=[],
+            subject='[Pyrrha Control List] ' + form.title.data,
+            template='control_lists/email/contact',
+            # current_user is a LocalProxy, we want the underlying user
+            # object
+            user=current_user._get_current_object(),
+            message=form.message.data,
+            control_list_title=control_list.name,
+            url=control_list_link)
+        flash('The email has been sent to the administrators.', 'success')
+        return redirect(url_for('control_lists_bp.propose_as_public', control_list_id=control_list_id))
+    return render_template_with_nav_info('control_lists/propose_as_public.html', form=form, control_list=control_list)
