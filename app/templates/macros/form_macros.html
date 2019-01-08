@@ -115,7 +115,20 @@
 {% endmacro %}
 
 {% macro render_form_input(field) %}
-    {% if field.widget.input_type == 'checkbox' %}
+    {% if field.type == 'TextAreaField' %}
+        <div class="mb-2 form-group">
+            <label for="{{field.id}}" id="{{field.id}}}}_label">{{field.label.text}}</label>
+            <div>
+            <textarea placeholder="{{ field.label.text }}"
+                   class="form-control"
+                   id="{{ field.id }}"
+                   value="{{ field.value }}"
+                   name="{{ field.id }}"
+                      rows="6"
+                  aria-describedby="{{ field.id }}_label"></textarea>
+            </div>
+        </div>
+    {% elif field.widget.input_type == 'checkbox' %}
         <div class="form-check">
             <input class="form-check-input" type="checkbox" value="{{ field.value }}" id="{{ field.id }}">
             {{ field.label }}

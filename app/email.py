@@ -19,11 +19,13 @@ def _async(app, msg):
             logger.warning(str(e))
 
 
-def send_email_async(app, recipient, subject, template, **kwargs):
+def send_email_async(app, recipient, subject, template, bcc=None, **kwargs):
+    if not isinstance(recipient, list):
+        recipient = [recipient]
     msg = Message(
         app.config['EMAIL_SUBJECT_PREFIX'] + ' ' + subject,
         sender=app.config['EMAIL_SENDER'],
-        recipients=[recipient])
+        recipients=recipient, bcc=bcc)
     msg.body = render_template(template + '.txt', **kwargs)
     msg.html = render_template(template + '.html', **kwargs)
     Thread(target=_async, args=(app, msg)).start()

@@ -9,4 +9,8 @@
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='POS')}}">POS</a></li>
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='morph')}}">Morphologies</a></li>
     </ul>
+    Others
+    <ul class="nav flex-column">
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.contact", control_list_id=control_list.id)}}"><i class="fa fa-envelope"></i> Propose changes</a></li>
+    </ul>
 {% endmacro -%}

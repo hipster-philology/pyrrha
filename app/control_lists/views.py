@@ -1,15 +1,17 @@
-from flask import request, flash, redirect, url_for, Blueprint, abort, jsonify, make_response
+from flask import request, flash, redirect, url_for, Blueprint, abort, jsonify, make_response, current_app
 from flask_login import current_user, login_required
+
 import sqlalchemy.exc
 from werkzeug.exceptions import BadRequest
 
 
 from app.main.views.utils import render_template_with_nav_info
 from app.models import ControlLists, AllowedLemma, WordToken
-from app import db
+from app import db, email
 from ..utils.forms import strip_or_none
 from ..utils.tsv import StringDictReader
 from ..utils.response import format_api_like_reply
+from .forms import SendMailToAdmin
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -191,6 +193,7 @@ def edit(cl_id, allowed_type):
 
 
 @control_lists_bp.route('/controls/<int:control_list_id>/api/<allowed_type>')
+@login_required
 def search_api(control_list_id, allowed_type):
     """ Find allowed values
 
@@ -210,3 +213,30 @@ def search_api(control_list_id, allowed_type):
             if result is not None
         ]
     )
+
+
+@control_lists_bp.route('/controls/<int:control_list_id>/contact', methods=["GET", "POST"])
+@login_required
+def contact(control_list_id):
+    """ This routes allows user to send email to list administrators
+    """
+    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
+
+    form = SendMailToAdmin()
+    if form.validate_on_submit():
+        control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
+        email.send_email_async(
+            app=current_app._get_current_object(),
+            bcc=[u[3] for u in control_list.owners] + [current_user.email],
+            recipient=[],
+            subject='[Pyrrha Control List] ' + form.title.data,
+            template='control_lists/email/contact',
+            # current_user is a LocalProxy, we want the underlying user
+            # object
+            user=current_user._get_current_object(),
+            message=form.message.data,
+            control_list_title=control_list.name,
+            url=control_list_link)
+        flash('The email has been sent to the control list administrators.', 'success')
+        return redirect(url_for('control_lists_bp.contact', control_list_id=control_list_id))
+    return render_template_with_nav_info('control_lists/contact.html', form=form, control_list=control_list)
