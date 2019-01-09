@@ -179,6 +179,8 @@ elit
         self.driver.get(self.get_server_url())
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addControlListsUser(cl.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        for user_mail, owner in kwargs.get("for_users", []):
+            self.addControlListsUser(cl.name, user_mail, is_owner=owner)
         return cl
 
     def addControlListsUser(self, cl_name, email, is_owner=False):
