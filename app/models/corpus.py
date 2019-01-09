@@ -14,7 +14,7 @@ from ..utils.forms import strip_or_none
 from ..utils.tsv import TSV_CONFIG
 # Models
 from .user import User
-from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma
+from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
 
 
 class CorpusUser(db.Model):
@@ -205,7 +205,7 @@ class Corpus(db.Model):
         :return:
         """
         if not control_list:
-            control_list = ControlLists(name="Control List {}".format(name))
+            control_list = ControlLists(name="Control List {}".format(name), public=PublicationStatus.private)
             db.session.add(control_list)
             db.session.flush()
 

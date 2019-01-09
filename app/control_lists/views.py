@@ -6,7 +6,7 @@ from werkzeug.exceptions import BadRequest
 
 
 from app.main.views.utils import render_template_with_nav_info
-from app.models import ControlLists, AllowedLemma, WordToken, User
+from app.models import ControlLists, AllowedLemma, WordToken, User, PublicationStatus
 from app import db, email
 from ..utils.forms import strip_or_none
 from ..utils.tsv import StringDictReader
@@ -253,23 +253,60 @@ def propose_as_public(control_list_id):
 
     if not is_owner:
         flash("You are not an owner of the list", category="danger")
-        redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
+        return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
+    elif control_list.public != PublicationStatus.private:
+        flash("This list is already public or submitted", category="warning")
+        return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
+
     form = SendMailToAdmin()
+
     if form.validate_on_submit():
         admins = User.get_admins()
         control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
-        email.send_email_async(
-            app=current_app._get_current_object(),
-            bcc=[u.email for u in admins] + [current_user.email],
-            recipient=[],
-            subject='[Pyrrha Control List] ' + form.title.data,
-            template='control_lists/email/contact',
-            # current_user is a LocalProxy, we want the underlying user
-            # object
-            user=current_user._get_current_object(),
-            message=form.message.data,
-            control_list_title=control_list.name,
-            url=control_list_link)
-        flash('The email has been sent to the administrators.', 'success')
-        return redirect(url_for('control_lists_bp.propose_as_public', control_list_id=control_list_id))
+        control_list.public = PublicationStatus.submitted
+        db.session.add(control_list)
+
+        try:
+            email.send_email_async(
+                app=current_app._get_current_object(),
+                bcc=[u.email for u in admins] + [current_user.email],
+                recipient=[],
+                subject='[Pyrrha Control List] ' + form.title.data,
+                template='control_lists/email/contact',
+                # current_user is a LocalProxy, we want the underlying user
+                # object
+                user=current_user._get_current_object(),
+                message=form.message.data,
+                control_list_title=control_list.name,
+                url=control_list_link)
+            flash('The email has been sent to the administrators.', 'success')
+            db.session.commit()
+            return redirect(url_for('control_lists_bp.propose_as_public', control_list_id=control_list_id))
+        except Exception:
+            db.session.rollback()
+            flash("There was an error during the messaging step")
     return render_template_with_nav_info('control_lists/propose_as_public.html', form=form, control_list=control_list)
+
+
+@control_lists_bp.route('/controls/<int:control_list_id>/go_public', methods=["GET"])
+@login_required
+def go_public(control_list_id):
+    """ This routes makes a list public
+
+    """
+    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
+    if not current_user.is_admin():
+        flash("You do not have the rights for this action.", category="danger")
+    elif control_list.public == PublicationStatus.public:
+        flash("This list is already public.", category="warning")
+    else:
+        control_list.public = PublicationStatus.public
+        db.session.add(control_list)
+        try:
+            db.session.commit()
+            flash('This list is now public.', 'success')
+        except Exception:
+            db.session.rollback()
+            flash("There was an error during the update.", category="danger")
+
+    return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))

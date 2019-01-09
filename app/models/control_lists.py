@@ -11,7 +11,7 @@ import unidecode
 import yaml
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import literal
+from sqlalchemy import literal, case
 from werkzeug.exceptions import BadRequest
 # APP Logic
 from .. import db
@@ -27,6 +27,9 @@ class PublicationStatus(enum.Enum):
     public = 1
     submitted = 0
     private = -1
+
+
+_PublicationStatusOrder = dict(public = -1, submitted = -1, private = 1)
 
 
 class ControlLists(db.Model):
@@ -45,6 +48,12 @@ class ControlLists(db.Model):
     #last_POS_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
     users = association_proxy('control_lists_user', 'user')
+
+    sort_logic = case(value=public, whens=_PublicationStatusOrder).label("priority")
+
+    @property
+    def str_public(self):
+        return self.public.name
 
     @property
     def owners(self):
@@ -119,7 +128,7 @@ class ControlLists(db.Model):
                 ControlLists.public == PublicationStatus.public,
                 ControlListsUser.user_id == user.id
             )
-        ).all()
+        ).order_by(ControlLists.sort_logic, ControlLists.name).all()
 
     def get_allowed_values(self, allowed_type="lemma", order_by="label", kw=None):
         """ List values that are allowed (without label) or checks that given label is part

@@ -1,3 +1,5 @@
+{% import 'macros/utils.html' as utils %}
+
 {% macro search_user(roles) %}
     <div class="input-group mb-3">
         <div class="input-group-prepend">
@@ -81,7 +83,7 @@
     </script>
 {% endmacro %}
 
-{% macro dashboard_option(title, endpoint, args={},description=None, icon=None) %}
+{% macro dashboard_option(title, endpoint, args={},description=None, icon=None, suffix="") %}
     <a href="{{ url_for(endpoint, **args) }}" class="list-group-item list-group-item-action">
         <div class="content container">
         <div class="row">
@@ -97,6 +99,7 @@
                     {{ description }}
                 </small>
             {% endif %}
+            {{ suffix }}
             </div>
         </div>
         </div>
@@ -114,7 +117,7 @@
             {% for corpus in corpora %}
                 {{ dashboard_option(corpus.name,
                                     'main.manage_corpus_users', args={"corpus_id": corpus.id},
-                                    icon="fa fa-users") }}
+                                    icon="fa fa-file-text") }}
             {% endfor %}
         </div>
     </div>
@@ -129,7 +132,7 @@
             {% for cl in control_lists %}
                 {{ dashboard_option(cl.name,
                                     'main.manage_control_lists_user', args={"cl_id": cl.id},
-                                    icon="fa fa-users") }}
+                                    icon="fa fa-th-list", suffix=utils.status_badge(cl.str_public))}}
             {% endfor %}
         </div>
     </div>

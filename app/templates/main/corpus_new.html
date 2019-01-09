@@ -79,7 +79,7 @@
             <div class="col-md-3">
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" id="checkbox_reuse" type="radio" name="control_list" value="reuse" checked/>
-                    <label class="form-check-label hide-toggle" data-toggle="#use_public" for="checkbox_reuse" id="label_checkbox_reuse">Use a shared control list</label>
+                    <label class="form-check-label hide-toggle" data-toggle="#use_public" for="checkbox_reuse" id="label_checkbox_reuse">Use an existing control list</label>
                 </div>
 
                 <p class="small text-muted">By using shared control lists, you ensure that you stick to accepted values in
@@ -88,9 +88,15 @@
             </div>
             <div class="col-md-9" id="use_public">
               <select class="form-control" id="control_list_select" name="control_list_select">
-                  {% for cl in public_control_lists %}
-                    <option id="cl_opt_{{ cl.id }}" value="{{ cl.id }}">{{ cl.name }}</option>
-                  {% endfor %}
+                  {%- for class, cls_ in public_control_lists.items() %}
+                      {%  if cls_ %}
+                        <optgroup label="{{ class }}">
+                            {% for cl in cls_ %}
+                                <option id="cl_opt_{{ cl.id }}" value="{{ cl.id }}">{{ cl.name }}</option>
+                            {%  endfor %}
+                        </optgroup>
+                      {%  endif %}
+                  {% endfor -%}
               </select>
             </div>
         </div>

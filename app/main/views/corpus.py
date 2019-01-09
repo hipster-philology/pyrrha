@@ -87,9 +87,12 @@ def corpus_new():
                 flash("The corpus cannot be registered. Check your data", category="error")
                 return go_back()
 
+    lists = {"public": [], "submitted": [], "private": []}
+    for cl in ControlLists.get_available(current_user):
+        lists[cl.str_public].append(cl)
     return render_template_with_nav_info(
         'main/corpus_new.html',
-        public_control_lists=ControlLists.get_available(current_user),
+        public_control_lists=lists,
         lemmatizers=lemmatizers
     )
 
