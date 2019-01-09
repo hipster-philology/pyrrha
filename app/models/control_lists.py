@@ -19,6 +19,8 @@ from ..utils.forms import prepare_search_string, column_search_filter, read_inpu
     read_input_lemma
 # Models
 from .user import User
+# Session
+from flask_login import current_user
 
 
 class PublicationStatus(enum.Enum):
@@ -87,13 +89,16 @@ class ControlLists(db.Model):
         return control_list, is_owner
 
     @staticmethod
-    def for_user(current_user):
+    def for_user(user):
         return db.session.query(ControlLists).filter(
             db.and_(
-                ControlListsUser.user_id == current_user.id,
+                ControlListsUser.user_id == user.id,
                 ControlListsUser.control_lists_id == ControlLists.id
             )
         ).all()
+
+    def can_edit(self):
+        return self.is_owned_by(current_user)
 
     @staticmethod
     def get_available(user):

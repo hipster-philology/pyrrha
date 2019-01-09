@@ -12,5 +12,8 @@
     Others
     <ul class="nav flex-column">
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.contact", control_list_id=control_list.id)}}"><i class="fa fa-envelope"></i> Propose changes</a></li>
+      {%  if control_list.can_edit() %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.propose_as_public", control_list_id=control_list.id)}}"><i class="fa fa-share-alt"></i> Make public</a></li>
+      {% endif %}
     </ul>
 {% endmacro -%}

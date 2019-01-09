@@ -260,7 +260,7 @@ def propose_as_public(control_list_id):
         control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
         email.send_email_async(
             app=current_app._get_current_object(),
-            bcc=[u[3] for u in admins] + [current_user.email],
+            bcc=[u.email for u in admins] + [current_user.email],
             recipient=[],
             subject='[Pyrrha Control List] ' + form.title.data,
             template='control_lists/email/contact',

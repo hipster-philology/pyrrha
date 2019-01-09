@@ -1,0 +1,21 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form_macros.html' as f %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h2>
+                <i class="fa fa-share-alt mr-2"></i>Propose the list as public list
+            </h2>
+            <p class="form-text">Through this form, you will contact the administrators to ask them for
+            making this control list public. A public control list can not be made private again.<br />By making this
+                list public, other users will be able to freely access this control list. They will be able
+            to contact the administrators of this list to propose new allowed values such as lemma.</p>
+        </div>
+        <div class="row ">
+            <div class="ml-3 col-sm-6">
+                {{ f.render_form(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
