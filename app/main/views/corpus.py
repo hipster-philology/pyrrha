@@ -82,7 +82,6 @@ def corpus_new():
                 return go_back()
             except Exception as e:
                 db.session.rollback()
-                raise e
                 print(e)
                 flash("The corpus cannot be registered. Check your data", category="error")
                 return go_back()

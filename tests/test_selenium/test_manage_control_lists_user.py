@@ -6,7 +6,7 @@ class TestManageControlListsUser(TestBase):
     def go_to_control_lists_management(self, control_lists):
         self.driver.find_element_by_link_text("Dashboard").click()
         controllists_dashboard = self.driver.find_element_by_id("control_lists-dashboard")
-        controllists_dashboard.find_element_by_link_text(control_lists).click()
+        controllists_dashboard.find_element_by_partial_link_text(control_lists).click()
 
     def get_ownership_table(self):
         accesses_table = self.driver.find_element_by_id("accesses-table")
