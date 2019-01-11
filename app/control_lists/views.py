@@ -222,8 +222,9 @@ def contact(control_list_id):
     """
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
 
-    form = SendMailToAdmin()
-    if form.validate_on_submit():
+    form = SendMailToAdmin(prefix="mail")
+
+    if request.method == "POST" and form.validate_on_submit():
         control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
         email.send_email_async(
             app=current_app._get_current_object(),
@@ -252,20 +253,19 @@ def propose_as_public(control_list_id):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
 
     if not is_owner:
-        flash("You are not an owner of the list", category="danger")
+        flash("You are not an owner of the list.", category="danger")
         return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
     elif control_list.public != PublicationStatus.private:
-        flash("This list is already public or submitted", category="warning")
+        flash("This list is already public or submitted.", category="warning")
         return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
 
-    form = SendMailToAdmin()
+    form = SendMailToAdmin(prefix="mail")
 
     if form.validate_on_submit():
         admins = User.get_admins()
         control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
         control_list.public = PublicationStatus.submitted
         db.session.add(control_list)
-
         try:
             email.send_email_async(
                 app=current_app._get_current_object(),
@@ -281,7 +281,6 @@ def propose_as_public(control_list_id):
                 url=control_list_link)
             flash('The email has been sent to the administrators.', 'success')
             db.session.commit()
-            return redirect(url_for('control_lists_bp.propose_as_public', control_list_id=control_list_id))
         except Exception:
             db.session.rollback()
             flash("There was an error during the messaging step")

@@ -26,6 +26,7 @@ class TestUpdateControlList(TestBase):
             sorted(['Rewrite Lemma List', 'Rewrite POS List', 'Rewrite Morphology List']),
             "Full rewrite are limited to control lists users"
         )
+
         # Check that we can make public
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
@@ -33,8 +34,26 @@ class TestUpdateControlList(TestBase):
             sorted(['Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier']),
             "Full rewrite are limited to control lists users"
         )
+
         # Check that we can send mail to admin to ask for publication
         self.driver.find_element_by_link_text("Make public").click()
+        self.driver.find_element_by_id("mail-title").send_keys("Hello")
+        self.writeMultiline(self.driver.find_element_by_id("mail-message"), "My\nName\nis\nBond")
+        self.driver.find_element_by_id("mail-submit").click()
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-success").text.strip(),
+            'The email has been sent to the administrators.',
+            "The list should be updated"
+        )
+        # Check that we can't do that twice
+        self.driver.find_element_by_link_text("Make public").click()
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-warning").text.strip(),
+            'This list is already public or submitted.',
+            "The same list cannot be made public twice"
+        )
 
     def test_action_as_admin(self):
         pass
@@ -42,5 +61,5 @@ class TestUpdateControlList(TestBase):
     def test_action_as_user(self):
         pass
 
-    def test_action_as_not_access(self):
+    def test_action_without_access(self):
         pass

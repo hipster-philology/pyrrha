@@ -14,7 +14,7 @@
         </div>
         <div class="row ">
             <div class="ml-3 col-sm-6">
-                {{ f.render_form(form) }}
+                {{ f.render_form(form, action=url_for('.propose_as_public', control_list_id=control_list.id)) }}
             </div>
         </div>
     </div>

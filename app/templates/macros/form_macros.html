@@ -9,7 +9,7 @@
         extra_classes – The classes to add to the <form>.
         enctype       – <form> enctype attribute. If None, will automatically be set to
                         multipart/form-data if a FileField is present in the form. #}
-{% macro render_form(form, method='POST', extra_classes='', enctype=None) %}
+{% macro render_form(form, method='POST', extra_classes='', enctype=None, action='') %}
     {% set flashes = {
         'error':   get_flashed_messages(category_filter=['form-error']),
         'warning': get_flashed_messages(category_filter=['form-check-email']),
@@ -17,7 +17,7 @@
         'success': get_flashed_messages(category_filter=['form-success'])
     } %}
 
-    {{ begin_form(form, flashes, method=method, extra_classes=extra_classes, enctype=enctype) }}
+    {{ begin_form(form, flashes, method=method, extra_classes=extra_classes, enctype=enctype, action=action) }}
     {% for field in form if not (field.widget.input_type == 'hidden'or field.type == 'SubmitField') %}
         {{ render_form_field(field) }}
     {% endfor %}
@@ -35,7 +35,7 @@
 {% endmacro %}
 
 {# Set up the form, including hidden fields and error states #}
-{% macro begin_form(form, flashes, method='POST', extra_classes='', enctype=None) %}
+{% macro begin_form(form, flashes, method='POST', extra_classes='', enctype=None, action='') %}
     {# Set proper enctype #}
     {% if enctype is none and (form | selectattr('type', 'equalto', 'FileField') | list | length > 0) %}
         {% set enctype = 'multipart/form-data' %}
@@ -43,7 +43,7 @@
         {% set enctype = '' %}
     {% endif %}
 
-    <form action="" method="{{ method }}" enctype="{{ enctype }}" class="ui form {{ extra_classes }}
+    <form action="{{action}}" method="{{ method }}" enctype="{{ enctype }}" class="ui form {{ extra_classes }}
         {% if form.errors or flashes['error'] %} error
         {% elif flashes['warning'] %} warning
         {% elif flashes['info'] %} info
