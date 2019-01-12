@@ -13,6 +13,7 @@ class TestUpdateControlList(TestBase):
         dropdown.find_element_by_partial_link_text(control_lists).click()
 
     def test_action_as_owner(self):
+        """ [ControlLists Administration] CL Admin can propose changes and propose to make a list public """
         foor_bar = self.add_user("foo", "bar", False)
         self.addControlLists("wauchier", no_corpus_user=True, for_users=[User(foor_bar, True)])
         self.addControlLists("floovant", no_corpus_user=True)
@@ -56,6 +57,7 @@ class TestUpdateControlList(TestBase):
         )
 
     def test_action_as_admin_but_not_owner(self):
+        """ [ControlLists Administration] App Admin can propose changes and turn a list public """
         self.addControlLists("wauchier", no_corpus_user=True, for_users=[User(self.app.config['ADMIN_EMAIL'], False)])
         self.addControlLists("floovant", no_corpus_user=True)
 
@@ -104,7 +106,36 @@ class TestUpdateControlList(TestBase):
         )
 
     def test_action_as_user(self):
-        pass
+        """ [ControlLists Administration] Normal users can only propose changes"""
+        foor_bar = self.add_user("foo", "bar", False)
+        self.addControlLists("wauchier", no_corpus_user=True, for_users=[User(foor_bar, False)])
+        self.addControlLists("floovant", no_corpus_user=True)
 
-    def test_action_without_access(self):
-        pass
+        self.login_with_user(foor_bar)
+        self.go_to_control_lists_management("Wauchier")
+        # This should work otherwise there is an issue
+        links = self.driver.find_element_by_id("right-column").find_elements_by_tag_name("a")
+        self.assertEqual(
+            [link.text.strip() for link in links], [],
+            "Users have no specific abilities on the dashboard"
+        )
+
+        # Check that we can make public
+        links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
+        self.assertEqual(
+            sorted([link.text.strip() for link in links]),
+            sorted(['Lemma', 'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
+            "Only contacting and reading is possible to users"
+        )
+
+        # Check that we can send mail to admin to ask for publication
+        self.driver.find_element_by_link_text("Propose changes").click()
+        self.driver.find_element_by_id("mail-title").send_keys("Hello")
+        self.writeMultiline(self.driver.find_element_by_id("mail-message"), "My\nName\nis\nBond")
+        self.driver.find_element_by_id("mail-submit").click()
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-success").text.strip(),
+            'The email has been sent to the control list administrators.',
+            "The list should be updated"
+        )
