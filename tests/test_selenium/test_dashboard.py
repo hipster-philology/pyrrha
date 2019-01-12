@@ -93,8 +93,6 @@ class TestDashboard(TestBase):
         header_items = navbars.find_elements_by_class_name("dd-corpus")
         header_names = sorted([item.text for item in header_items])
 
-        self.driver.get_screenshot_as_file("here.png")
-
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
         corpora_items = corpora_dashboard.find_elements_by_class_name("col")
         corpora_names = sorted([item.text for item in corpora_items])

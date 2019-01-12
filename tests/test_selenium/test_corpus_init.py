@@ -375,3 +375,124 @@ class TestCorpusRegistration(TestBase):
             "Ancien Français - École des Chartes",
             "The control list is available from the top menu"
         )
+
+    def test_registration_with_false_control_list(self):
+        """ [Corpus Creation] Check that a non existing control list cannot be used"""
+        self.add_control_lists()
+        # Click register menu link
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Target control list
+        target_cl = db.session.query(ControlLists).\
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # Fill in registration form
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_"+str(target_cl.id)).click()
+        # Change the value from JS
+        self.driver.execute_script(
+            "document.getElementById('cl_opt_"+str(target_cl.id)+"').value = '99999';"
+        )
+        self.driver.find_element_by_id("submit").click()
+
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            'This control list does not exist',
+            "It is impossible to validate form with a wrong id of control list"
+        )
+
+    def test_registration_with_an_existing_name(self):
+        """ [Corpus Creation] Check that a corpus using this name does not already exist"""
+        self.addCorpus("wauchier")
+        self.add_control_lists()
+        # Click register menu link
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Target control list
+        target_cl = db.session.query(ControlLists).\
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # Fill in registration form
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_"+str(target_cl.id)).click()
+
+        self.driver.find_element_by_id("submit").click()
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver.find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted([
+                'The corpus cannot be registered. Check your data',
+                "You have already a corpus going by the name Wauchier"
+            ]),
+            "Creating a corpus when one already exists for the current user with the same name fails."
+        )
+
+    def test_registration_with_wrongly_formated_input(self):
+        """ [Corpus Creation] Check that TSV formatting does not break everything"""
+        self.add_control_lists()
+        # Click register menu link
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Target control list
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # Fill in registration form
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), """lala	lemma	POS	morph
+SOIGNORS	seignor	NOMcom	NOMB.=p|GENRE=m|CAS=n
+or	or4	ADVgen	DEGRE=-
+escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p
+que	que4	CONsub	_
+	dieu	NOMpro	NOMB.=s|GENRE=m|CAS=n
+vos	vos1	PROper	PERS.=2|NOMB.=p|GENRE=m|CAS=r
+soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+
+        self.driver.find_element_by_id("submit").click()
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver.find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted([
+                'At least one line of your corpus is missing a token/form.'
+            ]),
+            "Creating a corpus with a missing tokens column fails."
+        )
+
+    def test_registration_with_no_tsv_input(self):
+        """ [Corpus Creation] Check that missing TSV throws a specific error"""
+        self.add_control_lists()
+        # Click register menu link
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Target control list
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # Fill in registration form
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+
+        self.driver.find_element_by_id("submit").click()
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver.find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted([
+                'You did not input any text.'
+            ]),
+            "Creating a corpus without TSV input fails."
+        )

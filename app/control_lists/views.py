@@ -2,7 +2,7 @@ from flask import request, flash, redirect, url_for, Blueprint, abort, jsonify, 
 from flask_login import current_user, login_required
 
 import sqlalchemy.exc
-from werkzeug.exceptions import BadRequest
+from werkzeug.exceptions import BadRequest, NotFound
 
 
 from app.main.views.utils import render_template_with_nav_info
@@ -55,18 +55,17 @@ def lemma_list(control_list_id):
             return "", 200
         except Exception as E:
             db.session.rollback()
-            abort(403)
+            return abort(403)
     elif request.method == "UPDATE" and request.mimetype == "application/json" and can_edit:
         form = request.get_json().get("lemmas", None)
         if not form:
-            abort(400, jsonify({"message": "No lemma were passed."}))
+            return abort(400, jsonify({"message": "No lemma were passed."}))
         lemmas = list(set(form.split()))
         try:
             AllowedLemma.add_batch(lemmas, control_list.id, _commit=True)
             return jsonify({"message": "Data saved"})
         except ValueError as E:
             db.session.rollback()
-            print(jsonify({"message": str(E)}))
             return make_response(jsonify({"message": str(E)}), 400)
         except sqlalchemy.exc.StatementError as E:
             db.session.rollback()
@@ -103,7 +102,7 @@ def lemma_list(control_list_id):
             readable=False,
             **kwargs
         )
-    abort(405)
+    return abort(405)
 
 
 @control_lists_bp.route('/controls/<int:control_list_id>/read/<allowed_type>', methods=["GET"])
@@ -111,7 +110,7 @@ def lemma_list(control_list_id):
 def read_allowed_values(control_list_id, allowed_type):
     if allowed_type not in ["POS", "morph"]:
         flash("The category you selected is wrong petit coquin !", category="error")
-        redirect(url_for(".get", control_list_id=control_list_id))
+        return redirect(url_for(".get", control_list_id=control_list_id))
 
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
     kwargs = {}
@@ -140,13 +139,13 @@ def edit(cl_id, allowed_type):
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
     if allowed_type not in ["lemma", "POS", "morph"]:
-        raise BadRequest("Unknown type of resource.")
+        raise NotFound("Unknown type of resource.")
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=cl_id, user=current_user)
 
     can_edit = is_owner or current_user.is_admin()
 
     if not can_edit:
-        abort(403)
+        return abort(403)
 
     # In case of Post
     if request.method == "POST":
@@ -169,7 +168,7 @@ def edit(cl_id, allowed_type):
         if success:
             flash("Control List Updated", category="success")
         else:
-            flash("An error occured", category="errors")
+            flash("An error occured", category="error")
 
     values = control_list.get_allowed_values(allowed_type=allowed_type, order_by="id")
     if allowed_type == "lemma":
@@ -253,7 +252,7 @@ def propose_as_public(control_list_id):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
 
     if not is_owner:
-        flash("You are not an owner of the list.", category="danger")
+        flash("You are not an owner of the list.", category="error")
         return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
     elif control_list.public != PublicationStatus.private:
         flash("This list is already public or submitted.", category="warning")
@@ -295,7 +294,7 @@ def go_public(control_list_id):
     """
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
     if not current_user.is_admin():
-        flash("You do not have the rights for this action.", category="danger")
+        flash("You do not have the rights for this action.", category="error")
     elif control_list.public == PublicationStatus.public:
         flash("This list is already public.", category="warning")
     else:
@@ -306,6 +305,6 @@ def go_public(control_list_id):
             flash('This list is now public.', 'success')
         except Exception:
             db.session.rollback()
-            flash("There was an error during the update.", category="danger")
+            flash("There was an error during the update.", category="error")
 
     return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))

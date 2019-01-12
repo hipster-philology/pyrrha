@@ -1,5 +1,7 @@
 from tests.test_selenium.base import TestBase
 from collections import namedtuple
+from ..db_fixtures.wauchier import WauchierAllowedPOS, WauchierAllowedMorph
+
 
 User = namedtuple("User", ["user", "owner"])
 
@@ -15,7 +17,8 @@ class TestUpdateControlList(TestBase):
     def test_action_as_owner(self):
         """ [ControlLists Administration] CL Admin can propose changes and propose to make a list public """
         foor_bar = self.add_user("foo", "bar", False)
-        self.addControlLists("wauchier", no_corpus_user=True, for_users=[User(foor_bar, True)])
+        self.addControlLists("wauchier", partial_allowed_pos=False, partial_allowed_morph=False,
+                             no_corpus_user=True, for_users=[User(foor_bar, True)])
         self.addControlLists("floovant", no_corpus_user=True)
 
         self.login_with_user(foor_bar)
@@ -54,6 +57,71 @@ class TestUpdateControlList(TestBase):
             self.driver.find_element_by_css_selector(".alert.alert-warning").text.strip(),
             'This list is already public or submitted.',
             "The same list cannot be made public twice"
+        )
+
+        # Check that we cannot make the liost public
+        self.driver.get(self.url_for_with_port("control_lists_bp.go_public", control_list_id=1))
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            'You do not have the rights for this action.',
+            "CL Admin cannot make a list public"
+        )
+
+        # Check that we cannot access edit pages of unknown type
+        self.driver.get(self.url_for_with_port("control_lists_bp.edit", cl_id=1, allowed_type="patate"))
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_id("error_message").text.strip(),
+            "Page not found",
+            "403 is generated when accessing something forbidden"
+        )
+
+        # Check that we cannot access edit pages of unknown type
+        self.driver.get(self.url_for_with_port("control_lists_bp.read_allowed_values",
+                                               control_list_id=1, allowed_type="patate"))
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            "The category you selected is wrong petit coquin !",
+            "User is redirected on none existing category"
+        )
+
+        # Check that we can read values
+        self.driver.get(self.url_for_with_port("control_lists_bp.read_allowed_values",
+                                               control_list_id=1, allowed_type="POS"))
+        self.driver.implicitly_wait(5)
+        found = [
+            el.text.strip()
+            for el in self.driver.find_elements_by_css_selector(".allowed .label")
+        ]
+        self.assertEqual(
+            sorted(found),
+            sorted([x.label for x in WauchierAllowedPOS]),
+            "We should be able to read the POS"
+        )
+
+        # Check that we can read values
+        self.driver.get(self.url_for_with_port("control_lists_bp.read_allowed_values",
+                                               control_list_id=1, allowed_type="morph"))
+        self.driver.implicitly_wait(5)
+        found = [
+            el.text.strip()
+            for el in self.driver.find_elements_by_css_selector(".allowed .label")
+        ]
+        self.assertEqual(
+            sorted(found),
+            sorted([x.label for x in WauchierAllowedMorph]),
+            "We should be able to read the POS"
+        )
+        found = [
+            el.text.strip()
+            for el in self.driver.find_elements_by_css_selector(".allowed .readable")
+        ]
+        self.assertEqual(
+            sorted(found),
+            sorted([x.readable for x in WauchierAllowedMorph]),
+            "We should be able to read the POS"
         )
 
     def test_action_as_admin_but_not_owner(self):
@@ -105,6 +173,15 @@ class TestUpdateControlList(TestBase):
             "There should be no link anymore."
         )
 
+        # Check that we cannot make the list public
+        self.driver.get(self.url_for_with_port("control_lists_bp.go_public", control_list_id=1))
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-warning").text.strip(),
+            'This list is already public.',
+            "Admin cannot make a list public twice"
+        )
+
     def test_action_as_user(self):
         """ [ControlLists Administration] Normal users can only propose changes"""
         foor_bar = self.add_user("foo", "bar", False)
@@ -138,4 +215,31 @@ class TestUpdateControlList(TestBase):
             self.driver.find_element_by_css_selector(".alert.alert-success").text.strip(),
             'The email has been sent to the control list administrators.',
             "The list should be updated"
+        )
+
+        # Check that we cannot access the propose as public page
+        self.driver.get(self.url_for_with_port("control_lists_bp.propose_as_public", control_list_id=1))
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            'You are not an owner of the list.',
+            "User cannot access list administration"
+        )
+
+        # Check that we cannot make the list public
+        self.driver.get(self.url_for_with_port("control_lists_bp.go_public", control_list_id=1))
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            'You do not have the rights for this action.',
+            "User cannot make a list public"
+        )
+
+        # Check that we cannot access edit pages
+        self.driver.get(self.url_for_with_port("control_lists_bp.edit", cl_id=1, allowed_type="lemma"))
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_id("error_message").text.strip(),
+            "Forbidden: You do not have the right to access this page.",
+            "403 is generated when accessing something forbidden"
         )

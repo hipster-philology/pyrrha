@@ -12,9 +12,11 @@ from flask import url_for
 from .. import db
 from ..utils.forms import strip_or_none
 from ..utils.tsv import TSV_CONFIG
+from ..errors import MissingTokenColumnValue, NoTokensInput
 # Models
 from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
+
 
 
 class CorpusUser(db.Model):
@@ -228,7 +230,7 @@ class Corpus(db.Model):
         )
 
         if token_count == 0:
-            raise ValueError("No tokens were given")
+            raise NoTokensInput("No tokens were given")
 
         return c
 
@@ -532,12 +534,22 @@ class WordToken(db.Model):
             else:
                 next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
+            form = token.get("form", token.get("tokens"))
+            if not form:
+                raise MissingTokenColumnValue()
+            lemma = token.get("lemma", token.get("lemmas"))
+            label_uniform = ""
+            if lemma:
+                label_uniform = unidecode.unidecode(lemma)
+            POS = token.get("POS", token.get("pos", None))
+            morph = token.get("morph", None)
+
             wt = dict(
-                form=token.get("form", token.get("tokens")),
-                lemma=token.get("lemma", token.get("lemmas")),
-                label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
-                POS=token.get("POS", token.get("pos")),
-                morph=token.get("morph", None),
+                form=form,
+                lemma=lemma,
+                label_uniform=label_uniform,
+                POS=POS,
+                morph=morph,
                 left_context=" ".join(previous_token),
                 right_context=" ".join(next_token),
                 corpus=corpus_id,
@@ -592,11 +604,13 @@ class WordToken(db.Model):
         lemma = strip_or_none(lemma)
         POS = strip_or_none(POS)
         morph = strip_or_none(morph)
+
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph:
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
+
         # Check if values are correct regarding allowed values
         validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):

@@ -244,7 +244,6 @@ class TokenEditBase(TestBase):
 
         def callback():
             # Show the dropdown
-            self.driver.get_screenshot_as_file("here2.png")
             self.driver.find_element_by_id("toggle_corpus_corpora").click()
             # Click on the edit link
             self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()

@@ -11,6 +11,7 @@ from .. import main
 from ...utils.forms import strip_or_none
 from ...models import Corpus
 from ...utils.response import format_api_like_reply
+from ...errors import MissingTokenColumnValue, NoTokensInput
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -21,18 +22,28 @@ def corpus_new():
     """ Register a new corpus
     """
     lemmatizers = current_app.config.get("LEMMATIZERS", [])
+
+    def normal_view():
+        lists = {"public": [], "submitted": [], "private": []}
+        for cl in ControlLists.get_available(current_user):
+            lists[cl.str_public].append(cl)
+
+        return render_template_with_nav_info(
+            'main/corpus_new.html',
+            lemmatizers=lemmatizers,
+            public_control_lists=lists,
+            tsv=request.form.get("tsv", "")
+        )
+
+    def error():
+        return normal_view(), 400
+
     if request.method == "POST":
-        def go_back():
-            return render_template_with_nav_info(
-                'main/corpus_new.html',
-                lemmatizers=lemmatizers,
-                tsv=request.form.get("tsv")
-            )
         if not current_user.is_authenticated:
             abort(403)
         elif not len(strip_or_none(request.form.get("name", ""))):
             flash("You forgot to give a name to your corpus", category="error")
-            return go_back()
+            return error()
         else:
             form_kwargs = {
                 "name": request.form.get("name"),
@@ -44,9 +55,9 @@ def corpus_new():
                 tokens = read_input_tokens(request.form.get("tsv"))
                 try:
                     control_list = ControlLists.query.get_or_404(request.form.get("control_list_select"))
-                except Exception as E:
-                    flash("This control list does not exist", category="errors")
-                    return go_back()
+                except Exception:
+                    flash("This control list does not exist", category="error")
+                    return error()
                 form_kwargs.update({"word_tokens_dict": tokens,
                                     "control_list": control_list})
                 cl_owner = False
@@ -69,31 +80,27 @@ def corpus_new():
                 db.session.commit()
                 flash("New corpus registered", category="success")
                 return redirect(url_for(".corpus_get", corpus_id=corpus.id))
-            except sqlalchemy.exc.StatementError as e:
+            except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 if str(e.orig) == "UNIQUE constraint failed: corpus.name":
                     flash("You have already a corpus going by the name {}".format(request.form.get("name")),
                           category="error")
-                return go_back()
-            except ValueError as e:
+                return error()
+            except MissingTokenColumnValue:
                 db.session.rollback()
-                flash(str(e), category="error")
-                return go_back()
+                flash("At least one line of your corpus is missing a token/form.", category="error")
+                return error()
+            except NoTokensInput:
+                db.session.rollback()
+                flash("You did not input any text.", category="error")
+                return error()
             except Exception as e:
                 db.session.rollback()
-                print(e)
                 flash("The corpus cannot be registered. Check your data", category="error")
-                return go_back()
+                return error()
 
-    lists = {"public": [], "submitted": [], "private": []}
-    for cl in ControlLists.get_available(current_user):
-        lists[cl.str_public].append(cl)
-    return render_template_with_nav_info(
-        'main/corpus_new.html',
-        public_control_lists=lists,
-        lemmatizers=lemmatizers
-    )
+    return normal_view()
 
 
 @main.route('/corpus/get/<int:corpus_id>')
