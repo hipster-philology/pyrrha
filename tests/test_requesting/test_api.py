@@ -22,14 +22,14 @@ class TestAPI(TestBase):
     def test_morph_autocomplete(self):
         """ Test that morph autocomplete works fine with accentuated or non accentuated chars """
         self.addCorpus(corpus="floovant", with_token=True, with_allowed_morph=True)
-        accentuated = json.loads(self.client.get("/corpus/2/api/morph?form=2 plur").data.decode())
+        accentuated = json.loads(self.client.get("/controls/2/api/morph?form=2 plur").data.decode())
         self.assertEqual(accentuated, [
             {'label': 'impératif 2e personne pluriel',
                 'value': 'MODE=imp|PERS.=2|NOMB.=p'},
             {'label': '2e personne pluriel masculin régime',
                 'value': 'PERS.=2|NOMB.=p|GENRE=m|CAS=r'},
         ])
-        non_accentuated = json.loads(self.client.get("/corpus/2/api/morph?form=%3Dr %3Dp").data.decode())
+        non_accentuated = json.loads(self.client.get("/controls/2/api/morph?form=%3Dr %3Dp").data.decode())
         self.assertEqual(
             non_accentuated,
             [{'label': 'pluriel masculin régime', 'value': 'NOMB.=p|GENRE=m|CAS=r'},

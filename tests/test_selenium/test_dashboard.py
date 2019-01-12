@@ -83,6 +83,7 @@ class TestDashboard(TestBase):
         self.driver.find_element_by_link_text("New Corpus").click()
         self.driver.find_element_by_id("corpusName").send_keys("FreshNewCorpus")
         self.write_lorem_impsum_tokens()
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
         self.driver.find_element_by_link_text("Dashboard").click()
@@ -91,8 +92,6 @@ class TestDashboard(TestBase):
         navbars.find_element_by_id("toggle_corpus_corpora").click()
         header_items = navbars.find_elements_by_class_name("dd-corpus")
         header_names = sorted([item.text for item in header_items])
-
-        self.driver.get_screenshot_as_file("here.png")
 
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
         corpora_items = corpora_dashboard.find_elements_by_class_name("col")

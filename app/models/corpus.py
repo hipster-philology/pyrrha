@@ -1,16 +1,22 @@
+# Base Python
 import csv
 import io
-
+# PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func
+from sqlalchemy import func, literal
 from werkzeug.exceptions import BadRequest
-
-from app.models.user import User
+from flask import url_for
+# Application imports
 from .. import db
 from ..utils.forms import strip_or_none
 from ..utils.tsv import TSV_CONFIG
+from ..errors import MissingTokenColumnValue, NoTokensInput
+# Models
+from .user import User
+from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
+
 
 
 class CorpusUser(db.Model):
@@ -30,99 +36,6 @@ class CorpusUser(db.Model):
         self.user = user
         self.corpus = corpus
         self.is_owner = is_owner
-
-
-class ControlLists(db.Model):
-    __tablename__ = "control_lists"
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(64), default="Control List")
-    public = db.Column(db.Boolean, default=False)
-    parent_id = db.Column(db.Integer, db.ForeignKey("control_lists.id"), nullable=True)
-
-    users = association_proxy('control_lists_user', 'user')
-
-    @property
-    def owners(self):
-        return db.session.query(User.first_name, User.last_name, User.id, User.email).filter(
-            ControlListsUser.user_id == User.id,
-            ControlListsUser.control_lists_id == self.id,
-            ControlListsUser.is_owner == True
-        ).all()
-
-    @staticmethod
-    def link(corpus, user, is_owner=False):
-        db.session.add(ControlListsUser(
-            user_id=user.id,
-            control_lists_id=corpus.control_lists_id,
-            is_owner=is_owner
-        ))
-
-    @staticmethod
-    def get_linked_or_404(control_list_id: int, user: User):
-        if user.is_admin():
-            return (
-                ControlLists.query.get_or_404(control_list_id),
-                db.session.query(ControlListsUser.query.filter(
-                    ControlListsUser.user_id == user.id,
-                    ControlListsUser.control_lists_id == control_list_id,
-                    ControlListsUser.is_owner == True
-                ).exists()).scalar()
-            )
-        element, is_owner = db.session.query(ControlLists, ControlListsUser.is_owner).filter(
-            db.and_(
-                ControlLists.id == control_list_id,
-                ControlListsUser.user_id == user.id,
-                ControlListsUser.control_lists_id == ControlLists.id
-            )
-        ).first()
-        if not element:
-            raise BadRequest(description="You have no right to access the Control List")
-        return element, is_owner
-
-    @staticmethod
-    def for_user(current_user):
-        return db.session.query(ControlLists).filter(
-            db.and_(
-                ControlListsUser.user_id == current_user.id,
-                ControlListsUser.control_lists_id == ControlLists.id
-            )
-        ).all()
-
-    def get_allowed_values(self, allowed_type="lemma", order_by="label"):
-        """ List values that are allowed (without label) or checks that given label is part
-        of the existing corpus
-
-        :param allowed_type: A value from the set "lemma", "POS", "morph"
-        :return: Flask SQL Alchemy Query
-        :rtype: BaseQuery
-        """
-        if allowed_type == "lemma":
-            cls = AllowedLemma
-            order_by = getattr(cls, order_by)
-        elif allowed_type == "POS":
-            cls = AllowedPOS
-            order_by = getattr(cls, order_by)
-        elif allowed_type == "morph":
-            cls = AllowedMorph
-            order_by = getattr(cls, order_by)
-        else:
-            raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
-
-        return db.session.query(cls).filter(cls.control_list == self.id).order_by(order_by)
-
-
-class ControlListsUser(db.Model):
-    """ Association proxy that link users to ControlLists
-
-    :param control: a control list object
-    :param user: a User
-    """
-    control_lists_id = db.Column(db.Integer, db.ForeignKey("control_lists.id"), primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
-    is_owner = db.Column(db.Boolean, default=False)
-
-    control = db.relationship("ControlLists", backref=backref("control_lists_user", cascade="all, delete-orphan"))
-    user = db.relationship(User, backref=backref("control_lists_user", cascade="all, delete-orphan"))
 
 
 class Corpus(db.Model):
@@ -148,20 +61,34 @@ class Corpus(db.Model):
     control_lists = db.relationship("ControlLists")
     users = association_proxy('corpus_users', 'user')
 
-    def has_access(self, user):
+    def allowed_search_route(self, allowed_type):
+        """ Returns the API search routes and parameters
+
+        :param allowed_type: Allowed Type to search values for
+        :return: Search route
         """
-        Can this corpus be accessed by the given user ?
-        :param user:
+        if self.control_lists:
+            if self.control_lists.has_list(allowed_type):
+                return url_for("control_lists_bp.search_api", control_list_id=self.control_lists_id,
+                               allowed_type=allowed_type)
+        return url_for("main.search_value_api", corpus_id=self.id, allowed_type=allowed_type)
+
+    def has_access(self, user):
+        """ Can this corpus be accessed by the given user ?
+
+        :param user: User to check access rights for
         :return: True or False
         """
-        access = True
         if not user.is_admin():
-            cu = CorpusUser.query.filter(
-                CorpusUser.user_id == user.id,
-                CorpusUser.corpus_id == self.id
-            ).first()
-            access = cu is not None
-        return access
+            return db.session.query(literal(True)).filter(
+                CorpusUser.query.filter(
+                    db.and_(
+                        CorpusUser.user_id == user.id,
+                        CorpusUser.corpus_id == self.id
+                    )
+                ).exists()
+            ).scalar()
+        return True
 
     @staticmethod
     def for_user(current_user):
@@ -173,11 +100,15 @@ class Corpus(db.Model):
         ).all()
 
     def is_owned_by(self, user):
-        cu = CorpusUser.query.filter(
-            CorpusUser.user_id == user.id,
-            CorpusUser.corpus_id == self.id
-        ).first()
-        return cu is not None and cu.is_owner
+        return db.session.query(literal(True)).filter(
+            CorpusUser.query.filter(
+                db.and_(
+                    CorpusUser.user_id == user.id,
+                    CorpusUser.corpus_id == self.id,
+                    CorpusUser.is_owner == True
+                )
+            ).exists()
+        ).scalar()
 
     def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
         """ List values that are allowed (without label) or checks that given label is part
@@ -264,7 +195,7 @@ class Corpus(db.Model):
     def create(
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
-            context_left=None, context_right=None
+            context_left=None, context_right=None, control_list=None
     ):
         """ Create a corpus
 
@@ -275,33 +206,32 @@ class Corpus(db.Model):
         :param allowed_morph: list of Allowed Morph in the form of dict with keys (label, readable)
         :return:
         """
+        if not control_list:
+            control_list = ControlLists(name="Control List {}".format(name), public=PublicationStatus.private)
+            db.session.add(control_list)
+            db.session.flush()
 
-        control_list = ControlLists()
-        db.session.add(control_list)
-        db.session.flush()
+            if allowed_lemma is not None and len(allowed_lemma) > 0:
+                AllowedLemma.add_batch(allowed_lemma, control_list.id)
+
+            if allowed_POS is not None and len(allowed_POS) > 0:
+                AllowedPOS.add_batch(allowed_POS, control_list.id)
+
+            if allowed_morph is not None and len(allowed_morph) > 0:
+                AllowedMorph.add_batch(allowed_morph, control_list.id)
 
         c = Corpus(name=name, control_lists_id=control_list.id)
-
-
         db.session.add(c)
         db.session.flush()
+
         token_count = WordToken.add_batch(
             corpus_id=c.id, word_tokens_dict=word_tokens_dict,
             context_left=context_left, context_right=context_right
         )
 
         if token_count == 0:
-            raise ValueError("No tokens were given")
+            raise NoTokensInput("No tokens were given")
 
-        if allowed_lemma is not None and len(allowed_lemma) > 0:
-            AllowedLemma.add_batch(allowed_lemma, control_list.id)
-
-        if allowed_POS is not None and len(allowed_POS) > 0:
-            AllowedPOS.add_batch(allowed_POS, control_list.id)
-
-        if allowed_morph is not None and len(allowed_morph) > 0:
-            AllowedMorph.add_batch(allowed_morph, control_list.id)
-        db.session.commit()
         return c
 
     def update_allowed_values(self, allowed_type, allowed_values):
@@ -323,156 +253,6 @@ class Corpus(db.Model):
         data = db.session.query(cls).filter_by(control_list=self.control_lists_id).delete()
         cls.add_batch(allowed_values, self.id, _commit=True)
         return data
-
-
-class AllowedLemma(db.Model):
-    """ An allowed lemma is a lemma that is accepted
-
-    :param id: ID of the Allowed Lemma (Optional)
-    :param label: Allowed Lemma Value
-    :param label_uniform: Normalized value of label, which allows for plaintext search
-    :param corpus: ID of the corpus this AllowedLemma is related to
-    """
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
-    label_uniform = db.Column(db.String(64))
-    control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
-
-    @staticmethod
-    def add_batch(allowed_values, control_lists_id, _commit=False):
-        """ Add a batch of allowed values
-
-        :param allowed_values: List of dictionary with label and readable keys
-        :param control_lists_id: Id of the Control List
-        :param _commit: Force commit (Default: false)
-        """
-        db.session.bulk_insert_mappings(
-            AllowedLemma,
-            [
-                dict(label=item, control_list=control_lists_id, label_uniform=unidecode.unidecode(item))
-                for item in allowed_values
-            ]
-        )
-        if _commit:
-            db.session.commit()
-
-    @staticmethod
-    def to_input_format(query):
-        """ Transforms query results into the input format
-
-        .. note:: OrderBy is done inside the function
-
-        :param query: Query on AllowedLemma
-        :type query: AllowedLemma.query
-        :return: String representation of the data
-        """
-        return "\n".join(
-            [
-                allowed.label
-                for allowed in query.order_by(AllowedLemma.id).all()
-            ]
-        )
-
-
-class AllowedPOS(db.Model):
-    """ An allowed POS is a POS that is accepted
-
-    :param id: ID of the Allowed POS (Optional)
-    :param label: Allowed POS Value
-    :param corpus: ID of the corpus this AllowedPOS is related to
-    """
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
-    control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
-
-    @staticmethod
-    def add_batch(allowed_values, control_lists_id: int, _commit: bool=False):
-        """ Add a batch of allowed values
-
-        :param allowed_values: List of dictionary with label and readable keys
-        :param control_lists_id: Id of the ControlLists
-        :param _commit: Force commit (Default: false)
-        """
-        db.session.bulk_insert_mappings(
-            AllowedPOS,
-            [
-                dict(label=item, control_list=control_lists_id)
-                for item in allowed_values
-            ]
-        )
-        if _commit:
-            db.session.commit()
-
-    @staticmethod
-    def to_input_format(query):
-        """ Transforms query results into the input format
-
-        .. note:: OrderBy is done inside the function
-
-        :param query: Query on AllowedPOS
-        :type query: AllowedPOS.query
-        :return: String representation of the data
-        """
-        return ",".join(
-            [
-                allowed.label
-                for allowed in query.order_by(AllowedPOS.id).all()
-            ]
-        )
-
-
-class AllowedMorph(db.Model):
-    """ An allowed Morph is a Morph that is accepted
-
-    :param id: ID of the Allowed Morph (Optional)
-    :param label: Allowed Morph Value
-    :param readable: Human Readable value of the label. *iei* v--1s-pi becomes Verb, 1st Singular Present Indicative
-    :param control_list: ID of the ControlLists this AllowedMorph is related to
-    """
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
-    readable = db.Column(db.String(256))
-    control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
-
-    @staticmethod
-    def add_batch(allowed_values, control_lists_id, _commit=False):
-        """ Add a batch of allowed values
-
-        :param allowed_values: List of dictionary with label and readable keys
-        :param control_lists_id: Id of the control list
-        :param _commit: Force commit (Default: false)
-        """
-        db.session.bulk_insert_mappings(
-            AllowedMorph,
-            [
-                dict(
-                    label=item.get("label"),
-                    readable=item.get("readable", item["label"]),
-                    control_list=control_lists_id
-                )
-                for item in allowed_values
-            ]
-        )
-        if _commit:
-            db.session.commit()
-
-    @staticmethod
-    def to_input_format(query):
-        """ Transforms query results into the input format
-
-        .. note:: OrderBy is done inside the function
-
-        :param query: Query on AllowedMorph
-        :type query: AllowedMorph.query
-        :return: String representation of the data
-        """
-        csv_file = io.StringIO()
-        writer = csv.writer(csv_file, dialect="excel-tab")
-        writer.writerow(["label", "readable"])
-        for morph in query.order_by(AllowedMorph.id).all():
-            writer.writerow([morph.label, morph.readable])
-
-        return csv_file.getvalue()
 
 
 class WordToken(db.Model):
@@ -754,12 +534,22 @@ class WordToken(db.Model):
             else:
                 next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
+            form = token.get("form", token.get("tokens"))
+            if not form:
+                raise MissingTokenColumnValue()
+            lemma = token.get("lemma", token.get("lemmas"))
+            label_uniform = ""
+            if lemma:
+                label_uniform = unidecode.unidecode(lemma)
+            POS = token.get("POS", token.get("pos", None))
+            morph = token.get("morph", None)
+
             wt = dict(
-                form=token.get("form", token.get("tokens")),
-                lemma=token.get("lemma", token.get("lemmas")),
-                label_uniform=unidecode.unidecode(token.get("lemma", token.get("lemmas"))),
-                POS=token.get("POS", token.get("pos")),
-                morph=token.get("morph", None),
+                form=form,
+                lemma=lemma,
+                label_uniform=label_uniform,
+                POS=POS,
+                morph=morph,
                 left_context=" ".join(previous_token),
                 right_context=" ".join(next_token),
                 corpus=corpus_id,
@@ -768,7 +558,6 @@ class WordToken(db.Model):
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
-        db.session.commit()
         return len(tokens)
 
     @staticmethod
@@ -815,11 +604,13 @@ class WordToken(db.Model):
         lemma = strip_or_none(lemma)
         POS = strip_or_none(POS)
         morph = strip_or_none(morph)
+
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph:
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
+
         # Check if values are correct regarding allowed values
         validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):

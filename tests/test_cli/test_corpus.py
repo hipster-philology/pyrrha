@@ -14,7 +14,7 @@ from nose.tools import nottest
 
 from app import create_app, db
 from app.cli import make_cli
-from app.models.linguistic import (
+from app.models import (
     AllowedLemma,
     AllowedMorph,
     AllowedPOS,

@@ -3,7 +3,7 @@ from app.models import ControlLists, ControlListsUser
 
 
 Floovant = Corpus(name="Floovant", id=2, control_lists_id=2)
-FCL = ControlLists(id=2)
+FCL = ControlLists(id=2, name="Floovant")
 FloovantTokens = [
     WordToken(corpus=Floovant.id, form="SOIGNORS", lemma="seignor", left_context="", right_context="or escoutez que",
               label_uniform="seignor", morph="NOMB.=p|GENRE=m|CAS=n"),

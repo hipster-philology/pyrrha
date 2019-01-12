@@ -1,5 +1,5 @@
-{% macro render_flashes(class) %}
-    {% with msgs = get_flashed_messages(category_filter=[class]) %}
+{% macro render_flashes(class, category) %}
+    {% with msgs = get_flashed_messages(category_filter=[category]) %}
         {% for msg in msgs %}
             <div class="alert alert-{{ class }}">
                 {{ msg }}
@@ -10,9 +10,9 @@
 
 <div class="container">
     <div class="flashes">
-        {{ render_flashes('error') }}
-        {{ render_flashes('warning') }}
-        {{ render_flashes('info') }}
-        {{ render_flashes('success') }}
+        {{ render_flashes('danger', 'error') }}
+        {{ render_flashes('warning', 'warning') }}
+        {{ render_flashes('info', 'info') }}
+        {{ render_flashes('success', 'success') }}
     </div>
 </div>

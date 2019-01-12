@@ -63,7 +63,6 @@ class TestManageCorpusUser(TestBase):
         # there is no user on this corpus
         self.go_to_corpus_management("Wauchier")
         el = self.get_ownership_table()
-        self.driver.save_screenshot("display.png")
         self.assertTrue(len(el) == 0)
 
         # add admin as the owner
@@ -193,6 +192,7 @@ Martin	martin	NOMpro
 mout	mout	ADVgen
 doit	devoir	VERcjg"""
         )
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
         self.go_to_corpus_management("FreshNewCorpus")

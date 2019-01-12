@@ -76,6 +76,9 @@
     {% else %}
     <script type="text/javascript">
     $(document).ready(function(){
+        var clear_br = function (elem) {
+            elem.find("br").remove();
+        };
         var sanitize = function (val) {
             val = val.replace(/[<]br[^>]*[>]/gi,"").replace(/[&]nbsp[;]/gi," ");
             return val.toLowerCase();
@@ -91,18 +94,21 @@
             minChars: 1,
             source: function(term, suggest){
                 var term = $("<div>"+term+"</div>").text().toLowerCase(),
-                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='lemma')}}?form="+term;
+                    url = "{{corpus.allowed_search_route('lemma')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
 
             }
         });
+        $('td[contenteditable="true"]').on("keyup", function(){
+            clear_br($(this));
+        });
         $('td.token_pos').autoComplete({
             minChars: 1,
             source: function(term, suggest){
                 var term = term.toLowerCase(),
-                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='POS')}}?form="+term;
+                    url = "{{corpus.allowed_search_route('POS')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
@@ -113,7 +119,7 @@
             minChars: 1,
             source: function(term, suggest){
                 var term = sanitize(term),
-                    url = "{{url_for("main.corpus_allowed_values_api", corpus_id=corpus.id, allowed_type='morph')}}?form="+term;
+                    url = "{{corpus.allowed_search_route('morph')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
@@ -123,17 +129,21 @@
                 return '<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>';
             },
             onSelect: function(e, term, item){
-                $(this).val(item.data("value"));
+                var elem = $(this);
+                elem.val(item.data("value"));
+                clean_br(elem)
+
             }
         });
 
         $('.editable a.save').on("click", function (event) {
             event.preventDefault();
             var link = $(this),
-                parent = link.parents("tr.editable");
+                parent = link.parents("tr.editable"),
+                spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>');
 
-
-            link.text("(Saving) Save");
+            link.before(spinner);
+            //link.text("(Saving) Save");
             jQuery.ajax({
                 url: event.target.href,
                 type: 'POST',
@@ -141,20 +151,23 @@
                     lemma: parent.find(".token_lemma").text(),
                     POS: parent.find(".token_pos").text(),
                     morph: parent.find(".token_morph").text()
-                }}).done(function(response){
+                }
+            }).done(function(response){
                     if(response.similar.count > 0) {
                         link.parent().append("<a class='similar-link' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
                     }
                     parent.addClass("table-changed");
                     link.text("(Saved) Save");
-                }).fail(function(jqXHR){
-                    link.text("(" + jqXHR.responseJSON.message + ") Save");
-                    $.each(jqXHR.responseJSON.details, function(key, status) {
-                        var selector = ".token_"+key.toLowerCase();
-                        if (status === false) { parent.find(selector).addClass("table-danger"); }
-                        else { parent.find(selector).removeClass("table-danger");  }
-                    });
+            }).fail(function(jqXHR){
+                link.text("(" + jqXHR.responseJSON.message + ") Save");
+                $.each(jqXHR.responseJSON.details, function(key, status) {
+                    var selector = ".token_"+key.toLowerCase();
+                    if (status === false) { parent.find(selector).addClass("table-danger"); }
+                    else { parent.find(selector).removeClass("table-danger");  }
                 });
+            }).always(function() {
+                spinner.remove();
+            });
         });
     });
     </script>

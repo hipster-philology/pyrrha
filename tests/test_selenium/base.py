@@ -12,8 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from app import db, create_app
-from app.models.linguistic import CorpusUser, Corpus
-from tests.db_fixtures import add_corpus
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists
+from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
 LIVESERVER_TIMEOUT = 1
@@ -67,6 +67,14 @@ class TestBase(LiveServerTestCase):
     db = db
     AUTO_LOG_IN = True
 
+    def add_control_lists(self):
+        """ Loads a control list from a folder as a public one
+
+        :param folder_name: Name of the folder in app/configurations/langs
+        """
+        ControlLists.add_default_lists()
+        db.session.commit()
+
     def create_app(self):
         config_name = 'test'
         app = create_app(config_name)
@@ -110,6 +118,11 @@ consectetur
 adipiscing			
 elit			
 .			"""
+
+    def wait_until_shown(self, selector):
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, selector))
+        )
 
     def write_lorem_impsum_tokens(self):
         self.writeMultiline(
@@ -160,6 +173,23 @@ elit
         self.db.session.add(new_cu)
         self.db.session.commit()
         return new_cu
+
+    def addControlLists(self, cl_name, *args, **kwargs):
+        cl = add_control_lists(cl_name, db, *args, **kwargs)
+        self.driver.get(self.get_server_url())
+        if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
+            self.addControlListsUser(cl.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        for user_mail, owner in kwargs.get("for_users", []):
+            self.addControlListsUser(cl.name, user_mail, is_owner=owner)
+        return cl
+
+    def addControlListsUser(self, cl_name, email, is_owner=False):
+        cl = ControlLists.query.filter(ControlLists.name == cl_name).first()
+        user = User.query.filter(User.email == email).first()
+        new_clu = ControlListsUser(control_lists_id=cl.id, user_id=user.id, is_owner=is_owner)
+        self.db.session.add(new_clu)
+        self.db.session.commit()
+        return new_clu
 
     def add_user(self, first_name, last_name, is_admin=False):
         email = "%s.%s@ppa.fr" % (first_name, last_name)
@@ -214,7 +244,6 @@ class TokenEditBase(TestBase):
 
         def callback():
             # Show the dropdown
-            self.driver.get_screenshot_as_file("here2.png")
             self.driver.find_element_by_id("toggle_corpus_corpora").click()
             # Click on the edit link
             self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
@@ -311,7 +340,7 @@ class TokenEditBase(TestBase):
         return super(TokenEditBase, self).addCorpus(self.CORPUS, *args, **kwargs)
 
     def test_edit_token(self):
-        """ Test the edition of a token """
+        """ [Generic] Test the edition of a token """
         self.addCorpus(with_token=True, tokens_up_to=24)
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)

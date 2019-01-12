@@ -11,15 +11,15 @@
     <tbody>
         {%  if readable %}
             {%- for token in allowed_values %}
-            <tr>
-                <td>{{token.label}}</td>
-                <td>{{token.readable}}</td>
+            <tr class="allowed">
+                <td class="label">{{token.label}}</td>
+                <td class="readable">{{token.readable}}</td>
             </tr>
             {% endfor -%}
         {% else %}
             {%- for token in allowed_values %}
-            <tr>
-                <td>{{token.label}}</td>
+            <tr class="allowed">
+                <td class="label">{{token.label}}</td>
             </tr>
             {% endfor -%}
         {% endif %}

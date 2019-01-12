@@ -3,108 +3,157 @@
 {% block content %}
 <form method="POST" action="{{url_for("main.corpus_new")}}">
     <h1>Create a new corpus</h1>
-    <div class="form-group">
-        <label for="corpusName">Corpus Name</label>
-        <input name="name" type="text" class="form-control" id="corpusName" aria-describedby="corpusNameHelp" placeholder="Enter name of the corpus" value="{% if name %}{{name}}{%endif%}" />
-        <small id="corpusNameHelp" class="form-text text-muted">This should be a clear name</small>
-    </div>
-    <div class="form-group">
-        <label for="context_left">Left Context</label>
-        <input name="context_left" type="number" class="form-control" id="context_left" aria-describedby="context_leftHelp" value="{% if name %}{{context_left}}{%else%}3{%endif%}" />
-        <small id="context_leftHelp" class="form-text text-muted">Number of words to display on the left of the word to annotate</small>
-    </div>
-    <div class="form-group">
-        <label for="context_right">Right Context</label>
-        <input name="context_right" type="number" class="form-control" id="context_right" aria-describedby="context_rightHelp" value="{% if name %}{{context_right}}{%else%}3{%endif%}" />
-        <small id="context_rightHelp" class="form-text text-muted">Number of words to display on the right of the word to annotate</small>
-    </div>
-    <div class="form-group">
-        <label for="tokens">Tokens (as TSV content)</label>
-        <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
-        <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
-    </div>
-    {% if lemmatizers %}
-    <div class="form-group row">
-        <div class="col-md-3">
-            <label for="language-model" id="language-model-label" class="form-text text-muted">
-                Lemmatize
-            </label>
-            <small class="form-text text-muted">If your text is not lemmatized, select the language and click on lemmatize.</small>
+    <fieldset class="form-fieldset">
+        <legend>Metadata</legend>
+        <div class="form-group">
+            <label for="corpusName">Corpus Name</label>
+            <input name="name" type="text" class="form-control" id="corpusName" aria-describedby="corpusNameHelp" placeholder="Enter name of the corpus" value="{% if name %}{{name}}{%endif%}" />
+            <small id="corpusNameHelp" class="form-text text-muted">This should be a clear name</small>
         </div>
-        <div class="col-md-9">
-            <div class="input-group">
-              <select class="form-control" id="language-model">
-                  {%- for lang, address in lemmatizers %}
-                <option value="{{ address }}">{{ lang }}</option>
+        <div class="form-group">
+            <label for="context_left">Left Context</label>
+            <input name="context_left" type="number" class="form-control" id="context_left" aria-describedby="context_leftHelp" value="{% if name %}{{context_left}}{%else%}3{%endif%}" />
+            <small id="context_leftHelp" class="form-text text-muted">Number of words to display on the left of the word to annotate</small>
+        </div>
+        <div class="form-group">
+            <label for="context_right">Right Context</label>
+            <input name="context_right" type="number" class="form-control" id="context_right" aria-describedby="context_rightHelp" value="{% if name %}{{context_right}}{%else%}3{%endif%}" />
+            <small id="context_rightHelp" class="form-text text-muted">Number of words to display on the right of the word to annotate</small>
+        </div>
+    </fieldset>
+
+    <fieldset class="form-fieldset">
+        <legend>Data</legend>
+        <div class="form-group">
+            <label for="tokens">Tokens (as TSV content)</label>
+            <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
+            <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
+        </div>
+        {% if lemmatizers %}
+        <div class="form-group row">
+            <div class="col-md-3">
+                <label for="language-model" id="language-model-label" class="form-text text-muted">
+                    Lemmatize
+                </label>
+                <small class="form-text text-muted">If your text is not lemmatized, select the language and click on lemmatize.</small>
+            </div>
+            <div class="col-md-9">
+                <div class="input-group">
+                  <select class="form-control" id="language-model">
+                      {%- for lang, address in lemmatizers %}
+                    <option value="{{ address }}">{{ lang }}</option>
+                      {% endfor -%}
+                  </select>
+                  <div class="input-group-append">
+                    <button id="submit-model" class="btn btn-outline-secondary" type="button">Lemmatize</button>
+                  </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <div class="form-group row">
+            <div class="col-md-3">
+                <label for="tokenize" id="tokenize-label" class="form-text text-muted">
+                    Tokenize (beta)
+                </label>
+                <small class="form-text text-muted">If your text is not tokenized and you don't need to pre-lemmatize it, you can use this function</small>
+            </div>
+            <div class="col-md-6">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="hyphens-remove">
+                <label class="form-check-label" for="hyphens-remove">Remove hyphens (Be careful with this function)</label>
+              </div>
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" id="punct-keep" checked="true">
+                <label class="form-check-label" for="punct-keep">Keep punctuation</label>
+              </div>
+            </div>
+            <div class="col-md-3 text-right">
+                    <button id="tokenize" class="btn btn-outline-secondary" type="button">Tokenize</button>
+            </div>
+        </div>
+    </fieldset>
+    <fieldset class="form-fieldset">
+        <legend>Control Lists</legend>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" id="checkbox_reuse" type="radio" name="control_list" value="reuse" checked/>
+                    <label class="form-check-label hide-toggle" data-toggle="#use_public" for="checkbox_reuse" id="label_checkbox_reuse">Use an existing control list</label>
+                </div>
+
+                <p class="small text-muted">By using shared control lists, you ensure that you stick to accepted values in
+                    the academic community. You will be able to propose new values to the administrators of control lists.
+                </p>
+            </div>
+            <div class="col-md-9" id="use_public">
+              <select class="form-control" id="control_list_select" name="control_list_select">
+                  {%- for class, cls_ in public_control_lists.items() %}
+                      {%  if cls_ %}
+                        <optgroup label="{{ class }}">
+                            {% for cl in cls_ %}
+                                <option id="cl_opt_{{ cl.id }}" value="{{ cl.id }}">{{ cl.name }}</option>
+                            {%  endfor %}
+                        </optgroup>
+                      {%  endif %}
                   {% endfor -%}
               </select>
-              <div class="input-group-append">
-                <button id="submit-model" class="btn btn-outline-secondary" type="button">Lemmatize</button>
-              </div>
             </div>
         </div>
-    </div>
-    {% endif %}
-    <div class="form-group row">
-        <div class="col-md-3">
-            <label for="tokenize" id="tokenize-label" class="form-text text-muted">
-                Tokenize (beta)
-            </label>
-            <small class="form-text text-muted">If your text is not tokenized and you don't need to pre-lemmatize it, you can use this function</small>
-        </div>
-        <div class="col-md-6">
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="hyphens-remove">
-            <label class="form-check-label" for="hyphens-remove">Remove hyphens (Be careful with this function)</label>
-          </div>
-          <div class="form-check">
-            <input type="checkbox" class="form-check-input" id="punct-keep" checked="true">
-            <label class="form-check-label" for="punct-keep">Keep punctuation</label>
-          </div>
-        </div>
-        <div class="col-md-3 text-right">
-                <button id="tokenize" class="btn btn-outline-secondary" type="button">Tokenize</button>
-        </div>
-    </div>
-    <div class="form-group row">
-        <div  class="col-md-3"><label for="config" class="form-text text-muted">Load a configuration</label>
-            <small id="config_loader_help" class="form-text text-muted">If your language is part of the following option, we recommend using the default configuration</small>
-       </div>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" id="checkbox_create" type="radio" name="control_list" value="create"/>
+                    <label class="form-check-label hide-toggle" data-toggle="#write_your_own" for="checkbox_create" id="label_checkbox_create">Write your own</label>
+                </div>
+                <p class="small text-muted">In case the configurations provided do not fit your need, you can create your own configuration.
+                    You will be able to share it with collaborators, propose it as a canon setting for the whole base of users.
+                    You can also later add bibliographic information about your settings.
+                </p>
+            </div>
+            <div class="col-md-9" id="write_your_own" style="display: none;">
+                <div class="form-group row">
+                    <div  class="col-md-3"><label for="config" class="form-text text-muted">Load a configuration</label>
+                        <small id="config_loader_help" class="form-text text-muted">This helps kickstarting configuration</small>
+                   </div>
 
-        <div class="col-md-9">
-            <div class="input-group">
-              <select class="form-control" id="config">
-                <option value="old_french">Ancien Français</option>
-                <option value="lasla_la">Latin (LASLA)</option>
-              </select>
-              <div class="input-group-append">
-                <button id="get-config" class="btn btn-outline-secondary" type="button">Load</button>
-              </div>
-            </div>
-            <div>
-                <ul>
-                    <li style="display: none;" id="config_loader_lemma">Lemma loaded</li>
-                    <li style="display: none;" id="config_loader_POS">POS loaded</li>
-                    <li style="display: none;" id="config_loader_morph">Morphology loaded</li>
-                </ul>
+                    <div class="col-md-9">
+                        <div class="input-group">
+                          <select class="form-control" id="config">
+                            <option value="old_french">Ancien Français</option>
+                            <option value="lasla_la">Latin (LASLA)</option>
+                          </select>
+                          <div class="input-group-append">
+                            <button id="get-config" class="btn btn-outline-secondary" type="button">Load</button>
+                          </div>
+                        </div>
+                        <div>
+                            <ul>
+                                <li style="display: none;" id="config_loader_lemma">Lemma loaded</li>
+                                <li style="display: none;" id="config_loader_POS">POS loaded</li>
+                                <li style="display: none;" id="config_loader_morph">Morphology loaded</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="allowed_lemma">Allowed lemma</label>
+                    <small id="allowed_lemma_help" class="form-text text-muted">This should be formatted as a list of lemma separated by new line</small>
+                    <textarea aria-describedby="allowed_lemma_help" class="form-control" id="allowed_lemma" name="allowed_lemma">{% if allowed_lemma %}{{allowed_lemma}}{%endif%}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="allowed_POS">Allowed POS</label>
+                    <small id="allowed_POS_help" class="form-text text-muted">This should be formatted as a list of POS separated by comma <b>and no space</b></small>
+                    <textarea aria-describedby="allowed_POS_help" class="form-control" id="allowed_POS" name="allowed_POS">{% if allowed_POS %}{{allowed_POS}}{%endif%}</textarea>
+                </div>
+                <div class="form-group">
+                    <label for="allowed_morph">Allowed Morph (as TSV content)</label>
+                    <small id="allowed_morph_help" class="form-text text-muted">The TSV should at least have the header : label and could have a <code>readable</code> column for human</small>
+                    <textarea aria-describedby="allowed_morph_help" class="form-control" id="allowed_morph" name="allowed_morph">{% if allowed_morph %}{{allowed_morph}}{%endif%}</textarea>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="form-group">
-        <label for="allowed_lemma">Allowed lemma</label>
-        <small id="allowed_lemma_help" class="form-text text-muted">This should be formatted as a list of lemma separated by new line</small>
-        <textarea aria-describedby="allowed_lemma_help" class="form-control" id="allowed_lemma" name="allowed_lemma">{% if allowed_lemma %}{{allowed_lemma}}{%endif%}</textarea>
-    </div>
-    <div class="form-group">
-        <label for="allowed_POS">Allowed POS</label>
-        <small id="allowed_POS_help" class="form-text text-muted">This should be formatted as a list of POS separated by comma <b>and no space</b></small>
-        <textarea aria-describedby="allowed_POS_help" class="form-control" id="allowed_POS" name="allowed_POS">{% if allowed_POS %}{{allowed_POS}}{%endif%}</textarea>
-    </div>
-    <div class="form-group">
-        <label for="allowed_morph">Allowed Morph (as TSV content)</label>
-        <small id="allowed_morph_help" class="form-text text-muted">The TSV should at least have the header : label and could have a <code>readable</code> column for human</small>
-        <textarea aria-describedby="allowed_morph_help" class="form-control" id="allowed_morph" name="allowed_morph">{% if allowed_morph %}{{allowed_morph}}{%endif%}</textarea>
-    </div>
+    </fieldset>
     <button type="submit" id="submit" class="btn btn-primary">Submit</button>
 </form>
 <script type="text/javascript">
@@ -117,7 +166,7 @@ $(document).ready(function() {
             uri,
             {
                 data: {data: text_data.val()},
-                method: "POST",
+                method: "POST"
 
             }
         ).done(function(response) {
@@ -144,9 +193,10 @@ $(document).ready(function() {
        text = text.split(/\s+/);
 
        var output = "form\tlemma\tPOS\tmorph\n";
-       console.log(text);
-       for (var token_index = 1; token_index < text.length; token_index++) {
-            output += text[token_index] + "\t\t\t\n";
+       for (var token_index = 0; token_index < text.length; token_index++) {
+           if (text[token_index]) {
+               output += text[token_index] + "\t\t\t\n";
+           }
        }
        $("#tokens").val(output);
     });
@@ -173,6 +223,16 @@ $(document).ready(function() {
                     }).fail(function() {
                         alert("Something went wrong...");
                     });
+    });
+    var toggle = function(element, fn) {
+        console.log(element, fn);
+        $($(element).attr("data-toggle"))[fn]();
+    };
+    $(".hide-toggle").on("click", function(e) {
+        $(".hide-toggle").each(function(index, el) {
+            toggle(el, "hide");
+        });
+        toggle(this, "show");
     });
 });
 </script>

@@ -1,5 +1,5 @@
 from .base import TestModels
-from app.models.linguistic import AllowedMorph
+from app.models import AllowedMorph
 
 
 class TestAllowedMorph(TestModels):

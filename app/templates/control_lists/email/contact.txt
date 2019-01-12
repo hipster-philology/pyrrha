@@ -1,0 +1,10 @@
+{{ message }}
+
+---------------------------
+
+This email has been sent by {{user.first_name}} {{user.last_name}}  <{{user.email}}> to every administrators of the
+control list {{control_list_title}} ( {{url}} )
+
+---------------------------
+
+Note: replies to this email address are not monitored.

@@ -1,7 +1,7 @@
 from flask import url_for
 
 from app.models import User, Corpus
-from app.models.linguistic import CorpusUser
+from app.models import CorpusUser
 from tests.test_selenium.base import TestBase
 
 

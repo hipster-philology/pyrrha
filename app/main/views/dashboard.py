@@ -3,8 +3,7 @@ from flask_login import login_required, current_user
 
 from app import db
 from app.main.views.utils import render_template_with_nav_info
-from app.models import Corpus, User, Role
-from app.models.linguistic import CorpusUser
+from app.models import Corpus, User, Role, ControlLists, CorpusUser, ControlListsUser
 from .. import main
 
 
@@ -14,13 +13,73 @@ def dashboard():
     """admin dashboard page."""
     if current_user.is_admin():
         corpora = db.session.query(Corpus).all()
+        control_lists = db.session.query(ControlLists).all()
     else:
         corpora = Corpus.for_user(current_user)
+        control_lists = ControlLists.for_user(current_user)
     return render_template_with_nav_info(
         'main/dashboard.html',
         current_user=current_user,
-        dashboard_corpora=corpora
+        dashboard_corpora=corpora,
+        dashboard_control_lists=control_lists
     )
+
+
+@main.route('/dashboard/manage-control-lists-users/<cl_id>', methods=['GET', 'POST'])
+@login_required
+def manage_control_lists_user(cl_id):
+    """ Save or display corpus accesses
+
+    :param cl_id: ID of the control list
+     """
+    control_list = ControlLists.query.filter(ControlLists.id == cl_id).first()
+
+    can_read = current_user.is_admin() or control_list.has_access(current_user)
+    can_edit = current_user.is_admin() or control_list.is_owned_by(current_user)
+
+    if can_read:
+        # only owners can give/remove access & promote a user to owner
+        if request.method == "POST" and can_edit:
+            users = [
+                User.query.filter(User.id == user_id).first()
+                for user_id in [int(u) for u in request.form.getlist("user_id")]
+            ]
+            ownerships = [int(u) for u in request.form.getlist("ownership") if u.isdigit()]
+
+            # previous rights
+            prev_cu = ControlListsUser.query.filter(ControlListsUser.control_lists_id == cl_id).all()
+
+            # should not be able to delete the last owner
+            if len(prev_cu) > 0 and True not in set([user.id in ownerships for user in users]):
+                abort(403)
+
+            # update corpus users
+            try:
+                for cu in prev_cu:
+                    db.session.delete(cu)
+                for cu in [
+                    ControlListsUser(control_lists_id=control_list.id, user_id=user.id, is_owner=user.id in ownerships)
+                    for user in users
+                ]:
+                    db.session.add(cu)
+                db.session.commit()
+                flash('Modifications have been saved.', 'success')
+            except Exception as e:
+                db.session.rollback()
+                raise e
+            return redirect(url_for('main.manage_control_lists_user', cl_id=cl_id))
+
+        else:
+            # GET method
+            users = User.query.all()
+            roles = Role.query.all()
+            return render_template_with_nav_info(
+                'main/dashboard_manage_control_lists_users.html',
+                control_list=control_list, current_user=current_user, users=users, roles=roles,
+                can_read=can_read, can_edit=can_edit
+            )
+    else:
+        return abort(403)
 
 
 @main.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
@@ -30,9 +89,13 @@ def manage_corpus_users(corpus_id):
          Save or display corpus accesses
      """
     corpus = Corpus.query.filter(Corpus.id == corpus_id).first()
-    if corpus.has_access(current_user) or current_user.is_admin():
+
+    can_read = corpus.has_access(current_user)
+    can_edit = current_user.is_admin() or corpus.is_owned_by(current_user)
+
+    if can_read is True:
         # only owners can give/remove access & promote a user to owner
-        if request.method == "POST" and (corpus.is_owned_by(current_user) or current_user.is_admin()):
+        if request.method == "POST" and can_edit:
             users = [
                 User.query.filter(User.id == user_id).first()
                 for user_id in [int(u) for u in request.form.getlist("user_id")]
@@ -65,7 +128,8 @@ def manage_corpus_users(corpus_id):
             roles = Role.query.all()
             return render_template_with_nav_info(
                 'main/dashboard_manage_corpus_users.html',
-                corpus=corpus, current_user=current_user, users=users, roles=roles
+                corpus=corpus, current_user=current_user, users=users, roles=roles,
+                can_read=can_read, can_edit=can_edit
             )
     else:
         return abort(403)

@@ -1,4 +1,6 @@
 {% extends 'layouts/base.html' %}
+{% import 'macros/utils.html' as utils %}
+
 
 {% block page_title %}Control List {{control_list.name}}{% endblock %}
 
@@ -7,6 +9,7 @@
         <h1>{{control_list.name}}</h1>
         {%- if is_owner %}
             <p class="text-info">You are an owner of this control list</p>
+            <p>{{ utils.status_badge(control_list.str_public) }}</p>
             <dl>
                 <dt>Owners</dt>
                 {% for owner_first_name, owner_last_name, owner_id, owner_mail in control_list.owners %}
@@ -14,5 +17,18 @@
                 {% endfor %}
             </dl>
         {% endif -%}
+        {%- if can_edit %}
+            <h2>Rewrite</h2>
+            <p class="text-muted">The following pages are made to completely rewrite control lists. Use with caution !</p>
+            <p>
+                <a class="btn btn-warning settings-lemma" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='lemma')}}">Rewrite Lemma List</a>
+                <a class="btn btn-warning settings-POS" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='POS')}}">Rewrite POS List</a>
+                <a class="btn btn-warning settings-morph" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='morph')}}">Rewrite Morphology List</a>
+            </p>
+        {% endif -%}
+        {% if current_user.is_admin() and control_list.str_public != 'public' %}
+            <h2>DANGER ZONE</h2>
+            <p><a class="btn btn-danger" href="{{url_for('.go_public', control_list_id=control_list.id)}}">Make public</a></p>
+        {%  endif %}
     </div>
 {% endblock %}

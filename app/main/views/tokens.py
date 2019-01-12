@@ -1,12 +1,11 @@
-import pprint
-from flask import request, jsonify, url_for, abort
+from flask import request, jsonify, url_for, abort, render_template
 from flask_login import current_user, login_required
 from sqlalchemy.sql.elements import or_, and_
 
 from .utils import render_template_with_nav_info, request_wants_json
 from .. import main
 from ...models import WordToken, Corpus, ChangeRecord
-from ...utils.forms import string_to_none, strip_or_none
+from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
 
 
@@ -178,6 +177,15 @@ def tokens_export(corpus_id):
                        "Content-Type": "text/tab-separated-values; charset= utf-8",
                        "Content-Disposition": 'attachment; filename="pyrrha-correction.tsv"'
                    }
+    elif format in ["tei", "tei-geste"]:
+        tokens = corpus.get_tokens().all()
+        base = tokens[0].id - 1
+        #if format == "tei-geste": Right now only 1 format
+        response = render_template("tei/geste.xml", base=base, tokens=tokens)
+        return response, 200, {
+           "Content-Type": "text/xml; charset= utf-8",
+           "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
+        }
 
     return render_template_with_nav_info(
         template="main/tokens_view.html",
@@ -223,8 +231,7 @@ def tokens_search_through_fields(corpus_id):
         if value is None:
             fields[name] = ""
         else:
-            value = value.replace('\\|', '¤$¤')
-            fields[name] = [v.replace('¤$¤', '|') for v in value.split('|')]
+            fields[name] = prepare_search_string(value)
         kargs[name] = value
 
     # all search combinations
@@ -239,44 +246,11 @@ def tokens_search_through_fields(corpus_id):
     value_filters = []
     # for each branch filter (= OR clauses if any)
     for search_branch in search_branches:
-
         branch_filters = [WordToken.corpus == corpus_id]
+
         # for each field (lemma, pos, form, morph)
         for name, value in search_branch.items():
-
-            if len(value) > 0:
-                value = value.replace(" ", "")
-                # escape search operators
-                value = value.replace('%', '\\%')
-                value = value.replace('\\*', '¤$¤')
-                value = value.replace('\\!', '¤$$¤')
-
-                value = string_to_none(value)
-                field = getattr(WordToken, name)
-                # distinguish LIKE from EQ
-                if value is not None and "*" in value:
-                    value = value.replace("*", "%")
-                    # unescape '\*'
-                    value = value.replace('¤$¤', '*')
-
-                    if value.startswith("!") and len(value) > 1:
-                        value = value[1:]
-                        branch_filters.append(field.notlike(value, escape='\\'))
-                    else:
-                        # unescape '\!'
-                        value = value.replace('¤$$¤', '!')
-                        branch_filters.append(field.like(value, escape='\\'))
-                else:
-                    # unescape '\*'
-                    value = value.replace('¤$¤', '*')
-
-                    if value is not None and value.startswith("!") and len(value) > 1:
-                        value = value[1:]
-                        branch_filters.append(field != value)
-                    else:
-                        # unescape '\!'
-                        value = value.replace('¤$$¤', '!')
-                        branch_filters.append(field == value)
+            branch_filters.extend(column_search_filter(getattr(WordToken, name), value))
 
         value_filters.append(branch_filters)
 
