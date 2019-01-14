@@ -119,12 +119,13 @@ def add_corpus(
             add = DB_CORPORA[corpus]["tokens"]
         index = 0
         for real_index, x in enumerate(add):
-            if real_index > 0 and real_index % 2 == 0:
+            if with_delimiter and real_index > 0 and real_index % 2 == 0:
                 db.session.add(WordToken(corpus=corpus_object.id, form=DELIMITER, order_id=index))
                 index += 1
 
             z = copy.deepcopy(x)
-            z.order_id = index
+            if with_delimiter:
+                z.order_id = index
             if hasattr(z, "label_uniform"):
                 z.label_uniform = unidecode.unidecode(z.label_uniform)
             db.session.add(z)
