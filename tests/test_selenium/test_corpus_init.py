@@ -21,6 +21,7 @@ class TestCorpusRegistration(TestBase):
         self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
+
         self.driver.implicitly_wait(15)
         self.assertIn(
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
@@ -32,6 +33,8 @@ class TestCorpusRegistration(TestBase):
             "There should be one well named corpus"
         )
         corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        self.assertEqual(corpus.delimiter_token, None, "We did not set a delimiter token")
+
         tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
         self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
 
@@ -496,3 +499,31 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             ]),
             "Creating a corpus without TSV input fails."
         )
+
+    def test_registration_with_sep_token(self):
+        """ Test that a user can create a corpus with a delimiter token
+        """
+
+        # Click register menu link
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Fill in registration form
+        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver.find_element_by_id("sep_token").send_keys("____")
+        self.driver.find_element_by_id("label_checkbox_create").click()
+        self.driver.find_element_by_id("submit").click()
+
+        self.driver.implicitly_wait(15)
+        self.assertIn(
+            url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
+            "Result page is the corpus new page"
+        )
+
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        self.assertEqual(corpus.delimiter_token, "____", "There should be a delimiter token")

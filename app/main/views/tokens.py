@@ -165,7 +165,7 @@ def tokens_export(corpus_id):
     """
     corpus = Corpus.query.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
-        abort(403)
+        return abort(403)
     format = request.args.get("format")
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
@@ -181,7 +181,7 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         #if format == "tei-geste": Right now only 1 format
-        response = render_template("tei/geste.xml", base=base, tokens=tokens)
+        response = render_template("tei/geste.xml", base=base, tokens=tokens, delimiter=corpus.delimiter_token)
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
            "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'

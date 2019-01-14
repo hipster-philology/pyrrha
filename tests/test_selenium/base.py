@@ -89,6 +89,15 @@ class TestBase(LiveServerTestCase):
             _force_authenticated(app)
         return app
 
+    def create_driver(self, options=None):
+        if not options:
+            options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        self.driver = webdriver.Chrome(options=options)
+        self.driver.set_window_size(1920, 1080)
+        return self.driver
+
     def setUp(self):
         """Setup the test driver and create test users"""
         db.session.commit()
@@ -100,11 +109,7 @@ class TestBase(LiveServerTestCase):
         Role.add_default_roles()
         User.add_default_users()
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--disable-gpu")
-        self.driver = webdriver.Chrome(options=options)
-        self.driver.set_window_size(1920, 1080)  # ??
+        self.create_driver()
         self.driver.get(self.get_server_url())
 
     LOREM_IPSUM = """form	lemma	POS	morph

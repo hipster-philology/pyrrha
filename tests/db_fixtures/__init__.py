@@ -2,6 +2,7 @@ from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, 
 from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph, FCL
 import copy
 import unidecode
+from app.models.corpus import WordToken
 
 
 DB_CORPORA = {
@@ -78,6 +79,7 @@ def add_corpus(
         with_allowed_lemma=False, partial_allowed_lemma=False,
         with_allowed_pos=False, partial_allowed_pos=False,
         with_allowed_morph=False, partial_allowed_morph=False,
+        with_delimiter=False,
         **nobodycares
 ):
     """ Add the Wauchier Corpus to fixtures
@@ -91,6 +93,7 @@ def add_corpus(
     :param partial_allowed_pos: Restrict to first three allowed POS (ADJqua, NOMpro, CONcoo)
     :param with_allowed_morph: Add allowed Morph to db
     :param partial_allowed_morph: Restrict to first few Morphs
+    :param with_delimiter: Add delimiters to the corpus
     """
     add_control_lists(
         corpus, db,
@@ -102,6 +105,11 @@ def add_corpus(
         partial_allowed_morph=partial_allowed_morph
     )
     corpus_object = copy.deepcopy(DB_CORPORA[corpus]["corpus"])
+    DELIMITER = "____"
+
+    if with_delimiter:
+        corpus_object.delimiter_token = DELIMITER
+
     db.session.add(corpus_object)
     db.session.flush()
     if with_token is True:
@@ -109,10 +117,19 @@ def add_corpus(
             add = DB_CORPORA[corpus]["tokens"][:tokens_up_to]
         else:
             add = DB_CORPORA[corpus]["tokens"]
-        for x in add:
+        index = 0
+        for real_index, x in enumerate(add):
+            if with_delimiter and real_index > 0 and real_index % 2 == 0:
+                db.session.add(WordToken(corpus=corpus_object.id, form=DELIMITER, order_id=index))
+                index += 1
+
             z = copy.deepcopy(x)
+            if with_delimiter:
+                z.order_id = index
             if hasattr(z, "label_uniform"):
                 z.label_uniform = unidecode.unidecode(z.label_uniform)
             db.session.add(z)
+            index += 1
+
     db.session.commit()
     return corpus_object

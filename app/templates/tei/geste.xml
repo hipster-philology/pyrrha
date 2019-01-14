@@ -13,7 +13,11 @@
         <body xml:lang="fro">
             <div>
                 <ab>
-                {% for token in tokens %}<w xml:id="t{{token.id - base}}" n="{{token.order_id}}" lemma="{{token.lemma}}" type="POS={{token.POS}}{% if token.morph %}|{{token.morph}}{% endif %}" >{{token.form}}</w>
+                {% for token in tokens %}{%- if token.form == delimiter %}
+                </ab>
+                <ab>{%- else %}
+                    <w xml:id="t{{token.id - base}}" n="{{token.order_id}}" lemma="{{token.lemma}}"
+                       type="POS={{token.POS}}{% if token.morph and token.morph != "None" %}|{{token.morph}}{% endif %}" >{{token.form}}</w>{% endif -%}
                 {% endfor %}</ab>
             </div>
        </body>

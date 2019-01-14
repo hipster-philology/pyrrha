@@ -48,7 +48,8 @@ def corpus_new():
             form_kwargs = {
                 "name": request.form.get("name"),
                 "context_left": request.form.get("context_left", None),
-                "context_right": request.form.get("context_right", None)
+                "context_right": request.form.get("context_right", None),
+                "delimiter_token": strip_or_none(request.form.get("sep_token", "")) or None
             }
 
             if request.form.get("control_list") == "reuse":
