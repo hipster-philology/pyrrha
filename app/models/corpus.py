@@ -57,7 +57,7 @@ class Corpus(db.Model):
     context_left = db.Column(db.SmallInteger, default=3)
     context_right = db.Column(db.SmallInteger, default=3)
     control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
-    passage_token = db.Column(db.String(12), default=None)
+    delimiter_token = db.Column(db.String(12), default=None)
 
     control_lists = db.relationship("ControlLists")
     users = association_proxy('corpus_users', 'user')
@@ -197,7 +197,7 @@ class Corpus(db.Model):
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
             context_left=None, context_right=None, control_list=None,
-            passage_token=None
+            delimiter_token=None
     ):
         """ Create a corpus
 
@@ -209,7 +209,7 @@ class Corpus(db.Model):
         :param context_left: Number of tokens to keep on the left
         :param context_right: Number of tokens to keep on the right
         :param control_list: Control list to reuse
-        :param passage_token: Token used for separating passages
+        :param delimiter_token: Token used for separating passages
         :return: Created Corpus
         :rtype: Corpus
         """
@@ -227,7 +227,7 @@ class Corpus(db.Model):
             if allowed_morph is not None and len(allowed_morph) > 0:
                 AllowedMorph.add_batch(allowed_morph, control_list.id)
 
-        c = Corpus(name=name, control_lists_id=control_list.id, passage_token=passage_token)
+        c = Corpus(name=name, control_lists_id=control_list.id, delimiter_token=delimiter_token)
         db.session.add(c)
         db.session.flush()
 

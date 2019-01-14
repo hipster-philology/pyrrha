@@ -20,6 +20,11 @@
             <input name="context_right" type="number" class="form-control" id="context_right" aria-describedby="context_rightHelp" value="{% if name %}{{context_right}}{%else%}3{%endif%}" />
             <small id="context_rightHelp" class="form-text text-muted">Number of words to display on the right of the word to annotate</small>
         </div>
+        <div class="form-group">
+            <label for="sep_token">Delimiter token</label>
+            <input name="sep_token" type="text" class="form-control" id="sep_token" aria-describedby="sep_tokenHelp" value="{% if name %}{{sep_token}}{%endif%}" />
+            <small id="sep_tokenHelp" class="form-text text-muted">[Optional] A specific token that is used as a delimiter between passages.</small>
+        </div>
     </fieldset>
 
     <fieldset class="form-fieldset">
