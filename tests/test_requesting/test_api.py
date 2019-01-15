@@ -46,7 +46,7 @@ class TestAPI(TestBase):
         self.addCorpus(corpus="wauchier", with_token=True)
         correction = json.loads(
             self.client.post(
-                "/corpus/1/tokens/edit/2",
+                "/corpus/1/tokens/correct/2",
                 data={"POS": "ADJqua", "lemma": "martin", "morph": "None"}
             ).data.decode()
         )
