@@ -7,11 +7,14 @@ Pyrrha
 Pyrrha is a simple Python Flask WebApp to fasten the post-correction
 of lemmatized and morpho-syntactic tagged corpora.
 
-![Pandora Post-Correction Editor](./readme.png)
+# Credits and citation
 
-![Pandora Post-Correction Editor](./history.png)
+This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
 
-![Pandora Post-Correction Editor](./batch_changes.png)
+The web application and its maintenance is done by Julien Pilla (@MrGecko) and Thibault Clérice (@ponteineptique). To learn how to cite this repository, go check [our releases](https://github.com/hipster-philology/pyrrha/releases).
+
+## Demo
+![Pandora Post-Correction Editor](./demo.gif)
 
 ## Install
 

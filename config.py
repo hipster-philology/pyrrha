@@ -64,7 +64,7 @@ class DevelopmentConfig(Config):
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
     LEMMATIZERS = [
-        ("Ancien Français", "http://localhost:5000/models-fro")
+        ("Ancien Français", "http://localhost:5001/")
     ]
 
 
