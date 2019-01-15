@@ -9,9 +9,9 @@ of lemmatized and morpho-syntactic tagged corpora.
 
 # Credits and citation
 
-This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
+This web application and its maintenance is done by Julien Pilla (@MrGecko) and Thibault Clérice (@ponteineptique). To learn **how to cite** this repository, go check [our releases](https://github.com/hipster-philology/pyrrha/releases).
 
-The web application and its maintenance is done by Julien Pilla (@MrGecko) and Thibault Clérice (@ponteineptique). To learn how to cite this repository, go check [our releases](https://github.com/hipster-philology/pyrrha/releases).
+This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
 
 ## Demo
 ![Pandora Post-Correction Editor](./demo.gif)
@@ -21,7 +21,7 @@ The web application and its maintenance is done by Julien Pilla (@MrGecko) and T
 Start by cloning the repository, and moving inside the created folder
 
 ```bash
-git clone https://github.com/hipster-philology/pandora-postcorrect-app.git
+git clone https://github.com/hipster-philology/pyrrha.git
 cd pandora-postcorrect-app/
 ```
 
