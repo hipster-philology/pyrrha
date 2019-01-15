@@ -9,7 +9,7 @@
         <div>
             <h3>Save checked similar lemma</h3>
             <p>
-                <a class="btn btn-primary save-lemma" href="{{url_for("main.tokens_edit_from_record", corpus_id=corpus.id, record_id=record.id)}}">Save</a> -
+                <a class="btn btn-primary save-lemma" href="{{url_for("main.tokens_correct_from_record", corpus_id=corpus.id, record_id=record.id)}}">Save</a> -
                 <a class="btn btn-secondary select-lemma" href="#">Select All</a> -
                 <a class="btn btn-secondary deselect-lemma" href="#">Deselect All</a>
             </p>
@@ -18,23 +18,36 @@
 
     <table class="table table-bordered">
         <thead>
-            <tr><th>Id</th><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
-                {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th></tr>
+        <tr><th>Id</th><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+                {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th>{% if not checkbox %}<th class="dd">+</th>{% endif %}</tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
                 <tr class="editable{% if token.changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
-                    <td class="tok-anc"><a href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
+                    <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
-                    <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}
-                    </td>
+                    <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_pos"{% endif %}>{{token.POS}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
                     <td class="small">{{token_context(token)}}</td>
-                    {%- if similar %}<td><a class="similar-link" href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}"><span class="badge badge-secondary">{{token.similar}}</span></a></td>{% endif -%}
-                    {%- if checkbox %}<td><input class="form-check word-token" type="checkbox" checked="checked" value="{{token.id}}" /></td>
-                    {% else%}<td><a class="save" href="{{url_for("main.tokens_edit_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
-                    {% endif%}
+                    {%- if similar -%}
+                        <td><a tabindex="-1" class="similar-link" href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}"><span class="badge badge-secondary">{{token.similar}}</span></a></td>
+                    {%- endif -%}
+                    {%- if checkbox -%}
+                        <td><input class="form-check word-token" type="checkbox" checked="checked" value="{{token.id}}" /></td>
+                    {%- else -%}
+                        <td class="save"><a class="save" href="{{url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
+                        <td class="dd">
+                          <a id="dd_t{{token.order_id}}" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="More options" tabindex="-1">
+                            <i class="fa fa-plus-square"></i>
+                          </a>
+                          <div class="dropdown-menu" aria-labelledby="dd_t{{token.order_id}}">
+                            <a class="dropdown-item" href="{{ url_for('main.tokens_edit_form', corpus_id=corpus.id, token_id=token.id) }}">Edit the form</a>
+                            <a class="dropdown-item" href="{{ url_for('main.tokens_del_row', corpus_id=corpus.id, token_id=token.id) }}">Delete the row</a>
+                            <a class="dropdown-item" href="{{ url_for('main.tokens_add_row', corpus_id=corpus.id, token_id=token.id) }}">Add a token after this one</a>
+                          </div>
+                        </td>
+                    {%- endif -%}
                 </tr>
             {% endfor %}
         </tbody>
@@ -90,10 +103,13 @@
             };
             return original.apply(this, arguments);
         };
+        var cleanUp = function(string) {
+            return $("<div>"+string+"</div>").text().toLowerCase().trim()
+        };
         $('td.token_lemma').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = $("<div>"+term+"</div>").text().toLowerCase(),
+                var term = cleanUp(term),
                     url = "{{corpus.allowed_search_route('lemma')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
@@ -107,7 +123,7 @@
         $('td.token_pos').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = term.toLowerCase(),
+                var term = cleanUp(term),
                     url = "{{corpus.allowed_search_route('POS')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
@@ -118,7 +134,7 @@
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = sanitize(term),
+                var term = cleanUp(term),
                     url = "{{corpus.allowed_search_route('morph')}}?form="+term;
                 $.getJSON(url, function(data) {
                     suggest(data);
@@ -131,7 +147,7 @@
             onSelect: function(e, term, item){
                 var elem = $(this);
                 elem.val(item.data("value"));
-                clean_br(elem)
+                clear_br(elem)
 
             }
         });

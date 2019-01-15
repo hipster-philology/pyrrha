@@ -1,6 +1,6 @@
 from tests.test_selenium.base import TestBase
 from collections import namedtuple
-from ..db_fixtures.wauchier import WauchierAllowedPOS, WauchierAllowedMorph
+from tests.db_fixtures.wauchier import WauchierAllowedPOS, WauchierAllowedMorph
 
 
 User = namedtuple("User", ["user", "owner"])

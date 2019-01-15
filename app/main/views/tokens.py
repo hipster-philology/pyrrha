@@ -1,27 +1,30 @@
-from flask import request, jsonify, url_for, abort, render_template
+from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash
 from flask_login import current_user, login_required
 from sqlalchemy.sql.elements import or_, and_
+import math
 
-from .utils import render_template_with_nav_info, request_wants_json
+from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
-from ...models import WordToken, Corpus, ChangeRecord
+from ...models import WordToken, Corpus, ChangeRecord, TokenHistory
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/edit')
+@main.route('/corpus/<int:corpus_id>/tokens/correct')
 @login_required
-def tokens_edit(corpus_id):
+@requires_corpus_access("corpus_id")
+def tokens_correct(corpus_id):
     """ Page to edit word tokens
 
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    if not corpus.has_access(current_user):
-        abort(403)
     tokens = corpus\
         .get_tokens()\
-        .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
+        .paginate(
+            page=int_or(request.args.get("page"), 1),
+            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        )
 
     maps = {}
     for token in tokens.items:
@@ -31,25 +34,27 @@ def tokens_edit(corpus_id):
                 WordToken.similar_as(corpus.id, *key)
         token.similar = maps[key]
 
-    return render_template_with_nav_info('main/tokens_edit.html', corpus=corpus, tokens=tokens)
+    return render_template_with_nav_info('main/tokens_correct.html', corpus=corpus, tokens=tokens)
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/edit')
+@main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/correct')
 @login_required
-def tokens_edit_unallowed(corpus_id, allowed_type):
+@requires_corpus_access("corpus_id")
+def tokens_correct_unallowed(corpus_id, allowed_type):
     """ Page to edit tokens that have unallowed values
 
     :param corpus_id: Id of the corpus
     :param allowed_type: Type of allowed value to check agains (lemma, POS, morph)
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    if not corpus.has_access(current_user):
-        abort(403)
     tokens = corpus\
         .get_unallowed(allowed_type)\
-        .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
+        .paginate(
+            page=int_or(request.args.get("page"), 1),
+            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        )
     return render_template_with_nav_info(
-        'main/tokens_edit_unallowed.html',
+        'main/tokens_correct_unallowed.html',
         corpus=corpus,
         tokens=tokens,
         allowed_type=allowed_type
@@ -58,6 +63,7 @@ def tokens_edit_unallowed(corpus_id, allowed_type):
 
 @main.route('/corpus/<int:corpus_id>/tokens/changes/similar/<int:record_id>')
 @login_required
+@requires_corpus_access("corpus_id")
 def tokens_similar_to_record(corpus_id, record_id):
     """ Find similar tokens to old values behind a changerecord
 
@@ -65,8 +71,6 @@ def tokens_similar_to_record(corpus_id, record_id):
     :param record_id: Id of the change record
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    if not corpus.has_access(current_user):
-        abort(403)
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
     tokens = WordToken.get_similar_to_record(change_record=record).paginate(per_page=1000)
     return render_template_with_nav_info(
@@ -77,6 +81,7 @@ def tokens_similar_to_record(corpus_id, record_id):
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:token_id>')
 @login_required
+@requires_corpus_access("corpus_id")
 def tokens_similar_to_token(corpus_id, token_id):
     """ Find tokens similar to a given tokens
 
@@ -88,8 +93,6 @@ def tokens_similar_to_token(corpus_id, token_id):
     """
     mode = request.args.get("mode", "partial")
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    if not corpus.has_access(current_user):
-        abort(403)
     token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
     tokens = WordToken.get_nearly_similar_to(token, mode=mode)
     if request_wants_json():
@@ -105,17 +108,16 @@ def tokens_similar_to_token(corpus_id, token_id):
     )
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["POST"])
+@main.route('/corpus/<int:corpus_id>/tokens/correct/<int:token_id>', methods=["POST"])
 @login_required
-def tokens_edit_single(corpus_id, token_id):
+@requires_corpus_access("corpus_id")
+def tokens_correct_single(corpus_id, token_id):
     """ Edit a single token values
 
     :param corpus_id: Id of the corpus
     :param token_id: Id of the token
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-    if not corpus.has_access(current_user):
-        abort(403)
     try:
         token, change_record = WordToken.update(
             user_id=current_user.id,
@@ -142,15 +144,14 @@ def tokens_edit_single(corpus_id, token_id):
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>/update', methods=["POST"])
 @login_required
-def tokens_edit_from_record(corpus_id, record_id):
+@requires_corpus_access("corpus_id")
+def tokens_correct_from_record(corpus_id, record_id):
     """ Edit posted word_tokens's ids according to a given recorded changes
 
     :param corpus_id: Id of the record
     :param record_id: Id of the ChangeRecord
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
-    if not corpus.has_access(current_user):
-        abort(403)
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
     changed = record.apply_changes_to(user_id=current_user.id, token_ids=request.json.get("word_tokens"))
     return jsonify([word_token.to_dict() for word_token in changed])
@@ -158,14 +159,13 @@ def tokens_edit_from_record(corpus_id, record_id):
 
 @main.route('/corpus/<int:corpus_id>/tokens')
 @login_required
+@requires_corpus_access("corpus_id")
 def tokens_export(corpus_id):
     """ Export tokens to CSV
 
     :param corpus_id: ID of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-    if not corpus.has_access(current_user):
-        return abort(403)
     format = request.args.get("format")
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
@@ -181,7 +181,9 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         #if format == "tei-geste": Right now only 1 format
-        response = render_template("tei/geste.xml", base=base, tokens=tokens, delimiter=corpus.delimiter_token)
+        response = render_template("tei/geste.xml", base=base, tokens=tokens,
+                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                                   delimiter=corpus.delimiter_token)
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
            "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
@@ -195,20 +197,20 @@ def tokens_export(corpus_id):
 
 @main.route('/corpus/get/<int:corpus_id>/history')
 @login_required
+@requires_corpus_access("corpus_id")
 def tokens_history(corpus_id):
     """ History of changes in the corpus
 
     :param corpus_id: ID of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-    if not corpus.has_access(current_user):
-        abort(403)
     tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 20))
     return render_template_with_nav_info('main/tokens_history.html', corpus=corpus, tokens=tokens)
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/search', methods=["POST", "GET"])
 @login_required
+@requires_corpus_access("corpus_id")
 def tokens_search_through_fields(corpus_id):
     """ Page to search tokens through fields (Form, POS, Lemma, Morph) within a corpus
 
@@ -270,3 +272,99 @@ def tokens_search_through_fields(corpus_id):
 
     return render_template_with_nav_info('main/tokens_search_through_fields.html',
                                          corpus=corpus, tokens=tokens, **kargs)
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["GET", "POST"])
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_edit_form(corpus_id, token_id):
+    """ Page to edit the form of a token
+
+    :param corpus_id: Id of the corpus
+    :param token_id: Id of the token
+    """
+    corpus = Corpus.query.get_or_404(corpus_id)
+    token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
+    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
+    if request.method == "POST" and request.form.get("form"):
+        token.edit_form(request.form.get("form"), corpus=corpus, user=current_user)
+        flash("The form has been updated.", category="success")
+        return redirect(go_back_url)
+    return render_template_with_nav_info(
+        "main/tokens_edit_form.html", corpus=corpus, token=token,
+        go_back=go_back_url
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/remove/<int:token_id>', methods=["GET", "POST"])
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_del_row(corpus_id, token_id):
+    """
+
+    :param corpus_id: Id of the corpus
+    :param token_id: Id of the token
+    :return:
+    """
+    corpus = Corpus.query.get_or_404(corpus_id)
+    token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
+    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
+
+    if request.method == "POST":
+        if request.form.get("form") == token.form:
+            token.del_form(corpus=corpus, user=current_user)
+            flash("The form has been deleted.", category="success")
+        else:
+            flash("The form was not matched", category="error")
+        return redirect(go_back_url)
+
+    return render_template_with_nav_info(
+        "main/tokens_del_row.html", corpus=corpus, token=token,
+        go_back=go_back_url
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/insert/<int:token_id>', methods=["GET", "POST"])
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_add_row(corpus_id, token_id):
+    """
+
+    :param corpus_id: Id of the corpus
+    :param token_id: Id of the token
+    :return:
+    """
+    corpus = Corpus.query.get_or_404(corpus_id)
+    token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
+    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
+
+    if request.method == "POST" and request.form.get("form"):
+        token.add_form(request.form.get("form"), corpus=corpus, user=current_user)
+        flash("The form has been updated.", category="success")
+        return redirect(go_back_url)
+
+    return render_template_with_nav_info(
+        "main/tokens_add_row.html", corpus=corpus, token=token,
+        go_back=go_back_url
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/modifications_history', methods=["GET"])
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_edit_history(corpus_id):
+    """
+
+    :param corpus_id: Id of the corpus
+    :return:
+    """
+    corpus = Corpus.query.get_or_404(corpus_id)
+    tokens = TokenHistory.query.filter_by(corpus=corpus.id).paginate(
+            page=int_or(request.args.get("page"), 1),
+            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        )
+    return render_template_with_nav_info("main/tokens_edit_history.html", corpus=corpus,
+                                         tokens=tokens)

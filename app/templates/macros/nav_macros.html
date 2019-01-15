@@ -73,7 +73,7 @@
                 <div class="dropdown-menu">
                     {% for corpus in corpora %}
                         <a class="dropdown-item dd-corpus"
-                           id="dropdown_link_{{corpus.id}}" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">
+                           id="dropdown_link_{{corpus.id}}" href="{{url_for("main.tokens_correct", corpus_id=corpus.id)}}">
                             {{ corpus.name | safe }}
                         </a>
                     {% endfor %}
@@ -146,23 +146,25 @@ Quick links
 <ul class="nav flex-column">
     <li class="nav-item"><a class="nav-link" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">
         <i class="fa fa-search"></i> Search tokens</a></li>
-    <li class="nav-item"><a class="nav-link" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}">
-        <i class="fa fa-pencil"></i> Edit tokens
+    <li class="nav-item"><a class="nav-link" href="{{ url_for("main.tokens_correct", corpus_id=corpus.id) }}">
+        <i class="fa fa-pencil"></i> Correct tokens
     </a></li>
-   <li class="nav-item"> <a class="nav-link " href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}" id="last-edit-link">
-        <i class="fa fa-history"></i> Last edited tokens
+   <li class="nav-item"> <a class="nav-link " href="{{ url_for("main.tokens_correct", corpus_id=corpus.id) }}" id="last-edit-link">
+        <i class="fa fa-history"></i> Last corrected tokens
    </a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">
       <i class="fa fa-download"></i> Export tokens</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">
-      <i class="fa fa-list"></i> History</a></li>
+      <i class="fa fa-list"></i> Corrections history</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.get", control_list_id=corpus.control_lists_id)}}">
       <i class="fa fa-cogs"></i> Control List</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_history", corpus_id=corpus.id)}}">
+      <i class="fa fa-calendar-times-o"></i> Editions history</a></li>
 </ul>
-Edit tokens with
+Correct tokens with
 <ul class="nav flex-column">
-  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Unallowed lemma</a></li>
-  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Unallowed POS</a></li>
-  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Unallowed morph</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Unallowed lemma</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Unallowed POS</a></li>
+  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Unallowed morph</a></li>
 </ul>
 {% endmacro %}

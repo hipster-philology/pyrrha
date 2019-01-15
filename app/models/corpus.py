@@ -1,6 +1,7 @@
 # Base Python
 import csv
 import io
+import enum
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -16,7 +17,6 @@ from ..errors import MissingTokenColumnValue, NoTokensInput
 # Models
 from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
-
 
 
 class CorpusUser(db.Model):
@@ -73,6 +73,24 @@ class Corpus(db.Model):
                 return url_for("control_lists_bp.search_api", control_list_id=self.control_lists_id,
                                allowed_type=allowed_type)
         return url_for("main.search_value_api", corpus_id=self.id, allowed_type=allowed_type)
+
+    @staticmethod
+    def static_has_access(corpus_id, user):
+        """
+        Can this corpus be accessed by the given user ?
+        :param user:
+        :return: True or False
+        """
+        if not user.is_admin():
+            return db.session.query(literal(True)).filter(
+                CorpusUser.query.filter(
+                    db.and_(
+                        CorpusUser.user_id == user.id,
+                        CorpusUser.corpus_id == corpus_id
+                    )
+                ).exists()
+            ).scalar()
+        return True
 
     def has_access(self, user):
         """ Can this corpus be accessed by the given user ?
@@ -329,6 +347,163 @@ class WordToken(db.Model):
             "morph": self.morph,
             "context": self.context
         }
+
+    def update_context_around(self, corpus, added=0, tokens=None, delete=None, _commit=True):
+        """ Recomputes the context of tokens around the current token
+
+        :param corpus: Corpus object to look for settings
+        :param added: Number of token added
+        :param tokens: Dictionary of tokens that should not be retrieved because they are updated
+        :param _commit: Autocommit
+        """
+
+        token_count = corpus.tokens_count
+        select_range = (
+            # Start is the current order id minus the context
+            # But we need this context twice because we will need also the tokens around it
+            max(self.order_id - corpus.context_left * 2, 1),
+            min(self.order_id + corpus.context_right * 2 + 1 + added, token_count)
+        )
+        edit_range = (
+            # Start is the current order id minus the context
+            # But we need this context twice because we will need also the tokens around it
+            max(self.order_id - corpus.context_left, 1),
+            min(self.order_id + corpus.context_right + 1 + added, token_count)
+        )
+
+        tokens = tokens or {}
+        # Get the required tokens
+        tokens.update({
+            tok.order_id: tok
+            for tok in WordToken.query.filter(
+                db.and_(
+                    WordToken.corpus == self.corpus,
+                    WordToken.order_id.between(
+                        *select_range
+                    )
+                )
+            ).all()
+            if not delete or tok.id != delete
+        })
+
+        for token_id in range(*edit_range):
+            if token_id == self.order_id and added:
+                pass
+            tok = tokens[token_id]
+
+            tok.left_context = " ".join([
+                tokens[order_id].form for order_id in range(
+                    max(token_id - corpus.context_left, 1),
+                    token_id
+                )
+            ])
+
+            tok.right_context = " ".join([
+                tokens[order_id].form for order_id in range(
+                    # We need max on both because editing the last one would make the range fail
+                    min(token_count, token_id + 1),
+                    min(token_count, corpus.context_right + token_id + 1)
+                )
+            ])
+            db.session.add(tok)
+        if _commit:
+            db.session.commit()
+
+    def edit_form(self, form, corpus, user):
+        """ Edit the form of a token, recompute the context of neighbors, adds a recording
+
+        :param form: New form
+        :param corpus: Corpus object
+        :param user: User editing the form
+        """
+
+        db.session.add(TokenHistory(
+            corpus=corpus.id,
+            new=form,
+            old=self.form,
+            action_type=TokenHistory.TYPES.Edition,
+            user_id=user.id,
+            word_token_id=self.id
+        ))
+        self.form = form
+        db.session.add(self)
+
+        self.update_context_around(corpus, tokens={
+            self.order_id: self
+        })
+
+        db.session.commit()
+
+    def add_form(self, form, corpus, user):
+        """ Add a new token after the current one
+
+        :param form: Form to record
+        :param corpus: Corpus in which the token is
+        :param user: User doing the correction
+        """
+
+        # Update the order ids
+        WordToken.query.filter(db.and_(
+            WordToken.corpus == corpus.id,
+            WordToken.order_id > self.order_id
+        )).update({WordToken.order_id: WordToken.order_id + 1})
+
+        # Add the new token
+        new_token = WordToken(
+            corpus=corpus.id,
+            form=form,
+            order_id=self.order_id + 1
+        )
+        db.session.add(new_token)
+        db.session.flush()
+
+        # Record the change
+        db.session.add(TokenHistory(
+            corpus=corpus.id,
+            new=form,
+            action_type=TokenHistory.TYPES.Addition,
+            user_id=user.id,
+            word_token_id=new_token.id
+        ))
+
+        # Update the contexts
+        self.update_context_around(corpus, added=2, tokens={
+            self.order_id: self,
+            self.order_id + 1: new_token
+        })
+
+        db.session.commit()
+
+    def del_form(self, corpus, user):
+        """ Add a new token after the current one
+
+        :param form: Form to record
+        :param corpus: Corpus in which the token is
+        :param user: User doing the correction
+        """
+        # Remove
+        db.session.delete(self)
+
+        # Update the order ids
+        WordToken.query.filter(db.and_(
+            WordToken.corpus == corpus.id,
+            WordToken.order_id > self.order_id
+        )).update({WordToken.order_id: WordToken.order_id - 1})
+
+        # Record the change
+        db.session.add(TokenHistory(
+            corpus=corpus.id,
+            new="",
+            old=self.form,
+            action_type=TokenHistory.TYPES.Deletion,
+            user_id=user.id,
+            word_token_id=self.id
+        ))
+
+        # Update the contexts
+        self.update_context_around(corpus, delete=self.id)
+
+        db.session.commit()
 
     @property
     def tsv(self):
@@ -755,6 +930,26 @@ class WordToken(db.Model):
                     *filtering
                 )
             )
+
+
+class TokenHistory(db.Model):
+    """ A change record keep track of tokens row edition, deletion and addition"""
+
+    class TYPES(enum.Enum):
+        Addition = 1
+        Deletion = -1
+        Edition = 0
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id))
+    action_type = db.Column(db.Enum(TYPES), nullable=False)
+    new = db.Column(db.String(100), nullable=True)
+    old = db.Column(db.String(100), nullable=True)
+    created_on = db.Column(db.DateTime, server_default=db.func.now())
+
+    user = db.relationship(User, lazy='select')
 
 
 class ChangeRecord(db.Model):

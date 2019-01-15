@@ -1,7 +1,25 @@
-from flask import render_template, request
+from flask import render_template, request, abort
 from flask_login import current_user
+from functools import wraps
+
 
 from ...models import Corpus, ControlLists
+
+
+def requires_corpus_access(corpus_id_key):
+    """ Check that a user has access to a corpus
+
+    :param corpus_id_key: URL Parameter name in flask route declaration that contains the Corpus ID
+    :return: Wrapped function
+    """
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if not Corpus.static_has_access(request.view_args[corpus_id_key], current_user):
+                return abort(403)
+            return f(*args, **kwargs)
+        return wrapped
+    return wrapper
 
 
 def render_template_with_nav_info(template, **kwargs):
