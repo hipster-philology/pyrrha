@@ -7,10 +7,10 @@
 
 <h1>Corpus {{corpus.name}} - List of tokens </h1>
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit_unallowed", allowed_type=allowed_type) }}
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct_unallowed", allowed_type=allowed_type) }}
 
 {{ tokens_macros.table(tokens, corpus=corpus, editable=True) }}
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit_unallowed", allowed_type=allowed_type) }}
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct_unallowed", allowed_type=allowed_type) }}
 
 {% endblock %}

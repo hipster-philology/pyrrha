@@ -7,11 +7,11 @@
 
 <h1>Corpus {{corpus.name}} - List of tokens </h1>
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit") }}
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
 
 {{ tokens_macros.table(tokens, corpus=corpus, editable=True, similar=True) }}
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit") }}
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
 
 <script type="text/javascript">
     // These lines allows to remember what was the last page edited.

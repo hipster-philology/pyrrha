@@ -9,10 +9,10 @@ from ...utils.forms import string_to_none, strip_or_none, column_search_filter, 
 from ...utils.pagination import int_or
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/edit')
+@main.route('/corpus/<int:corpus_id>/tokens/correct')
 @login_required
 @requires_corpus_access("corpus_id")
-def tokens_edit(corpus_id):
+def tokens_correct(corpus_id):
     """ Page to edit word tokens
 
     :param corpus_id: Id of the corpus
@@ -30,13 +30,13 @@ def tokens_edit(corpus_id):
                 WordToken.similar_as(corpus.id, *key)
         token.similar = maps[key]
 
-    return render_template_with_nav_info('main/tokens_edit.html', corpus=corpus, tokens=tokens)
+    return render_template_with_nav_info('main/tokens_correct.html', corpus=corpus, tokens=tokens)
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/edit')
+@main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/correct')
 @login_required
 @requires_corpus_access("corpus_id")
-def tokens_edit_unallowed(corpus_id, allowed_type):
+def tokens_correct_unallowed(corpus_id, allowed_type):
     """ Page to edit tokens that have unallowed values
 
     :param corpus_id: Id of the corpus
@@ -47,7 +47,7 @@ def tokens_edit_unallowed(corpus_id, allowed_type):
         .get_unallowed(allowed_type)\
         .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
     return render_template_with_nav_info(
-        'main/tokens_edit_unallowed.html',
+        'main/tokens_correct_unallowed.html',
         corpus=corpus,
         tokens=tokens,
         allowed_type=allowed_type
@@ -101,10 +101,10 @@ def tokens_similar_to_token(corpus_id, token_id):
     )
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["POST"])
+@main.route('/corpus/<int:corpus_id>/tokens/correct/<int:token_id>', methods=["POST"])
 @login_required
 @requires_corpus_access("corpus_id")
-def tokens_edit_single(corpus_id, token_id):
+def tokens_correct_single(corpus_id, token_id):
     """ Edit a single token values
 
     :param corpus_id: Id of the corpus
@@ -138,7 +138,7 @@ def tokens_edit_single(corpus_id, token_id):
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>/update', methods=["POST"])
 @login_required
 @requires_corpus_access("corpus_id")
-def tokens_edit_from_record(corpus_id, record_id):
+def tokens_correct_from_record(corpus_id, record_id):
     """ Edit posted word_tokens's ids according to a given recorded changes
 
     :param corpus_id: Id of the record
@@ -265,7 +265,7 @@ def tokens_search_through_fields(corpus_id):
                                          corpus=corpus, tokens=tokens, **kargs)
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/correct/<int:token_id>', methods=["POST"])
+@main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["GET"])
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_edit_form(corpus_id, token_id):
@@ -278,7 +278,7 @@ def tokens_edit_form(corpus_id, token_id):
     corpus = Corpus.query.get_or_404(corpus_id)
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/correct/<int:token_id>', methods=["POST"])
+@main.route('/corpus/<int:corpus_id>/tokens/remove/<int:token_id>', methods=["GET"])
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_remove_row(corpus_id, token_id):
@@ -291,7 +291,7 @@ def tokens_remove_row(corpus_id, token_id):
     corpus = Corpus.query.get_or_404(corpus_id)
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/correct/<int:token_id>', methods=["POST"])
+@main.route('/corpus/<int:corpus_id>/tokens/insert/<int:token_id>', methods=["GET"])
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_add_row(corpus_id, token_id):

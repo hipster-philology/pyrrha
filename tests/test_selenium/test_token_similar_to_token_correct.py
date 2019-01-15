@@ -1,7 +1,7 @@
-from tests.test_selenium.base import TokenEdit2CorporaBase
+from tests.test_selenium.base import TokenCorrect2CorporaBase
 
 
-class TokenEditBase(TokenEdit2CorporaBase):
+class TokenEditBase(TokenCorrect2CorporaBase):
     """ Base class with helpers to test token edition page """
     CORPUS = "wauchier"
     CORPUS_ID = "1"

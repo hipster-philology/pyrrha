@@ -1,8 +1,8 @@
-from tests.test_selenium.base import TokenEditBase, TokenEdit2CorporaBase
+from tests.test_selenium.base import TokenCorrectBase, TokenCorrect2CorporaBase
 import selenium
 
 
-class TestTokenEditWauchierCorpus(TokenEditBase):
+class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
     def test_edit_token_lemma_with_allowed_values(self):
         """ [Wauchier] Test the edition of a token lemma with allowed values"""
         # Try first with an edit that would word
@@ -112,7 +112,7 @@ class TestTokenEditWauchierCorpus(TokenEditBase):
         self.assertEqual(status_text, "(Saved) Save")
 
 
-class TestTokensEditFloovant(TokenEditBase):
+class TestTokensCorrectFloovant(TokenCorrectBase):
     CORPUS = "floovant"
     CORPUS_ID = "2"
 
@@ -179,7 +179,7 @@ class TestTokensEditFloovant(TokenEditBase):
         self.assertNotIn("table-changed", row.get_attribute("class"))
 
 
-class TestTokensEditTwoCorpora(TokenEdit2CorporaBase):
+class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
     CORPUS = "wauchier"
     CORPUS_ID = "1"
 

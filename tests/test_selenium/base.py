@@ -22,8 +22,8 @@ LIVESERVER_TIMEOUT = 1
 COOKIE = None
 __all__ = [
     "TestBase",
-    "TokenEdit2CorporaBase",
-    "TokenEditBase",
+    "TokenCorrect2CorporaBase",
+    "TokenCorrectBase",
     "TokensSearchThroughFieldsBase"
 ]
 
@@ -239,7 +239,7 @@ elit
             return url
 
 
-class TokenEditBase(TestBase):
+class TokenCorrectBase(TestBase):
     """ Base class with helpers to test token edition page """
     CORPUS = "wauchier"
     CORPUS_ID = "1"
@@ -342,7 +342,7 @@ class TokenEditBase(TestBase):
             filter_by(corpus=corpus_id).order_by(WordToken.order_id).limit(1).first()[0]
 
     def addCorpus(self, *args, **kwargs):
-        return super(TokenEditBase, self).addCorpus(self.CORPUS, *args, **kwargs)
+        return super(TokenCorrectBase, self).addCorpus(self.CORPUS, *args, **kwargs)
 
     def test_edit_token(self):
         """ [Generic] Test the edition of a token """
@@ -357,10 +357,10 @@ class TokenEditBase(TestBase):
         self.assertIn("table-changed", row.get_attribute("class"))
 
 
-class TokenEdit2CorporaBase(TokenEditBase):
+class TokenCorrect2CorporaBase(TokenCorrectBase):
     def addCorpus(self, *args, **kwargs):
-        super(TokenEditBase, self).addCorpus("wauchier", *args, **kwargs)
-        super(TokenEditBase, self).addCorpus("floovant", *args, **kwargs)
+        super(TokenCorrectBase, self).addCorpus("wauchier", *args, **kwargs)
+        super(TokenCorrectBase, self).addCorpus("floovant", *args, **kwargs)
 
 
 class TokensSearchThroughFieldsBase(TestBase):
