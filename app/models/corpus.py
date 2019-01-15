@@ -52,12 +52,12 @@ class Corpus(db.Model):
     :ivar name: Name of the corpus
     :type name: str
     """
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(64), unique=True)
-    context_left = db.Column(db.SmallInteger, default=3)
-    context_right = db.Column(db.SmallInteger, default=3)
-    control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
-    delimiter_token = db.Column(db.String(12), default=None)
+    id: int = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name: str = db.Column(db.String(64), unique=True)
+    context_left: int = db.Column(db.SmallInteger, default=3)
+    context_right: int = db.Column(db.SmallInteger, default=3)
+    control_lists_id: int = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
+    delimiter_token: str = db.Column(db.String(12), default=None)
 
     control_lists = db.relationship("ControlLists")
     users = association_proxy('corpus_users', 'user')
@@ -73,6 +73,24 @@ class Corpus(db.Model):
                 return url_for("control_lists_bp.search_api", control_list_id=self.control_lists_id,
                                allowed_type=allowed_type)
         return url_for("main.search_value_api", corpus_id=self.id, allowed_type=allowed_type)
+
+    @staticmethod
+    def static_has_access(corpus_id, user):
+        """
+        Can this corpus be accessed by the given user ?
+        :param user:
+        :return: True or False
+        """
+        if not user.is_admin():
+            return db.session.query(literal(True)).filter(
+                CorpusUser.query.filter(
+                    db.and_(
+                        CorpusUser.user_id == user.id,
+                        CorpusUser.corpus_id == corpus_id
+                    )
+                ).exists()
+            ).scalar()
+        return True
 
     def has_access(self, user):
         """ Can this corpus be accessed by the given user ?

@@ -147,10 +147,10 @@ Quick links
     <li class="nav-item"><a class="nav-link" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">
         <i class="fa fa-search"></i> Search tokens</a></li>
     <li class="nav-item"><a class="nav-link" href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}">
-        <i class="fa fa-pencil"></i> Edit tokens
+        <i class="fa fa-pencil"></i> Correct tokens
     </a></li>
    <li class="nav-item"> <a class="nav-link " href="{{ url_for("main.tokens_edit", corpus_id=corpus.id) }}" id="last-edit-link">
-        <i class="fa fa-history"></i> Last edited tokens
+        <i class="fa fa-history"></i> Last corrected tokens
    </a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">
       <i class="fa fa-download"></i> Export tokens</a></li>
@@ -159,7 +159,7 @@ Quick links
   <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.get", control_list_id=corpus.control_lists_id)}}">
       <i class="fa fa-cogs"></i> Control List</a></li>
 </ul>
-Edit tokens with
+Correct tokens with
 <ul class="nav flex-column">
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Unallowed lemma</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Unallowed POS</a></li>

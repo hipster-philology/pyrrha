@@ -313,14 +313,14 @@ class TokenEditBase(TestBase):
             self.driver.find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
-        row.find_element_by_class_name("save").click()
+        row.find_element_by_css_selector("a.save").click()
         # It's safer to wait for the AJAX call to be completed
         row = self.driver.find_element_by_id("token_" + id_row + "_row")
-        self.wait_until_text(selector=(By.CSS_SELECTOR, "#token_"+id_row+"_row > td:last-child"), text="(")
+        self.wait_until_text(selector=(By.CSS_SELECTOR, "#token_"+id_row+"_row > td.save"), text="(")
 
         return (
             self.db.session.query(WordToken).get(int(id_row)),
-            row.find_elements_by_tag_name("td")[-1].text.strip(),
+            row.find_element_by_css_selector("#token_"+id_row+"_row > td.save").text.strip(),
             row
         )
 
