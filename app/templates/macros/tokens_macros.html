@@ -43,7 +43,7 @@
                           </a>
                           <div class="dropdown-menu" aria-labelledby="dd_t{{token.order_id}}">
                             <a class="dropdown-item" href="{{ url_for('main.tokens_edit_form', corpus_id=corpus.id, token_id=token.id) }}">Edit the form</a>
-                            <a class="dropdown-item" href="{{ url_for('main.tokens_remove_row', corpus_id=corpus.id, token_id=token.id) }}">Delete the row</a>
+                            <a class="dropdown-item" href="{{ url_for('main.tokens_del_row', corpus_id=corpus.id, token_id=token.id) }}">Delete the row</a>
                             <a class="dropdown-item" href="{{ url_for('main.tokens_add_row', corpus_id=corpus.id, token_id=token.id) }}">Add a token after this one</a>
                           </div>
                         </td>
