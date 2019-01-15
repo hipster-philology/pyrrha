@@ -52,12 +52,12 @@ class Corpus(db.Model):
     :ivar name: Name of the corpus
     :type name: str
     """
-    id: int = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name: str = db.Column(db.String(64), unique=True)
-    context_left: int = db.Column(db.SmallInteger, default=3)
-    context_right: int = db.Column(db.SmallInteger, default=3)
-    control_lists_id: int = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
-    delimiter_token: str = db.Column(db.String(12), default=None)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(64), unique=True)
+    context_left = db.Column(db.SmallInteger, default=3)
+    context_right = db.Column(db.SmallInteger, default=3)
+    control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
+    delimiter_token = db.Column(db.String(12), default=None)
 
     control_lists = db.relationship("ControlLists")
     users = association_proxy('corpus_users', 'user')
