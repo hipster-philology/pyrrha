@@ -308,7 +308,7 @@ def tokens_remove_row(corpus_id, token_id):
     corpus = Corpus.query.get_or_404(corpus_id)
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/insert/<int:token_id>', methods=["GET"])
+@main.route('/corpus/<int:corpus_id>/tokens/insert/<int:token_id>', methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_add_row(corpus_id, token_id):
@@ -319,6 +319,19 @@ def tokens_add_row(corpus_id, token_id):
     :return:
     """
     corpus = Corpus.query.get_or_404(corpus_id)
+    token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
+    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
+
+    if request.method == "POST" and request.form.get("form"):
+        token.add_form(request.form.get("form"), corpus=corpus, user=current_user)
+        flash("The form has been updated.", category="success")
+        return redirect(go_back_url)
+
+    return render_template_with_nav_info(
+        "main/tokens_add_row.html", corpus=corpus, token=token,
+        go_back=go_back_url
+    )
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/modifications_history', methods=["GET"])

@@ -348,10 +348,12 @@ class WordToken(db.Model):
             "context": self.context
         }
 
-    def update_context_around(self, corpus, _commit=True):
+    def update_context_around(self, corpus, added=0, tokens=None, _commit=True):
         """ Recomputes the context of tokens around the current token
 
         :param corpus: Corpus object to look for settings
+        :param added: Number of token added
+        :param tokens: Dictionary of tokens that should not be retrieved because they are updated
         :param _commit: Autocommit
         """
 
@@ -360,20 +362,17 @@ class WordToken(db.Model):
             # Start is the current order id minus the context
             # But we need this context twice because we will need also the tokens around it
             max(self.order_id - corpus.context_left * 2, 0),
-            min(self.order_id + corpus.context_right * 2 + 1, token_count)
+            min(self.order_id + corpus.context_right * 2 + 1 + added, token_count)
         )
         edit_range = (
             # Start is the current order id minus the context
             # But we need this context twice because we will need also the tokens around it
             max(self.order_id - corpus.context_left, 0),
-            min(self.order_id + corpus.context_right + 1, token_count)
+            min(self.order_id + corpus.context_right + 1 + added, token_count)
         )
-        print(select_range, self.order_id)
-        #       5
-        #     2 5 8
-        #   0 2 5 8 11
 
-        tokens = {
+        tokens = tokens or {}
+        tokens.update({
             tok.order_id: tok
             for tok in WordToken.query.filter(
                 db.and_(
@@ -383,22 +382,20 @@ class WordToken(db.Model):
                     )
                 )
             ).all()
-        }
-        tokens[self.order_id] = self
-
+        })
+        
         for token_id in range(*edit_range):
-            if token_id == self.order_id:
+            if token_id == self.order_id and added:
                 pass
             tok = tokens[token_id]
 
-            print("left", tok.order_id, max(token_id - corpus.context_left, 0), token_id)
             tok.left_context = " ".join([
                 tokens[order_id].form for order_id in range(
                     max(token_id - corpus.context_left, 0),
                     token_id
                 )
             ])
-            print("right", tok.order_id, min(token_count, token_id + 1), min(token_count, corpus.context_right + token_id + 1))
+
             tok.right_context = " ".join([
                 tokens[order_id].form for order_id in range(
                     # We need max on both because editing the last one would make the range fail
@@ -429,7 +426,49 @@ class WordToken(db.Model):
         self.form = form
         db.session.add(self)
 
-        self.update_context_around(corpus)
+        self.update_context_around(corpus, tokens={
+            self.order_id: self
+        })
+
+        db.session.commit()
+
+    def add_form(self, form, corpus, user):
+        """ Add a new token after the current one
+
+        :param form: Form to record
+        :param corpus: Corpus in which the token is
+        :param user: User doing the correction
+        """
+
+        # Update the order ids
+        WordToken.query.filter(db.and_(
+            WordToken.corpus == corpus.id,
+            WordToken.order_id > self.order_id
+        )).update({WordToken.order_id: WordToken.order_id + 1})
+
+        # Add the new token
+        new_token = WordToken(
+            corpus=corpus.id,
+            form=form,
+            order_id=self.order_id + 1
+        )
+        db.session.add(new_token)
+        db.session.flush()
+
+        # Record the change
+        db.session.add(TokenHistory(
+            corpus=corpus.id,
+            new=form,
+            action_type=TokenHistory.TYPES.Addition,
+            user_id=user.id,
+            word_token_id=new_token.id
+        ))
+
+        # Update the contexts
+        self.update_context_around(corpus, added=2, tokens={
+            self.order_id: self,
+            self.order_id + 1: new_token
+        })
 
         db.session.commit()
 

@@ -11,7 +11,7 @@ class TestTokenEdit(TestBase):
         self.driver.find_element_by_id("dd_t"+str(tok_id)).click()
         self.driver.implicitly_wait(2)
         dd = self.driver.find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
-        dd.find_element_by_partial_link_text("Edit").click()
+        dd.find_element_by_partial_link_text(link).click()
         self.driver.implicitly_wait(2)
 
     def change_form_value(self, value):
@@ -88,5 +88,55 @@ class TestTokenEdit(TestBase):
         self.assertEqual(
             self.get_history(),
             [('Edition', 'oulala', 'on'), ('Edition', 'Oulipo', 'volentiers')],
+            "History should be saved"
+        )
+
+    def test_addition(self):
+        """ [TokenEdit] Check that we are able to edit the form of a token """
+        self.addCorpus("wauchier")
+        # First edition
+        self.dropdown_link(5, "Add")
+        self.change_form_value("oulala")
+        self.driver.find_element_by_css_selector("button[type='submit']").click()
+        self.driver.implicitly_wait(5)
+
+        self.assertEqual(
+            self.select_context_around(6),
+            ['De seint Martin mout doit on',
+             'De seint Martin mout doit on oulala',
+             'seint Martin mout doit on oulala doucement',
+             'Martin mout doit on oulala doucement et',
+             'doit on oulala doucement et volentiers le',
+             'on oulala doucement et volentiers le bien',
+             'oulala doucement et volentiers le bien oïr',
+             'doucement et volentiers le bien oïr et'],
+            "Context of neighbours and form have been updated"
+        )
+        self.assertEqual(
+            self.get_history(),
+            [("Addition", "oulala", "")],
+            "History should be saved"
+        )
+        # Second edition
+        self.dropdown_link(8, "Add")
+        self.change_form_value("Oulipo")
+        self.driver.find_element_by_css_selector("button[type='submit']").click()
+        self.driver.implicitly_wait(5)
+
+        self.assertEqual(
+            self.select_context_around(8),
+            ['seint Martin mout doit on oulala doucement',
+             'Martin mout doit on oulala doucement et',
+             'doit on oulala doucement et Oulipo volentiers',
+             'on oulala doucement et Oulipo volentiers le',
+             'doucement et Oulipo volentiers le bien oïr',
+             'et Oulipo volentiers le bien oïr et',
+             'Oulipo volentiers le bien oïr et entendre',
+             'volentiers le bien oïr et entendre ,'],
+            "Context of neighbours and form have been updated"
+        )
+        self.assertEqual(
+            self.get_history(),
+            [('Addition', 'oulala', ''), ('Addition', 'Oulipo', '')],
             "History should be saved"
         )

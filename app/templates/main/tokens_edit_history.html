@@ -15,8 +15,8 @@
             <td>{{ token.user.first_name[0] }}. {{ token.user.last_name }}</td>
             <td>{{ token.created_on }}</td>
             <td class="type">{{ token.action_type.name }}</td>
-            <td class="old">{{ token.old }}</td>
-            <td class="new">{{ token.new }}</td>
+            <td class="old">{{ token.old if token.old }}</td>
+            <td class="new">{{ token.new if token.new }}</td>
         </tr>
         {%- endfor %}
     </tbody>
