@@ -126,6 +126,8 @@ def add_corpus(
             z = copy.deepcopy(x)
             if with_delimiter:
                 z.order_id = index
+            else:
+                z.order_id = real_index
             if hasattr(z, "label_uniform"):
                 z.label_uniform = unidecode.unidecode(z.label_uniform)
             db.session.add(z)

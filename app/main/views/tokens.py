@@ -1,10 +1,11 @@
-from flask import request, jsonify, url_for, abort, render_template
+from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash
 from flask_login import current_user, login_required
 from sqlalchemy.sql.elements import or_, and_
+import math
 
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
-from ...models import WordToken, Corpus, ChangeRecord
+from ...models import WordToken, Corpus, ChangeRecord, TokenHistory
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
 
@@ -20,7 +21,10 @@ def tokens_correct(corpus_id):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     tokens = corpus\
         .get_tokens()\
-        .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
+        .paginate(
+            page=int_or(request.args.get("page"), 1),
+            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        )
 
     maps = {}
     for token in tokens.items:
@@ -45,7 +49,10 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     tokens = corpus\
         .get_unallowed(allowed_type)\
-        .paginate(page=int_or(request.args.get("page"), 1), per_page=int_or(request.args.get("limit"), 100))
+        .paginate(
+            page=int_or(request.args.get("page"), 1),
+            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        )
     return render_template_with_nav_info(
         'main/tokens_correct_unallowed.html',
         corpus=corpus,
@@ -265,17 +272,27 @@ def tokens_search_through_fields(corpus_id):
                                          corpus=corpus, tokens=tokens, **kargs)
 
 
-@main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["GET"])
+@main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_edit_form(corpus_id, token_id):
-    """
+    """ Page to edit the form of a token
 
     :param corpus_id: Id of the corpus
     :param token_id: Id of the token
-    :return:
     """
     corpus = Corpus.query.get_or_404(corpus_id)
+    token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
+    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
+    if request.method == "POST" and request.form.get("form"):
+        token.edit_form(request.form.get("form"), corpus=corpus, user=current_user)
+        flash("The form has been updated.", category="success")
+        return redirect(go_back_url)
+    return render_template_with_nav_info(
+        "main/tokens_edit_form.html", corpus=corpus, token=token,
+        go_back=go_back_url
+    )
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/remove/<int:token_id>', methods=["GET"])
@@ -303,3 +320,20 @@ def tokens_add_row(corpus_id, token_id):
     """
     corpus = Corpus.query.get_or_404(corpus_id)
 
+
+@main.route('/corpus/<int:corpus_id>/tokens/modifications_history', methods=["GET"])
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_edit_history(corpus_id):
+    """
+
+    :param corpus_id: Id of the corpus
+    :return:
+    """
+    corpus = Corpus.query.get_or_404(corpus_id)
+    tokens = TokenHistory.query.filter_by(corpus=corpus.id).paginate(
+            page=int_or(request.args.get("page"), 1),
+            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        )
+    return render_template_with_nav_info("main/tokens_edit_history.html", corpus=corpus,
+                                         tokens=tokens)

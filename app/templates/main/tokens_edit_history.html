@@ -1,0 +1,25 @@
+{% import 'macros/nav_macros.html' as nav %}
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+<h1>Corpus {{corpus.name}} - History of tokens edition</h1>
+
+{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit_history") }}
+
+<table class="table table-bordered">
+    <thead><tr><th>User</th><th>Date</th><th>Type</th><th>Ancienne valeur</th><th>Nouvelle valeur</th></tr></thead>
+    <tbody>
+        {% for token in tokens.items -%}
+        <tr>
+            <td>{{ token.user.first_name[0] }}. {{ token.user.last_name }}</td>
+            <td>{{ token.created_on }}</td>
+            <td class="type">{{ token.action_type.name }}</td>
+            <td class="old">{{ token.old }}</td>
+            <td class="new">{{ token.new }}</td>
+        </tr>
+        {%- endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

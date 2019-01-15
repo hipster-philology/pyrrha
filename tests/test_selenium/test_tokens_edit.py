@@ -1,0 +1,92 @@
+from tests.test_selenium.base import TestBase
+from tests.db_fixtures.wauchier import WauchierTokens
+
+
+class TestTokenEdit(TestBase):
+    """ Check token form edition, token update, token delete
+    """
+
+    def dropdown_link(self, tok_id, link):
+        self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))
+        self.driver.find_element_by_id("dd_t"+str(tok_id)).click()
+        self.driver.implicitly_wait(2)
+        dd = self.driver.find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
+        dd.find_element_by_partial_link_text("Edit").click()
+        self.driver.implicitly_wait(2)
+
+    def change_form_value(self, value):
+        inp = self.driver.find_element_by_css_selector("input[name='form']")
+        inp.clear()
+        inp.send_keys(value)
+
+    def select_context_around(self, tok_id, max_id=len(WauchierTokens)):
+        return [
+            self.driver.find_element_by_id("token_"+str(cur)+"_row").find_elements_by_tag_name("td")[5].text
+            for cur in range(
+                max(tok_id - 3, 0),
+                min(max_id, tok_id + 3 + 2)
+            )
+        ]
+
+    def get_history(self):
+        self.driver.find_element_by_partial_link_text("Editions history").click()
+        return [
+            (
+                el.find_element_by_css_selector(".type").text.strip(),
+                el.find_element_by_css_selector(".new").text.strip(),
+                el.find_element_by_css_selector(".old").text.strip()
+            )
+            for el in self.driver.find_elements_by_css_selector("tbody > tr")
+        ]
+
+    def test_edition(self):
+        """ [TokenEdit] Check that we are able to edit the form of a token """
+        self.addCorpus("wauchier")
+        # First edition
+        self.dropdown_link(5, "Edit")
+        self.change_form_value("oulala")
+        self.driver.find_element_by_css_selector("button[type='submit']").click()
+        self.driver.implicitly_wait(5)
+
+        self.assertEqual(
+            self.select_context_around(5),
+            [
+                'De seint Martin mout doit',
+                'De seint Martin mout doit oulala',
+                'De seint Martin mout doit oulala doucement',
+                'seint Martin mout doit oulala doucement et',
+                'Martin mout doit oulala doucement et volentiers',
+                'mout doit oulala doucement et volentiers le',
+                'doit oulala doucement et volentiers le bien',
+                'oulala doucement et volentiers le bien oïr'
+            ],
+            "Context of neighbours and form have been updated"
+        )
+        self.assertEqual(
+            self.get_history(),
+            [("Edition", "oulala", "on")],
+            "History should be saved"
+        )
+        # Second edition
+        self.dropdown_link(8, "Edit")
+        self.change_form_value("Oulipo")
+        self.driver.find_element_by_css_selector("button[type='submit']").click()
+        self.driver.implicitly_wait(5)
+
+        self.assertEqual(
+            self.select_context_around(8),
+            ['seint Martin mout doit oulala doucement et',
+             'Martin mout doit oulala doucement et Oulipo',
+             'mout doit oulala doucement et Oulipo le',
+             'doit oulala doucement et Oulipo le bien',
+             'oulala doucement et Oulipo le bien oïr',
+             'doucement et Oulipo le bien oïr et',
+             'et Oulipo le bien oïr et entendre',
+             'Oulipo le bien oïr et entendre ,'],
+            "Context of neighbours and form have been updated"
+        )
+        self.assertEqual(
+            self.get_history(),
+            [('Edition', 'oulala', 'on'), ('Edition', 'Oulipo', 'volentiers')],
+            "History should be saved"
+        )
