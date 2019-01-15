@@ -181,7 +181,9 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         #if format == "tei-geste": Right now only 1 format
-        response = render_template("tei/geste.xml", base=base, tokens=tokens, delimiter=corpus.delimiter_token)
+        response = render_template("tei/geste.xml", base=base, tokens=tokens,
+                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                                   delimiter=corpus.delimiter_token)
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
            "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
@@ -313,7 +315,7 @@ def tokens_del_row(corpus_id, token_id):
     if request.method == "POST":
         if request.form.get("form") == token.form:
             token.del_form(corpus=corpus, user=current_user)
-            flash("The form has been updated.", category="success")
+            flash("The form has been deleted.", category="success")
         else:
             flash("The form was not matched", category="error")
         return redirect(go_back_url)

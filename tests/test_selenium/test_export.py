@@ -69,10 +69,13 @@ class TestExport(TestBase):
             "There should be 12 segments, as one is added every two tokens"
         )
         self.assertEqual(
-            [(el.text, el.get("lemma"), el.get("type")) for el in abs[0].findall("./tei:w", namespaces=TEI_NS)],
             [
-                ("De", "de", "POS=PRE"),
-                ("seint", "saint", "POS=ADJqua")
+                (el.text, el.get("lemma"), el.get("type"), el.get("n"), el.get("{http://www.w3.org/XML/1998/namespace}id"))
+                for el in abs[0].findall("./tei:w", namespaces=TEI_NS)
+            ],
+            [
+                ("De", "de", "POS=PRE", "1", "t1"),
+                ("seint", "saint", "POS=ADJqua", "2", "t2")
             ],
             "Words should be correctly written"
         )
