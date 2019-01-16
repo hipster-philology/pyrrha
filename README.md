@@ -3,6 +3,8 @@ Pyrrha
 
 [![Coverage Status](https://coveralls.io/repos/github/hipster-philology/pandora-postcorrect-app/badge.svg?branch=master)](https://coveralls.io/github/hipster-philology/pandora-postcorrect-app?branch=master)
 [![Build Status](https://travis-ci.org/hipster-philology/pandora-postcorrect-app.svg?branch=master)](https://travis-ci.org/hipster-philology/pandora-postcorrect-app)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2325427.svg)](https://doi.org/10.5281/zenodo.2325427)
+
 
 Pyrrha is a simple Python Flask WebApp to fasten the post-correction
 of lemmatized and morpho-syntactic tagged corpora.
