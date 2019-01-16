@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+    <teiHeader>
+        <fileDesc>
+            <titleStmt>
+                <title></title>
+            </titleStmt>
+            <publicationStmt><p></p></publicationStmt>
+            <sourceDesc><p></p></sourceDesc>
+        </fileDesc>
+        {% if history -%}
+        <revisionDesc>
+            {% for change in history %}
+                <change who="{{ change.user.first_name }}. {{ change.user.last_name }}" corresp="#t{{change.word_token_id - base}}"
+                        type="{{change.action_type.name}}" when-custom="{{change.created_on}}">{%if change.old %}<del>{{change.old}}</del> {% endif %}{%if change.new %}<add>{{change.new}}</add>{% endif %}</change>
+            {% endfor %}
+        </revisionDesc>
+        {%- endif %}
+    </teiHeader>
+    <text xml:lang="fr">
+        <body xml:lang="fro">
+            <div>
+                <ab>
+                {% for token in tokens %}{%- if token.form == delimiter %}
+                </ab>
+                <ab>{%- else %}
+                    <w xml:id="t{{token.id - base}}" n="{{token.order_id}}" lemma="{{token.lemma}}"
+                       type="POS={{token.POS}}{% if token.morph and token.morph != "None" %}|{{token.morph}}{% endif %}" >{{token.form}}</w>{% endif -%}
+                {% endfor %}</ab>
+            </div>
+       </body>
+     </text>
+</TEI>

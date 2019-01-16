@@ -11,4 +11,3 @@ from flask import Blueprint
 static_folder = path.join(path.abspath(path.dirname(__file__)), "langs")
 #  Create the current blueprint
 configuration = Blueprint('configurations', __name__, static_folder=static_folder)
-

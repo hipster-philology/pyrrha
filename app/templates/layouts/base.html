@@ -1,4 +1,5 @@
 {% import 'macros/nav_macros.html' as nav %}
+{% import 'control_lists/macros.html' as control_list_macros with context %}
 <!DOCTYPE html>
 <html>
     <head>
@@ -8,17 +9,23 @@
     </head>
     <body>
         {% block nav %}
-            {{ nav.render_nav(current_user, corpora=corpora) }}
+            {{ nav.render_nav(current_user, corpora=corpora, control_lists=control_lists) }}
         {%  endblock %}
         <div class="container-fluid" id="main-container">
             <div class="row">
+              {%  if corpus or control_list %}
               <div class="col-lg-2 bg-light" id="left-menu">
-                  {%  if corpus %}
+                  {%- if corpus %}
                       {{ nav.quick_nav(corpus) }}
                       {{ nav.single_corpus_nav(corpus) }}
-                  {%  endif %}
+                  {% elif control_list %}
+                      {{ control_list_macros.nav_control_list(control_list) }}
+                  {% endif %}
               </div>
-              <div class="col-lg-10">
+              <div class="col-lg-10" id="right-column">
+              {% else %}
+              <div class="col-lg-12">
+              {%  endif %}
                 {% include 'partials/_flashes.html' %}
                 {# When extended, the content block contains all the html of the webpage #}
                 {% block content %}{% endblock %}

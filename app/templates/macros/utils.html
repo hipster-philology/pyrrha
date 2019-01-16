@@ -1,0 +1,8 @@
+{%-  macro status_badge(status) %}
+    <span class="badge badge-info">
+        {% if status == "private" %}<i class="fa fa-eye-slash"></i> Private
+        {% elif status == "submitted" %}<i class="fa fa-stack-exchange"></i> Sent for publicization
+        {% else %}<i class="fa fa-eye"></i> Public
+        {% endif %}
+    </span>
+{%  endmacro -%}

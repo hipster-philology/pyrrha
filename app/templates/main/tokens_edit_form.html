@@ -1,0 +1,39 @@
+{% import 'macros/tokens_macros.html' as tokens_macros %}
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+<form method="POST" action="{{ url_for('.tokens_edit_form', token_id=token.id, corpus_id=corpus.id)}}" class="form col-md-9">
+    <h1>Corpus {{corpus.name}} - Token Edit</h1>
+    <p>This page allows you to correct the form of the following token</p>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Token ID</th>
+                <th>Form</th>
+                <th>Context</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{token.id}}</td>
+                <td>{{token.form}}</td>
+                <td>{{tokens_macros.token_context(token)}}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">New form</span>
+      </div>
+      <input type="text" name="form"  value="{{token.form}}" class="form-control" placeholder="{{token.form}}" required
+             aria-label="New form value" aria-describedby="basic-addon1">
+    </div>
+
+    <p>
+        <button class="btn btn-danger" type="submit"><i class="fa fa-save"></i> Correct</button>
+        &nbsp;
+        <a class="btn btn-secondary" href="{{go_back}}" id="go_back"><i class="fa fa-undo"></i> Go back to correcting annotations</a>
+    </p>
+</form>
+{% endblock %}

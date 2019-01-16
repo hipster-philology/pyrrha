@@ -1,10 +1,13 @@
+cover/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
-
+# usual name I choose for driver screenshot with Selenium
+here*.png
 # SQLITE
 *.sqlite
+tests/**/*.png
 
 # C extensions
 *.so

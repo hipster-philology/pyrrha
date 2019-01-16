@@ -31,10 +31,11 @@ class Config:
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
+    # Defaults
+    PAGINATION_DEFAULT_TOKENS = 100
+
     # Lemmatizer (until Deucalion client)
-    LEMMATIZERS = [
-        ("Ancien Français", "http://localhost:5000/models-fro")
-    ]
+    LEMMATIZERS = []
 
     @staticmethod
     def init_app(app):
@@ -61,6 +62,10 @@ class DevelopmentConfig(Config):
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
+
+    LEMMATIZERS = [
+        ("Ancien Français", "http://localhost:5001/")
+    ]
 
 
 class TestConfig(Config):

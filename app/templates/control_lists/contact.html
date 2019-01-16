@@ -1,0 +1,20 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form_macros.html' as f %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h2>
+                <i class="fa fa-envelope mr-2"></i>Contact control lists administrators
+            </h2>
+            <p class="form-text">This page is built so that you can contact administrators of a control list to propose
+            new lemma, POS or morphologies accepted values. We have preferred to use email so that discussion could be rich
+            when needed.</p>
+        </div>
+        <div class="row ">
+            <div class="ml-3 col-sm-6">
+                {{ f.render_form(form, action=url_for('.contact', control_list_id=control_list.id)) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,39 @@
+{% import 'macros/tokens_macros.html' as tokens_macros %}
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+
+<form method="POST" action="{{ url_for('.tokens_del_row', token_id=token.id, corpus_id=corpus.id)}}" class="form col-md-9">
+    <h1>Corpus {{corpus.name}} - Remove a token</h1>
+    <p>This page allows you to remove the following one</p>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Token ID</th>
+                <th>Form</th>
+                <th>Context</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{token.id}}</td>
+                <td>{{token.form}}</td>
+                <td>{{tokens_macros.token_context(token)}}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="input-group mb-3">
+      <div class="input-group-prepend">
+        <span class="input-group-text" id="basic-addon1">Confirm the token form</span>
+      </div>
+      <input type="text" name="form"  value="" class="form-control" placeholder="Token form" required
+             aria-label="Confirm the form of the token to remove" aria-describedby="basic-addon1">
+    </div>
+
+    <p>
+        <button class="btn btn-danger" type="submit"><i class="fa fa-save"></i> Delete</button>
+        &nbsp;
+        <a class="btn btn-secondary" href="{{go_back}}" id="go_back"><i class="fa fa-undo"></i> Go back to correcting annotations</a>
+    </p>
+</form>
+{% endblock %}

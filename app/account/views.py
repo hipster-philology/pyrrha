@@ -280,7 +280,6 @@ def before_request():
         return redirect(url_for('account.unconfirmed'))
 
 
-
 @account.route('/unconfirmed')
 def unconfirmed():
     """Catch users with unconfirmed emails."""

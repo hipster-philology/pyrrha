@@ -1,5 +1,5 @@
 from .base import TestModels
-from app.models.linguistic import AllowedLemma
+from app.models import AllowedLemma
 
 
 class TestAllowedLemma(TestModels):
@@ -8,7 +8,7 @@ class TestAllowedLemma(TestModels):
         self.addCorpus("floovant", tokens_up_to=3, with_allowed_lemma=True)
         self.assertEqual(
             AllowedLemma.to_input_format(
-                AllowedLemma.query.filter(AllowedLemma.corpus == 2)
+                AllowedLemma.query.filter(AllowedLemma.control_list == 2)
             ).replace("\r", ""),
             """escouter
 or4
