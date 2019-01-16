@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from app import db, create_app
 from app.cli import make_cli
-from app.models import Corpus
+from app.models import Corpus, ControlLists
 
 
 class TestGenericScript(TestCase):
@@ -41,7 +41,10 @@ class TestGenericScript(TestCase):
         result = self.invoke(["db-create"])
         self.assertIn("Created the database", result.output)
         with self.app.app_context():
-            db.session.add(Corpus(name="Corpus1"))
+            cl = ControlLists(name="Corpus1")
+            db.session.add(cl)
+            db.session.flush()
+            db.session.add(Corpus(name="Corpus1", control_lists_id=cl.id))
             db.session.commit()
 
             self.assertEqual(
@@ -55,7 +58,10 @@ class TestGenericScript(TestCase):
         with self.app.app_context():
             db.create_all()
             db.session.commit()
-            db.session.add(Corpus(name="Corpus1"))
+            cl = ControlLists(name="Corpus1")
+            db.session.add(cl)
+            db.session.flush()
+            db.session.add(Corpus(name="Corpus1", control_lists_id=cl.id))
             db.session.commit()
 
             self.assertEqual(

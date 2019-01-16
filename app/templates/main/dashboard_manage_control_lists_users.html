@@ -1,0 +1,21 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/dashboard_macros.html' as dashboard %}
+
+{% block content %}
+    {{ dashboard.show_dashboard_for(
+        post_endpoint='main.manage_control_lists_user',
+        post_kwargs={'cl_id': control_list.id},
+        managed_item=control_list,
+        read_endpoint='main.corpus_get',
+        read_kwargs={'corpus_id':control_list.id},
+        current_user=current_user,
+        users=users,
+        roles=roles,
+        item_type_name='control lists',
+        can_edit=can_edit,
+        can_read=can_read
+    ) }}
+    {{ dashboard.insert_search_script() }}
+
+    {{ dashboard.dashboard_javascript() }}
+{% endblock %}

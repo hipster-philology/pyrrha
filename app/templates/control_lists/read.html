@@ -1,0 +1,30 @@
+{% extends 'layouts/base.html' %}
+
+{% block page_title %}Control List {{control_list.name}}{% endblock %}
+
+{% block content %}
+<h1>{{control_list.name}}</h1>
+<h2>Allowed values for {{allowed_type}}</h2>
+{% if allowed_values %}
+<table class="table table-sm small">
+    <thead><tr><th>Label</th>{% if readable %}<th>Readable</th>{% endif %}</tr></thead>
+    <tbody>
+        {%  if readable %}
+            {%- for token in allowed_values %}
+            <tr class="allowed">
+                <td class="label">{{token.label}}</td>
+                <td class="readable">{{token.readable}}</td>
+            </tr>
+            {% endfor -%}
+        {% else %}
+            {%- for token in allowed_values %}
+            <tr class="allowed">
+                <td class="label">{{token.label}}</td>
+            </tr>
+            {% endfor -%}
+        {% endif %}
+    </tbody>
+</table>
+{% else %}<p>No allowed value in this category</p>
+{% endif %}
+{% endblock %}

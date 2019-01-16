@@ -58,4 +58,7 @@ def create_app(config_name="dev"):
     from .configurations import configuration as configurations_blueprint
     app.register_blueprint(configurations_blueprint)
 
+    from .control_lists import control_lists_bp
+    app.register_blueprint(control_lists_bp)
+
     return app

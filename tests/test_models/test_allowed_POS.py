@@ -1,5 +1,5 @@
 from .base import TestModels
-from app.models.linguistic import AllowedPOS
+from app.models import AllowedPOS
 
 
 class TestAllowedPOS(TestModels):
@@ -9,7 +9,7 @@ class TestAllowedPOS(TestModels):
                        with_allowed_pos=True, partial_allowed_pos=True)
         self.assertEqual(
             AllowedPOS.to_input_format(
-                AllowedPOS.query.filter(AllowedPOS.corpus == 2)
+                AllowedPOS.query.filter(AllowedPOS.control_list == 2)
             ),
             "ADVgen,VERcjg,NOMcom"
         )

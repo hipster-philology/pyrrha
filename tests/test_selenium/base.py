@@ -12,8 +12,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from app import db, create_app
-from app.models.linguistic import CorpusUser, Corpus
-from tests.db_fixtures import add_corpus
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists
+from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
 LIVESERVER_TIMEOUT = 1
@@ -22,8 +22,8 @@ LIVESERVER_TIMEOUT = 1
 COOKIE = None
 __all__ = [
     "TestBase",
-    "TokenEdit2CorporaBase",
-    "TokenEditBase",
+    "TokenCorrect2CorporaBase",
+    "TokenCorrectBase",
     "TokensSearchThroughFieldsBase"
 ]
 
@@ -67,10 +67,19 @@ class TestBase(LiveServerTestCase):
     db = db
     AUTO_LOG_IN = True
 
+    def add_control_lists(self):
+        """ Loads a control list from a folder as a public one
+
+        :param folder_name: Name of the folder in app/configurations/langs
+        """
+        ControlLists.add_default_lists()
+        db.session.commit()
+
     def create_app(self):
         config_name = 'test'
         app = create_app(config_name)
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+        app.DEBUG = True
         app.client = app.test_client()
         app.config.update(
             # Change the port that the liveserver listens on
@@ -79,6 +88,15 @@ class TestBase(LiveServerTestCase):
         if self.AUTO_LOG_IN:
             _force_authenticated(app)
         return app
+
+    def create_driver(self, options=None):
+        if not options:
+            options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--disable-gpu")
+        self.driver = webdriver.Chrome(options=options)
+        self.driver.set_window_size(1920, 1080)
+        return self.driver
 
     def setUp(self):
         """Setup the test driver and create test users"""
@@ -91,12 +109,31 @@ class TestBase(LiveServerTestCase):
         Role.add_default_roles()
         User.add_default_users()
 
-        options = Options()
-        options.add_argument("--headless")
-        options.add_argument("--disable-gpu")
-        self.driver = webdriver.Chrome(options=options)
-        self.driver.set_window_size(1920, 1080)  # ??
+        self.create_driver()
         self.driver.get(self.get_server_url())
+
+    LOREM_IPSUM = """form	lemma	POS	morph
+Lorem			
+ipsum			
+dolor			
+sit			
+amet			
+,			
+consectetur			
+adipiscing			
+elit			
+.			"""
+
+    def wait_until_shown(self, selector):
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, selector))
+        )
+
+    def write_lorem_impsum_tokens(self):
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            self.LOREM_IPSUM
+        )
 
     def writeMultiline(self, element, text):
         """ Helper to write in multiline text
@@ -126,10 +163,13 @@ class TestBase(LiveServerTestCase):
 
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":
-            add_corpus("wauchier", db, *args, **kwargs)
+            corpus = add_corpus("wauchier", db, *args, **kwargs)
         else:
-            add_corpus("floovant", db, *args, **kwargs)
+            corpus = add_corpus("floovant", db, *args, **kwargs)
         self.driver.get(self.get_server_url())
+        if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
+            self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        return corpus
 
     def addCorpusUser(self, corpus_name, email, is_owner=False):
         corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
@@ -138,6 +178,23 @@ class TestBase(LiveServerTestCase):
         self.db.session.add(new_cu)
         self.db.session.commit()
         return new_cu
+
+    def addControlLists(self, cl_name, *args, **kwargs):
+        cl = add_control_lists(cl_name, db, *args, **kwargs)
+        self.driver.get(self.get_server_url())
+        if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
+            self.addControlListsUser(cl.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        for user_mail, owner in kwargs.get("for_users", []):
+            self.addControlListsUser(cl.name, user_mail, is_owner=owner)
+        return cl
+
+    def addControlListsUser(self, cl_name, email, is_owner=False):
+        cl = ControlLists.query.filter(ControlLists.name == cl_name).first()
+        user = User.query.filter(User.email == email).first()
+        new_clu = ControlListsUser(control_lists_id=cl.id, user_id=user.id, is_owner=is_owner)
+        self.db.session.add(new_clu)
+        self.db.session.commit()
+        return new_clu
 
     def add_user(self, first_name, last_name, is_admin=False):
         email = "%s.%s@ppa.fr" % (first_name, last_name)
@@ -182,7 +239,7 @@ class TestBase(LiveServerTestCase):
             return url
 
 
-class TokenEditBase(TestBase):
+class TokenCorrectBase(TestBase):
     """ Base class with helpers to test token edition page """
     CORPUS = "wauchier"
     CORPUS_ID = "1"
@@ -256,14 +313,14 @@ class TokenEditBase(TestBase):
             self.driver.find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
-        row.find_element_by_class_name("save").click()
+        row.find_element_by_css_selector("a.save").click()
         # It's safer to wait for the AJAX call to be completed
         row = self.driver.find_element_by_id("token_" + id_row + "_row")
-        self.wait_until_text(selector=(By.CSS_SELECTOR, "#token_"+id_row+"_row > td:last-child"), text="(")
+        self.wait_until_text(selector=(By.CSS_SELECTOR, "#token_"+id_row+"_row > td.save"), text="(")
 
         return (
             self.db.session.query(WordToken).get(int(id_row)),
-            row.find_elements_by_tag_name("td")[-1].text.strip(),
+            row.find_element_by_css_selector("#token_"+id_row+"_row > td.save").text.strip(),
             row
         )
 
@@ -285,11 +342,12 @@ class TokenEditBase(TestBase):
             filter_by(corpus=corpus_id).order_by(WordToken.order_id).limit(1).first()[0]
 
     def addCorpus(self, *args, **kwargs):
-        return super(TokenEditBase, self).addCorpus(self.CORPUS, *args, **kwargs)
+        return super(TokenCorrectBase, self).addCorpus(self.CORPUS, *args, **kwargs)
 
     def test_edit_token(self):
-        """ Test the edition of a token """
+        """ [Generic] Test the edition of a token """
         self.addCorpus(with_token=True, tokens_up_to=24)
+        self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "(Saved) Save")
@@ -299,10 +357,10 @@ class TokenEditBase(TestBase):
         self.assertIn("table-changed", row.get_attribute("class"))
 
 
-class TokenEdit2CorporaBase(TokenEditBase):
+class TokenCorrect2CorporaBase(TokenCorrectBase):
     def addCorpus(self, *args, **kwargs):
-        super(TokenEditBase, self).addCorpus("wauchier", *args, **kwargs)
-        super(TokenEditBase, self).addCorpus("floovant", *args, **kwargs)
+        super(TokenCorrectBase, self).addCorpus("wauchier", *args, **kwargs)
+        super(TokenCorrectBase, self).addCorpus("floovant", *args, **kwargs)
 
 
 class TokensSearchThroughFieldsBase(TestBase):

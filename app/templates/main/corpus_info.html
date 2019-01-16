@@ -10,18 +10,13 @@
     <p>This corpus has <em>{{corpus.tokens_count|thousands}} tokens</em>.</p>
     <div>
             <p>
-                <a class="btn btn-primary" href="{{url_for("main.tokens_edit", corpus_id=corpus.id)}}">Edit tokens</a> -
+                <a class="btn btn-primary" href="{{url_for("main.tokens_correct", corpus_id=corpus.id)}}">Edit tokens</a> -
                 <a class="btn btn-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a> -
                 <a class="btn btn-primary" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
                 <hr />
-                <a class="btn btn-primary" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Edit tokens with unallowed lemma</a>
-                <a class="btn btn-primary" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Edit tokens with unallowed POS</a>
-                <a class="btn btn-primary" href="{{url_for("main.tokens_edit_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Edit tokens with unallowed morph</a>
-                <hr />
-                <em>Settings</em> :
-                <a class="btn btn-warning settings-lemma" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='lemma')}}">Edit Lemma allowed values</a>
-                <a class="btn btn-warning settings-POS" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='POS')}}">Edit POS allowed values</a>
-                <a class="btn btn-warning settings-morph" href="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type='morph')}}">Edit morph allowed values</a>
+                <a class="btn btn-primary" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Edit tokens with unallowed lemma</a>
+                <a class="btn btn-primary" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Edit tokens with unallowed POS</a>
+                <a class="btn btn-primary" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Edit tokens with unallowed morph</a>
             </p>
     </div>
 {% endblock %}

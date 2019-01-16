@@ -1,7 +1,7 @@
 import click
 import os
 
-from app.models import Role, User
+from app.models import Role, User, ControlLists
 from . import create_app, db
 from .models import (
     Corpus,
@@ -10,8 +10,7 @@ from .models import (
     AllowedMorph,
     WordToken
 )
-from .main.views.utils import create_input_format_convertion
-
+from app.utils.forms import create_input_format_convertion
 
 app = None
 
@@ -45,6 +44,7 @@ def make_cli():
 
             Role.add_default_roles()
             User.add_default_users()
+            ControlLists.add_default_lists()
 
             db.session.commit()
             click.echo("Created the database")
@@ -60,6 +60,7 @@ def make_cli():
 
             Role.add_default_roles()
             User.add_default_users()
+            ControlLists.add_default_lists()
 
             db.session.commit()
             click.echo("Dropped then recreated the database")
@@ -124,6 +125,7 @@ def make_cli():
                 context_left=left,
                 context_right=right
             )
+            db.session.commit()
             click.echo(
                 "Corpus created under the name {} with {} tokens".format(
                     name, corpus.tokens_count
@@ -172,17 +174,22 @@ def make_cli():
         input_tokens, allowed_lemma, allowed_morph, allowed_POS = create_input_format_convertion(
             tokens, lemma, morph, POS
         )
-        with app.app_context():
-            data = Corpus.create(
-                name=name, word_tokens_dict=input_tokens,
-                allowed_lemma=allowed_lemma, allowed_morph=allowed_morph,
-                allowed_POS=allowed_POS, context_left=left,
-                context_right=right
-            )
-            click.echo("Corpus '{}' (ID : {}) created ".format(
-                name,
-                data.id
-            ))
+        try:
+            with app.app_context():
+                data = Corpus.create(
+                    name=name, word_tokens_dict=input_tokens,
+                    allowed_lemma=allowed_lemma, allowed_morph=allowed_morph,
+                    allowed_POS=allowed_POS, context_left=left,
+                    context_right=right
+                )
+                db.session.commit()
+                click.echo(data.control_lists_id)
+                click.echo("Corpus '{}' (ID : {}) created ".format(
+                    name,
+                    data.id
+                ))
+        except Exception as E:
+            click.echo(str(E))
 
         tokens.close()
         if morph:
@@ -217,17 +224,17 @@ def make_cli():
                 click.echo("--- Tokens dumped")
             with open(os.path.join(path, DEFAULT_FILENAMES["lemma"]), "w") as file:
                 file.write(AllowedLemma.to_input_format(
-                    AllowedLemma.query.filter(AllowedLemma.corpus == corpus.id)
+                    AllowedLemma.query.filter(AllowedLemma.control_list == corpus.control_lists_id)
                 ))
                 click.echo("--- Allowed Lemma Values dumped")
             with open(os.path.join(path, DEFAULT_FILENAMES["morph"]), "w") as file:
                 file.write(AllowedMorph.to_input_format(
-                    AllowedMorph.query.filter(AllowedMorph.corpus == corpus.id)
+                    AllowedMorph.query.filter(AllowedMorph.control_list == corpus.control_lists_id)
                 ))
                 click.echo("--- Allowed Morphological Values dumped")
             with open(os.path.join(path, DEFAULT_FILENAMES["POS"]), "w") as file:
                 file.write(AllowedPOS.to_input_format(
-                    AllowedPOS.query.filter(AllowedPOS.corpus == corpus.id)
+                    AllowedPOS.query.filter(AllowedPOS.control_list == corpus.control_lists_id)
                 ))
                 click.echo("--- Allowed POS Values dumped")
 

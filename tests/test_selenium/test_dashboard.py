@@ -1,7 +1,7 @@
 from selenium.common.exceptions import NoSuchElementException
 
 from tests.test_selenium.base import TestBase
-
+from tests.db_fixtures import DB_CORPORA
 
 class TestDashboard(TestBase):
     AUTO_LOG_IN = False
@@ -63,24 +63,27 @@ class TestDashboard(TestBase):
         """
         self.addCorpus("wauchier")
         self.addCorpus("floovant")
-
+        inserted_corpora = sorted([
+            DB_CORPORA["wauchier"]["corpus"].name,
+            DB_CORPORA["floovant"]["corpus"].name
+        ])
         self.admin_login()
         self.driver.find_element_by_link_text("Dashboard").click()
 
-        navbars = self.driver.find_element_by_id("main-nav")
-        navbars.find_element_by_id("toggle_corpus_corpora").click()
-        header_items = navbars.find_elements_by_class_name("dd-corpus")
-        header_names = [item.text for item in header_items]
-
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
         corpora_items = corpora_dashboard.find_elements_by_class_name("col")
-        corpora_names = [item.text for item in corpora_items]
+        corpora_names = sorted([item.text for item in corpora_items])
 
-        self.assertListEqual(corpora_names, header_names)
+        self.assertEqual(
+            inserted_corpora, corpora_names,
+            "Admin has access on dashboard to all corpora"
+        )
 
         # add a new corpus and check again
         self.driver.find_element_by_link_text("New Corpus").click()
         self.driver.find_element_by_id("corpusName").send_keys("FreshNewCorpus")
+        self.write_lorem_impsum_tokens()
+        self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
         self.driver.find_element_by_link_text("Dashboard").click()
@@ -88,10 +91,20 @@ class TestDashboard(TestBase):
         navbars = self.driver.find_element_by_id("main-nav")
         navbars.find_element_by_id("toggle_corpus_corpora").click()
         header_items = navbars.find_elements_by_class_name("dd-corpus")
-        header_names = [item.text for item in header_items]
+        header_names = sorted([item.text for item in header_items])
 
         corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
         corpora_items = corpora_dashboard.find_elements_by_class_name("col")
-        corpora_names = [item.text for item in corpora_items]
+        corpora_names = sorted([item.text for item in corpora_items])
 
-        self.assertListEqual(corpora_names, header_names)
+        self.assertNotEqual(header_names, corpora_names,
+                            "Quick-link corpora are different from dashboard for admins")
+        self.assertEqual(
+            header_names, ["FreshNewCorpus"],
+            "FreshNewCorpus is owned by admin so it's shown in header"
+        )
+        self.assertEqual(
+            corpora_names,
+            sorted(["FreshNewCorpus"] + inserted_corpora),
+            "Admin's dashboard contains all corpora"
+        )

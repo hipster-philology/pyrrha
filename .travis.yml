@@ -18,7 +18,9 @@ install:
 
 # command to run tests
 script:
-  - nosetests ./tests --with-coverage --cover-package=app --cover-xml
+  - chromedriver --version
+  - pip freeze
+  - nosetests ./tests --with-coverage --cover-package=app --cover-xml --verbose --nologcapture
 after_success:
   - coverage combine
   - coveralls
