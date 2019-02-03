@@ -705,20 +705,22 @@ class WordToken(db.Model):
             if i == 0:
                 previous_token = []
             elif i < context_left:
-                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[:i]]
+                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[:i]]
             else:
-                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i-context_left:i]]
+                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i-context_left:i]]
 
             if i == count_tokens-1:
                 next_token = []
             elif count_tokens-1-i < context_right:
-                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:]]
+                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+context_right+1]]
+                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
-            form = token.get("form", token.get("tokens"))
+            form = token.get("form", token.get("tokens", token.get("token")))
             if not form:
-                raise MissingTokenColumnValue()
+                error = MissingTokenColumnValue()
+                error.line = i+1
+                raise error
             lemma = token.get("lemma", token.get("lemmas"))
             label_uniform = ""
             if lemma:
