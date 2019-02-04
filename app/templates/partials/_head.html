@@ -12,11 +12,18 @@
 <script type="text/javascript" src="{{ url_for('static', filename='js/typeahead.js') }}"></script>
 
 <style type="text/css">
-    h1, h2, h3, h4 { color:rgb(189, 5, 45); }
-    .bg-dark, .navbar-dark { background-color : rgb(189, 5, 45)!important; }
+
+    {% if config.ENV == 'production' %}
+        {% set THEME_COLOR="#B4061F" %}
+    {% else %}
+        {% set THEME_COLOR="#3E606F" %}
+    {% endif %}
+
+    h1, h2, h3, h4 { color: {{THEME_COLOR}}; }
+    .bg-dark, .navbar-dark { background-color : {{THEME_COLOR}}!important; }
     .hidden-default  { display: none; }
     fieldset.form-fieldset {
-        border: 1px groove rgb(189, 5, 45) !important;
+        border: 1px groove {{THEME_COLOR}} !important;
         padding: 0 1.4em 1.4em 1.4em !important;
         margin: 0 0 1.5em 0 !important;
         border-radius: 1em;
@@ -35,7 +42,7 @@
     }
     .form-check-label {
         font-weight: bold;
-        color: rgb(189, 5, 45);
+        color: {{THEME_COLOR}};
     }
     .table td, .table th {
         padding: .5rem !important;

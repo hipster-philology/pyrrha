@@ -5,6 +5,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 
 class Config:
+    ENV = 'production'
     APP_NAME = 'Pyrrha'
     if os.environ.get('SECRET_KEY'):
         SECRET_KEY = os.environ.get('SECRET_KEY')
@@ -43,6 +44,7 @@ class Config:
 
 
 class DevelopmentConfig(Config):
+    ENV = 'development'
     DEBUG = True
     ASSETS_DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
@@ -69,6 +71,7 @@ class DevelopmentConfig(Config):
 
 
 class TestConfig(Config):
+    ENV = 'testing'
     DEBUG = True
     ASSETS_DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
