@@ -255,6 +255,8 @@ def tokens_search_through_fields(corpus_id):
             branch_filters.extend(column_search_filter(getattr(WordToken, name), value))
 
         value_filters.append(branch_filters)
+    else:  # If the search is empty, we only search for the corpus_id
+        value_filters.append([WordToken.corpus == corpus_id])
 
     # there is at least one OR clause
     if len(value_filters) > 1:
