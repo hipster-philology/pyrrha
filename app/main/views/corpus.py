@@ -88,9 +88,9 @@ def corpus_new():
                     flash("You have already a corpus going by the name {}".format(request.form.get("name")),
                           category="error")
                 return error()
-            except MissingTokenColumnValue:
+            except MissingTokenColumnValue as exc:
                 db.session.rollback()
-                flash("At least one line of your corpus is missing a token/form.", category="error")
+                flash("At least one line of your corpus is missing a token/form. Check line %s " % exc.line, category="error")
                 return error()
             except NoTokensInput:
                 db.session.rollback()
