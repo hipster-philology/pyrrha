@@ -9,6 +9,37 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
         rows = self.search(form="Martin", lemma="martin", pos="NOMpro", morph="")
         self.assertEqual(rows, [{'form': 'Martin', 'lemma': 'martin', 'morph': 'None', 'pos': 'NOMpro'}])
 
+    def test_search_homepage(self):
+        """ Homepage should only contain the current corpus tokens"""
+        #self.addCorpus("wauchier")
+        self.addCorpus("floovant")
+        self.go_to_search_tokens_page(2, as_callback=False)
+        result = []
+
+        def get_field(row, f):
+            return row.find_element_by_class_name(f).text.strip()
+        
+        res_table = self.driver.find_element_by_id("result_table").find_element_by_tag_name("tbody")
+        rows = res_table.find_elements_by_tag_name("tr")
+
+        for row in rows:
+            result.append({
+                "form": row.find_elements_by_tag_name("td")[1].text.strip(),
+                "lemma": get_field(row, "token_lemma"),
+                "morph": get_field(row, "token_morph"),
+                "pos": get_field(row, "token_pos")
+            })
+
+        self.assertEqual(
+            result[:3],
+            [
+             {'form': 'SOIGNORS', 'lemma': 'seignor', 'morph': 'NOMB.=p|GENRE=m|CAS=n', 'pos': 'None'},
+             {'form': 'or', 'lemma': 'or4', 'morph': 'DEGRE=-', 'pos': 'None'},
+             {'form': 'escoutez', 'lemma': 'escouter', 'morph': 'MODE=imp|PERS.=2|NOMB.=p', 'pos': 'None'}
+            ],
+            "Only tokens for requested corpus should be shown !"
+        )
+
     def test_search_with_pagination(self):
         """ Test the count of returned results among the different pages"""
         # Search a morph
