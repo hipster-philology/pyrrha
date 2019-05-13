@@ -181,8 +181,10 @@ $(document).ready(function() {
             }
         ).done(function(response) {
             text_data.val(response.replace("token\tlemma\tmorph\tpos", "form\tlemma\tmorph\tPOS"));
-        }).fail(function() {
-            alert("Something went wrong...");
+        }).fail(function(jqXHR) {
+            if (jqXHR.status >= 400) {
+                alert("The lemmatizer service seems to be down.");
+            }
         });
     });
     var dehyphen_regex = /(\w+)\-(\s+)(\w+)/gm,
