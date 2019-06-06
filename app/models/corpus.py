@@ -29,7 +29,7 @@ class CorpusUser(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
 
-    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete-orphan"))
+    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete"))
     user = db.relationship(User, backref=backref("corpus_users", cascade="all, delete-orphan"))
 
     def __init__(self, user, corpus, is_owner=False):
@@ -60,7 +60,10 @@ class Corpus(db.Model):
     delimiter_token = db.Column(db.String(12), default=None)
 
     control_lists = db.relationship("ControlLists")
+    word_token_history = db.relationship('TokenHistory', lazy='select', cascade="all, delete-orphan")
     users = association_proxy('corpus_users', 'user')
+    word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
+    changes = db.relationship("ChangeRecord", cascade="all,delete")
 
     def allowed_search_route(self, allowed_type):
         """ Returns the API search routes and parameters
@@ -317,7 +320,7 @@ class WordToken(db.Model):
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
-    _changes = db.relationship("ChangeRecord")
+    _changes = db.relationship("ChangeRecord", cascade="all,delete")
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
