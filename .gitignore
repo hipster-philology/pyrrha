@@ -108,3 +108,7 @@ ENV/
 
 # mypy
 .mypy_cache/
+data-dev.sqlite.old
+gunicorn.conf.py
+flask_app.py
+config.py

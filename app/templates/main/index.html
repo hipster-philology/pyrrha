@@ -7,5 +7,15 @@
       <p>It is under active development at the <a href="http://www.chartes.psl.eu">École Nationale des Chartes</a> and can
       be found on <a href="https://github.com/hipster-philology/pyrrha">github</a>.</p>
         <p>To cite it in a paper, please use the information available on <a href="https://doi.org/10.5281/zenodo.2325427">Zenodo</a></p>
+
+            <article style="margin-top: 3em">
+          <p>This is the <b>{{config.ENV}}</b> environment.
+          {% if config.ENV != 'production' %}
+            Long term availability of your data is not guaranteed. Please consider using the <a href="https://dh.chartes.psl.eu/pyrrha">production environment</a> for real work.
+          {% else %}
+            Please consider using the <a href="https://dev.chartes.psl.eu/pyrrha">development environment</a> for test purposes.
+          {% endif %}
+          </p>
+      </article>	
     </div>
 {% endblock %}
