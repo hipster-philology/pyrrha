@@ -1,7 +1,7 @@
 Pyrrha, tutoriel
 ===
 
-Pyrrha est une application de post-correction collaborative de l’étiquetage (lemmatisation et étiquetage morpho-syntaxique – *POS tagging*).
+Pyrrha est une application de correction collaborative de l’étiquetage linguistique (lemmatisation et étiquetage morpho-syntaxique – *POS tagging*).
 
 Selon la configuration déployée, Pyrrha permet la lemmatisation préalable   du texte brut soumis.  
 Vous pouvez tester une telle configuration de Pyrrha sur le serveur de développement de l’École des chartes : https://dev.chartes.psl.eu/pyrrha/.
@@ -22,12 +22,12 @@ Vous pouvez tester une telle configuration de Pyrrha sur le serveur de développ
 
 ### 1.1. Créer son compte
 Lien `Register` : https://dev.chartes.psl.eu/pyrrha/account/register
-1. Renseignez le formulaire.
-1. Confirmez votre inscription en cliquant sur le lien reçu dans votre messagerie.
+1. Renseigner le formulaire.
+1. Confirmer l'inscription en cliquant sur le lien reçu dans sa messagerie.
 
 ### 1.2. Modifier son compte
 Onglet `Your Account`  
-Vous pouvez mettre à jour votre adresse mail et votre mot de passe.
+Possibilité de mettre à jour l'adresse mail et le mot de passe.
 
 ### 1.3. Supprimer son compte
 TODO
@@ -37,7 +37,7 @@ TODO
 ##  2. Gérer ses corpus
 
 ### <a name="create_corpus"></a>2.1. Créer un corpus
-[`New Corpus`](https://dev.chartes.psl.eu/pyrrha/corpus/new)  
+Onglet [`New Corpus`](https://dev.chartes.psl.eu/pyrrha/corpus/new)  
 Un *nouveau corpus* est un texte étiqueté que l’on souhaite corriger.  
 À sa création, il convient donc de lui [associer les ressources (listes de contrôle)](control_lists) utiles à la reprise de l’étiquetage.
 
@@ -46,9 +46,9 @@ Un *nouveau corpus* est un texte étiqueté que l’on souhaite corriger.
 
 * `Metadata > Corpus Name` : nommer explicitement le nouveau corpus pour faciliter le suivi de nombreux projets.
 
-* `Metadata > Left and right context` : définir la taille des contextes gauche et droit autour du token éditable dans l’interface de correction (3 mots par défaut de part et d’autre du token).
+* <a name="context_setting"></a><`Metadata > Left and right context` : définir la taille des contextes gauche et droit autour du token éditable dans l’interface de correction (3 mots par défaut de part et d’autre du token).
 
-* `Data > Tokens (as TSV content)` : la représentation tabulaire (TSV) de l’étiquetage à corriger du texte, par ex. :
+* `Data > Tokens (as TSV content)` : copier-coller le texte étiqueté à corriger au format [TSV](https://fr.wikipedia.org/wiki/Tabulation-separated_values), en respectant l’en-tête suivante :
 ```tsv
 Form	Lemma	POS	Morph
 son	son4	DETpos	PERS.=3|NOMB.=s|GENRE=m|CAS=r
@@ -58,9 +58,11 @@ bien	bien1	ADVgen	DEGRE=p
 …
 ```
 
+* Penser à cliquer en bas de page sur le bouton `Submit` pour enregistrer le nouveau corpus.
+
 ---
 #### 2.1.2. Tokenizer un nouveau corpus (beta)
-Si votre texte n’est pas encore étiqueté, vous pouvez importer simplement le texte brut :
+Si le texte n’est pas encore étiqueté, il est possible d’importer simplement le texte brut :
 * Copier-coller votre texte dans le champs `Data > Tokens (as TSV content)`.
 * Cliquer sur le bouton `Tokenize`.
 Le texte est reformaté pour les besoins de l’annotation : chaque token est inscrit en début de ligne et l’en-tête obligatoire (`form | lemma | POS morph`) est ajoutée.
@@ -70,7 +72,7 @@ Le texte est reformaté pour les besoins de l’annotation : chaque token est in
 ---
 #### 2.1.3. Lemmatiser un nouveau corpus (selon la configuration)
 À la création du nouveau corpus, l’École des chartes propose un service de lemmatisation pour l’ancien français et le latin.
-* Copier-coller votre texte dans le champs `Data > Tokens (as TSV content)`.
+* Copier-coller le texte dans le champs `Data > Tokens (as TSV content)`.
 * Dans le menu déroulant, sélectionner le modèle de langue.
 * Cliquer sur le bouton `Lemmatize`.
 
@@ -81,22 +83,22 @@ Le service de lemmatisation utilise des modèles [Pie](https://github.com/emanja
   * modèle entraîné sur les données du [LASLA](http://web.philo.ulg.ac.be/lasla/).
 * Deucalion pour l’ancien français (https://doi.org/10.5281/zenodo.3237455) :
 	* lemmes issus du Tobler-Lommatzsch ;
-	* jeu d'étiquettes morphosyntaxiques issu du référentiel Cattex 2009 : Guillot, C., Prévost, S., & Lavrentiev, A. (2013). [Manuel de référence du jeu Cattex09](http://bfm.ens-lyon.fr/IMG/pdf/Cattex2009_manuel_2.0.pdf).
+	* jeu d'étiquettes morpho-syntaxiques issu du référentiel Cattex 2009 : Guillot, C., Prévost, S., & Lavrentiev, A. (2013). [Manuel de référence du jeu Cattex09](http://bfm.ens-lyon.fr/IMG/pdf/Cattex2009_manuel_2.0.pdf).
 
 ---
 #### <a name="control_lists"></a>2.1.4. Associer des listes de contrôle
 
-`Control Lists`. Les listes de contrôles facilitent la correction de l’étiquetage : elles permettent d’isoler les étiquettes non autorisées ou inconnues et d’encadrer la saisie du correcteur (suggestions et autocomplétion).
+`Control Lists`. Les listes de contrôle facilitent la correction de l’étiquetage : elles permettent d’isoler les étiquettes non autorisées ou inconnues et d’encadrer la saisie du correcteur (suggestions et autocomplétion).
 * Liste de lemmes (`Lemma List`)
 * Liste des étiquettes grammaticales (`POS List`)
 * Liste des étiquettes morphologiques (`Morph List`)
 
-Cochez :
+Cocher (au choix) :
 * `Use an existing control list` pour utiliser des listes prédéfinies et partagées (et y contribuer). Ces listes sont disponibles pour :
   * l’ancien Français ;
   * le français moderne ;
   * le latin ([LASLA](http://web.philo.ulg.ac.be/lasla/)).
-* `Write your own` pour créer vos propres listes si aucune des listes partagées ne convient à votre besoin.
+* `Write your own` pour créer ses propres listes si aucune des listes partagées ne convient au besoin.
 
 
 ---
@@ -107,11 +109,11 @@ TODO!
 ---
 ### 2.3. <a name="collaborate"></a>Collaborer
 Onglet `Dashboard > Corpora > corpus_name`  
-Vous pouvez inviter des utilisateurs enregistrés à colloborer à la correction d’un corpus.
+Il est possible d’inviter des utilisateurs enregistrés à colloborer à la correction d’un corpus.
 
 #### Inviter des utilisateurs
-* Dans la liste `Grant access to a user`, cliquer sur les utilisateurs que vous souhaitez inviter : ils s’ajoutent à la liste des utilisateurs associés au corpus (liste `View and manage corpus users`).
-* Vous pouvez associer certains utilisateurs en tant qu’administreur du corpus en cochant la case `Owner`.
+* Dans la liste `Grant access to a user`, cliquer sur les utilisateurs invités : ils s’ajoutent à la liste des utilisateurs associés au corpus (liste `View and manage corpus users`).
+* Pour associer certains utilisateurs en tant qu’administreur du corpus, cocher la case `Owner`.
 * Cliquer en bas de page sur le bouton `Save modifications`.
 
 #### Retirer un utilisateur de la liste associée au corpus
@@ -127,15 +129,15 @@ ou `Quick links > Correct tokens`
 
 L’interface affiche un tableau à 9 colonnes, dont 3 sont éditables :
 
-1. `Id` : un numéro est attribué à chaque token (mots et éléments de ponctuation) pour l’identifier ;
+1. `Id` : identifiant attribué à chaque token (mots et éléments de ponctuation) ;
 1. `Form` : **éditable**, terme tel qu’il apparaît dans le texte ;
-1. `Lemma` : **éditable**, lemme attribué à chaque terme permettant ainsi de l’associer à une forme normalisée ;
-1. `POS` : **éditable**, nature du mot ;
-1. `Morph` : annotation morphosyntaxique ;
-1. `Context` : le terme en gras accompagné de contexte textuel2;
-1. `Similar` : nombre de termes dans une situation comparable ;
-1. `Save` : sauvegarde les modifications opérées sur l’annotation ;
-1. `+` : accès vers les options de modification du token : correction, suppression, ajout.
+1. `Lemma` : **éditable**, lemme attribué à chaque token ;
+1. `POS` : **éditable**, étiquette gramaticale du token ;
+1. `Morph` : étiquette morpho-syntaxique du token ;
+1. `Context` : le token en contexte ([configurer le contexte](#context_setting)) ;
+1. `Similar` : nombre de token similaires (pour les [corrections par lots](#batch_correction)) ;
+1. `Save` : sauvegarder les modifications ;
+1. `+` : options de modification du token : correction, suppression, ajout.
 
 
 ---
@@ -149,12 +151,12 @@ L’interface affiche un tableau à 9 colonnes, dont 3 sont éditables :
 
 ![correct POS](../img/correct_POS.gif)
 
-Si nécessaire (définition d’un nouveau lemme par ex.), vous pouvez [modifier les listes de contrôle](#control_lists_update).
+Si nécessaire (définition d’un nouveau lemme par ex.), il est possible de [modifier les listes de contrôle](#control_lists_update).
 
 
 ---
-### 3.3. Corriger par lots
-1. Cliquer sur le nombre renseigné dans la colonne `Similar` : pour accéder toutes les tokens (`Form`) identiques.
+### 3.3. <a name="batch_correction"></a>Corriger par lots
+1. Cliquer sur le nombre renseigné dans la colonne `Similar` : pour accéder à toutes les tokens (`Form`) identiques.
 1. Utiliser les filtres en haut de page pour affiner la liste :
   * `Match`
     * `Partial` :
@@ -177,7 +179,7 @@ Si nécessaire (définition d’un nouveau lemme par ex.), vous pouvez [modifier
   * leur forme (`Form`) ;
   * et/ou leur lemme (`Lemma`) ;
   * et/ou leur POS (`POS`) ;
-  * et/ou leur étiquette morphosyntaxique (`Morph`).
+  * et/ou leur étiquette morpho-syntaxique (`Morph`).
   * NB. les expressions régulières (Regex) sont autorisées.
 1. Corriger par lots.
 
@@ -185,7 +187,7 @@ Si nécessaire (définition d’un nouveau lemme par ex.), vous pouvez [modifier
 ---
 ### 3.5. Contrôler et nettoyer l’annotation
 Menu `Correct tokens with`  
-Ce raccourci permet de lister les tokens dont l’étiquetage n’est pas validé par les listes de contrôles.
+Ce raccourci permet de lister les tokens dont l’étiquetage n’est pas validé par les listes de contrôle.
 
 1. Cliquer sur :
   * `Unallowed lemma`: liste des tokens dont le lemme est inconnu.
@@ -216,10 +218,10 @@ Pour suivre les modifications apportées au texte annoté, cliquer sur `Quick li
 ## <a name="control_lists_update"></a>4. Modifier les listes de contrôle
 `Quick links > Control Lists`
 
-#### Vous utilisez une des listes partagées (`public list`)
+#### Utilisation des listes partagées (`public list`)
 Les modifications sur ces listes sont soumises à modération.
 
-#### Vous maintenez votre propre liste (`private list`)
+#### Utilisation des listes personnalisées (`private list`)
 TODO
 
 ---
@@ -228,7 +230,7 @@ TODO
 
 À tout moment, les données peuvent être intégralement exportées en TSV ou en XML/TEI.
 #### `Pandora/Pie CSV`
-Export TSV avec l’en-tête `Form	Lemma	POS	Morph`
+Export TSV avec l’en-tête `Form	| Lemma	| POS	| Morph`.
 
 #### `TEI`  
 ```xml
