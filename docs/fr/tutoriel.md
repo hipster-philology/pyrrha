@@ -39,7 +39,7 @@ TODO
 ### <a name="create_corpus"></a>2.1. Créer un corpus
 Onglet [`New Corpus`](https://dev.chartes.psl.eu/pyrrha/corpus/new)  
 Un *nouveau corpus* est un texte étiqueté que l’on souhaite corriger.  
-À sa création, il convient donc de lui [associer les ressources (listes de contrôle)](control_lists) utiles à la reprise de l’étiquetage.
+À sa création, il convient donc de lui [associer les ressources (listes de contrôle)](#control_lists) utiles à la reprise de l’étiquetage.
 
 ---
 #### 2.1.1. Importer un texte
