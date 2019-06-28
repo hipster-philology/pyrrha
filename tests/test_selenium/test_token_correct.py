@@ -30,7 +30,10 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         token, status_text, row = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
         self.assertEqual(token.lemma, "martin", "Lemma should have not been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
-        self.assertEqual(status_text, "(Saved) Save")
+        self.assertEqual(
+            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
+            "Saved"
+        )
 
     def test_edit_token_lemma_with_allowed_values_autocomplete(self):
         """ [Wauchier] Test the edition of a token with the use of autocompletion"""
