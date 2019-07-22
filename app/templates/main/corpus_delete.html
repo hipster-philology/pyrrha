@@ -1,0 +1,25 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form_macros.html' as f %}
+
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <h2>
+                <i class="fa fa-remove mr-2"></i> Delete the corpus
+            </h2>
+
+        </div>
+        <div class="row ">
+            <div class="ml-3 col-sm-6">
+                <div class="alert alert-danger">
+                    <p>Once you have deleted the corpus, we won't have any backup. You cannot
+                        go back once it's done ! If you want to feel safer,
+                        go <a href="{{url_for('.tokens_export', corpus_id=corpus.id)}}">export the corpus.</a></p>
+                    <p> The name of your corpus is <code>{{corpus.name}}</code>. Copy here the name of your corpus
+                        to confirm its deletion.</p>
+                </div>
+                {{ f.render_form(form, action=url_for('.corpus_delete', corpus_id=corpus.id)) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
