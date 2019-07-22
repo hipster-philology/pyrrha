@@ -25,7 +25,7 @@ class CorpusUser(db.Model):
         :param corpus_id: a corpus ID
         :param user_id: a user ID
     """
-    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"), primary_key=True)
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
 
@@ -310,7 +310,7 @@ class WordToken(db.Model):
 
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete='CASCADE'))
     order_id = db.Column(db.Integer)  # Id in the corpus
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
@@ -946,7 +946,7 @@ class TokenHistory(db.Model):
         Edition = 0
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
     word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     action_type = db.Column(db.Enum(TYPES), nullable=False)

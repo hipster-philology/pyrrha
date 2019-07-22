@@ -127,9 +127,7 @@ def corpus_delete(corpus_id: int):
     form = Delete(prefix="delete")
     if request.method == "POST" and form.validate():
         if form.name.data == corpus.name.strip():
-            # If only we had cascade ;)
-            WordToken.query.filter(corpus_id == corpus.id).delete()
-            CorpusUser.query.filter(corpus_id == corpus.id).delete()
+            # Enjoy cascade deletion
             db.session.delete(corpus)
             db.session.commit()
             flash("The corpus has been removed", category="success")
