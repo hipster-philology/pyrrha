@@ -6,7 +6,7 @@ import enum
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func, literal
+from sqlalchemy import func, literal, Index
 from werkzeug.exceptions import BadRequest
 from flask import url_for
 # Application imports
@@ -529,18 +529,16 @@ class WordToken(db.Model):
 
     @classmethod
     def similar_as(cls, corpus: int, form: str, lemma: str, POS: str, morph: str):
-        cnt, *_ = db.session.query(func.count(1)).filter(
-            db.and_(
-                WordToken.corpus == corpus,
-                WordToken.form == form,
-                db.or_(
-                    WordToken.lemma == lemma,
-                    WordToken.POS == POS,
-                    WordToken.morph == morph,
-                )
-            )
-        ).first()
-        return cnt - 1
+        c = Corpus.query.filter(Corpus.id == corpus).first()
+        if c is None:
+            return 0
+        else:
+            return len(
+                [w for w in c.word_token
+                   if w.form == form and
+                     (w.lemma == lemma or w.POS == POS or w.morph == morph)
+                 ]
+            ) - 1
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
@@ -935,6 +933,9 @@ class WordToken(db.Model):
                     *filtering
                 )
             )
+
+
+Index("word_token_idx", WordToken.corpus, WordToken.form)
 
 
 class TokenHistory(db.Model):
