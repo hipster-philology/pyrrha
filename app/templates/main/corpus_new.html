@@ -31,7 +31,12 @@
         <legend>Data</legend>
         <div class="form-group">
             <label for="tokens">Tokens (as TSV content)</label>
-            <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : lemma, POS, morph, form</small>
+            <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : form, lemma, POS, morph</small>
+            <small>Example :</small>
+            <pre>form	lemma	POS	morph
+SOIGNORS	seignor	NOMcom	NOMB.=p|GENRE=m|CAS=n
+or	or4	ADVgen	DEGRE=-
+escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
             <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
         </div>
         {% if lemmatizers %}
@@ -176,8 +181,10 @@ $(document).ready(function() {
             }
         ).done(function(response) {
             text_data.val(response.replace("token\tlemma\tmorph\tpos", "form\tlemma\tmorph\tPOS"));
-        }).fail(function() {
-            alert("Something went wrong...");
+        }).fail(function(jqXHR) {
+            if (jqXHR.status >= 400) {
+                alert("The lemmatizer service seems to be down.");
+            }
         });
     });
     var dehyphen_regex = /(\w+)\-(\s+)(\w+)/gm,

@@ -25,11 +25,11 @@ class CorpusUser(db.Model):
         :param corpus_id: a corpus ID
         :param user_id: a user ID
     """
-    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"), primary_key=True)
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
 
-    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete-orphan"))
+    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete"))
     user = db.relationship(User, backref=backref("corpus_users", cascade="all, delete-orphan"))
 
     def __init__(self, user, corpus, is_owner=False):
@@ -60,7 +60,10 @@ class Corpus(db.Model):
     delimiter_token = db.Column(db.String(12), default=None)
 
     control_lists = db.relationship("ControlLists")
+    word_token_history = db.relationship('TokenHistory', lazy='select', cascade="all, delete-orphan")
     users = association_proxy('corpus_users', 'user')
+    word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
+    changes = db.relationship("ChangeRecord", cascade="all,delete")
 
     def allowed_search_route(self, allowed_type):
         """ Returns the API search routes and parameters
@@ -307,7 +310,7 @@ class WordToken(db.Model):
 
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete='CASCADE'))
     order_id = db.Column(db.Integer)  # Id in the corpus
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
@@ -317,7 +320,7 @@ class WordToken(db.Model):
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
-    _changes = db.relationship("ChangeRecord")
+    _changes = db.relationship("ChangeRecord", cascade="all,delete")
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
@@ -705,20 +708,22 @@ class WordToken(db.Model):
             if i == 0:
                 previous_token = []
             elif i < context_left:
-                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[:i]]
+                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[:i]]
             else:
-                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i-context_left:i]]
+                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i-context_left:i]]
 
             if i == count_tokens-1:
                 next_token = []
             elif count_tokens-1-i < context_right:
-                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:]]
+                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+context_right+1]]
+                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
-            form = token.get("form", token.get("tokens"))
+            form = token.get("form", token.get("tokens", token.get("token")))
             if not form:
-                raise MissingTokenColumnValue()
+                error = MissingTokenColumnValue()
+                error.line = i+1
+                raise error
             lemma = token.get("lemma", token.get("lemmas"))
             label_uniform = ""
             if lemma:
@@ -941,7 +946,7 @@ class TokenHistory(db.Model):
         Edition = 0
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
     word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     action_type = db.Column(db.Enum(TYPES), nullable=False)

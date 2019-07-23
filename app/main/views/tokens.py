@@ -2,12 +2,16 @@ from flask import request, jsonify, url_for, abort, render_template, current_app
 from flask_login import current_user, login_required
 from sqlalchemy.sql.elements import or_, and_
 import math
+from csv import DictWriter
 
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
+from ...utils.tsv import TSV_CONFIG
+from io import StringIO
+
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
@@ -170,8 +174,12 @@ def tokens_export(corpus_id):
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
         if format == "tsv":
-            headers = ["\t".join(["form", "lemma", "POS", "morph"])]
-            return "\n".join(headers+[tok.tsv for tok in tokens]), \
+            output = StringIO()
+            writer = DictWriter(output, fieldnames=["form", "lemma", "POS", "morph"], **TSV_CONFIG)
+            writer.writeheader()
+            for tok in tokens:
+                writer.writerow({"form": tok.form, "lemma": tok.lemma, "POS": tok.POS, "morph": tok.morph})
+            return output.getvalue().encode('utf-8'), \
                    200, \
                    {
                        "Content-Type": "text/tab-separated-values; charset= utf-8",
@@ -255,6 +263,8 @@ def tokens_search_through_fields(corpus_id):
             branch_filters.extend(column_search_filter(getattr(WordToken, name), value))
 
         value_filters.append(branch_filters)
+    if not value_filters:  # If the search is empty, we only search for the corpus_id
+        value_filters.append([WordToken.corpus == corpus_id])
 
     # there is at least one OR clause
     if len(value_filters) > 1:

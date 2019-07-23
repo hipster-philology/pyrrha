@@ -35,7 +35,7 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text for link in links]),
-            sorted(['Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier']),
+            sorted(['Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier', 'Rename']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -143,7 +143,7 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(['Lemma', 'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
+            sorted(['Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -180,6 +180,20 @@ class TestUpdateControlList(TestBase):
             self.driver.find_element_by_css_selector(".alert.alert-warning").text.strip(),
             'This list is already public.',
             "Admin cannot make a list public twice"
+        )
+
+        # Check that we cannot make the list public
+        self.driver.get(self.url_for_with_port("control_lists_bp.rename", control_list_id=1))
+        self.driver.find_element_by_id("rename-title").send_keys("WOOHOOO")
+        self.driver.find_element_by_id("rename-submit").click()
+        self.driver.implicitly_wait(5)
+        self.assertEqual(
+            self.driver.find_element_by_css_selector(".alert.alert-success").text.strip(),
+            'The name of the list has been updated.'
+        )
+        self.assertEqual(
+            self.driver.find_element_by_css_selector("h1").text.strip(),
+            'WOOHOOO'
         )
 
     def test_action_as_user(self):

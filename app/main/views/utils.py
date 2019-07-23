@@ -1,4 +1,4 @@
-from flask import render_template, request, abort
+from flask import render_template, request, abort, flash
 from flask_login import current_user
 from functools import wraps
 
@@ -16,6 +16,25 @@ def requires_corpus_access(corpus_id_key):
         @wraps(f)
         def wrapped(*args, **kwargs):
             if not Corpus.static_has_access(request.view_args[corpus_id_key], current_user):
+                return abort(403)
+            return f(*args, **kwargs)
+        return wrapped
+    return wrapper
+
+
+def requires_corpus_admin_access(corpus_id_key):
+    """ Check that a user has access to a corpus
+
+    :param corpus_id_key: URL Parameter name in flask route declaration that contains the Corpus ID
+    :return: Wrapped function
+    """
+    def wrapper(f):
+        @wraps(f)
+        def wrapped(*args, **kwargs):
+            if not Corpus.query.get_or_404(request.view_args[corpus_id_key]).is_owned_by(
+                    current_user
+            ) and not current_user.is_admin():
+                flash("You have not admin access to this corpus.")
                 return abort(403)
             return f(*args, **kwargs)
         return wrapped

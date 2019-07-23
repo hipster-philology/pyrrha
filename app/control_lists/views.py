@@ -11,7 +11,7 @@ from app import db, email
 from ..utils.forms import strip_or_none
 from ..utils.tsv import StringDictReader
 from ..utils.response import format_api_like_reply
-from .forms import SendMailToAdmin
+from .forms import SendMailToAdmin, Rename
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -240,6 +240,31 @@ def contact(control_list_id):
         flash('The email has been sent to the control list administrators.', 'success')
         return redirect(url_for('control_lists_bp.contact', control_list_id=control_list_id))
     return render_template_with_nav_info('control_lists/contact.html', form=form, control_list=control_list)
+
+
+@control_lists_bp.route('/controls/<int:control_list_id>/rename', methods=["GET", "POST"])
+@login_required
+def rename(control_list_id):
+    """ This routes allows user to send email to list administrators
+    """
+    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
+    form = Rename(prefix="rename")
+    control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
+
+    if not is_owner and not current_user.is_admin():
+        flash("You are not an owner of the list.", category="error")
+        return redirect(control_list_link)
+
+    if request.method == "POST" and form.validate_on_submit():
+        control_list.name = form.title.data
+        db.session.add(control_list)
+        try:
+            db.session.commit()
+            flash("The name of the list has been updated.", category="success")
+        except:
+            flash("There was an error when we tried to rename your control list.", category="error")
+        return redirect(control_list_link)
+    return render_template_with_nav_info('control_lists/rename.html', form=form, control_list=control_list)
 
 
 @control_lists_bp.route('/controls/<int:control_list_id>/propose_as_public', methods=["GET", "POST"])

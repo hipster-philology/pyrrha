@@ -12,6 +12,8 @@ from ...utils.forms import strip_or_none
 from ...models import Corpus
 from ...utils.response import format_api_like_reply
 from ...errors import MissingTokenColumnValue, NoTokensInput
+from .utils import requires_corpus_admin_access
+from ..forms import Delete
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -88,9 +90,9 @@ def corpus_new():
                     flash("You have already a corpus going by the name {}".format(request.form.get("name")),
                           category="error")
                 return error()
-            except MissingTokenColumnValue:
+            except MissingTokenColumnValue as exc:
                 db.session.rollback()
-                flash("At least one line of your corpus is missing a token/form.", category="error")
+                flash("At least one line of your corpus is missing a token/form. Check line %s " % exc.line, category="error")
                 return error()
             except NoTokensInput:
                 db.session.rollback()
@@ -115,6 +117,26 @@ def corpus_get(corpus_id):
     if not corpus.has_access(current_user):
         abort(403)
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
+
+
+@main.route('/corpus/<int:corpus_id>/delete', methods=["GET", "POST"])
+@requires_corpus_admin_access("corpus_id")
+def corpus_delete(corpus_id: int):
+    corpus = Corpus.query.get_or_404(corpus_id)
+
+    form = Delete(prefix="delete")
+    if request.method == "POST" and form.validate():
+        if form.name.data == corpus.name.strip():
+            # Enjoy cascade deletion
+            db.session.delete(corpus)
+            db.session.commit()
+            flash("The corpus has been removed", category="success")
+            return redirect(url_for(".index"))
+        else:
+            flash("The corpus name you entered is not the one expected.", category="error")
+    return render_template_with_nav_info(
+        template="main/corpus_delete.html", corpus=corpus, form=form
+    )
 
 
 @main.route('/corpus/<int:corpus_id>/fixtures')

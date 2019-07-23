@@ -468,7 +468,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.assertEqual(
             sorted([e.text.strip() for e in self.driver.find_elements_by_css_selector(".alert.alert-danger")]),
             sorted([
-                'At least one line of your corpus is missing a token/form.'
+                'At least one line of your corpus is missing a token/form. Check line 1'
             ]),
             "Creating a corpus with a missing tokens column fails."
         )

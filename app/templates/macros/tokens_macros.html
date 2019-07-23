@@ -92,50 +92,53 @@
         var clear_br = function (elem) {
             elem.find("br").remove();
         };
-        var sanitize = function (val) {
-            val = val.replace(/[<]br[^>]*[>]/gi,"").replace(/[&]nbsp[;]/gi," ");
-            return val.toLowerCase();
-        };
         var original = $.fn.val;
         $.fn.val = function() {
             if ($(this).is('*[contenteditable=true]')) {
                 return $.fn.html.apply(this, arguments);
-            };
+            }
             return original.apply(this, arguments);
         };
         var cleanUp = function(string) {
-            return $("<div>"+string+"</div>").text().toLowerCase().trim()
+            return $("<div>"+string+"</div>").text().toLowerCase().trim();
         };
         $('td.token_lemma').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = cleanUp(term),
-                    url = "{{corpus.allowed_search_route('lemma')}}?form="+term;
+                var url = "{{corpus.allowed_search_route('lemma')}}?form="+cleanUp(term);
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
-
+            },
+            onSelect: function(e, term, item){
+                var elem = $(this);
+                elem.val(item.data("value"));
+                clear_br(elem);
             }
         });
-        $('td[contenteditable="true"]').on("keyup", function(){
-            clear_br($(this));
+        $('td[contenteditable="true"]').on("keyup", function(e){
+            if (e.keyCode == 13)  {
+                $(this).html($(this).text())
+            }
         });
         $('td.token_pos').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = cleanUp(term),
-                    url = "{{corpus.allowed_search_route('POS')}}?form="+term;
+                var url = "{{corpus.allowed_search_route('POS')}}?form="+cleanUp(term);
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
-
+            },
+            onSelect: function(e, term, item){
+                var elem = $(this);
+                elem.val(item.data("value"));
+                clear_br(elem);
             }
         });
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = cleanUp(term),
-                    url = "{{corpus.allowed_search_route('morph')}}?form="+term;
+                var url = "{{corpus.allowed_search_route('morph')}}?form="+cleanUp(term);
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
@@ -148,10 +151,8 @@
                 var elem = $(this);
                 elem.val(item.data("value"));
                 clear_br(elem)
-
             }
         });
-
         $('.editable a.save').on("click", function (event) {
             event.preventDefault();
             var link = $(this),
@@ -164,9 +165,9 @@
                 url: event.target.href,
                 type: 'POST',
                 data: {
-                    lemma: parent.find(".token_lemma").text(),
-                    POS: parent.find(".token_pos").text(),
-                    morph: parent.find(".token_morph").text()
+                    lemma: parent.find(".token_lemma").text().trim(),
+                    POS: parent.find(".token_pos").text().trim(),
+                    morph: parent.find(".token_morph").text().trim()
                 }
             }).done(function(response){
                     if(response.similar.count > 0) {
