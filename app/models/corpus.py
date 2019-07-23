@@ -531,12 +531,13 @@ class WordToken(db.Model):
     def similar_as(cls, corpus: int, form: str, lemma: str, POS: str, morph: str):
         c = Corpus.query.filter(Corpus.id == corpus).first()
         if c is None:
-            return 0
+            count = 0
         else:
-            return len([
+            count = len([
                 w for w in c.word_token
                 if w.form == form and (w.lemma == lemma or w.POS == POS or w.morph == morph)
             ]) - 1
+        return max(count, 0)
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
