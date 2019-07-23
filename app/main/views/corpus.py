@@ -116,7 +116,7 @@ def corpus_get(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
-    return render_template_with_nav_info('main/corpus_info.html', corpus=corpus)
+    return render_template_with_nav_info('main/corpus_info.html', corpus=corpus, stats=corpus.statistics)
 
 
 @main.route('/corpus/<int:corpus_id>/delete', methods=["GET", "POST"])

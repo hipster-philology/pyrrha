@@ -19,6 +19,15 @@ from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
 
 
+from collections import namedtuple
+
+
+CorpusStatistics = namedtuple("CorpusStatistics",
+                              field_names=["word_count", "changes", "forms_edited", "unallowed",
+                                           "lemma_acc", "pos_acc", "morph_acc",
+                                           "lemma_count", "pos_count", "morph_count"])
+
+
 class CorpusUser(db.Model):
     """
         Association proxy that link users to corpora
@@ -111,6 +120,56 @@ class Corpus(db.Model):
                 ).exists()
             ).scalar()
         return True
+
+    @property
+    def statistics(self) -> CorpusStatistics:
+        """ Returns some nice statistics on the dashboard
+        """
+        total = self.tokens_count
+        changes = ChangeRecord.query.filter(ChangeRecord.corpus == self.id).count()
+
+        forms_edited = TokenHistory.query.filter(TokenHistory.corpus == self.id).count()
+
+        lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+                db.and_(
+                    ChangeRecord.corpus == self.id,
+                    ChangeRecord.lemma != ChangeRecord.lemma_new
+                )
+            ).count()
+        pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+                db.and_(
+                    ChangeRecord.corpus == self.id,
+                    ChangeRecord.POS != ChangeRecord.POS_new
+                )
+            ).count()
+        morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+                db.and_(
+                    ChangeRecord.corpus == self.id,
+                    ChangeRecord.morph != ChangeRecord.morph_new
+                )
+            ).count()
+
+        # Todo: Make sure this is optimized.
+        all_lemma = db.session.query(AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
+        all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
+        all_morph = db.session.query(AllowedMorph.label).filter(AllowedMorph.control_list == self.control_lists_id)
+
+        unallowed = db.session.query(WordToken.id).filter(
+            db.and_(
+                WordToken.corpus == self.id,
+                db.or_(
+                    WordToken.morph.notin_(all_morph),
+                    WordToken.lemma.notin_(all_lemma),
+                    WordToken.POS.notin_(all_type)
+                )
+            )
+        ).count()
+
+        return CorpusStatistics(
+            total, changes, forms_edited, unallowed,
+            lemma_acc / total * 100, pos_acc / total * 100, morph_acc / total * 100,
+            lemma_acc, pos_acc, morph_acc
+        )
 
     @staticmethod
     def for_user(current_user):
