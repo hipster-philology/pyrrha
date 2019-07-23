@@ -33,7 +33,16 @@ class TokenEditBase(TokenCorrect2CorporaBase):
         )
         self.assertEqual(token.lemma, "saint", "Lemma has been kept")
         self.assertEqual(token.POS, "NOMcom", "POS has been changed")
-        self.assertEqual(text, "(Saved) Save 2 similar to see", "POS has been changed")
+
+        self.assertEqual(
+            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
+            "Saved"
+        )
+
+        self.assertEqual(
+            row.find_element_by_css_selector(".similar-link").text.strip(),
+            "2 similar to see"
+        )
         # Go to find similar
         row.find_element_by_class_name("similar-link").click()
         # Count the number of similar case

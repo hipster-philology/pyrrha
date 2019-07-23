@@ -173,7 +173,7 @@
             var link = $(this),
                 parent = link.parents("tr.editable"),
                 spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>');
-
+            link.parent().find(".badge-status").remove();
             link.before(spinner);
             //link.text("(Saving) Save");
             jQuery.ajax({
@@ -186,12 +186,12 @@
                 }
             }).done(function(response){
                     if(response.similar.count > 0) {
-                        link.parent().append("<a class='similar-link' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
+                        link.parent().append("<a class='similar-link badge badge-primary' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
                     }
                     parent.addClass("table-changed");
-                    link.text("(Saved) Save");
+                    link.parent().append('<span class="badge badge-success badge-status">Saved</span>');
             }).fail(function(jqXHR){
-                link.text("(" + jqXHR.responseJSON.message + ") Save");
+                link.parent().append('<span class="badge badge-danger badge-status">'+jqXHR.responseJSON.message+"</span>");
                 $.each(jqXHR.responseJSON.details, function(key, status) {
                     var selector = ".token_"+key.toLowerCase();
                     if (status === false) { parent.find(selector).addClass("table-danger"); }
