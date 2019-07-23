@@ -58,6 +58,15 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
                     <button id="submit-model" class="btn btn-outline-secondary" type="button">Lemmatize</button>
                   </div>
                 </div>
+                <div class="hidden-default font-italic" id="tokens-update">
+                    <img src="{{ url_for("static", filename="ajax-loader.gif") }}" alt="loading.." /> <span id="tokens-count">0</span> / <span id="tokens-approximate">0</span> tokens analyzed... Total is approximately computed and could differ depending on the language...
+                </div>
+                <div class="hidden-default font-italic" id="tokens-success">
+                    <div class="alert alert-success">Operation finished with success ! <span id="tokens-count-success">0</span> tokens analyzed in total.</div>
+                </div>
+                <div class="hidden-default font-italic" id="tokens-fail">
+                    <div class="alert alert-danger">Operation failed! Contact the administrator with the corpus you tried to lemmatize to investigate the issue.</div>
+                </div>
             </div>
         </div>
         {% endif %}
@@ -167,25 +176,67 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
     <button type="submit" id="submit" class="btn btn-primary">Submit</button>
 </form>
 <script type="text/javascript">
+
 $(document).ready(function() {
     $("#submit-model").on("click", function(event) {
         event.preventDefault();
+        // Get the parameters
         var uri = $("#language-model").val(),
-            text_data = $("#tokens");
-        $.ajax(
-            uri,
-            {
-                data: {data: text_data.val()},
-                method: "POST"
+            text_data = document.getElementById("tokens"),
+            update_div = document.getElementById("tokens-update"),
+            tokens_count = document.getElementById("tokens-count"),
+            tokens_count_success = document.getElementById("tokens-count-success"),
+            tokens_success = document.getElementById("tokens-success"),
+            tokens_fail = document.getElementById("tokens-fail"),
+            approximate_count = document.getElementById("tokens-approximate");
 
+        // Create the form
+        var formData = new FormData();
+        formData.append("data", text_data.value);
+
+
+        // Set up our HTTP request
+        var xhr = new XMLHttpRequest();
+        var update = function(xhr) {
+            text_data.value = xhr.responseText.replace("token\tlemma\tmorph\tpos", "form\tlemma\tmorph\tPOS");
+            text_data.scrollTop = text_data.scrollHeight;
+            tokens_count.innerText = (xhr.responseText.match(/\n/g) || []).length;
+            update_div.style.display = "block";
+        };
+        // Setup our listener to process compeleted requests
+        xhr.onreadystatechange = function () {
+
+            // Only run if the request is complete
+            if (xhr.readyState < 3 || xhr.readyState > 4) return null;
+
+            if (xhr.readyState === 3) {
+                update(xhr);
+                return null;
             }
-        ).done(function(response) {
-            text_data.val(response.replace("token\tlemma\tmorph\tpos", "form\tlemma\tmorph\tPOS"));
-        }).fail(function(jqXHR) {
-            if (jqXHR.status >= 400) {
-                alert("The lemmatizer service seems to be down.");
+
+            // Process our return data
+            if (xhr.status >= 200 && xhr.status < 300) {
+                update(xhr);
+                // What do when the request is successful
+                update_div.style.display = "none";
+                tokens_count_success.innerText = tokens_count.innerText;
+                tokens_success.style.display = "block";
+                return null;
+            } else {
+                // What to do when the request has failed
+                update_div.style.display = "none";
+                tokens_fail.style.display = "block";
             }
-        });
+
+        };
+
+        tokens_fail.style.display = "none";
+        tokens_success.style.display = "none";
+        update_div.style.display = "block";
+        approximate_count.innerText = (text_data.value.match(/\s+/g) || []).length;
+        xhr.open('POST', uri);
+        xhr.send(formData);
+
     });
     var dehyphen_regex = /(\w+)\-(\s+)(\w+)/gm,
         unicode_punct = /([!-#%-*,-/\:;?@\[-\]_\{\}\u00A1\u00A7\u00AB\u00B6\u00B7\u00BB\u00BF\u037E\u0387\u055A-\u055F\u0589\u058A\u05BE\u05C0\u05C3\u05C6\u05F3\u05F4\u0609\u060A\u060C\u060D\u061B\u061E\u061F\u066A-\u066D\u06D4\u0700-\u070D\u07F7-\u07F9\u0830-\u083E\u085E\u0964\u0965\u0970\u0AF0\u0DF4\u0E4F\u0E5A\u0E5B\u0F04-\u0F12\u0F14\u0F3A-\u0F3D\u0F85\u0FD0-\u0FD4\u0FD9\u0FDA\u104A-\u104F\u10FB\u1360-\u1368\u1400\u166D\u166E\u169B\u169C\u16EB-\u16ED\u1735\u1736\u17D4-\u17D6\u17D8-\u17DA\u1800-\u180A\u1944\u1945\u1A1E\u1A1F\u1AA0-\u1AA6\u1AA8-\u1AAD\u1B5A-\u1B60\u1BFC-\u1BFF\u1C3B-\u1C3F\u1C7E\u1C7F\u1CC0-\u1CC7\u1CD3\u2010-\u2027\u2030-\u2043\u2045-\u2051\u2053-\u205E\u207D\u207E\u208D\u208E\u2308-\u230B\u2329\u232A\u2768-\u2775\u27C5\u27C6\u27E6-\u27EF\u2983-\u2998\u29D8-\u29DB\u29FC\u29FD\u2CF9-\u2CFC\u2CFE\u2CFF\u2D70\u2E00-\u2E2E\u2E30-\u2E42\u3001-\u3003\u3008-\u3011\u3014-\u301F\u3030\u303D\u30A0\u30FB\uA4FE\uA4FF\uA60D-\uA60F\uA673\uA67E\uA6F2-\uA6F7\uA874-\uA877\uA8CE\uA8CF\uA8F8-\uA8FA\uA8FC\uA92E\uA92F\uA95F\uA9C1-\uA9CD\uA9DE\uA9DF\uAA5C-\uAA5F\uAADE\uAADF\uAAF0\uAAF1\uABEB\uFD3E\uFD3F\uFE10-\uFE19\uFE30-\uFE52\uFE54-\uFE61\uFE63\uFE68\uFE6A\uFE6B\uFF01-\uFF03\uFF05-\uFF0A\uFF0C-\uFF0F\uFF1A\uFF1B\uFF1F\uFF20\uFF3B-\uFF3D\uFF3F\uFF5B\uFF5D\uFF5F-\uFF65])/gm;
