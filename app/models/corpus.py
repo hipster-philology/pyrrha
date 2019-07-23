@@ -533,12 +533,10 @@ class WordToken(db.Model):
         if c is None:
             return 0
         else:
-            return len(
-                [w for w in c.word_token
-                   if w.form == form and
-                     (w.lemma == lemma or w.POS == POS or w.morph == morph)
-                 ]
-            ) - 1
+            return len([
+                w for w in c.word_token
+                if w.form == form and (w.lemma == lemma or w.POS == POS or w.morph == morph)
+            ]) - 1
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
