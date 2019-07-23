@@ -6,7 +6,7 @@ import enum
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func, literal, Index
+from sqlalchemy import func, literal
 from werkzeug.exceptions import BadRequest
 from flask import url_for
 # Application imports
@@ -931,9 +931,6 @@ class WordToken(db.Model):
                     *filtering
                 )
             )
-
-
-Index("word_token_idx", WordToken.corpus, WordToken.form)
 
 
 class TokenHistory(db.Model):
