@@ -167,7 +167,9 @@ class Corpus(db.Model):
 
         return CorpusStatistics(
             total, changes, forms_edited, unallowed,
-            lemma_acc / total * 100, pos_acc / total * 100, morph_acc / total * 100,
+            lemma_acc / total * 100 if total > 0 else 0,
+            pos_acc / total * 100 if total > 0 else 0,
+            morph_acc / total * 100 if total > 0 else 0,
             lemma_acc, pos_acc, morph_acc
         )
 
