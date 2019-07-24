@@ -2,6 +2,7 @@
 import csv
 import io
 import enum
+from typing import Iterable
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -594,6 +595,21 @@ class WordToken(db.Model):
                     if w.lemma == lemma or w.POS == POS or w.morph == morph:
                         cnt += 1
             return cnt - 1
+
+    @staticmethod
+    def get_similar_for_batch(corpus: Corpus, tokens: Iterable["WordToken"]):
+        forms = {token.form: [] for token in tokens}
+        for token in tokens:
+            token.similar = 0
+            forms[token.form].append(token)
+
+        for w in WordToken.query.filter(
+                db.and_(WordToken.corpus == corpus.id, WordToken.form.in_(list(forms.keys())))
+        ).all():
+            if w.form in forms:
+                for token in forms[w.form]:
+                    if w.lemma == token.lemma or w.POS == token.POS or w.morph == token.morph:
+                        token.similar += 1
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
