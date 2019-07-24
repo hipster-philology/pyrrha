@@ -610,6 +610,8 @@ class WordToken(db.Model):
                 for token in forms[w.form]:
                     if w.lemma == token.lemma or w.POS == token.POS or w.morph == token.morph:
                         token.similar += 1
+        for token in tokens:
+            token.similar = token.similar - 1 if token.similar > 0 else 0
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
