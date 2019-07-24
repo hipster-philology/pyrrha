@@ -3,7 +3,7 @@
 {{ token.left_context }} <b>{{ token.form }}</b> {{ token.right_context }}
 {% endmacro -%}
 
-{% macro table(tokens, corpus, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
+{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
 {% if editable %}
     {%- if checkbox %}
         <div>
@@ -23,7 +23,7 @@
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr class="editable{% if token.changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
+                <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
                     <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
