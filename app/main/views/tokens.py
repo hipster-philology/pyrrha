@@ -13,12 +13,6 @@ from ...utils.tsv import TSV_CONFIG
 from io import StringIO
 
 
-import logging
-logger = logging.getLogger()
-import time
-from ... import db
-
-
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
 @login_required
 @requires_corpus_access("corpus_id")
@@ -27,10 +21,8 @@ def tokens_correct(corpus_id):
 
     :param corpus_id: Id of the corpus
     """
-    before = time.time()
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    print("Corpus retrieval : %s " % (time.time() - before))
-    before = time.time()
+
     tokens = corpus\
         .get_tokens()\
         .paginate(
@@ -38,14 +30,10 @@ def tokens_correct(corpus_id):
             per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
         )
 
-    print("Tokens Retrieval: %s " % (time.time() - before))
-    before = time.time()
-
     WordToken.get_similar_for_batch(corpus, tokens.items)
 
-    print("Secondary method: %s " % (time.time() - before))
-
     changed = corpus.changed(tokens.items)
+
     return render_template_with_nav_info('main/tokens_correct.html', corpus=corpus, tokens=tokens, changed=changed)
 
 
