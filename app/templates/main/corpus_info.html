@@ -6,8 +6,102 @@
 
 {% block content %}
     <p class="container">
+
     {{ header_macros.render_corpus(corpus) }}
     <p>This corpus has <em>{{corpus.tokens_count|thousands}} tokens</em>.</p>
+    <div>
+        <section id="statistics">
+            <h2>Statistics</h2>
+            <div class="row">
+                <div class="offset-md-2 col-md-2 stats-fact">
+                    <i class="fa fa-book fa-3x"></i>
+                    <em>{{stats.word_count|thousands}}</em>
+                    words
+                </div>
+                <div class="col-md-2 stats-fact">
+                    <i class="fa fa-edit fa-3x"></i>
+                    <em>{{stats.changes|thousands}}</em>
+                    annotations <br />corrected
+                </div>
+                <div class="col-md-2 stats-fact">
+                    <i class="fa fa-bug fa-3x"></i>
+                    <em>{{stats.unallowed|thousands}}</em>
+                    unallowed <br /> values
+                </div>
+                <div class="col-md-2 stats-fact">
+                    <i class="fa fa-strikethrough fa-3x"></i>
+                    <em>{{stats.forms_edited|thousands}}</em>
+                    forms <br />edited
+                </div>
+        </div>
+            <div class="row">
+            <div class="offset-md-3 col-md-2">
+              <div class="single-chart">
+                <svg viewBox="0 0 36 36" class="circular-chart green">
+                  <path class="circle-bg"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  ></path>
+                  <path class="circle"
+                    stroke-dasharray="{{ 100 - stats.lemma_acc|int}}, 100"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  ></path>
+                  <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.lemma_acc)}}%</text>
+                </svg>
+                <p class="stats-info">
+                    lemma were correct from lemmatization. It means you corrected {{stats.lemma_count}} lemma.
+                </p>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="single-chart">
+                <svg viewBox="0 0 36 36" class="circular-chart green">
+                  <path class="circle-bg"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  ></path>
+                  <path class="circle"
+                    stroke-dasharray="{{ 100 - stats.morph_acc|int}}, 100"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  ></path>
+                  <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.morph_acc)}}%</text>
+                </svg>
+                <p class="stats-info">
+                    morphologies were correct from lemmatization. It means you corrected {{stats.morph_count}} morphologies.
+                </p>
+              </div>
+            </div>
+            <div class="col-md-2">
+              <div class="single-chart">
+                <svg viewBox="0 0 36 36" class="circular-chart green">
+                  <path class="circle-bg"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  ></path>
+                  <path class="circle"
+                    stroke-dasharray="{{ 100 - stats.pos_acc|int}}, 100"
+                    d="M18 2.0845
+                      a 15.9155 15.9155 0 0 1 0 31.831
+                      a 15.9155 15.9155 0 0 1 0 -31.831"
+                  ></path>
+                  <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.pos_acc)}}%</text>
+                </svg>
+                <p class="stats-info">
+                    POS were correct from lemmatization. It means you corrected {{stats.pos_count}} POS.
+                </p>
+              </div>
+            </div>
+        </div>
+        </section>
+    </div>
+    <hr />
     <div>
             <p>
                 <a class="btn btn-primary" href="{{url_for("main.tokens_correct", corpus_id=corpus.id)}}">Edit tokens</a> -
