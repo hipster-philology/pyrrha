@@ -103,10 +103,11 @@ def tokens_similar_to_token(corpus_id, token_id):
                 tok.to_dict() for tok in tokens.all()
             ])
         return jsonify({"count": tokens.count()})
+    tokens = tokens.paginate(per_page=1000)
     return render_template_with_nav_info(
         # The Dict is a small hack to emulate paginate
         'main/tokens_similar_to_token.html',
-        corpus=corpus, tokens=tokens.paginate(per_page=1000), mode=mode, token=token,
+        corpus=corpus, tokens=tokens, mode=mode, token=token,
         changed=corpus.changed(tokens.items)
     )
 
