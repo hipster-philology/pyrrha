@@ -96,25 +96,59 @@
                     </div>
                 </div>
             </div>
+            <h3>Annotations over time</h3>
             <div class="row">
                 <div class="offset-md-3 col-md-6">
-                    <h3>Annotations over time</h3>
                     <div id="corrections-per-day" class="ct-chart"></div>
                 </div>
             </div>
+            <h3>Most common corrections</h3>
+            <form action="{{url_for('.corpus_get', corpus_id=corpus.id)}}" method="GET" class="col-md-2">
+                <div class="input-group mb-3 input-group-sm">
+                  <input type="number" name="limit"
+                         class="form-control" placeholder="" aria-label="Example text with button addon"
+                         aria-describedby="button-addon1" value="10" />
+                  <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="submit" id="button-addon1">See more</button>
+                  </div>
+                </div>
+            </form>
+            <div class="row">
+                <div class="col-lg-3">
+                    <h4>Lemma</h4>
+                    <table class="table table-xs table-striped">
+                        <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
+                        <tbody>
+                            {% for count, lemma_new, lemma in lemma_cor %}
+                            <tr><td>{{count}}</td><td>{{lemma_new}}</td><td>{{lemma}}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-lg-6">
+                    <h4>Morphology</h4>
+                    <table class="table table-xs table-striped">
+                        <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
+                        <tbody>
+                            {% for count, lemma_new, lemma in morph_cor %}
+                            <tr><td>{{count}}</td><td>{{lemma_new}}</td><td>{{lemma}}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-lg-3">
+                    <h4>POS</h4>
+                    <table class="table table-xs table-striped">
+                        <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
+                        <tbody>
+                            {% for count, lemma_new, lemma in pos_cor %}
+                            <tr><td>{{count}}</td><td>{{lemma_new}}</td><td>{{lemma}}</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </section>
-    </div>
-    <hr />
-    <div>
-            <p>
-                <a class="btn btn-primary" href="{{url_for("main.tokens_correct", corpus_id=corpus.id)}}">Edit tokens</a> -
-                <a class="btn btn-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">Export tokens</a> -
-                <a class="btn btn-primary" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">History</a>
-                <hr />
-                <a class="btn btn-primary" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Edit tokens with unallowed lemma</a>
-                <a class="btn btn-primary" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Edit tokens with unallowed POS</a>
-                <a class="btn btn-primary" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Edit tokens with unallowed morph</a>
-            </p>
     </div>
 {% endblock %}
 {% block custom_head_tags %}
