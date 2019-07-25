@@ -123,7 +123,6 @@ def corpus_get(corpus_id):
         if limit_corr.isnumeric():
             limit_corr = min(int(limit_corr), 100)
             limit_corr = max(10, limit_corr)
-            print(limit_corr)
         else:
             limit_corr = 10
 
