@@ -106,22 +106,43 @@
 {% endmacro %}
 
 
-{% macro render_pagination(pagination, endpoint) %}
-<nav aria-label="Page navigation example">
-  <ul class="pagination">
-  {%- for page in pagination.iter_pages() %}
-    {% if page %}
-      {% if page != pagination.page %}
-        <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, limit=pagination.per_page, **kwargs) }}">{{ page }}</a></li>
-      {% else %}
-        <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
-      {% endif %}
-    {% else %}
-        <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
-    {% endif %}
-  {%- endfor %}
-  </ul>
-</nav>
+{% macro render_pagination(pagination, endpoint, get_params=[]) %}
+<div class="row">
+    <div class="col-md-6">
+        <nav aria-label="Page navigation example">
+          <ul class="pagination">
+          {%- for page in pagination.iter_pages() %}
+            {% if page %}
+              {% if page != pagination.page %}
+                <li class="page-item"><a class="page-link" href="{{ url_for(endpoint, page=page, limit=pagination.per_page, **kwargs) }}">{{ page }}</a></li>
+              {% else %}
+                <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
+              {% endif %}
+            {% else %}
+                <li class="page-item disabled"><a class="page-link" href="#">...</a></li>
+            {% endif %}
+          {%- endfor %}
+          </ul>
+        </nav>
+    </div>
+    <div class="col-md-6">
+        <form action="{{url_for(endpoint, **kwargs)}}" method="GET" style="max-width:160px;" >
+            {%- for name, value in kwargs.items() -%}
+                {%- if get_params and name in get_params %}
+                    <input type="hidden" name="{{name}}" value="{{value}}" />
+                {% endif %}
+            {%- endfor -%}
+            <div class="input-group input-group-sm">
+              <div class="input-group-prepend">
+                <button class="btn btn-primary" type="submit" id="button-addon1">Go to</button>
+              </div>
+              <input type="number" name="page"
+                     class="form-control" placeholder="Page" aria-label="Example text with button addon"
+                     aria-describedby="button-addon1" aria-placeholder="Page" />
+            </div>
+        </form>
+    </div>
+</div>
 {% endmacro %}
 
 {%- macro quick_nav(corpus) %}
