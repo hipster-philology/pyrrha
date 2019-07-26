@@ -41,6 +41,36 @@
   color:darkgrey;
   font-size: smaller;
 }
+tr.history td {
+    padding: 0.1em;
+}
+tr.history .detail {
+    font-style: italic;
+    color: #3d3e3f;
+}
+tbody tr.history {
+    color: #a89ea4;
+}
+tr.history .text {
+    max-width: 90ch; /* 100 * 0 */
+}
+tr.history .line, tr.history .text {
+    border-right-width:3px;
+}
+tr.history .old {
+    background-color: #baa390;
+}
+tr.history .red {
+    color: #9a0a1c;
+    font-weight: bold;
+}
+tr.history .green {
+    color: #175b1f;
+    font-weight: bold;
+}
+tr.history .badge {
+    font-size: 1em;
+}
   h1, h2, h3, h4 { color:rgb(189, 5, 45); }
   .bg-dark, .navbar-dark, .thead-dark th { background-color : rgb(189, 5, 45)!important; }
   .thead-dark th { border-color : rgb(189, 5, 45)!important; }
