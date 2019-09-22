@@ -185,11 +185,22 @@ def tokens_export(corpus_id):
                        "Content-Type": "text/tab-separated-values; charset= utf-8",
                        "Content-Disposition": 'attachment; filename="pyrrha-correction.tsv"'
                    }
-    elif format in ["tei", "tei-geste"]:
+    elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         #if format == "tei-geste": Right now only 1 format
         response = render_template("tei/geste.xml", base=base, tokens=tokens,
+                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                                   delimiter=corpus.delimiter_token)
+        return response, 200, {
+           "Content-Type": "text/xml; charset= utf-8",
+           "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
+        }
+     elif format == "tei-msd":
+        tokens = corpus.get_tokens().all()
+        base = tokens[0].id - 1
+        #if format == "tei-geste": Right now only 1 format
+        response = render_template("tei/TEI.xml", base=base, tokens=tokens,
                                    history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
                                    delimiter=corpus.delimiter_token)
         return response, 200, {

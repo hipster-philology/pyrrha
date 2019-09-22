@@ -8,8 +8,11 @@
     <a class="btn btn-outline-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id, format="tsv")}}">
     <i class="fa fa-th-list"></i> Pandora/Pie CSV
     </a>
+     <a id="geste-tei" class="btn btn-outline-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id, format="tei-msd")}}">
+    <i class="fa fa-code"></i> TEI (@msd/@pos)
+    </a>
     <a id="geste-tei" class="btn btn-outline-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id, format="tei-geste")}}">
-    <i class="fa fa-code"></i> TEI
+    <i class="fa fa-code"></i> TEI-Geste
     </a>
 </p>
 
