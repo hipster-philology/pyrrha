@@ -34,12 +34,16 @@
   color:black!important;
   font-size: 1.1em!important;
 }
+.table-xs {
+    font-size: 0.8em;
+}
 .tok-anc {
   color:darkgrey;
   font-size: smaller;
 }
   h1, h2, h3, h4 { color:rgb(189, 5, 45); }
-  .bg-dark, .navbar-dark { background-color : rgb(189, 5, 45)!important; }
+  .bg-dark, .navbar-dark, .thead-dark th { background-color : rgb(189, 5, 45)!important; }
+  .thead-dark th { border-color : rgb(189, 5, 45)!important; }
   .hidden-default  { display: none; }
   fieldset.form-fieldset {
       border: 1px groove rgb(189, 5, 45) !important;
