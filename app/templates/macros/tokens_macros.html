@@ -16,6 +16,10 @@
         </div>
     {% endif -%}
 
+    <div class="alert alert-success" style="display:none;" id="tokens-success"></div>
+    <div class="alert alert-danger" style="display:none;" id="tokens-error">An error occured. Contact the administrator
+        with all the information you can so they can replicate your error.</div>
+
     <table class="table table-bordered">
         <thead>
         <tr><th>Id</th><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
@@ -66,6 +70,12 @@
         });
         $('.save-lemma').on("click", function (event) {
             event.preventDefault();
+            var al = document.getElementById("tokens-success"),
+                er = document.getElementById("tokens-error");
+
+            al.style.display = "none";
+            er.style.display = "none";
+
 
             var selected_tokens = $.map($(".word-token:checked"), function(elem) { return $(elem).val(); });
             jQuery.ajax({
@@ -77,10 +87,15 @@
                     word_tokens: selected_tokens
                 }),
                 success:function(response){
-                    location.reload();
+                    al.innerText = response.length + " tokens edited.";
+                    al.style.display = "block";
+
+                    for (var i=0; i < response.length; i++) {
+                        document.getElementById("token_" + response[i]["id"] + "_row").remove();
+                    }
                 },
                 error:function(jq, response, errorThrown){
-                    location.reload();
+                    er.style.display = "block";
                 }
             });
         });
