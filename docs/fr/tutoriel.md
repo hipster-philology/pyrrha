@@ -21,34 +21,37 @@ Vous pouvez tester une telle configuration de Pyrrha sur le serveur de développ
 ## 1. Gérer son compte utilisateur
 
 ### 1.1. Créer son compte
-Lien `Register` : https://dev.chartes.psl.eu/pyrrha/account/register
+
+Lien [`Register`](https://dev.chartes.psl.eu/pyrrha/account/register)
+
 1. Renseigner le formulaire.
 1. Confirmer l'inscription en cliquant sur le lien reçu dans sa messagerie.
 
 ### 1.2. Modifier son compte
-Onglet `Your Account`  
-Possibilité de mettre à jour l'adresse mail et le mot de passe.
+
+- Onglet `Your Account`  
+- Possibilité de mettre à jour l'adresse mail et le mot de passe.
 
 ### 1.3. Supprimer son compte
-TODO
 
+TODO
 
 ---
 ##  2. Gérer ses corpus
 
 ### <a name="create_corpus"></a>2.1. Créer un corpus
-Onglet [`New Corpus`](https://dev.chartes.psl.eu/pyrrha/corpus/new)  
-Un *nouveau corpus* est un texte étiqueté que l’on souhaite corriger.  
-À sa création, il convient donc de lui [associer les ressources (listes de contrôle)](#control_lists) utiles à la reprise de l’étiquetage.
+
+- Onglet [`New Corpus`](https://dev.chartes.psl.eu/pyrrha/corpus/new)  
+- Un *nouveau corpus* est un texte étiqueté que l’on souhaite corriger.  
+- À sa création, il convient donc de lui [associer les ressources (listes de contrôle)](#control_lists) utiles à la reprise de l’étiquetage.
 
 ---
 #### 2.1.1. Importer un texte
 
 * `Metadata > Corpus Name` : nommer explicitement le nouveau corpus pour faciliter le suivi de nombreux projets.
-
 * <a name="context_setting"></a><`Metadata > Left and right context` : définir la taille des contextes gauche et droit autour du token éditable dans l’interface de correction (3 mots par défaut de part et d’autre du token).
-
 * `Data > Tokens (as TSV content)` : copier-coller le texte étiqueté à corriger au format [TSV](https://fr.wikipedia.org/wiki/Tabulation-separated_values), en respectant l’en-tête suivante :
+
 ```tsv
 Form	Lemma	POS	Morph
 son	son4	DETpos	PERS.=3|NOMB.=s|GENRE=m|CAS=r
@@ -63,8 +66,10 @@ bien	bien1	ADVgen	DEGRE=p
 ---
 #### 2.1.2. Tokenizer un nouveau corpus (beta)
 Si le texte n’est pas encore étiqueté, il est possible d’importer simplement le texte brut :
+
 * Copier-coller votre texte dans le champs `Data > Tokens (as TSV content)`.
 * Cliquer sur le bouton `Tokenize`.
+
 Le texte est reformaté pour les besoins de l’annotation : chaque token est inscrit en début de ligne et l’en-tête obligatoire (`form | lemma | POS morph`) est ajoutée.
 
 ![tokenize](../img/tokenize.gif)
@@ -72,6 +77,7 @@ Le texte est reformaté pour les besoins de l’annotation : chaque token est in
 ---
 #### 2.1.3. Lemmatiser un nouveau corpus (selon la configuration)
 À la création du nouveau corpus, l’École des chartes propose un service de lemmatisation pour l’ancien français et le latin.
+
 * Copier-coller le texte dans le champs `Data > Tokens (as TSV content)`.
 * Dans le menu déroulant, sélectionner le modèle de langue.
 * Cliquer sur le bouton `Lemmatize`.
@@ -79,6 +85,7 @@ Le texte est reformaté pour les besoins de l’annotation : chaque token est in
 ![tokenize](../img/lemmatize.gif)
 
 Le service de lemmatisation utilise des modèles [Pie](https://github.com/emanjavacas/pie) (Manjavacas, E., Kestemont, M., & Clérice, T. (2019). emanjavacas/pie v0.1.0. https://doi.org/10.5281/zenodo.1637878) :
+
 * Deucalion pour le latin (https://doi.org/10.5281/zenodo.2707476) :
   * modèle entraîné sur les données du [LASLA](http://web.philo.ulg.ac.be/lasla/).
 * Deucalion pour l’ancien français (https://doi.org/10.5281/zenodo.3237455) :
@@ -89,11 +96,13 @@ Le service de lemmatisation utilise des modèles [Pie](https://github.com/emanja
 #### <a name="control_lists"></a>2.1.4. Associer des listes de contrôle
 
 `Control Lists`. Les listes de contrôle facilitent la correction de l’étiquetage : elles permettent d’isoler les étiquettes non autorisées ou inconnues et d’encadrer la saisie du correcteur (suggestions et autocomplétion).
+
 * Liste de lemmes (`Lemma List`)
 * Liste des étiquettes grammaticales (`POS List`)
 * Liste des étiquettes morphologiques (`Morph List`)
 
 Cocher (au choix) :
+
 * `Use an existing control list` pour utiliser des listes prédéfinies et partagées (et y contribuer). Ces listes sont disponibles pour :
   * l’ancien Français ;
   * le français moderne ;
@@ -102,21 +111,27 @@ Cocher (au choix) :
 
 
 ---
+
 ### 2.2. Supprimer un corpus
+
 TODO!
 
 
 ---
+
 ### 2.3. <a name="collaborate"></a>Collaborer
+
 Onglet `Dashboard > Corpora > corpus_name`  
 Il est possible d’inviter des utilisateurs enregistrés à colloborer à la correction d’un corpus.
 
 #### Inviter des utilisateurs
+
 * Dans la liste `Grant access to a user`, cliquer sur les utilisateurs invités : ils s’ajoutent à la liste des utilisateurs associés au corpus (liste `View and manage corpus users`).
 * Pour associer certains utilisateurs en tant qu’administreur du corpus, cocher la case `Owner`.
 * Cliquer en bas de page sur le bouton `Save modifications`.
 
 #### Retirer un utilisateur de la liste associée au corpus
+
 * Dans la liste `View and manage corpus users`, cliquer sur l’icône `Corbeille`.
 * Cliquer en bas de page sur le bouton `Save modifications`.
 
@@ -124,8 +139,8 @@ Il est possible d’inviter des utilisateurs enregistrés à colloborer à la co
 ## <a name="tags_correct"></a>3. Corriger les données
 
 ### 3.1. Fonctionnalités de base : relecture et édition des corrections
-Onglet `Corpora > corpus_name > Edit tokens`  
-ou `Quick links > Correct tokens`
+
+Onglet `Corpora > corpus_name > Edit tokens` ou `Quick links > Correct tokens`
 
 L’interface affiche un tableau à 9 colonnes, dont 3 sont éditables :
 
@@ -139,10 +154,12 @@ L’interface affiche un tableau à 9 colonnes, dont 3 sont éditables :
 1. `Save` : sauvegarder les modifications ;
 1. `+` : options de modification du token : correction, suppression, ajout.
 
-
 ---
+
 ### 3.2. Corriger les étiquettes `Lemma`, `Pos` et `Morph`
+
 `Quick links > Correct tokens`
+
 1. Cliquer dans la cellule à corriger.
 1. Corriger la valeur.
 1. Cliquer sur `Save` pour enregistrer la modification.
@@ -156,6 +173,7 @@ Si nécessaire (définition d’un nouveau lemme par ex.), il est possible de [m
 
 ---
 ### 3.3. <a name="batch_correction"></a>Corriger par lots
+
 1. Cliquer sur le nombre renseigné dans la colonne `Similar` : pour accéder à toutes les tokens (`Form`) identiques.
 1. Utiliser les filtres en haut de page pour affiner la liste :
   * `Match`
@@ -175,6 +193,7 @@ Si nécessaire (définition d’un nouveau lemme par ex.), il est possible de [m
 ---
 ### 3.4. Corriger par lots grâce aux filtres de recherche
 `Quick links > Search tokens`
+
 1. Rechercher des tokens selon :
   * leur forme (`Form`) ;
   * et/ou leur lemme (`Lemma`) ;
@@ -187,6 +206,7 @@ Si nécessaire (définition d’un nouveau lemme par ex.), il est possible de [m
 ---
 ### 3.5. Contrôler et nettoyer l’annotation
 Menu `Correct tokens with`  
+
 Ce raccourci permet de lister les tokens dont l’étiquetage n’est pas validé par les listes de contrôle.
 
 1. Cliquer sur :
@@ -197,17 +217,20 @@ Ce raccourci permet de lister les tokens dont l’étiquetage n’est pas valid�
 
 ---
 ### 3.6. Annuler la dernière correction
+
 `Quick links > Last corrected tokens`
 
 
 ---
 ### 3.7. Suivre les corrections de l’annotation
+
 `Quick links > Corrections history`
 
 ---
 ### 3.8. Corriger le texte annoté
 
 Si nécessaire, vous pouvez corriger le texte annoté (la liste des tokens) grâce au raccourci `+` de la dernière colonne qui ouvre un menu contextuel :
+
 * `Edit the form` : modification de la forme fautive ;
 * `Delete the row` : suppression du token ;
 * `Add a token after this one` : ajout d’un token.
@@ -230,12 +253,14 @@ TODO
 
 À tout moment, les données peuvent être intégralement exportées en TSV ou en XML/TEI.
 #### `Pandora/Pie CSV`
+
 Export TSV avec l’en-tête `Form	| Lemma	| POS	| Morph`.
 
 #### `TEI`  
 ```xml
 <w xml:id="t6" n="6" lemma="qui" type="POS=PROadv|NOMB.=s|GENRE=m|CAS=n">qui</w>
 ```  
+
 * `@xml:id` : identifiant Pyrrha du token (numéro d’ordre dans le corpus)
 * `@lemma` : lemme
 * `@type` : concaténation des étiquettes POS et morpho-syntaxique.
