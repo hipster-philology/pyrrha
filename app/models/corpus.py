@@ -761,33 +761,40 @@ class WordToken(db.Model):
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
         tokens = []
+
+        _keys = word_tokens_dict[0]
+        form_key = "form" if "form" in _keys else "token" if "token" in _keys else "tokens"
+        lemma_key = "lemma" if "lemma" in _keys else "lemmas"
+        pos_key = "pos" if "pos" in _keys else "POS"
+        morph_key = "morph"
+
         for i, token in enumerate(word_tokens_dict):
 
             if i == 0:
                 previous_token = []
             elif i < context_left:
-                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[:i]]
+                previous_token = [tok.get(form_key) for tok in word_tokens_dict[:i]]
             else:
-                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i-context_left:i]]
+                previous_token = [tok.get(form_key) for tok in word_tokens_dict[i-context_left:i]]
 
             if i == count_tokens-1:
                 next_token = []
             elif count_tokens-1-i < context_right:
-                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:]]
+                next_token = [tok.get(form_key) for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:i+context_right+1]]
+                next_token = [tok.get(form_key) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
-            form = token.get("form", token.get("tokens", token.get("token")))
+            form = token.get(form_key)
             if not form:
                 error = MissingTokenColumnValue()
                 error.line = i+1
                 raise error
-            lemma = token.get("lemma", token.get("lemmas"))
+            lemma = token.get(lemma_key)
             label_uniform = ""
             if lemma:
                 label_uniform = unidecode.unidecode(lemma)
-            POS = token.get("POS", token.get("pos", None))
-            morph = token.get("morph", None)
+            POS = token.get(pos_key, None)
+            morph = token.get(morph_key, None)
 
             wt = dict(
                 form=form,
