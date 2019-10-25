@@ -11,35 +11,39 @@
 
 <h2>Change</h2>
 
+<dl>
+    <dt>User</dt>
+    <dd>{{ record.user.first_name[0] }}.{{ record.user.last_name }}</dd>
+    <dt>Date</dt>
+    <dd class="datetime">{{record.created_on}}</dd>
+</dl>
+
 <table class="table table-bordered">
     <thead>
-        <tr>
-            <th>User</th>
-            <th>Edit</th><th>Form</th>
-            <th>Context</th>
-            <th>Lemma</th><th>POS</th><th>Morph</th>
-            <th>Corr Lemma</th><th>Corr POS</th><th>Corr Morph</th>
-            <th>Similar</th>
+        <tr class="history">
+            <th class="line">Context</th>
+            <th>Old Lemma</th>
+            <th class="line">Corr Lemma</th>
+            <th>Previous POS</th>
+            <th class="line">Actual POS</th>
+            <th>Previous Morph</th>
+            <th class="line">Actual Morph</th>
         </tr>
     </thead>
     <tbody>
-        <tr>
-            <td class="small">{{ record.user.first_name[0] }}.{{ record.user.last_name }}</td>
-            <td class="small">{{record.created_on}}</td>
-            <td>{{record.form}}</td>
-            <td class="small">{{record.word_token.context}}</td>
-            <td class="bg-warning">{{record.lemma}}</td>
-            <td class="bg-warning">{{record.POS}}</td>
-            <td class="bg-warning">{{record.morph}}</td>
-            <td class="bg-info">{{record.lemma_new}}</td>
-            <td class="bg-info">{{record.POS_new}}</td>
-            <td class="bg-info">{{record.morph_new}}</td>
-            <td >{{record.similar_remaining}}</td>
+        <tr class="history">
+            <td class="detail text">{{tokens_macros.token_context(record.word_token, "b")}}</td>
+            <td class="{% if record.lemma != record.lemma_new%}red{%endif%}">{{record.lemma}}</td>
+            <td class="line {% if record.lemma != record.lemma_new%}green{%endif%}">{{record.lemma_new}}</td>
+            <td class="{% if record.POS != record.POS_new%}red{%endif%}">{{record.POS}}</td>
+            <td class="line {% if record.POS != record.POS_new%}green{%endif%}">{{record.POS_new}}</td>
+            <td class="{% if record.morph != record.morph_new%}red{%endif%}">{{record.morph}}</td>
+            <td class="line {% if record.morph != record.morph_new%}green{%endif%}">{{record.morph_new}}</td>
         </tr>
     </tbody>
 </table>
 
-<h2>Similar matching</h2>
+<h2>Similar matching: {{record.similar_remaining}}</h2>
 <div class="main">
 {{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, checkbox=True, record=record) }}
 </div>
