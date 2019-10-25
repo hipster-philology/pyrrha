@@ -2,6 +2,7 @@
 import csv
 import io
 import enum
+from typing import Iterable
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -269,6 +270,12 @@ class Corpus(db.Model):
         :return: Tokens Query
         """
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
+
+    def changed(self, tokens):
+        data = db.session.query(ChangeRecord.word_token_id).distinct(ChangeRecord.word_token_id).filter(
+            ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
+        ).all()
+        return set([token for token, *_ in data])
 
     def get_history(self, page=1, limit=100):
         """ Retrieve ChangeRecord from the Corpus
@@ -584,28 +591,34 @@ class WordToken(db.Model):
         """
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
-    @property
-    def changed(self):
-        """ Tells whether this token has already been edited
-
-        :return: If the token has been edited
-        :rtype: bool
-        """
-        return db.session.query(ChangeRecord.query.filter(
-                ChangeRecord.word_token_id == self.id
-        ).exists()).scalar()
-
     @classmethod
-    def similar_as(cls, corpus: int, form: str, lemma: str, POS: str, morph: str):
-        c = Corpus.query.filter(Corpus.id == corpus).first()
-        if c is None:
-            count = 0
+    def similar_as(cls, corpus: Corpus, form: str, lemma: str, POS: str, morph: str):
+        if corpus is None:
+            return 0
         else:
-            count = len([
-                w for w in c.word_token
-                if w.form == form and (w.lemma == lemma or w.POS == POS or w.morph == morph)
-            ]) - 1
-        return max(count, 0)
+            cnt = 0
+            for w in corpus.word_token:
+                if w.form == form:
+                    if w.lemma == lemma or w.POS == POS or w.morph == morph:
+                        cnt += 1
+            return cnt - 1
+
+    @staticmethod
+    def get_similar_for_batch(corpus: Corpus, tokens: Iterable["WordToken"]):
+        forms = {token.form: [] for token in tokens}
+        for token in tokens:
+            token.similar = 0
+            forms[token.form].append(token)
+
+        for w in WordToken.query.filter(
+                db.and_(WordToken.corpus == corpus.id, WordToken.form.in_(list(forms.keys())))
+        ).all():
+            if w.form in forms:
+                for token in forms[w.form]:
+                    if w.lemma == token.lemma or w.POS == token.POS or w.morph == token.morph:
+                        token.similar += 1
+        for token in tokens:
+            token.similar = token.similar - 1 if token.similar > 0 else 0
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
