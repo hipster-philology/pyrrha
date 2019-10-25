@@ -762,6 +762,10 @@ class WordToken(db.Model):
         count_tokens = len(word_tokens_dict)
         tokens = []
 
+        # stop right now if there's nothing to add
+        if count_tokens == 0:
+            return 0
+
         _keys = word_tokens_dict[0]
         form_key = "form" if "form" in _keys else "token" if "token" in _keys else "tokens"
         lemma_key = "lemma" if "lemma" in _keys else "lemmas"
