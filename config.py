@@ -36,7 +36,10 @@ class Config:
     PAGINATION_DEFAULT_TOKENS = 100
 
     # Lemmatizer (until Deucalion client)
-    LEMMATIZERS = []
+    LEMMATIZERS = [
+        ("Ancien Français", "https://dev.chartes.psl.eu/deucalion/models/fro-1/api/"),
+        ("Lasla (LASLA)", "https://dev.chartes.psl.eu/deucalion/models/lasla/api/"),
+    ]
 
     @staticmethod
     def init_app(app):
@@ -66,7 +69,8 @@ class DevelopmentConfig(Config):
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
     LEMMATIZERS = [
-        ("Ancien Français", "http://localhost:5001/")
+        ("Ancien Français", "https://dev.chartes.psl.eu/deucalion/models/fro-1/api/"),
+        ("Lasla (LASLA)", "https://dev.chartes.psl.eu/deucalion/models/lasla/api/"),
     ]
 
 
