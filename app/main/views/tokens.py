@@ -13,7 +13,6 @@ from ...utils.tsv import TSV_CONFIG
 from io import StringIO
 
 
-
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
 @login_required
 @requires_corpus_access("corpus_id")
@@ -23,6 +22,7 @@ def tokens_correct(corpus_id):
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+
     tokens = corpus\
         .get_tokens()\
         .paginate(
@@ -30,15 +30,11 @@ def tokens_correct(corpus_id):
             per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
         )
 
-    maps = {}
-    for token in tokens.items:
-        key = (token.form, token.lemma, token.POS, token.morph)
-        if key not in maps:
-            maps[key] = \
-                WordToken.similar_as(corpus.id, *key)
-        token.similar = maps[key]
+    WordToken.get_similar_for_batch(corpus, tokens.items)
 
-    return render_template_with_nav_info('main/tokens_correct.html', corpus=corpus, tokens=tokens)
+    changed = corpus.changed(tokens.items)
+
+    return render_template_with_nav_info('main/tokens_correct.html', corpus=corpus, tokens=tokens, changed=changed)
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/correct')
@@ -61,7 +57,8 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
         'main/tokens_correct_unallowed.html',
         corpus=corpus,
         tokens=tokens,
-        allowed_type=allowed_type
+        allowed_type=allowed_type,
+        changed=corpus.changed(tokens.items)
     )
 
 
@@ -79,7 +76,8 @@ def tokens_similar_to_record(corpus_id, record_id):
     tokens = WordToken.get_similar_to_record(change_record=record).paginate(per_page=1000)
     return render_template_with_nav_info(
         # The Dict is a small hack to emulate paginate
-        'main/tokens_similar_to_record.html', corpus=corpus, tokens=tokens, record=record
+        'main/tokens_similar_to_record.html', corpus=corpus, tokens=tokens, record=record,
+        changed=corpus.changed(tokens.items)
     )
 
 
@@ -105,10 +103,12 @@ def tokens_similar_to_token(corpus_id, token_id):
                 tok.to_dict() for tok in tokens.all()
             ])
         return jsonify({"count": tokens.count()})
+    tokens = tokens.paginate(per_page=1000)
     return render_template_with_nav_info(
         # The Dict is a small hack to emulate paginate
         'main/tokens_similar_to_token.html',
-        corpus=corpus, tokens=tokens.paginate(per_page=1000), mode=mode, token=token
+        corpus=corpus, tokens=tokens, mode=mode, token=token,
+        changed=corpus.changed(tokens.items)
     )
 
 
@@ -281,6 +281,7 @@ def tokens_search_through_fields(corpus_id):
     tokens = tokens.paginate(page=page, per_page=per_page)
 
     return render_template_with_nav_info('main/tokens_search_through_fields.html',
+                                         changed=corpus.changed(tokens.items),
                                          corpus=corpus, tokens=tokens, **kargs)
 
 

@@ -115,3 +115,4 @@ flask_app.py
 config.py
 # OS X
 .DS_Store
+site/

@@ -1,9 +1,9 @@
 
-{%- macro token_context(token) %}
-{{ token.left_context }} <b>{{ token.form }}</b> {{ token.right_context }}
+{%- macro token_context(token, tag="b") %}
+{{ token.left_context }} <{{tag}}>{{ token.form }}</{{tag}}> {{ token.right_context }}
 {% endmacro -%}
 
-{% macro table(tokens, corpus, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
+{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
 {% if editable %}
     {%- if checkbox %}
         <div>
@@ -27,7 +27,7 @@
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr class="editable{% if token.changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
+                <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
                     <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
@@ -205,38 +205,50 @@
     </script>
     {% endif %}
 {% elif tracking %}
-    <table class="table table-bordered">
+    <table class="table table-bordered table-xs">
         <thead>
-            <tr>
+            <tr class="history">
                 <th>User</th>
                 <th>Edit</th>
-                <th>Form</th>
-                <th>Context</th>
-                <th>Lemma</th><th>POS</th><th>Morph</th>
-                <th>Corr Lemma</th><th>Corr POS</th><th>Corr Morph</th>
+                <th class="line">Context</th>
+                <th>Old Lemma</th>
+                <th class="line">Corr Lemma</th>
+                <th>Previous POS</th>
+                <th class="line">Actual POS</th>
+                <th>Previous Morph</th>
+                <th class="line">Actual Morph</th>
                 <th>Similar</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr>
-                    <td class="small">{{ token.user.first_name[0] }}.{{ token.user.last_name }}</td>
-                    <td class="small">{{token.created_on}}</td>
-                    <td>{{token.form}}</td>
-                    <td class="small">{{token_context(token.word_token)}}</td>
-                    <td class="bg-warning">{{token.lemma}}</td>
-                    <td class="bg-warning">{{token.POS}}</td>
-                    <td class="bg-warning">{{token.morph}}</td>
-                    <td class="bg-info">{{token.lemma_new}}</td>
-                    <td class="bg-info">{{token.POS_new}}</td>
-                    <td class="bg-info">{{token.morph_new}}</td>
-                    <td>{{token.similar_remaining}}</td>
-                    <td><a href="{{url_for("main.tokens_similar_to_record", corpus_id=corpus.id, record_id=token.id)}}">Find Similar</a></td>
+                <tr class="history">
+                    <td class="detail">{{ token.user.first_name[0] }}.{{ token.user.last_name }}</td>
+                    <td class="detail datetime">{{token.created_on}}</td>
+                    <td class="detail text">{{token_context(token.word_token, "b")}}</td>
+                    <td class="{% if token.lemma != token.lemma_new%}red{%endif%}">{{token.lemma}}</td>
+                    <td class="line {% if token.lemma != token.lemma_new%}green{%endif%}">{{token.lemma_new}}</td>
+                    <td class="{% if token.POS != token.POS_new%}red{%endif%}">{{token.POS}}</td>
+                    <td class="line {% if token.POS != token.POS_new%}green{%endif%}">{{token.POS_new}}</td>
+                    <td class="{% if token.morph != token.morph_new%}red{%endif%}">{{token.morph}}</td>
+                    <td class="line {% if token.morph != token.morph_new%}green{%endif%}">{{token.morph_new}}</td>
+                    <td>
+                        <a href="{{url_for('main.tokens_similar_to_record', corpus_id=corpus.id, record_id=token.id)}}" class="badge badge-info">
+                        {{token.similar_remaining}} similar</a>
+                    </td>
+
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+    <script type="text/javascript" src="{{url_for('static', filename='js/moments.js')}}"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            document.querySelectorAll(".datetime").forEach((element) => {
+               element.innerText = moment(element.innerText.split(" ").join("T")+"Z").format("lll");
+            });
+        });
+    </script>
 {% else %}
     <table class="table table-bordered">
         <thead>
