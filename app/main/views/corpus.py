@@ -5,7 +5,7 @@ from sqlalchemy import func, distinct, text
 
 
 from app import db
-from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord
+from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord, Bookmark
 from .utils import render_template_with_nav_info
 from app.utils.forms import create_input_format_convertion, read_input_tokens
 from .. import main
@@ -13,7 +13,7 @@ from ...utils.forms import strip_or_none
 from ...models import Corpus
 from ...utils.response import format_api_like_reply
 from ...errors import MissingTokenColumnValue, NoTokensInput
-from .utils import requires_corpus_admin_access
+from .utils import requires_corpus_admin_access, requires_corpus_access
 from ..forms import Delete
 
 AUTOCOMPLETE_LIMIT = 20
@@ -109,14 +109,13 @@ def corpus_new():
 
 @main.route('/corpus/get/<int:corpus_id>')
 @login_required
+@requires_corpus_access("corpus_id")
 def corpus_get(corpus_id):
     """ Main page about the corpus
 
     :param corpus_id: ID of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-    if not corpus.has_access(current_user):
-        abort(403)
 
     limit_corr = request.args.get("limit", 10)
     if isinstance(limit_corr, str):
@@ -164,6 +163,31 @@ def corpus_get(corpus_id):
         ).limit(limit_corr).all()
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus, stats=corpus.statistics,
                                          lemma_cor=lemma_cor, pos_cor=pos_cor, morph_cor=morph_cor)
+
+
+@main.route("/corpus/<int:corpus_id>/bookmark")
+@login_required
+@requires_corpus_access("corpus_id")
+def corpus_bookmark(corpus_id):
+    token = request.args.get("token_id", None)
+    page = request.args.get("page", None)
+    if token and page:
+        bm = Bookmark.mark(corpus_id, current_user.id, token, page)
+        link = "{uri}#token_{token}_row".format(
+            uri=url_for("main.tokens_correct", corpus_id=corpus_id, page=bm.page),
+            token=bm.token_id
+        )
+    else:
+        bm = Corpus.query.get_or_404(corpus_id).get_bookmark(current_user)
+        if bm:
+            link = "{uri}#token_{token}_row".format(
+                uri=url_for("main.tokens_correct", corpus_id=corpus_id, page=bm.page),
+                token=bm.token_id
+            )
+        else:
+            flash("No bookmark found for this corpus on your account", category="warning")
+            link = url_for("main.tokens_correct", corpus_id=corpus_id)
+    return redirect(link)
 
 
 @main.route('/corpus/<int:corpus_id>/delete', methods=["GET", "POST"])

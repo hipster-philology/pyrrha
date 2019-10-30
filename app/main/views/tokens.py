@@ -6,7 +6,7 @@ from csv import DictWriter
 
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
-from ...models import WordToken, Corpus, ChangeRecord, TokenHistory
+from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
 from ...utils.tsv import TSV_CONFIG
@@ -22,6 +22,7 @@ def tokens_correct(corpus_id):
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    current_user.bookmark: Bookmark = corpus.get_bookmark(current_user)
 
     tokens = corpus\
         .get_tokens()\

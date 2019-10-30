@@ -10,7 +10,7 @@
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
 
-{{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=True) }}
+{{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=True, current_user=current_user) }}
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
 
