@@ -182,13 +182,17 @@ class Corpus(db.Model):
         )
 
     @staticmethod
-    def for_user(current_user):
-        return db.session.query(Corpus).filter(
+    def for_user(current_user, _all=True):
+        corpora = db.session.query(Corpus).filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,
                 CorpusUser.user_id == current_user.id
             )
-        ).all()
+        )
+        if _all:
+            return corpora.all()
+        else:
+            return corpora
 
     def is_owned_by(self, user):
         return db.session.query(literal(True)).filter(
