@@ -202,7 +202,7 @@ Correct tokens with
 {% endmacro %}
 
 
-{% macro corpora_list(corpora, endpoint='') %}
+{% macro corpora_list(corpora, endpoint='', favorites=[]) %}
     <div class="mt-5">
         <h2>Your corpora</h2>
 
@@ -211,7 +211,21 @@ Correct tokens with
         <div id="corpora-dashboard" class="list-group">
             <h3 class="list-group-item bg-dark text-white">Corpora</h3>
             {% for corpus in corpora.items %}
-                {{ dashboard.dashboard_option(corpus.name, 'main.tokens_correct', args={"corpus_id": corpus.id}, icon="fa fa-file-text") }}
+                <div  class="list-group-item list-group-item-action">
+                    <div class="content container">
+                        <div class="row">
+                            <a class="col-sm-1 text-center" href="{{ url_for('main.corpus_fav', corpus_id=corpus.id) }}">
+                                <i class="fa {% if corpus in favorites %}fa-star{% else %}fa-star-o{% endif %}"></i>
+                            </a>
+                            <div class="col-sm-0"><i class="fa fa-file-text"></i></div>
+                            <a class="col-sm-11 col-md-10 col" href="{{ url_for('main.tokens_correct', corpus_id=corpus.id) }}">
+                                <div>
+                                    <span class="title">{{ corpus.name }}</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                 </div>
             {% endfor %}
         </div>
         <hr />
