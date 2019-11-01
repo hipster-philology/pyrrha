@@ -1,9 +1,9 @@
 
-{%- macro token_context(token) %}
-{{ token.left_context }} <b>{{ token.form }}</b> {{ token.right_context }}
+{%- macro token_context(token, tag="b") %}
+{{ token.left_context }} <{{tag}}>{{ token.form }}</{{tag}}> {{ token.right_context }}
 {% endmacro -%}
 
-{% macro table(tokens, corpus, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
+{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
 {% if editable %}
     {%- if checkbox %}
         <div>
@@ -16,6 +16,10 @@
         </div>
     {% endif -%}
 
+    <div class="alert alert-success" style="display:none;" id="tokens-success"></div>
+    <div class="alert alert-danger" style="display:none;" id="tokens-error">An error occured. Contact the administrator
+        with all the information you can so they can replicate your error.</div>
+
     <table class="table table-bordered">
         <thead>
         <tr><th>Id</th><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
@@ -23,7 +27,7 @@
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr class="editable{% if token.changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
+                <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
                     <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
@@ -66,6 +70,12 @@
         });
         $('.save-lemma').on("click", function (event) {
             event.preventDefault();
+            var al = document.getElementById("tokens-success"),
+                er = document.getElementById("tokens-error");
+
+            al.style.display = "none";
+            er.style.display = "none";
+
 
             var selected_tokens = $.map($(".word-token:checked"), function(elem) { return $(elem).val(); });
             jQuery.ajax({
@@ -77,10 +87,15 @@
                     word_tokens: selected_tokens
                 }),
                 success:function(response){
-                    location.reload();
+                    al.innerText = response.length + " tokens edited.";
+                    al.style.display = "block";
+
+                    for (var i=0; i < response.length; i++) {
+                        document.getElementById("token_" + response[i]["id"] + "_row").remove();
+                    }
                 },
                 error:function(jq, response, errorThrown){
-                    location.reload();
+                    er.style.display = "block";
                 }
             });
         });
@@ -92,50 +107,53 @@
         var clear_br = function (elem) {
             elem.find("br").remove();
         };
-        var sanitize = function (val) {
-            val = val.replace(/[<]br[^>]*[>]/gi,"").replace(/[&]nbsp[;]/gi," ");
-            return val.toLowerCase();
-        };
         var original = $.fn.val;
         $.fn.val = function() {
             if ($(this).is('*[contenteditable=true]')) {
                 return $.fn.html.apply(this, arguments);
-            };
+            }
             return original.apply(this, arguments);
         };
         var cleanUp = function(string) {
-            return $("<div>"+string+"</div>").text().toLowerCase().trim()
+            return $("<div>"+string+"</div>").text().toLowerCase().trim();
         };
         $('td.token_lemma').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = cleanUp(term),
-                    url = "{{corpus.allowed_search_route('lemma')}}?form="+term;
+                var url = "{{corpus.allowed_search_route('lemma')}}?form="+cleanUp(term);
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
-
+            },
+            onSelect: function(e, term, item){
+                var elem = $(this);
+                elem.val(item.data("value"));
+                clear_br(elem);
             }
         });
-        $('td[contenteditable="true"]').on("keyup", function(){
-            clear_br($(this));
+        $('td[contenteditable="true"]').on("keyup", function(e){
+            if (e.keyCode == 13)  {
+                $(this).html($(this).text())
+            }
         });
         $('td.token_pos').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = cleanUp(term),
-                    url = "{{corpus.allowed_search_route('POS')}}?form="+term;
+                var url = "{{corpus.allowed_search_route('POS')}}?form="+cleanUp(term);
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
-
+            },
+            onSelect: function(e, term, item){
+                var elem = $(this);
+                elem.val(item.data("value"));
+                clear_br(elem);
             }
         });
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var term = cleanUp(term),
-                    url = "{{corpus.allowed_search_route('morph')}}?form="+term;
+                var url = "{{corpus.allowed_search_route('morph')}}?form="+cleanUp(term);
                 $.getJSON(url, function(data) {
                     suggest(data);
                 });
@@ -148,34 +166,32 @@
                 var elem = $(this);
                 elem.val(item.data("value"));
                 clear_br(elem)
-
             }
         });
-
         $('.editable a.save').on("click", function (event) {
             event.preventDefault();
             var link = $(this),
                 parent = link.parents("tr.editable"),
                 spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>');
-
+            link.parent().find(".badge-status").remove();
             link.before(spinner);
             //link.text("(Saving) Save");
             jQuery.ajax({
                 url: event.target.href,
                 type: 'POST',
                 data: {
-                    lemma: parent.find(".token_lemma").text(),
-                    POS: parent.find(".token_pos").text(),
-                    morph: parent.find(".token_morph").text()
+                    lemma: parent.find(".token_lemma").text().trim(),
+                    POS: parent.find(".token_pos").text().trim(),
+                    morph: parent.find(".token_morph").text().trim()
                 }
             }).done(function(response){
                     if(response.similar.count > 0) {
-                        link.parent().append("<a class='similar-link' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
+                        link.parent().append("<a class='similar-link badge badge-primary' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
                     }
                     parent.addClass("table-changed");
-                    link.text("(Saved) Save");
+                    link.parent().append('<span class="badge badge-success badge-status">Saved</span>');
             }).fail(function(jqXHR){
-                link.text("(" + jqXHR.responseJSON.message + ") Save");
+                link.parent().append('<span class="badge badge-danger badge-status">'+jqXHR.responseJSON.message+"</span>");
                 $.each(jqXHR.responseJSON.details, function(key, status) {
                     var selector = ".token_"+key.toLowerCase();
                     if (status === false) { parent.find(selector).addClass("table-danger"); }
@@ -189,38 +205,50 @@
     </script>
     {% endif %}
 {% elif tracking %}
-    <table class="table table-bordered">
+    <table class="table table-bordered table-xs">
         <thead>
-            <tr>
+            <tr class="history">
                 <th>User</th>
                 <th>Edit</th>
-                <th>Form</th>
-                <th>Context</th>
-                <th>Lemma</th><th>POS</th><th>Morph</th>
-                <th>Corr Lemma</th><th>Corr POS</th><th>Corr Morph</th>
+                <th class="line">Context</th>
+                <th>Old Lemma</th>
+                <th class="line">Corr Lemma</th>
+                <th>Previous POS</th>
+                <th class="line">Actual POS</th>
+                <th>Previous Morph</th>
+                <th class="line">Actual Morph</th>
                 <th>Similar</th>
-                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr>
-                    <td class="small">{{ token.user.first_name[0] }}.{{ token.user.last_name }}</td>
-                    <td class="small">{{token.created_on}}</td>
-                    <td>{{token.form}}</td>
-                    <td class="small">{{token_context(token.word_token)}}</td>
-                    <td class="bg-warning">{{token.lemma}}</td>
-                    <td class="bg-warning">{{token.POS}}</td>
-                    <td class="bg-warning">{{token.morph}}</td>
-                    <td class="bg-info">{{token.lemma_new}}</td>
-                    <td class="bg-info">{{token.POS_new}}</td>
-                    <td class="bg-info">{{token.morph_new}}</td>
-                    <td>{{token.similar_remaining}}</td>
-                    <td><a href="{{url_for("main.tokens_similar_to_record", corpus_id=corpus.id, record_id=token.id)}}">Find Similar</a></td>
+                <tr class="history">
+                    <td class="detail">{{ token.user.first_name[0] }}.{{ token.user.last_name }}</td>
+                    <td class="detail datetime">{{token.created_on}}</td>
+                    <td class="detail text">{{token_context(token.word_token, "b")}}</td>
+                    <td class="{% if token.lemma != token.lemma_new%}red{%endif%}">{{token.lemma}}</td>
+                    <td class="line {% if token.lemma != token.lemma_new%}green{%endif%}">{{token.lemma_new}}</td>
+                    <td class="{% if token.POS != token.POS_new%}red{%endif%}">{{token.POS}}</td>
+                    <td class="line {% if token.POS != token.POS_new%}green{%endif%}">{{token.POS_new}}</td>
+                    <td class="{% if token.morph != token.morph_new%}red{%endif%}">{{token.morph}}</td>
+                    <td class="line {% if token.morph != token.morph_new%}green{%endif%}">{{token.morph_new}}</td>
+                    <td>
+                        <a href="{{url_for('main.tokens_similar_to_record', corpus_id=corpus.id, record_id=token.id)}}" class="badge badge-info">
+                        {{token.similar_remaining}} similar</a>
+                    </td>
+
                 </tr>
             {% endfor %}
         </tbody>
     </table>
+    <script type="text/javascript" src="{{url_for('static', filename='js/moments.js')}}"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            document.querySelectorAll(".datetime").forEach((element) => {
+               element.innerText = moment(element.innerText.split(" ").join("T")+"Z").format("lll");
+            });
+        });
+    </script>
 {% else %}
     <table class="table table-bordered">
         <thead>

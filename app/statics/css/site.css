@@ -34,7 +34,152 @@
   color:black!important;
   font-size: 1.1em!important;
 }
+.table-xs {
+    font-size: 0.8em;
+}
 .tok-anc {
   color:darkgrey;
   font-size: smaller;
 }
+tr.history td {
+    padding: 0.1em;
+}
+tr.history .detail {
+    font-style: italic;
+    color: #3d3e3f;
+}
+tbody tr.history {
+    color: #a89ea4;
+}
+tr.history .text {
+    max-width: 90ch; /* 100 * 0 */
+}
+tr.history .line, tr.history .text {
+    border-right-width:3px;
+}
+tr.history .old {
+    background-color: #baa390;
+}
+tr.history .red {
+    color: #9a0a1c;
+    font-weight: bold;
+}
+tr.history .green {
+    color: #175b1f;
+    font-weight: bold;
+}
+tr.history .badge {
+    font-size: 1em;
+}
+  h1, h2, h3, h4 { color:rgb(189, 5, 45); }
+  .bg-dark, .navbar-dark, .thead-dark th { background-color : rgb(189, 5, 45)!important; }
+  .thead-dark th { border-color : rgb(189, 5, 45)!important; }
+  .hidden-default  { display: none; }
+  fieldset.form-fieldset {
+      border: 1px groove rgb(189, 5, 45) !important;
+      padding: 0 1.4em 1.4em 1.4em !important;
+      margin: 0 0 1.5em 0 !important;
+      border-radius: 1em;
+  }
+
+  .form-fieldset > legend {
+      font-size: 1.2em !important;
+      font-weight: bold !important;
+      text-align: left !important;
+      width:auto;
+      padding:0 10px;
+      border-bottom:none;
+  }
+  h1 > a, h2 > a, h3 > a {
+      color:inherit!important;
+  }
+  .form-check-label {
+      font-weight: bold;
+      color: rgb(189, 5, 45);
+  }
+  .table td, .table th {
+      padding: .5rem !important;
+  }
+  td.dd, th.dd {
+      text-align: center;
+  }
+  /**
+https://codepen.io/sergiopedercini/pen/jmKdbj/?source=post_page---------------------------
+1   */
+
+            .flex-wrapper {
+              display: flex;
+              flex-flow: row nowrap;
+            }
+
+            .single-chart {
+              width: 80%;
+              justify-content: space-around ;
+            }
+
+            .circular-chart {
+              display: block;
+              margin: 10px auto;
+              max-width: 80%;
+              max-height: 250px;
+            }
+
+            .circle-bg {
+              fill: none;
+              stroke: #eee;
+              stroke-width: 3.8;
+            }
+
+            .circle {
+              fill: none;
+              stroke-width: 2.8;
+              stroke-linecap: round;
+              animation: progress 1s ease-out forwards;
+            }
+
+            @keyframes progress {
+              0% {
+                stroke-dasharray: 0, 100;
+              }
+            }
+
+            .circular-chart.orange .circle {
+              stroke: #ff9f00;
+            }
+
+            .circular-chart.green .circle {
+              stroke: #4CC790;
+            }
+
+            .circular-chart.blue .circle {
+              stroke: #3c9ee5;
+            }
+
+            .percentage {
+              fill: #666;
+              font-family: sans-serif;
+              font-size: 0.3em;
+              text-anchor: middle;
+            }
+            .stats-info {
+                font-style: italic;
+                font-size: small;
+                text-align: center;
+            }
+            .stats-fact {
+                text-align: center;
+                font-weight: lighter;
+                text-transform: uppercase;
+            }
+            .stats-fact .fa {
+                color: #ff9f00;
+            }
+            .stats-fact em {
+                display: block;
+                font-size: 2em;
+                font-weight: bold;
+                text-transform: none;
+            }
+            #statistics > div {
+                margin-bottom: 1em !important;
+            }

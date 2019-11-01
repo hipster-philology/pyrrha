@@ -2,6 +2,7 @@
 import csv
 import io
 import enum
+from typing import Iterable
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -19,17 +20,26 @@ from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
 
 
+from collections import namedtuple
+
+
+CorpusStatistics = namedtuple("CorpusStatistics",
+                              field_names=["word_count", "changes", "forms_edited", "unallowed",
+                                           "lemma_acc", "pos_acc", "morph_acc",
+                                           "lemma_count", "pos_count", "morph_count"])
+
+
 class CorpusUser(db.Model):
     """
         Association proxy that link users to corpora
         :param corpus_id: a corpus ID
         :param user_id: a user ID
     """
-    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"), primary_key=True)
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
 
-    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete-orphan"))
+    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete"))
     user = db.relationship(User, backref=backref("corpus_users", cascade="all, delete-orphan"))
 
     def __init__(self, user, corpus, is_owner=False):
@@ -60,7 +70,10 @@ class Corpus(db.Model):
     delimiter_token = db.Column(db.String(12), default=None)
 
     control_lists = db.relationship("ControlLists")
+    word_token_history = db.relationship('TokenHistory', lazy='select', cascade="all, delete-orphan")
     users = association_proxy('corpus_users', 'user')
+    word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
+    changes = db.relationship("ChangeRecord", cascade="all,delete")
 
     def allowed_search_route(self, allowed_type):
         """ Returns the API search routes and parameters
@@ -92,6 +105,13 @@ class Corpus(db.Model):
             ).scalar()
         return True
 
+    def changes_per_day(self):
+        return list(db.session.query(
+            db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+        ) \
+            .filter(ChangeRecord.corpus == self.id) \
+            .group_by(db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)).all())
+
     def has_access(self, user):
         """ Can this corpus be accessed by the given user ?
 
@@ -108,6 +128,58 @@ class Corpus(db.Model):
                 ).exists()
             ).scalar()
         return True
+
+    @property
+    def statistics(self) -> CorpusStatistics:
+        """ Returns some nice statistics on the dashboard
+        """
+        total = self.tokens_count
+        changes = ChangeRecord.query.filter(ChangeRecord.corpus == self.id).count()
+
+        forms_edited = TokenHistory.query.filter(TokenHistory.corpus == self.id).count()
+
+        lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+                db.and_(
+                    ChangeRecord.corpus == self.id,
+                    ChangeRecord.lemma != ChangeRecord.lemma_new
+                )
+            ).count()
+        pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+                db.and_(
+                    ChangeRecord.corpus == self.id,
+                    ChangeRecord.POS != ChangeRecord.POS_new
+                )
+            ).count()
+        morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+                db.and_(
+                    ChangeRecord.corpus == self.id,
+                    ChangeRecord.morph != ChangeRecord.morph_new
+                )
+            ).count()
+
+        # Todo: Make sure this is optimized.
+        all_lemma = db.session.query(AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
+        all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
+        all_morph = db.session.query(AllowedMorph.label).filter(AllowedMorph.control_list == self.control_lists_id)
+
+        unallowed = db.session.query(WordToken.id).filter(
+            db.and_(
+                WordToken.corpus == self.id,
+                db.or_(
+                    WordToken.morph.notin_(all_morph),
+                    WordToken.lemma.notin_(all_lemma),
+                    WordToken.POS.notin_(all_type)
+                )
+            )
+        ).count()
+
+        return CorpusStatistics(
+            total, changes, forms_edited, unallowed,
+            lemma_acc / total * 100 if total > 0 else 0,
+            pos_acc / total * 100 if total > 0 else 0,
+            morph_acc / total * 100 if total > 0 else 0,
+            lemma_acc, pos_acc, morph_acc
+        )
 
     @staticmethod
     def for_user(current_user):
@@ -198,6 +270,12 @@ class Corpus(db.Model):
         :return: Tokens Query
         """
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
+
+    def changed(self, tokens):
+        data = db.session.query(ChangeRecord.word_token_id).distinct(ChangeRecord.word_token_id).filter(
+            ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
+        ).all()
+        return set([token for token, *_ in data])
 
     def get_history(self, page=1, limit=100):
         """ Retrieve ChangeRecord from the Corpus
@@ -307,7 +385,7 @@ class WordToken(db.Model):
 
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete='CASCADE'))
     order_id = db.Column(db.Integer)  # Id in the corpus
     form = db.Column(db.String(64))
     lemma = db.Column(db.String(64))
@@ -317,7 +395,7 @@ class WordToken(db.Model):
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
-    _changes = db.relationship("ChangeRecord")
+    _changes = db.relationship("ChangeRecord", cascade="all,delete")
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
@@ -513,31 +591,34 @@ class WordToken(db.Model):
         """
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
-    @property
-    def changed(self):
-        """ Tells whether this token has already been edited
-
-        :return: If the token has been edited
-        :rtype: bool
-        """
-        return db.session.query(ChangeRecord.query.filter(
-                ChangeRecord.word_token_id == self.id
-        ).exists()).scalar()
-
     @classmethod
-    def similar_as(cls, corpus: int, form: str, lemma: str, POS: str, morph: str):
-        cnt, *_ = db.session.query(func.count(1)).filter(
-            db.and_(
-                WordToken.corpus == corpus,
-                WordToken.form == form,
-                db.or_(
-                    WordToken.lemma == lemma,
-                    WordToken.POS == POS,
-                    WordToken.morph == morph,
-                )
-            )
-        ).first()
-        return cnt - 1
+    def similar_as(cls, corpus: Corpus, form: str, lemma: str, POS: str, morph: str):
+        if corpus is None:
+            return 0
+        else:
+            cnt = 0
+            for w in corpus.word_token:
+                if w.form == form:
+                    if w.lemma == lemma or w.POS == POS or w.morph == morph:
+                        cnt += 1
+            return cnt - 1
+
+    @staticmethod
+    def get_similar_for_batch(corpus: Corpus, tokens: Iterable["WordToken"]):
+        forms = {token.form: [] for token in tokens}
+        for token in tokens:
+            token.similar = 0
+            forms[token.form].append(token)
+
+        for w in WordToken.query.filter(
+                db.and_(WordToken.corpus == corpus.id, WordToken.form.in_(list(forms.keys())))
+        ).all():
+            if w.form in forms:
+                for token in forms[w.form]:
+                    if w.lemma == token.lemma or w.POS == token.POS or w.morph == token.morph:
+                        token.similar += 1
+        for token in tokens:
+            token.similar = token.similar - 1 if token.similar > 0 else 0
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
@@ -700,31 +781,44 @@ class WordToken(db.Model):
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
         tokens = []
+
+        # stop right now if there's nothing to add
+        if count_tokens == 0:
+            return 0
+
+        _keys = word_tokens_dict[0]
+        form_key = "form" if "form" in _keys else "token" if "token" in _keys else "tokens"
+        lemma_key = "lemma" if "lemma" in _keys else "lemmas"
+        pos_key = "pos" if "pos" in _keys else "POS"
+        morph_key = "morph"
+
         for i, token in enumerate(word_tokens_dict):
 
             if i == 0:
                 previous_token = []
             elif i < context_left:
-                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[:i]]
+                previous_token = [tok.get(form_key) for tok in word_tokens_dict[:i]]
             else:
-                previous_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i-context_left:i]]
+                previous_token = [tok.get(form_key) for tok in word_tokens_dict[i-context_left:i]]
 
             if i == count_tokens-1:
                 next_token = []
             elif count_tokens-1-i < context_right:
-                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:]]
+                next_token = [tok.get(form_key) for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form", tok.get("tokens")) for tok in word_tokens_dict[i+1:i+context_right+1]]
+                next_token = [tok.get(form_key) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
-            form = token.get("form", token.get("tokens"))
+            form = token.get(form_key)
             if not form:
-                raise MissingTokenColumnValue()
-            lemma = token.get("lemma", token.get("lemmas"))
+                error = MissingTokenColumnValue()
+                error.line = i+1
+                raise error
+            lemma = token.get(lemma_key)
             label_uniform = ""
             if lemma:
                 label_uniform = unidecode.unidecode(lemma)
-            POS = token.get("POS", token.get("pos", None))
-            morph = token.get("morph", None)
+            POS = token.get(pos_key, None)
+            morph = token.get(morph_key, None)
 
             wt = dict(
                 form=form,
@@ -941,7 +1035,7 @@ class TokenHistory(db.Model):
         Edition = 0
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
     word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     action_type = db.Column(db.Enum(TYPES), nullable=False)

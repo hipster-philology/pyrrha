@@ -94,6 +94,7 @@ class TestBase(LiveServerTestCase):
             options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
+        options.add_experimental_option('w3c', False)
         self.driver = webdriver.Chrome(options=options)
         self.driver.set_window_size(1920, 1080)
         return self.driver
@@ -316,11 +317,16 @@ class TokenCorrectBase(TestBase):
         row.find_element_by_css_selector("a.save").click()
         # It's safer to wait for the AJAX call to be completed
         row = self.driver.find_element_by_id("token_" + id_row + "_row")
-        self.wait_until_text(selector=(By.CSS_SELECTOR, "#token_"+id_row+"_row > td.save"), text="(")
+
+        WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, "#token_{}_row .badge-status".format(id_row))
+            )
+        )
 
         return (
             self.db.session.query(WordToken).get(int(id_row)),
-            row.find_element_by_css_selector("#token_"+id_row+"_row > td.save").text.strip(),
+            row.find_element_by_css_selector("#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
 
@@ -350,7 +356,12 @@ class TokenCorrectBase(TestBase):
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
-        self.assertEqual(status_text, "(Saved) Save")
+        print(status_text)
+        self.assertEqual(status_text, "Save")
+        self.assertEqual(
+            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
+            "Saved"
+        )
         self.assertIn("table-changed", row.get_attribute("class"))
         self.driver.refresh()
         row = self.driver.find_element_by_id("token_1_row")
