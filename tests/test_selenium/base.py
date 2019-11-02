@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from app import db, create_app
-from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
@@ -88,6 +88,12 @@ class TestBase(LiveServerTestCase):
         if self.AUTO_LOG_IN:
             _force_authenticated(app)
         return app
+
+    def add_favorite(self, user_id, corpora_ids):
+        for corpus_id in corpora_ids:
+            db.session.add(Favorite(user_id=user_id, corpus_id=corpus_id))
+        db.session.commit()
+        self.driver.refresh()
 
     def create_driver(self, options=None):
         if not options:
@@ -228,6 +234,10 @@ elit
         self.driver.implicitly_wait(5)
         self.login(email, self.app.config['ADMIN_PASSWORD'])
 
+    def get_admin_id(self):
+        user = User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first()
+        return user.id
+
     def admin_login(self):
         self.login_with_user(self.app.config['ADMIN_EMAIL'])
 
@@ -248,11 +258,13 @@ class TokenCorrectBase(TestBase):
     def go_to_edit_token_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's edit token page """
 
+        #def callback():
+        #    # Show the dropdown
+        #    self.driver.find_element_by_id("toggle_corpus_corpora").click()
+        #    # Click on the edit link
+        #    self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
         def callback():
-            # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_corpora").click()
-            # Click on the edit link
-            self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
+            self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id=corpus_id))
 
         if as_callback:
             return callback
