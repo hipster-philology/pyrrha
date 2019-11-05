@@ -168,6 +168,19 @@ elit
     def tearDown(self):
         self.driver.quit()
 
+    def add_n_corpora(self, n_corpus: int, **kwargs):
+        if not self.AUTO_LOG_IN:
+            raise Exception("This function only works with autologin")
+
+        user = User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first()
+        for n in range(n_corpus):
+            corpus = Corpus(name="a"*n, control_lists_id=1)
+            new_cu = CorpusUser(corpus=corpus, user=user, is_owner=True)
+            db.session.add(corpus)
+            db.session.add(new_cu)
+            db.session.flush()
+        db.session.commit()
+
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":
             corpus = add_corpus("wauchier", db, *args, **kwargs)
@@ -178,12 +191,13 @@ elit
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         return corpus
 
-    def addCorpusUser(self, corpus_name, email, is_owner=False):
+    def addCorpusUser(self, corpus_name, email, is_owner=False, _commit=True):
         corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
         user = User.query.filter(User.email == email).first()
         new_cu = CorpusUser(corpus=corpus, user=user, is_owner=is_owner)
         self.db.session.add(new_cu)
-        self.db.session.commit()
+        if _commit:
+            self.db.session.commit()
         return new_cu
 
     def addControlLists(self, cl_name, *args, **kwargs):

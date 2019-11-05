@@ -214,11 +214,11 @@ Correct tokens with
                 <div  class="list-group-item list-group-item-action">
                     <div class="content container">
                         <div class="row">
-                            <a class="col-sm-1 text-center" href="{{ url_for('main.corpus_fav', corpus_id=corpus.id) }}">
+                            <a class="col-sm-1 text-center add-fav" href="{{ url_for('main.corpus_fav', corpus_id=corpus.id) }}">
                                 <i class="fa {% if corpus in favorites %}fa-star{% else %}fa-star-o{% endif %}"></i>
                             </a>
                             <div class="col-sm-0"><i class="fa fa-file-text"></i></div>
-                            <a class="col-sm-11 col-md-10 col" href="{{ url_for('main.tokens_correct', corpus_id=corpus.id) }}">
+                            <a class="col-sm-11 col-md-10 col corpus-nav-link" href="{{ url_for('main.tokens_correct', corpus_id=corpus.id) }}">
                                 <div>
                                     <span class="title">{{ corpus.name }}</span>
                                 </div>
