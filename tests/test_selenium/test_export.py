@@ -36,7 +36,6 @@ class TestExport(TestBase):
         self.download_path = os.path.abspath(
             os.path.join(os.path.dirname(os.path.realpath(__file__)), "download_temp")
         )
-        print(self.download_path)
         os.makedirs(self.download_path, exist_ok=True)
         super(TestExport, self).setUp()
 
@@ -61,7 +60,7 @@ class TestExport(TestBase):
 
         time.sleep(5)
 
-        with open(os.path.join(self.download_path, "pyrrha-correction.xml")) as f:
+        with open(os.path.join(self.download_path, "priapees.xml")) as f:
             xml = etree.parse(f)
         abs = xml.findall(".//tei:ab", namespaces=TEI_NS)
         self.assertEqual(
@@ -107,7 +106,7 @@ class TestExport(TestBase):
 
         time.sleep(5)
 
-        with open(os.path.join(self.download_path, "pyrrha-correction.xml")) as f:
+        with open(os.path.join(self.download_path, "wauchier.xml")) as f:
             xml = etree.parse(f)
         abs = xml.findall(".//tei:ab", namespaces=TEI_NS)
         self.assertEqual(

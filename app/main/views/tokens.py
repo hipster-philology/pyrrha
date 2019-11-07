@@ -1,5 +1,6 @@
 from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash
 from flask_login import current_user, login_required
+from slugify import slugify
 from sqlalchemy.sql.elements import or_, and_
 import math
 from csv import DictWriter
@@ -11,7 +12,6 @@ from ...utils.forms import string_to_none, strip_or_none, column_search_filter, 
 from ...utils.pagination import int_or
 from ...utils.tsv import TSV_CONFIG
 from io import StringIO
-
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
@@ -171,6 +171,7 @@ def tokens_export(corpus_id):
     """
     corpus = Corpus.query.get_or_404(corpus_id)
     format = request.args.get("format", "").lower()
+    filename = slugify(corpus.name)
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
         if format == "tsv":
@@ -183,7 +184,7 @@ def tokens_export(corpus_id):
                    200, \
                    {
                        "Content-Type": "text/tab-separated-values; charset= utf-8",
-                       "Content-Disposition": 'attachment; filename="pyrrha-correction.tsv"'
+                       "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
                    }
     elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
@@ -193,7 +194,7 @@ def tokens_export(corpus_id):
                                    delimiter=corpus.delimiter_token)
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
+           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
         }
     elif format == "tei-msd":
         tokens = corpus.get_tokens().all()
@@ -203,7 +204,7 @@ def tokens_export(corpus_id):
                                    delimiter=corpus.delimiter_token)
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
+           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
         }
 
     return render_template_with_nav_info(
