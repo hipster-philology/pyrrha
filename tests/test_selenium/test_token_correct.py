@@ -51,7 +51,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             "Saved"
         )
 
-
     def test_edit_POS(self):
         """ [Wauchier] Edit POS of a token """
         self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
@@ -65,7 +64,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
             "Saved"
         )
-
 
     def test_edit_morph(self):
         """ [Wauchier]  Edit morph of a token """
@@ -82,7 +80,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             "Saved"
         )
 
-
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(
             "Not Allowed", id_row="2", value_type="morph"
@@ -94,7 +91,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
             "Saved"
         )
-
 
     def test_edit_morph_with_allowed(self):
         """ [Wauchier] Edit morph of a token with allowed values as control"""
@@ -110,7 +106,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
             "Saved"
         )
-
 
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(

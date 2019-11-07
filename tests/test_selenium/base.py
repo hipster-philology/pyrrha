@@ -162,13 +162,11 @@ elit
         self.driver.quit()
 
     def addCorpus(self, corpus, *args, **kwargs):
-        if corpus == "wauchier":
-            corpus = add_corpus("wauchier", db, *args, **kwargs)
-        else:
-            corpus = add_corpus("floovant", db, *args, **kwargs)
-        self.driver.get(self.get_server_url())
+        print("Addin %s" % corpus)
+        corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        self.driver.get(self.get_server_url())
         return corpus
 
     def addCorpusUser(self, corpus_name, email, is_owner=False):
@@ -305,8 +303,8 @@ class TokenCorrectBase(TestBase):
 
         # Click, clear the td and send a new value
         td.click(), td.clear(), td.send_keys(value)
-
         if autocomplete_selector is not None:
+            self.driver.save_screenshot("lala.png")
             WebDriverWait(self.driver, 10).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
             )

@@ -46,8 +46,54 @@ class TestExport(TestBase):
             os.remove(file)
         os.rmdir(self.download_path)
 
-    def test_tei_export(self):
-        """ [Export] Test that the TEI export uses delimiter when needed"""
+    def test_tei_msd_export(self):
+        """ [Export] Test that the TEI MSD export uses delimiter when needed"""
+        # Try first with an edit that would word
+        self.addCorpus(
+            "priapees", with_token=True, with_allowed_lemma=True, tokens_up_to=24,
+            with_delimiter=True
+        )
+
+        self.driver.refresh()
+
+        self.driver.get(self.url_for_with_port("main.tokens_export", corpus_id=3))
+        self.driver.find_element_by_id("tei-msd").click()
+
+        time.sleep(5)
+
+        with open(os.path.join(self.download_path, "pyrrha-correction.xml")) as f:
+            xml = etree.parse(f)
+        abs = xml.findall(".//tei:ab", namespaces=TEI_NS)
+        self.assertEqual(
+            len(abs), 18/2,
+            "There should be 9 segments, as one is added every two tokens"
+        )
+
+        self.assertEqual(
+            [
+                (el.text, el.get("lemma"), el.get("pos"), el.get("n"),
+                 el.get("{http://www.w3.org/XML/1998/namespace}id"), el.get("msd"))
+                for el in abs[0].findall("./tei:w", namespaces=TEI_NS)
+            ],
+            [
+                ('Carminis', 'carmen1', 'NOMcom', '1', 't1', 'Case=Gen|Numb=Sing'),
+                ('incompti', 'incomptus', 'ADJqua', '2', 't2', 'Case=Gen|Numb=Sing|Deg=Pos')
+            ],
+            "Words should be correctly written"
+        )
+        self.assertEqual(
+            [
+                (el.text, el.get("lemma"), el.get("pos"), el.get("msd"))
+                for el in abs[1].findall("./tei:w", namespaces=TEI_NS)
+            ],
+            [
+                ('lusus', 'lusus', 'NOMcom', "Case=Gen|Numb=Sing"),
+                ('lecture', 'lego?', 'VER', "Case=Voc|Numb=Sing|Mood=Par|Voice=Act")],
+            "Words should be correctly grouped"
+        )
+
+    def test_tei_geste_export(self):
+        """ [Export] Test that the TEI-Geste export uses delimiter when needed"""
         # Try first with an edit that would word
         self.addCorpus(
             "wauchier", with_token=True, with_allowed_lemma=True, tokens_up_to=24,

@@ -170,7 +170,7 @@ def tokens_export(corpus_id):
     :param corpus_id: ID of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-    format = request.args.get("format")
+    format = request.args.get("format", "").lower()
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
         if format == "tsv":
@@ -207,7 +207,7 @@ def tokens_export(corpus_id):
         }
 
     return render_template_with_nav_info(
-        template="main/tokens_view.html",
+        template="main/tokens_export.html",
         corpus=corpus
     )
 
