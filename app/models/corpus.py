@@ -2,6 +2,7 @@
 import csv
 import io
 import enum
+from typing import Iterable
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -103,6 +104,13 @@ class Corpus(db.Model):
                 ).exists()
             ).scalar()
         return True
+
+    def changes_per_day(self):
+        return list(db.session.query(
+            db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+        ) \
+            .filter(ChangeRecord.corpus == self.id) \
+            .group_by(db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)).all())
 
     def has_access(self, user):
         """ Can this corpus be accessed by the given user ?
@@ -262,6 +270,12 @@ class Corpus(db.Model):
         :return: Tokens Query
         """
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
+
+    def changed(self, tokens):
+        data = db.session.query(ChangeRecord.word_token_id).distinct(ChangeRecord.word_token_id).filter(
+            ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
+        ).all()
+        return set([token for token, *_ in data])
 
     def get_history(self, page=1, limit=100):
         """ Retrieve ChangeRecord from the Corpus
@@ -577,28 +591,34 @@ class WordToken(db.Model):
         """
         return "\t".join([self.form, self.lemma, self.POS or "_", self.morph or "_"])
 
-    @property
-    def changed(self):
-        """ Tells whether this token has already been edited
-
-        :return: If the token has been edited
-        :rtype: bool
-        """
-        return db.session.query(ChangeRecord.query.filter(
-                ChangeRecord.word_token_id == self.id
-        ).exists()).scalar()
-
     @classmethod
-    def similar_as(cls, corpus: int, form: str, lemma: str, POS: str, morph: str):
-        c = Corpus.query.filter(Corpus.id == corpus).first()
-        if c is None:
-            count = 0
+    def similar_as(cls, corpus: Corpus, form: str, lemma: str, POS: str, morph: str):
+        if corpus is None:
+            return 0
         else:
-            count = len([
-                w for w in c.word_token
-                if w.form == form and (w.lemma == lemma or w.POS == POS or w.morph == morph)
-            ]) - 1
-        return max(count, 0)
+            cnt = 0
+            for w in corpus.word_token:
+                if w.form == form:
+                    if w.lemma == lemma or w.POS == POS or w.morph == morph:
+                        cnt += 1
+            return cnt - 1
+
+    @staticmethod
+    def get_similar_for_batch(corpus: Corpus, tokens: Iterable["WordToken"]):
+        forms = {token.form: [] for token in tokens}
+        for token in tokens:
+            token.similar = 0
+            forms[token.form].append(token)
+
+        for w in WordToken.query.filter(
+                db.and_(WordToken.corpus == corpus.id, WordToken.form.in_(list(forms.keys())))
+        ).all():
+            if w.form in forms:
+                for token in forms[w.form]:
+                    if w.lemma == token.lemma or w.POS == token.POS or w.morph == token.morph:
+                        token.similar += 1
+        for token in tokens:
+            token.similar = token.similar - 1 if token.similar > 0 else 0
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
@@ -761,33 +781,44 @@ class WordToken(db.Model):
         word_tokens_dict = list(word_tokens_dict)
         count_tokens = len(word_tokens_dict)
         tokens = []
+
+        # stop right now if there's nothing to add
+        if count_tokens == 0:
+            return 0
+
+        _keys = word_tokens_dict[0]
+        form_key = "form" if "form" in _keys else "token" if "token" in _keys else "tokens"
+        lemma_key = "lemma" if "lemma" in _keys else "lemmas"
+        pos_key = "pos" if "pos" in _keys else "POS"
+        morph_key = "morph"
+
         for i, token in enumerate(word_tokens_dict):
 
             if i == 0:
                 previous_token = []
             elif i < context_left:
-                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[:i]]
+                previous_token = [tok.get(form_key) for tok in word_tokens_dict[:i]]
             else:
-                previous_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i-context_left:i]]
+                previous_token = [tok.get(form_key) for tok in word_tokens_dict[i-context_left:i]]
 
             if i == count_tokens-1:
                 next_token = []
             elif count_tokens-1-i < context_right:
-                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:]]
+                next_token = [tok.get(form_key) for tok in word_tokens_dict[i+1:]]
             else:
-                next_token = [tok.get("form", tok.get("tokens", tok.get("token"))) for tok in word_tokens_dict[i+1:i+context_right+1]]
+                next_token = [tok.get(form_key) for tok in word_tokens_dict[i+1:i+context_right+1]]
 
-            form = token.get("form", token.get("tokens", token.get("token")))
+            form = token.get(form_key)
             if not form:
                 error = MissingTokenColumnValue()
                 error.line = i+1
                 raise error
-            lemma = token.get("lemma", token.get("lemmas"))
+            lemma = token.get(lemma_key)
             label_uniform = ""
             if lemma:
                 label_uniform = unidecode.unidecode(lemma)
-            POS = token.get("POS", token.get("pos", None))
-            morph = token.get("morph", None)
+            POS = token.get(pos_key, None)
+            morph = token.get(morph_key, None)
 
             wt = dict(
                 form=form,

@@ -1,0 +1,8 @@
+site_name: Pyrrha
+site_description: Help for the post-correction app for morphological annotation and lemmatization
+docs_dir: docs
+site_dir: site
+nav:
+  - Home: index.md
+  - 'Tutoriel FR': fr/tutoriel.md
+theme: readthedocs

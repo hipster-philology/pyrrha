@@ -1,5 +1,6 @@
 import locale
 from . import main
+from json import dumps
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -14,3 +15,8 @@ def thousands(integer):
     :rtype: str
     """
     return locale.format("%d", integer, 1)
+
+
+@main.app_template_filter("json")
+def json(obj):
+    return dumps(obj)
