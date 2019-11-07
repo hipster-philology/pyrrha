@@ -74,7 +74,6 @@ def add_control_lists(
             add += DB_CORPORA[corpus]["morph"][:3]
         else:
             add += DB_CORPORA[corpus]["morph"]
-        print(add)
     for x in add:
         z = copy.deepcopy(x)
         if hasattr(z, "label_uniform"):

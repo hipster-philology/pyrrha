@@ -10,6 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from app import db, create_app
 from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists
@@ -94,9 +95,16 @@ class TestBase(LiveServerTestCase):
             options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
-        self.driver = webdriver.Chrome(options=options)
+        desired = DesiredCapabilities.CHROME
+        desired['loggingPrefs'] = {'browser': 'ALL'}
+        desired["goog:loggingPrefs"] = {'browser': 'ALL'}
+        self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
         self.driver.set_window_size(1920, 1080)
         return self.driver
+
+    def pprint_log(self):
+        for log in self.driver.get_log("browser"):
+            print(log)
 
     def setUp(self):
         """Setup the test driver and create test users"""
@@ -162,7 +170,6 @@ elit
         self.driver.quit()
 
     def addCorpus(self, corpus, *args, **kwargs):
-        print("Addin %s" % corpus)
         corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
@@ -302,13 +309,21 @@ class TokenCorrectBase(TestBase):
             td = row.find_element_by_class_name("token_lemma")
 
         # Click, clear the td and send a new value
-        td.click(), td.clear(), td.send_keys(value)
+        td.click()
+        td.clear()
+        td.send_keys(value)
+        td.send_keys("")
+        self.driver.implicitly_wait(10)
         if autocomplete_selector is not None:
-            self.driver.save_screenshot("lala.png")
-            WebDriverWait(self.driver, 10).until(
-                EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
-            )
-            self.driver.find_element_by_css_selector(autocomplete_selector).click()
+            try:
+                WebDriverWait(self.driver, 10).until(
+                    EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
+                )
+            except:
+                self.pprint_log()
+                raise
+            finally:
+                self.driver.find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
         row.find_element_by_css_selector("a.save").click()
@@ -353,7 +368,6 @@ class TokenCorrectBase(TestBase):
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
-        print(status_text)
         self.assertEqual(status_text, "Save")
         self.assertEqual(
             row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
