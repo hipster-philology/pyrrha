@@ -41,6 +41,7 @@ class ControlLists(db.Model):
     description = db.Column(db.String(255), nullable=True)
     bibliography = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(10), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
 
     # For caching purposes, we record the last time these fields were edited
     #last_lemma_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)

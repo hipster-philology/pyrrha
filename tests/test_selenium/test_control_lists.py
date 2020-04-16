@@ -35,7 +35,7 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text for link in links]),
-            sorted(['Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier', 'Rename']),
+            sorted(["Edit informations", 'Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier', 'Rename']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -135,7 +135,8 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("right-column").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(['Make public', 'Rewrite Lemma List', 'Rewrite POS List', 'Rewrite Morphology List']),
+            sorted(['Make public', 'Rewrite Lemma List', 'Rewrite POS List',
+                    'Rewrite Morphology List']),
             "Full rewrite are limited to control lists users and admin. Admin can make list public"
         )
 
@@ -143,7 +144,7 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(['Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
+            sorted(["Edit informations", 'Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -253,7 +254,7 @@ class TestUpdateControlList(TestBase):
         self.driver.get(self.url_for_with_port("control_lists_bp.edit", cl_id=1, allowed_type="lemma"))
         self.driver.implicitly_wait(5)
         self.assertEqual(
-            self.driver.find_element_by_id("error_message").text.strip(),
-            "Forbidden: You do not have the right to access this page.",
-            "403 is generated when accessing something forbidden"
+            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            'You are not an owner of the list.',
+            "User cannot edit control list they don't own"
         )

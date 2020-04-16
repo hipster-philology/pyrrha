@@ -22,5 +22,8 @@
       {%  if control_list.can_edit() or current_user.is_admin() %}
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.rename", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> Rename</a></li>
       {% endif %}
+      {%  if control_list.can_edit() or current_user.is_admin() %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.edit_content", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> Edit informations</a></li>
+      {% endif %}
     </ul>
 {% endmacro -%}

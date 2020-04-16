@@ -1,8 +1,9 @@
 from flask import request, flash, redirect, url_for, Blueprint, abort, jsonify, make_response, current_app
 from flask_login import current_user, login_required
+from functools import wraps
 
 import sqlalchemy.exc
-from werkzeug.exceptions import BadRequest, NotFound
+from werkzeug.exceptions import BadRequest, NotFound, Forbidden
 
 
 from app.main.views.utils import render_template_with_nav_info
@@ -18,6 +19,30 @@ AUTOCOMPLETE_LIMIT = 20
 
 # Create the current blueprint
 control_lists_bp = Blueprint('control_lists_bp', __name__)
+
+
+def cl_editable(control_list_param: str):
+    """ Rewrites a function by checking that the use have the rights to edit the CL. Passes
+    the control list as an object in kwargs
+
+    :param control_list_param: Name of the control list param
+    :return: Wrapped function
+    """
+
+    def wrapper(func):
+        @wraps(func)
+        def decorated_view(*args, **kwargs):
+            control_list, is_owner = ControlLists.get_linked_or_404(
+                control_list_id=kwargs[control_list_param],
+                user=current_user
+            )
+            can_edit = is_owner or current_user.is_admin()
+            if not can_edit:
+                flash("You are not an owner of the list.", category="error")
+                return redirect(url_for(".get", control_list_id=kwargs[control_list_param]))
+            return func(*args, control_list=control_list, **kwargs)
+        return decorated_view
+    return wrapper
 
 
 @control_lists_bp.route('/controls', methods=["GET"])
@@ -132,7 +157,8 @@ def read_allowed_values(control_list_id, allowed_type):
 
 @control_lists_bp.route('/controls/<int:cl_id>/edit/<allowed_type>', methods=["GET", "POST"])
 @login_required
-def edit(cl_id, allowed_type):
+@cl_editable("cl_id")
+def edit(cl_id, allowed_type, control_list):
     """ Find allowed values and allow their edition
 
     :param cl_id: Id of the Control List
@@ -140,12 +166,6 @@ def edit(cl_id, allowed_type):
     """
     if allowed_type not in ["lemma", "POS", "morph"]:
         raise NotFound("Unknown type of resource.")
-    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=cl_id, user=current_user)
-
-    can_edit = is_owner or current_user.is_admin()
-
-    if not can_edit:
-        return abort(403)
 
     # In case of Post
     if request.method == "POST":
@@ -244,16 +264,13 @@ def contact(control_list_id):
 
 @control_lists_bp.route('/controls/<int:control_list_id>/rename', methods=["GET", "POST"])
 @login_required
-def rename(control_list_id):
+@cl_editable("control_list_id")
+def rename(control_list_id, control_list):
     """ This routes allows user to send email to list administrators
     """
-    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
     form = Rename(prefix="rename")
     control_list_link = url_for('control_lists_bp.get', control_list_id=control_list_id, _external=True)
 
-    if not is_owner and not current_user.is_admin():
-        flash("You are not an owner of the list.", category="error")
-        return redirect(control_list_link)
 
     if request.method == "POST" and form.validate_on_submit():
         control_list.name = form.title.data
@@ -333,3 +350,11 @@ def go_public(control_list_id):
             flash("There was an error during the update.", category="error")
 
     return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
+
+
+@control_lists_bp.route("/controls/<int:control_list_id>/informations/edit")
+@login_required
+@cl_editable("control_list_id")
+def edit_content(control_list_id, control_list):
+    print(control_list_id, control_list)
+    return render_template_with_nav_info('control_lists/propose_as_public.html', form=form, control_list=control_list)
