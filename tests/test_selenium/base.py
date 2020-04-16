@@ -305,9 +305,14 @@ class TokenCorrectBase(TestBase):
             td = row.find_element_by_class_name("token_lemma")
 
         # Click, clear the td and send a new value
-        td.click(), td.clear(), td.send_keys(value)
+        td.click()
+        td.clear()
+        td.send_keys(value)
 
         if autocomplete_selector is not None:
+            # For some reason, screenshot was working as well, screenshot makes
+            #   autocomplete appear...
+            self.driver.save_screenshot("debug-autocomplete.png")
             WebDriverWait(self.driver, 10).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
             )
