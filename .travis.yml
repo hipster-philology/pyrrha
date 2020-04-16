@@ -1,3 +1,4 @@
+dist: bionic
 language: python
 python:
   - "3.7"
@@ -6,8 +7,10 @@ addons:
   apt:
     packages:
       - chromium-chromedriver
+cache: pip
 
-before_script:
+before_install:
+  - ./chromedriver.sh
   # include ChromeDriver in PATH
 #  - ln --symbolic /usr/lib/chromium-browser/chromedriver "${HOME}/bin/chromedriver"
 
@@ -15,7 +18,6 @@ install:
   - pip install -r requirements.txt
   - pip install coveralls
   - pip install nose
-  - ./chromedriver.sh
 
 # command to run tests
 script:
