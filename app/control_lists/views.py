@@ -352,9 +352,20 @@ def go_public(control_list_id):
     return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
 
 
-@control_lists_bp.route("/controls/<int:control_list_id>/informations/edit")
+@control_lists_bp.route("/controls/<int:control_list_id>/informations/edit", methods=["GET", "POST"])
 @login_required
 @cl_editable("control_list_id")
-def edit_content(control_list_id, control_list):
-    print(control_list_id, control_list)
-    return render_template_with_nav_info('control_lists/propose_as_public.html', form=form, control_list=control_list)
+def information_edit(control_list_id, control_list):
+    if request.method == "POST":
+        control_list.description = request.form.get("cl_description")
+        control_list.language = request.form.get("cl_language")
+        control_list.notes = request.form.get("cl_notes")
+        control_list.bibliography = request.form.get("cl_bibliography")
+    return render_template_with_nav_info('control_lists/information_edit.html', control_list=control_list)
+
+
+@control_lists_bp.route("/controls/<int:control_list_id>/informations", methods=["GET"])
+@login_required
+def information_read(control_list_id):
+    control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
+    return render_template_with_nav_info('control_lists/information_read.html', control_list=control_list)

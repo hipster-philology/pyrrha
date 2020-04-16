@@ -1,0 +1,16 @@
+{% extends 'layouts/base.html' %}
+
+{% block page_title %}Control List {{control_list.name}} : Guidelines{% endblock %}
+
+{% block content %}
+
+<h3>Guidelines</h3>
+{{control_list.notes | markdown}}
+
+
+<h3>Description</h3>
+<p>{{control_list.description}}</p>
+
+<h3>Bibliography</h3>
+<p>{{control_list.bibliography}}</p>
+{% endblock %}

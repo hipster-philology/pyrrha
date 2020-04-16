@@ -7,7 +7,15 @@
 {% block content %}
     <div>
         <h1>{{control_list.name}}</h1>
+        <h2>Description</h2>
+        <p>{{control_list.description}}</p>
+
+        <h2>Bibliography</h2>
+        <p>{{control_list.bibliography}}</p>
+
+
         {%- if is_owner %}
+            <h2>Information</h2>
             <p class="text-info">You are an owner of this control list</p>
             <p>{{ utils.status_badge(control_list.str_public) }}</p>
             <dl>
