@@ -8,10 +8,10 @@
     <div>
         <h1>{{control_list.name}}</h1>
         <h2>Description</h2>
-        <p>{{control_list.description}}</p>
+        <p>{{control_list.description or ""}}</p>
 
         <h2>Bibliography</h2>
-        <p>{{control_list.bibliography}}</p>
+        <p>{{control_list.bibliography or ""}}</p>
 
 
         {%- if is_owner %}

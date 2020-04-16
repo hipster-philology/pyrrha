@@ -35,7 +35,8 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text for link in links]),
-            sorted(["Edit informations", 'Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier', 'Rename']),
+            sorted(["Edit informations", "Guidelines",
+                    'Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier', 'Rename']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -124,6 +125,16 @@ class TestUpdateControlList(TestBase):
             "We should be able to read the POS"
         )
 
+        # Check that we can edit informations about markdown or whatever
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_edit", control_list_id=1))
+        self.driver.find_element_by_id("cl_notes").send_keys("# This is some notes")
+        self.driver.find_element_by_id("submit").click()
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_read", control_list_id=1))
+        self.assertEqual(
+            self.driver.find_element_by_tag_name("h1").text, "This is some notes",
+            "Check that edition works"
+        )
+
     def test_action_as_admin_but_not_owner(self):
         """ [ControlLists Administration] App Admin can propose changes and turn a list public """
         self.addControlLists("wauchier", no_corpus_user=True, for_users=[User(self.app.config['ADMIN_EMAIL'], False)])
@@ -144,7 +155,8 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(["Edit informations", 'Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
+            sorted(["Guidelines",
+                    "Edit informations", 'Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -197,6 +209,17 @@ class TestUpdateControlList(TestBase):
             'WOOHOOO'
         )
 
+        # Check that we can edit informations about markdown or whatever
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_edit", control_list_id=1))
+        self.driver.find_element_by_id("cl_notes").send_keys("# This is some notes")
+        self.driver.find_element_by_id("submit").click()
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_read", control_list_id=1))
+        self.assertEqual(
+            self.driver.find_element_by_tag_name("h1").text, "This is some notes",
+            "Check that edition works"
+        )
+
+
     def test_action_as_user(self):
         """ [ControlLists Administration] Normal users can only propose changes"""
         foor_bar = self.add_user("foo", "bar", False)
@@ -216,7 +239,8 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(['Lemma', 'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
+            sorted(['Lemma', "Guidelines",
+                    'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
             "Only contacting and reading is possible to users"
         )
 
