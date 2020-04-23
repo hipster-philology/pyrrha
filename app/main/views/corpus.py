@@ -241,6 +241,9 @@ def search_value_api(corpus_id, allowed_type):
     :param corpus_id: Id of the Corpus
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
+    form = request.args.get("form", "")
+    if not form.strip():
+        return jsonify([])
     corpus = Corpus.query.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
@@ -249,7 +252,7 @@ def search_value_api(corpus_id, allowed_type):
             format_api_like_reply(result, allowed_type)
             for result in WordToken.get_like(
                 filter_id=corpus_id,
-                form=request.args.get("form"),
+                form=form,
                 group_by=True,
                 type_like=allowed_type,
                 allowed_list=False

@@ -1,5 +1,6 @@
 from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier, WauchierAllowedMorph, WCL
 from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph, FCL
+from . import priapees
 import copy
 import unidecode
 from app.models.corpus import WordToken
@@ -21,6 +22,14 @@ DB_CORPORA = {
         "POS": FloovantAllowedPOS,
         "morph": FloovantAllowedMorph,
         "control_list": FCL
+    },
+    "priapees": {
+        "corpus": priapees.corpus,
+        "tokens": priapees.tokens,
+        "lemma": [],
+        "POS": [],
+        "morph": [],
+        "control_list": priapees.control_list
     }
 }
 
