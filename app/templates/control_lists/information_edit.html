@@ -10,14 +10,14 @@
         <label for="cl_description">Description</label>
         <small id="cl_description_help" class="form-text text-muted">Description of the control list</small>
         <textarea aria-describedby="cl_description_help"
-                  class="form-control" id="cl_description" name="cl_description">{{control_list.description}}</textarea>
+                  class="form-control" id="cl_description" name="cl_description">{{control_list.description  or ""}}</textarea>
     </div>
     <div class="form-group">
         <label for="cl_language">Language</label>
         <small id="cl_language_help" class="form-text text-muted">Language, using
             <a href="https://fr.wikipedia.org/wiki/Liste_des_codes_ISO_639-2">ISO 632-2</a></small>
         <input aria-describedby="cl_language_help"
-                  class="form-control" id="cl_language" name="cl_language" value="{{control_list.language}}"/>
+                  class="form-control" id="cl_language" name="cl_language" value="{{control_list.language  or ""}}"/>
     </div>
     <div class="form-group">
         <label for="cl_bibliography">Bibliography</label>
@@ -26,9 +26,9 @@
                   class="form-control" id="cl_bibliography" name="cl_bibliography">{{control_list.bibliography or ""}}</textarea>
     </div>
     <div class="form-group">
-        <label for="cl_notes">Tagging information</label>
+        <label for="cl_notes">Guidelines</label>
         <small id="cl_notes_help" class="form-text text-muted">All the relevant information that might be of help
-        about how to tag using your control list. Can link to external data and use markdown</small>
+        about how to tag using your control list. Can link to external data and use <a href="https://daringfireball.net/projects/markdown/syntax#list">markdown</a></small>
         <textarea aria-describedby="cl_notes_help"
                   class="form-control" id="cl_notes" name="cl_notes">{{control_list.notes or ""}}</textarea>
     </div>
