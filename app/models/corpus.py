@@ -182,13 +182,32 @@ class Corpus(db.Model):
         )
 
     @staticmethod
-    def for_user(current_user):
-        return db.session.query(Corpus).filter(
+    def fav_for_user(current_user, _all=True):
+        corpora = db.session.query(Corpus).filter(
+            db.and_(
+                CorpusUser.corpus_id == Corpus.id,
+                CorpusUser.user_id == current_user.id,
+                Favorite.user_id == CorpusUser.user_id,
+                Favorite.corpus_id == Corpus.id
+            )
+        )
+        if _all:
+            return corpora.all()
+        else:
+            return corpora
+
+    @staticmethod
+    def for_user(current_user, _all=True):
+        corpora = db.session.query(Corpus).filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,
                 CorpusUser.user_id == current_user.id
             )
-        ).all()
+        )
+        if _all:
+            return corpora.all()
+        else:
+            return corpora
 
     def is_owned_by(self, user):
         return db.session.query(literal(True)).filter(
@@ -365,6 +384,18 @@ class Corpus(db.Model):
             Bookmark.corpus_id == self.id
         )).first()
 
+    def toggle_favorite(self, user_id: int) -> bool:
+        fav = Favorite.query.filter(db.and_(
+            Favorite.corpus_id == self.id,
+            Favorite.user_id == user_id
+        ))
+        if fav.first():
+            db.session.delete(fav.first())
+        else:
+            db.session.add(
+                Favorite(corpus_id=self.id, user_id=user_id)
+            )
+        db.session.commit()
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -1144,11 +1175,6 @@ class ChangeRecord(db.Model):
 
 
 class Bookmark(db.Model):
-    """
-        Association proxy that link users to corpora
-        :param corpus_id: a corpus ID
-        :param user_id: a user ID
-    """
     corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     token_id = db.Column(db.Integer, db.ForeignKey(WordToken.id, ondelete="CASCADE"), primary_key=True)
@@ -1177,3 +1203,9 @@ class Bookmark(db.Model):
             db.session.delete(bm)
             if _commit:
                 db.session.commit()
+
+
+class Favorite(db.Model):
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
+
