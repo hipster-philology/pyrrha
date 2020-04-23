@@ -1,6 +1,7 @@
 {# This macro is called on the user dashboards. In this case the administrator dashboard
    at the route admin.index
 #}
+{% import 'macros/dashboard_macros.html' as dashboard %}
 
 {% macro render_menu_items(endpoints) %}
     {% for endpoint, name, icon in endpoints %}
@@ -198,4 +199,36 @@ Correct tokens with
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Unallowed POS</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Unallowed morph</a></li>
 </ul>
+{% endmacro %}
+
+
+{% macro corpora_list(corpora, endpoint='', favorites=[]) %}
+    <div class="mt-5">
+        <h2>Your corpora</h2>
+
+        {{ render_pagination(corpora, endpoint, get_params=[]) }}
+
+        <div id="corpora-dashboard" class="list-group">
+            <h3 class="list-group-item bg-dark text-white">Corpora</h3>
+            {% for corpus in corpora.items %}
+                <div  class="list-group-item list-group-item-action">
+                    <div class="content container">
+                        <div class="row">
+                            <a class="col-sm-1 text-center add-fav" href="{{ url_for('main.corpus_fav', corpus_id=corpus.id) }}">
+                                <i class="fa {% if corpus in favorites %}fa-star{% else %}fa-star-o{% endif %}"></i>
+                            </a>
+                            <div class="col-sm-0"><i class="fa fa-file-text"></i></div>
+                            <a class="col-sm-11 col-md-10 col corpus-nav-link" href="{{ url_for('main.tokens_correct', corpus_id=corpus.id) }}">
+                                <div>
+                                    <span class="title">{{ corpus.name }}</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                 </div>
+            {% endfor %}
+        </div>
+        <hr />
+        {{ render_pagination(corpora, endpoint, get_params=[]) }}
+    </div>
 {% endmacro %}

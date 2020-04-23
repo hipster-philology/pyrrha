@@ -60,7 +60,7 @@ class TestBookmark(TestBase):
             self.assertEqual(bookmark[0].page, 3)
 
     def test_go_to_bookmark(self):
-        """ [Bookmark] Check that we are to go to a bookmark """
+        """ [Bookmark] Check that we are able to go to a bookmarked token """
         self.addCorpus("wauchier")
         # Check first cases where there is nothing
         self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))

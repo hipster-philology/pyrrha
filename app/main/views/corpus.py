@@ -5,7 +5,7 @@ from sqlalchemy import func, distinct, text
 
 
 from app import db
-from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord, Bookmark
+from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord, Bookmark, Favorite
 from .utils import render_template_with_nav_info
 from app.utils.forms import create_input_format_convertion, read_input_tokens
 from .. import main
@@ -105,6 +105,16 @@ def corpus_new():
                 return error()
 
     return normal_view()
+
+
+@main.route('/corpus/favorite/<int:corpus_id>')
+@login_required
+@requires_corpus_access("corpus_id")
+def corpus_fav(corpus_id):
+    """ Mark a corpus as favorite """
+    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus.toggle_favorite(current_user.id)
+    return redirect(url_for("main.index"))
 
 
 @main.route('/corpus/get/<int:corpus_id>')
