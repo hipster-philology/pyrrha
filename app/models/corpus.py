@@ -2,7 +2,7 @@
 import csv
 import io
 import enum
-from typing import Iterable
+from typing import Iterable, Optional
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -356,6 +356,14 @@ class Corpus(db.Model):
         data = db.session.query(cls).filter_by(control_list=self.control_lists_id).delete()
         cls.add_batch(allowed_values, self.id, _commit=True)
         return data
+
+    def get_bookmark(self, user: User) -> Optional["Bookmark"]:
+        """ Retrieve a bookmark for a given user. None if not found
+        """
+        return Bookmark.query.filter(db.and_(
+            Bookmark.user_id == user.id,
+            Bookmark.corpus_id == self.id
+        )).first()
 
 
 class WordToken(db.Model):
@@ -1133,3 +1141,39 @@ class ChangeRecord(db.Model):
             WordToken.update(**apply)
             changed.append(token)
         return changed
+
+
+class Bookmark(db.Model):
+    """
+        Association proxy that link users to corpora
+        :param corpus_id: a corpus ID
+        :param user_id: a user ID
+    """
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
+    token_id = db.Column(db.Integer, db.ForeignKey(WordToken.id, ondelete="CASCADE"), primary_key=True)
+    page = db.Column(db.Integer, nullable=False)
+
+    @staticmethod
+    def mark(corpus: int, user: int, token_id: int, page: int):
+        bm = Bookmark(
+            corpus_id=corpus,
+            user_id=user,
+            token_id=token_id,
+            page=page
+        )
+        Bookmark.clear(corpus, user, _commit=False)
+        db.session.add(bm)
+        db.session.commit()
+        return bm
+
+    @staticmethod
+    def clear(corpus: int, user: int, _commit: bool = False):
+        bm = Bookmark.query.filter(db.and_(
+            Bookmark.corpus_id == corpus,
+            Bookmark.user_id == user
+        )).first()
+        if bm:
+            db.session.delete(bm)
+            if _commit:
+                db.session.commit()

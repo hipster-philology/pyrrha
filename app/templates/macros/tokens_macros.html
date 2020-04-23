@@ -3,7 +3,7 @@
 {{ token.left_context }} <{{tag}}>{{ token.form }}</{{tag}}> {{ token.right_context }}
 {% endmacro -%}
 
-{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
+{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False)%}
 {% if editable %}
     {%- if checkbox %}
         <div>
@@ -27,7 +27,7 @@
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
+                <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor {% if current_user and current_user.bookmark.token_id == token.id %}bookmark{% endif %}" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
                     <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
@@ -49,6 +49,7 @@
                             <a class="dropdown-item" href="{{ url_for('main.tokens_edit_form', corpus_id=corpus.id, token_id=token.id) }}">Edit the form</a>
                             <a class="dropdown-item" href="{{ url_for('main.tokens_del_row', corpus_id=corpus.id, token_id=token.id) }}">Delete the row</a>
                             <a class="dropdown-item" href="{{ url_for('main.tokens_add_row', corpus_id=corpus.id, token_id=token.id) }}">Add a token after this one</a>
+                            <a class="dropdown-item bookmark" href="{{ url_for('main.corpus_bookmark', corpus_id=corpus.id, token_id=token.id, page=tokens.page) }}">Set as bookmark</a>
                           </div>
                         </td>
                     {%- endif -%}
