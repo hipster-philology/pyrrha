@@ -99,15 +99,15 @@ class TestBase(LiveServerTestCase):
     def create_driver(self, options=None):
         if not options:
             options = Options()
-            
+
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         options.add_experimental_option('w3c', False)
-        
+
         desired = DesiredCapabilities.CHROME
         desired['loggingPrefs'] = {'browser': 'ALL'}
         desired["goog:loggingPrefs"] = {'browser': 'ALL'}
-        
+
         self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
         self.driver.set_window_size(1920, 1080)
         return self.driver
@@ -342,18 +342,15 @@ class TokenCorrectBase(TestBase):
         td.click()
         td.clear()
         td.send_keys(value)
-        td.send_keys("")
-        self.driver.implicitly_wait(10)
+
         if autocomplete_selector is not None:
-            try:
-                WebDriverWait(self.driver, 10).until(
-                    EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
-                )
-            except:
-                self.pprint_log()
-                raise
-            finally:
-                self.driver.find_element_by_css_selector(autocomplete_selector).click()
+            # For some reason, screenshot was working as well, screenshot makes
+            #   autocomplete appear...
+            self.driver.save_screenshot("debug-autocomplete.png")
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
+            )
+            self.driver.find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
         row.find_element_by_css_selector("a.save").click()

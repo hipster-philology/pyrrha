@@ -238,6 +238,38 @@ def make_cli():
                 ))
                 click.echo("--- Allowed POS Values dumped")
 
+    @cli.command("db-upgrade", help="Do small migrations")
+    @click.argument("migration_name",
+              type=click.Choice(['controllist-markdown'], case_sensitive=False))
+    def db_add_table(migration_name):
+        columns = {
+            "controllist-markdown": [
+                ("control_lists", db.Column("notes", db.Text))
+            ]
+        }
+
+        def add_column(engine, table_name, column):
+            column_name = column.compile(dialect=engine.dialect)
+            column_type = column.type.compile(engine.dialect)
+            engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % (table_name, column_name, column_type))
+            return column_name, column_type
+
+        migration_name = migration_name.lower()
+        with app.app_context():
+            if migration_name in columns:
+                changes = []
+                for table, column in columns[migration_name]:
+                    name, _ = add_column(db.engine, table, column)
+                    changes.append(str(name))
+
+                click.echo(
+                    "Success: {} columns added [{}]".format(
+                        len(changes),
+                        ", ".join(changes))
+                )
+
+    cli.add_command(db_create)
+    
     @click.command("db-add", help="Small tool to add new table instead of migrating")
     @click.argument("model")
     def db_add_table(model):
