@@ -2,7 +2,7 @@
 import csv
 import io
 import enum
-from typing import Iterable
+from typing import Iterable, Optional
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -182,13 +182,32 @@ class Corpus(db.Model):
         )
 
     @staticmethod
-    def for_user(current_user):
-        return db.session.query(Corpus).filter(
+    def fav_for_user(current_user, _all=True):
+        corpora = db.session.query(Corpus).filter(
+            db.and_(
+                CorpusUser.corpus_id == Corpus.id,
+                CorpusUser.user_id == current_user.id,
+                Favorite.user_id == CorpusUser.user_id,
+                Favorite.corpus_id == Corpus.id
+            )
+        )
+        if _all:
+            return corpora.all()
+        else:
+            return corpora
+
+    @staticmethod
+    def for_user(current_user, _all=True):
+        corpora = db.session.query(Corpus).filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,
                 CorpusUser.user_id == current_user.id
             )
-        ).all()
+        )
+        if _all:
+            return corpora.all()
+        else:
+            return corpora
 
     def is_owned_by(self, user):
         return db.session.query(literal(True)).filter(
@@ -357,6 +376,26 @@ class Corpus(db.Model):
         cls.add_batch(allowed_values, self.id, _commit=True)
         return data
 
+    def get_bookmark(self, user: User) -> Optional["Bookmark"]:
+        """ Retrieve a bookmark for a given user. None if not found
+        """
+        return Bookmark.query.filter(db.and_(
+            Bookmark.user_id == user.id,
+            Bookmark.corpus_id == self.id
+        )).first()
+
+    def toggle_favorite(self, user_id: int) -> bool:
+        fav = Favorite.query.filter(db.and_(
+            Favorite.corpus_id == self.id,
+            Favorite.user_id == user_id
+        ))
+        if fav.first():
+            db.session.delete(fav.first())
+        else:
+            db.session.add(
+                Favorite(corpus_id=self.id, user_id=user_id)
+            )
+        db.session.commit()
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -1133,3 +1172,40 @@ class ChangeRecord(db.Model):
             WordToken.update(**apply)
             changed.append(token)
         return changed
+
+
+class Bookmark(db.Model):
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
+    token_id = db.Column(db.Integer, db.ForeignKey(WordToken.id, ondelete="CASCADE"), primary_key=True)
+    page = db.Column(db.Integer, nullable=False)
+
+    @staticmethod
+    def mark(corpus: int, user: int, token_id: int, page: int):
+        bm = Bookmark(
+            corpus_id=corpus,
+            user_id=user,
+            token_id=token_id,
+            page=page
+        )
+        Bookmark.clear(corpus, user, _commit=False)
+        db.session.add(bm)
+        db.session.commit()
+        return bm
+
+    @staticmethod
+    def clear(corpus: int, user: int, _commit: bool = False):
+        bm = Bookmark.query.filter(db.and_(
+            Bookmark.corpus_id == corpus,
+            Bookmark.user_id == user
+        )).first()
+        if bm:
+            db.session.delete(bm)
+            if _commit:
+                db.session.commit()
+
+
+class Favorite(db.Model):
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
+

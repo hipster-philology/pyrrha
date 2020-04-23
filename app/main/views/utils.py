@@ -49,7 +49,7 @@ def render_template_with_nav_info(template, **kwargs):
     :return:
     """
     kwargs.update(dict(
-        corpora=[corpus for corpus in Corpus.for_user(current_user)]
+        favorites=[corpus for corpus in Corpus.fav_for_user(current_user)]
     ))
     kwargs.update(dict(
         control_lists=[

@@ -269,9 +269,28 @@ def make_cli():
                 )
 
     cli.add_command(db_create)
+    
+    @click.command("db-add", help="Small tool to add new table instead of migrating")
+    @click.argument("model")
+    def db_add_table(model):
+        import app.models as tables
+        Model = getattr(tables, model, None)
+        if Model:
+            with app.app_context():
+                Model.__table__.create(db.session.bind, checkfirst=True)
+        else:
+            click.echo("Model not found.")
+            click.echo(
+                "Model available: " + ", ".join(sorted([
+                    x for x in dir(tables)
+                    if x[0] != "_" and x[0].isupper()
+                ]))
+            )
+
     cli.add_command(db_create)
     cli.add_command(db_fixtures)
     cli.add_command(db_recreate)
+    cli.add_command(db_add_table)
     cli.add_command(run)
     cli.add_command(corpus_ingest)
     cli.add_command(corpus_import)

@@ -12,7 +12,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 from app import db, create_app
-from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
@@ -89,6 +89,12 @@ class TestBase(LiveServerTestCase):
             _force_authenticated(app)
         return app
 
+    def add_favorite(self, user_id, corpora_ids):
+        for corpus_id in corpora_ids:
+            db.session.add(Favorite(user_id=user_id, corpus_id=corpus_id))
+        db.session.commit()
+        self.driver.refresh()
+
     def create_driver(self, options=None):
         if not options:
             options = Options()
@@ -162,6 +168,19 @@ elit
     def tearDown(self):
         self.driver.quit()
 
+    def add_n_corpora(self, n_corpus: int, **kwargs):
+        if not self.AUTO_LOG_IN:
+            raise Exception("This function only works with autologin")
+
+        user = User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first()
+        for n in range(n_corpus):
+            corpus = Corpus(name="a"*n, control_lists_id=1)
+            new_cu = CorpusUser(corpus=corpus, user=user, is_owner=True)
+            db.session.add(corpus)
+            db.session.add(new_cu)
+            db.session.flush()
+        db.session.commit()
+
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":
             corpus = add_corpus("wauchier", db, *args, **kwargs)
@@ -172,12 +191,13 @@ elit
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         return corpus
 
-    def addCorpusUser(self, corpus_name, email, is_owner=False):
+    def addCorpusUser(self, corpus_name, email, is_owner=False, _commit=True):
         corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
         user = User.query.filter(User.email == email).first()
         new_cu = CorpusUser(corpus=corpus, user=user, is_owner=is_owner)
         self.db.session.add(new_cu)
-        self.db.session.commit()
+        if _commit:
+            self.db.session.commit()
         return new_cu
 
     def addControlLists(self, cl_name, *args, **kwargs):
@@ -228,6 +248,10 @@ elit
         self.driver.implicitly_wait(5)
         self.login(email, self.app.config['ADMIN_PASSWORD'])
 
+    def get_admin_id(self):
+        user = User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first()
+        return user.id
+
     def admin_login(self):
         self.login_with_user(self.app.config['ADMIN_EMAIL'])
 
@@ -248,11 +272,13 @@ class TokenCorrectBase(TestBase):
     def go_to_edit_token_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's edit token page """
 
+        #def callback():
+        #    # Show the dropdown
+        #    self.driver.find_element_by_id("toggle_corpus_corpora").click()
+        #    # Click on the edit link
+        #    self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
         def callback():
-            # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_corpora").click()
-            # Click on the edit link
-            self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
+            self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id=corpus_id))
 
         if as_callback:
             return callback

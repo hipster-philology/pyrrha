@@ -3,6 +3,7 @@ from selenium.common.exceptions import NoSuchElementException
 from tests.test_selenium.base import TestBase
 from tests.db_fixtures import DB_CORPORA
 
+
 class TestDashboard(TestBase):
     AUTO_LOG_IN = False
 
@@ -67,6 +68,11 @@ class TestDashboard(TestBase):
             DB_CORPORA["wauchier"]["corpus"].name,
             DB_CORPORA["floovant"]["corpus"].name
         ])
+
+        self.add_favorite(user_id=self.get_admin_id(), corpora_ids=(
+            DB_CORPORA["wauchier"]["corpus"].id,
+            DB_CORPORA["floovant"]["corpus"].id
+        ))
         self.admin_login()
         self.driver.find_element_by_link_text("Dashboard").click()
 
@@ -86,6 +92,8 @@ class TestDashboard(TestBase):
         self.driver.find_element_by_id("label_checkbox_create").click()
         self.driver.find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
+
+        self.add_favorite(user_id=self.get_admin_id(), corpora_ids=(3, ))
         self.driver.find_element_by_link_text("Dashboard").click()
 
         navbars = self.driver.find_element_by_id("main-nav")

@@ -103,6 +103,27 @@ tr.history .badge {
   td.dd, th.dd {
       text-align: center;
   }
+
+  tr.bookmark {
+      background-color: #accbf7;
+      position: relative;
+      transform: scale(1);
+  }
+  tr.bookmark td:first-child::before {
+    content: "\f02e";
+    color:black;
+    left:-20px;
+    position:absolute;
+    top:0;
+    margin-right: .5em;
+      margin-top:0.5em;
+    font-family: FontAwesome;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    transform: translate(0, 0);
+    font-size: 1.2em;
+    line-height: 100%;
+  }
   /**
 https://codepen.io/sergiopedercini/pen/jmKdbj/?source=post_page---------------------------
 1   */
