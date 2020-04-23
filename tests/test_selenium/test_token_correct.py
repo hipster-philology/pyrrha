@@ -51,7 +51,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             "Saved"
         )
 
-
     def test_edit_POS(self):
         """ [Wauchier] Edit POS of a token """
         self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
@@ -65,7 +64,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
             "Saved"
         )
-
 
     def test_edit_morph(self):
         """ [Wauchier]  Edit morph of a token """
@@ -82,7 +80,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             "Saved"
         )
 
-
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(
             "Not Allowed", id_row="2", value_type="morph"
@@ -95,11 +92,10 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             "Saved"
         )
 
-
     def test_edit_morph_with_allowed(self):
         """ [Wauchier] Edit morph of a token with allowed values as control"""
         self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_morph=True, tokens_up_to=24)
-        self.driver.refresh()
+        self.driver.get(self.get_server_url())
         token, status_text, row = self.edith_nth_row_value(
             "_", id_row="1", value_type="morph"
         )
@@ -110,7 +106,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
             "Saved"
         )
-
 
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(
@@ -309,7 +304,10 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
 
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()
-        with self.assertRaises(selenium.common.exceptions.TimeoutException):
+        with self.assertRaises(
+                (selenium.common.exceptions.NoSuchElementException,
+                 selenium.common.exceptions.TimeoutException)
+        ):
             _ = self.edith_nth_row_value(
                 "s", id_row=str(self.first_token_id(2)+1), corpus_id="2",
                 autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
