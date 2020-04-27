@@ -103,6 +103,7 @@
     });
     </script>
     {% else %}
+    <select id="autocomplete" style="display: none"></select>
     <script type="text/javascript">
     $(document).ready(function(){
         var clear_br = function (elem) {
@@ -137,6 +138,7 @@
                 $(this).html($(this).text())
             }
         });
+
         $('td.token_pos').autoComplete({
             minChars: 1,
             source: function(term, suggest){
@@ -151,16 +153,21 @@
                 clear_br(elem);
             }
         });
+
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var url = "{{corpus.allowed_search_route('morph')}}?form="+cleanUp(term);
-                $.getJSON(url, function(data) {
-                    suggest(data);
-                });
-
+                fetch("{{corpus.allowed_search_route('morph')}}?form="+cleanUp(term))
+                    .then(function(response) {
+                        return response.json();
+                    }).then(function(responseJson) {
+                       suggest(responseJson);
+                    });
             },
             renderItem: function (item, search){
+                console.log(item.value);
+                console.log(item.label);
+                console.log('<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>');
                 return '<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>';
             },
             onSelect: function(e, term, item){

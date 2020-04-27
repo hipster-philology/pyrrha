@@ -10,6 +10,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from app import db, create_app
 from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite
@@ -98,12 +99,22 @@ class TestBase(LiveServerTestCase):
     def create_driver(self, options=None):
         if not options:
             options = Options()
+            
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         options.add_experimental_option('w3c', False)
-        self.driver = webdriver.Chrome(options=options)
+        
+        desired = DesiredCapabilities.CHROME
+        desired['loggingPrefs'] = {'browser': 'ALL'}
+        desired["goog:loggingPrefs"] = {'browser': 'ALL'}
+        
+        self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
         self.driver.set_window_size(1920, 1080)
         return self.driver
+
+    def pprint_log(self):
+        for log in self.driver.get_log("browser"):
+            print(log)
 
     def setUp(self):
         """Setup the test driver and create test users"""
@@ -182,13 +193,10 @@ elit
         db.session.commit()
 
     def addCorpus(self, corpus, *args, **kwargs):
-        if corpus == "wauchier":
-            corpus = add_corpus("wauchier", db, *args, **kwargs)
-        else:
-            corpus = add_corpus("floovant", db, *args, **kwargs)
-        self.driver.get(self.get_server_url())
+        corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        self.driver.get(self.get_server_url())
         return corpus
 
     def addCorpusUser(self, corpus_name, email, is_owner=False, _commit=True):
@@ -334,7 +342,6 @@ class TokenCorrectBase(TestBase):
         td.click()
         td.clear()
         td.send_keys(value)
-
         if autocomplete_selector is not None:
             # For some reason, screenshot was working as well, screenshot makes
             #   autocomplete appear...
@@ -387,7 +394,6 @@ class TokenCorrectBase(TestBase):
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
-        print(status_text)
         self.assertEqual(status_text, "Save")
         self.assertEqual(
             row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),

@@ -29,3 +29,4 @@ Unidecode==1.1.1
 urllib3==1.25.9
 Werkzeug==0.15.3
 WTForms==2.2.1
+python-slugify==4.0.0

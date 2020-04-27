@@ -1,5 +1,6 @@
 from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash
 from flask_login import current_user, login_required
+from slugify import slugify
 from sqlalchemy.sql.elements import or_, and_
 import math
 from csv import DictWriter
@@ -171,7 +172,8 @@ def tokens_export(corpus_id):
     :param corpus_id: ID of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-    format = request.args.get("format")
+    format = request.args.get("format", "").lower()
+    filename = slugify(corpus.name)
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
         if format == "tsv":
@@ -184,22 +186,31 @@ def tokens_export(corpus_id):
                    200, \
                    {
                        "Content-Type": "text/tab-separated-values; charset= utf-8",
-                       "Content-Disposition": 'attachment; filename="pyrrha-correction.tsv"'
+                       "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
                    }
-    elif format in ["tei", "tei-geste"]:
+    elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        #if format == "tei-geste": Right now only 1 format
         response = render_template("tei/geste.xml", base=base, tokens=tokens,
                                    history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
                                    delimiter=corpus.delimiter_token)
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
+           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
+        }
+    elif format == "tei-msd":
+        tokens = corpus.get_tokens().all()
+        base = tokens[0].id - 1
+        response = render_template("tei/TEI.xml", base=base, tokens=tokens,
+                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                                   delimiter=corpus.delimiter_token)
+        return response, 200, {
+           "Content-Type": "text/xml; charset= utf-8",
+           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
         }
 
     return render_template_with_nav_info(
-        template="main/tokens_view.html",
+        template="main/tokens_export.html",
         corpus=corpus
     )
 
