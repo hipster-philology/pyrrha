@@ -13,7 +13,7 @@ from app.admin.forms import (
     ChangeUserEmailForm,
     InviteUserForm,
     NewUserForm,
-)
+    ChangeAccountStatusForm)
 from app.decorators import admin_required
 from app.email import send_email_async
 from app.main.views.utils import render_template_with_nav_info
@@ -137,6 +137,30 @@ def change_account_type(user_id):
         db.session.commit()
         flash('Role for user {} successfully changed to {}.'.format(
             user.full_name(), user.role.name), 'form-success')
+    return render_template_with_nav_info('admin/manage_user.html', user=user, form=form)
+
+
+@admin.route(
+    '/user/<int:user_id>/change-account-status', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def change_account_status(user_id):
+    """Change a user's account status (active/inactive)."""
+    user = User.query.get(user_id)
+    if user is None:
+        abort(404)
+
+    form = ChangeAccountStatusForm()
+
+    if form.validate_on_submit():
+        user.confirmed = not user.confirmed
+        db.session.add(user)
+        db.session.commit()
+        flash('Status for user {} successfully changed to {}.'.format(
+            user.full_name(), 'Confirmed' if user.confirmed else 'Unconfirmed'), 'form-success')
+    else:
+        form = ChangeAccountStatusForm(status=user.confirmed)
+
     return render_template_with_nav_info('admin/manage_user.html', user=user, form=form)
 
 
