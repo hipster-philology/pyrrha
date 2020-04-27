@@ -342,18 +342,14 @@ class TokenCorrectBase(TestBase):
         td.click()
         td.clear()
         td.send_keys(value)
-        td.send_keys("")
-        self.driver.implicitly_wait(10)
         if autocomplete_selector is not None:
-            try:
-                WebDriverWait(self.driver, 10).until(
-                    EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
-                )
-            except:
-                self.pprint_log()
-                raise
-            finally:
-                self.driver.find_element_by_css_selector(autocomplete_selector).click()
+            # For some reason, screenshot was working as well, screenshot makes
+            #   autocomplete appear...
+            self.driver.save_screenshot("debug-autocomplete.png")
+            WebDriverWait(self.driver, 10).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
+            )
+            self.driver.find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
         row.find_element_by_css_selector("a.save").click()
