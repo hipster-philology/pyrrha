@@ -11,7 +11,7 @@
         <p>{{control_list.description or ""}}</p>
 
         <h2>Bibliography</h2>
-        <p>{{control_list.bibliography or ""}}</p>
+        <p>{{(control_list.bibliography or "")| markdown}}</p>
 
 
         {%- if is_owner %}

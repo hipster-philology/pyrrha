@@ -13,7 +13,7 @@
 
 {% if control_list.bibliography %}
 <h3>Bibliography</h3>
-<p>{{control_list.bibliography}}</p>
+<p>{{control_list.bibliography | markdown}}</p>
 {% endif %}
 
 {% endblock %}
