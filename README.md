@@ -9,9 +9,24 @@ Pyrrha
 Pyrrha is a simple Python Flask WebApp to fasten the post-correction
 of lemmatized and morpho-syntactic tagged corpora.
 
-# Credits and citation
+# How to cite
 
 This web application and its maintenance is done by Julien Pilla (@MrGecko) and Thibault Clérice (@ponteineptique). To learn **how to cite** this repository, go check [our releases](https://github.com/hipster-philology/pyrrha/releases).
+
+```latex
+@software{thibault_clerice_2019_3524771,
+  author       = {Clérice, Thibault and Pilla, Julien and Camps, Jean-Baptiste and Jolivet, Vincent and Pinche, Ariane},
+  title        = {Pyrrha, A language independant post correction app for POS and lemmatization},
+  month        = nov,
+  year         = 2019,
+  publisher    = {Zenodo},
+  version      = {Any Version},
+  doi          = {10.5281/zenodo.2325427},
+  url          = {https://doi.org/10.5281/zenodo.2325427}
+}
+```
+
+# Credits
 
 This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
 
