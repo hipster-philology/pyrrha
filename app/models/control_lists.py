@@ -15,6 +15,7 @@ from sqlalchemy import literal, case
 from werkzeug.exceptions import BadRequest
 # APP Logic
 from .. import db
+from ..utils import PyrrhaError
 from ..utils.forms import prepare_search_string, column_search_filter, read_input_POS, read_input_morph, \
     read_input_lemma
 # Models
@@ -216,8 +217,7 @@ class ControlLists(db.Model):
         except Exception as E:
             print(E)
             db.session.rollback()
-            return False
-        return True
+            raise
 
     def has_list(self, allowed_type):
         """ Check if the Control List has the specific allowed_type
@@ -309,7 +309,7 @@ class AllowedLemma(db.Model):
         :param _commit: Force commit (Default: false)
         """
         if len(allowed_values) != len(set(allowed_values)):
-            raise Exception("Following values are duplicated: " + ", ".join(
+            raise PyrrhaError("Following values are duplicated: " + ", ".join(
                 [
                     lemma
                     for lemma, cnt in Counter(allowed_values).items()

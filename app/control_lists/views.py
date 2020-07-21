@@ -9,6 +9,7 @@ from werkzeug.exceptions import BadRequest, NotFound, Forbidden
 from app.main.views.utils import render_template_with_nav_info
 from app.models import ControlLists, AllowedLemma, WordToken, User, PublicationStatus
 from app import db, email
+from ..utils import PyrrhaError
 from ..utils.forms import strip_or_none
 from ..utils.tsv import StringDictReader
 from ..utils.response import format_api_like_reply
@@ -184,11 +185,13 @@ def edit(cl_id, allowed_type, control_list):
             ]
         else:
             allowed_values = list(StringDictReader(allowed_values))
-        success = control_list.update_allowed_values(allowed_type, allowed_values)
-        if success:
+        try:
+            control_list.update_allowed_values(allowed_type, allowed_values)
             flash("Control List Updated", category="success")
-        else:
-            flash("An error occured", category="error")
+        except PyrrhaError as exception:
+            flash("A Pyrrha error occurred: {}".format(exception), category="error")
+        except:
+            flash("An unknown error occurred", category="error")
 
     values = control_list.get_allowed_values(allowed_type=allowed_type, order_by="id")
     if allowed_type == "lemma":
