@@ -161,7 +161,7 @@ class ControlLists(db.Model):
                 filters,
                 db.or_(
                     *(
-                        db.and_(*tuple(column_search_filter(AllowedLemma.label_uniform, search_string)))
+                        db.and_(*tuple(column_search_filter(AllowedLemma.label_uniform, unidecode.unidecode(search_string))))
                         for search_string in prepare_search_string(kw)
                     )
                 )
