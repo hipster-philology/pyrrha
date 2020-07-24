@@ -1,5 +1,6 @@
 {% import 'macros/nav_macros.html' as nav %}
 {% import 'macros/tokens_macros.html' as tokens_macros %}
+{% import 'macros/table_macros.html' as table_macros %}
 
 {% extends 'layouts/base.html' %}
 
@@ -15,15 +16,19 @@
             <tr>
                 <th>
                     <label id="formHelp" for="form">Form</label>
+                        {{ table_macros.sortable_table_row('main.tokens_search_through_fields', search_kwargs=search_kwargs, orderBy="form") }}
                 </th>
                 <th>
                     <label id="lemma_help" for="lemma">Lemma</label>
+                        {{ table_macros.sortable_table_row('main.tokens_search_through_fields', search_kwargs=search_kwargs, orderBy="lemma") }}
                 </th>
                 <th>
                     <label id="POS_help" for="POS">POS</label>
+                        {{ table_macros.sortable_table_row('main.tokens_search_through_fields', search_kwargs=search_kwargs, orderBy="pos") }}
                 </th>
                 <th>
                     <label id="morph_help" for="morph">Morph</label>
+                        {{ table_macros.sortable_table_row('main.tokens_search_through_fields', search_kwargs=search_kwargs, orderBy="morph") }}
                 </th>
             </thead>
             <tbody>
