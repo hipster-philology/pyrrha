@@ -1,0 +1,30 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/form_macros.html' as f %}
+
+{% block content %}
+<form>
+    <div class="container">
+        <div class="row">
+            <h2>
+                <i class="fa fa-exchange"></i> Switch control list
+            </h2>
+        </div>
+        <div class="row">
+            <div class="col-md-9" id="use_public">
+              <select class="form-control" id="control_list_select" name="control_list_select">
+                  {%- for class, cls_ in public_control_lists.items() %}
+                      {%  if cls_ %}
+                        <optgroup label="{{ class }}">
+                            {% for cl in cls_ %}
+                                <option id="cl_opt_{{ cl.id }}" value="{{ cl.id }}">{{ cl.name }}</option>
+                            {%  endfor %}
+                        </optgroup>
+                      {%  endif %}
+                  {% endfor -%}
+              </select>
+            </div>
+            <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </div>
+</form>
+{% endblock %}
