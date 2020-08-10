@@ -189,6 +189,15 @@
             }
         });
 
+        // https://stackoverflow.com/a/36846308 : Prevents pasting rich content
+        [].forEach.call(document.querySelectorAll('td[contenteditable="true"]'), function (el) {
+            el.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var text = e.clipboardData.getData("text/plain");
+                document.execCommand("insertHTML", false, text);
+            }, false);
+        });
+
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
@@ -200,9 +209,6 @@
                     });
             },
             renderItem: function (item, search){
-                console.log(item.value);
-                console.log(item.label);
-                console.log('<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>');
                 return '<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>';
             },
             onSelect: function(e, term, item){
