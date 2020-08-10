@@ -29,6 +29,15 @@
 
     <fieldset class="form-fieldset">
         <legend>Data</legend>
+        <div class="form-group row">
+            <div class="col-md-3">
+                <label for="upload">Text file</label>
+                <small id="upload_help" class="form-text form-group">Upload a text file (.txt) which will be read</small>
+            </div>
+            <div class="col-md-9">
+                <input type="file" id="upload" placeholder="Text file"  />
+            </div>
+        </div>
         <div class="form-group">
             <label for="tokens">Tokens (as TSV content)</label>
             <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : form, lemma, POS, morph</small>
@@ -178,6 +187,19 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
 <script type="text/javascript">
 
 $(document).ready(function() {
+
+    document.getElementById('upload').addEventListener('change', readFile, false);
+
+    function readFile (evt) {
+        var files = evt.target.files;
+        var file = files[0];
+        var reader = new FileReader();
+        reader.onload = function(event) {
+         document.getElementById('tokens').value = event.target.result;
+        };
+        reader.readAsText(file);
+    }
+
     $("#submit-model").on("click", function(event) {
         event.preventDefault();
         // Get the parameters
