@@ -262,7 +262,7 @@ class ControlLists(db.Model):
             for file, model, parser in configs:
                 filepath = os.path.join(directory, file)
                 if os.path.exists(filepath):
-                    with open(filepath) as f:
+                    with open(filepath, encoding='utf-8') as f:
                         model.add_batch(parser(f.read()), control_lists_id=cl.id)
 
                     print("[ControlLists] [%s] Loading %s " % (data["name"], os.path.basename(filepath)))
