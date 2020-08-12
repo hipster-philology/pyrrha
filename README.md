@@ -39,7 +39,7 @@ Start by cloning the repository, and moving inside the created folder
 
 ```bash
 git clone https://github.com/hipster-philology/pyrrha.git
-cd pandora-postcorrect-app/
+cd pyrrha/
 ```
 
 Create a virtual environment, source it and run
