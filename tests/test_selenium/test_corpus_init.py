@@ -546,3 +546,59 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
                 [row for row in csv.reader(open(fp.name), delimiter="\t")]
             )
         os.remove(temp_file.name)
+
+    def test_registration_with_field_length_violation(self):
+        """Test registrating tokens violating field length constraint.
+
+        Trying: column 'form' violates field length
+        Expecting: alert is displayed
+        """
+        self.add_control_lists()
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # prepare form
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.find_element_by_id("corpusName").send_keys("example")
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        invalid = "btOUZvzXARqNbnmvVIrcqjAbsRGIvZQsrhspGusZypNlUJSubtOztbiMiwipTpQJVTvSDZyIGCaONJ"
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            f"form\tlemma\tPOS\tmorph\n{invalid}\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
+        )
+
+        # submit and wait
+        self.driver.find_element_by_id("submit").click()
+        self.driver.implicitly_wait(15)
+        self.assertEqual(
+            self.driver.find_elements_by_css_selector(".alert.alert-danger")[0].text.strip(),
+            f"column 'form': '{invalid}' is too long (maximum 64 characters)"
+        )
+
+    def test_registration_without_field_length_violation(self):
+        """Test registrating tokens respecting field length constraint.
+
+        Trying: field length violations
+        Expecting: no alert is displayed
+        """
+        self.add_control_lists()
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # prepare form
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.find_element_by_id("corpusName").send_keys("example")
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            f"form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
+        )
+
+        # submit and wait
+        self.driver.find_element_by_id("submit").click()
+        self.driver.implicitly_wait(15)
+        self.assertFalse(self.driver.find_elements_by_css_selector(".alert.alert-danger"))

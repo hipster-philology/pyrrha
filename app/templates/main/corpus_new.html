@@ -1,8 +1,10 @@
 {% extends 'layouts/base.html' %}
 {% import 'macros/upload_text.html' as upload_text %}
+{% import 'macros/validate_length.html' as validateLength %}
 
 {% block content %}
-<form method="POST" action="{{url_for("main.corpus_new")}}">
+    <form method="POST" action="{{url_for("main.corpus_new")}}" id="form">
+    {{ validateLength.validateLength("tokens", {0: 64}) }}
     <h1>Create a new corpus</h1>
     <fieldset class="form-fieldset">
         <legend>Metadata</legend>

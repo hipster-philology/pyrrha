@@ -7,6 +7,7 @@ from sqlalchemy import func, distinct, text
 from app import db
 from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord, Bookmark, Favorite
 from .utils import render_template_with_nav_info
+from app.utils import ValidationError
 from app.utils.forms import create_input_format_convertion, read_input_tokens
 from .. import main
 from ...utils.forms import strip_or_none
@@ -98,6 +99,10 @@ def corpus_new():
             except NoTokensInput:
                 db.session.rollback()
                 flash("You did not input any text.", category="error")
+                return error()
+            except ValidationError as exception:
+                db.session.rollback()
+                flash(exception, category="error")
                 return error()
             except Exception as e:
                 db.session.rollback()

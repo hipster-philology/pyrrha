@@ -1,0 +1,29 @@
+{% macro validateLength(textArea, index, length) %}
+    <script type="text/javascript">
+    document.getElementById("form").addEventListener("submit", (evt => validateLength(evt, "{{textArea}}", {{index}}, {{length}})));
+    function validateLength(evt, textArea, lengths){
+        textAreaElement = document.getElementById(textArea)
+        var text = textAreaElement.value;
+        lines = text.split(/\r\n|\n\r|\r|\n/);
+        fields = lines.map((x) => x.split(/\t+/));
+        for (const index in lengths) {
+            length = lengths[index];
+            var validatedField = fields[0][index];
+            for (let i=1; i < fields.length; i++){
+                fieldValue = fields[i][index]
+                if (fieldValue.length > length){
+                    evt.preventDefault();
+                    startPos = text.search(new RegExp(fieldValue));
+                    textAreaElement.setSelectionRange(startPos, startPos + fieldValue.length)
+                    textAreaElement.focus();
+                    var div = document.createElement("div");
+                    div.className = "alert alert-danger mt-3 mb-3";
+                    div.textContent = `column '${validatedField}': '${fieldValue}' is too long (maximum ${length} characters)`;
+                    var formElement = document.getElementById("form");
+                    formElement.insertBefore(div, formElement.firstChild);
+                };
+            };
+        };
+    };
+</script>
+{% endmacro %}
