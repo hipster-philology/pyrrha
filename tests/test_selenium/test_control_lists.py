@@ -1,5 +1,7 @@
 from tests.test_selenium.base import TestBase
 from collections import namedtuple
+import csv
+import os
 from tests.db_fixtures.wauchier import WauchierAllowedPOS, WauchierAllowedMorph
 
 
@@ -257,3 +259,26 @@ class TestUpdateControlList(TestBase):
             "Forbidden: You do not have the right to access this page.",
             "403 is generated when accessing something forbidden"
         )
+
+    def test_edit_upload_file(self):
+        """Test that an user can upload a file to fill in 'allowed_values' textarea."""
+        self.addControlLists(
+            "wauchier",
+            no_corpus_user=True,
+            for_users=[User(self.app.config['ADMIN_EMAIL'], False)]
+        )
+        self.admin_login()
+        self.go_to_control_lists_management("Wauchier")
+        self.driver.find_element_by_class_name("settings-lemma").click()
+        self.driver.implicitly_wait(15)
+        upload = self.driver.find_element_by_id("upload")
+        temp_file = self.create_temp_example_file()
+        upload.send_keys(temp_file.name)
+        self.driver.implicitly_wait(15)
+        allowed_values = self.driver.find_element_by_id("allowed_values")
+        with open(temp_file.name) as fp:
+            self.assertCountEqual(
+                [row for row in csv.reader(allowed_values.get_attribute("value").split("\n"), delimiter="\t") if row],
+                [row for row in csv.reader(open(fp.name), delimiter="\t")]
+            )
+        os.remove(temp_file.name)

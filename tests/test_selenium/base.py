@@ -2,8 +2,10 @@ from flask import url_for, current_app, Flask
 from flask_testing import LiveServerTestCase
 import flask_login
 import os
+import csv
 import signal
 import logging
+import tempfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
@@ -161,6 +163,22 @@ elit
 
     def tearDown(self):
         self.driver.quit()
+
+    def create_temp_example_file(self):
+        """Create temporary example file.
+
+        :returns: temporary example file
+        :rtype: NamedTemporaryFile
+        """
+        fp = tempfile.NamedTemporaryFile("w", delete=False)
+        csv.writer(fp, delimiter="\t").writerows(
+            (
+                ("form", "lemma", "POS", "morph"),
+                ("SOIGNORS", "seignor", "NOMcom", "NOMB.=p|GENRE=m|CAS=n")
+            )
+        )
+        fp.close()
+        return fp
 
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":
