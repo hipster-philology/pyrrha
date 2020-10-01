@@ -2,6 +2,7 @@ from flask import request, jsonify, url_for, abort, render_template, current_app
 from flask_login import current_user, login_required
 from slugify import slugify
 from sqlalchemy.sql.elements import or_, and_
+from sqlalchemy import func
 import math
 from csv import DictWriter
 
@@ -280,13 +281,15 @@ def tokens_search_through_fields(corpus_id):
 
     # there is at least one OR clause
     # get sort arguments (sort per default by WordToken.order_id)
-    order_by = {
-        "order_id": WordToken.order_id,
-        "lemma": WordToken.lemma,
-        "pos": WordToken.POS,
-        "form": WordToken.form,
-        "morph": WordToken.morph,
-    }.get(request.args.get("orderBy"), WordToken.order_id)
+    order_by = func.lower(
+        {
+            "order_id": WordToken.order_id,
+            "lemma": WordToken.lemma,
+            "pos": WordToken.POS,
+            "form": WordToken.form,
+            "morph": WordToken.morph,
+        }.get(request.args.get("orderBy"), WordToken.order_id)
+    )
     if len(value_filters) > 1:
         and_filters = [and_(*branch_filters) for branch_filters in value_filters]
         args = [or_(*and_filters)]
