@@ -1,4 +1,5 @@
 {% extends 'layouts/base.html' %}
+{% import 'macros/upload_text.html' as upload_text %}
 
 {% block content %}
 <form method="POST" action="{{url_for("main.corpus_new")}}">
@@ -29,6 +30,7 @@
 
     <fieldset class="form-fieldset">
         <legend>Data</legend>
+        {{ upload_text.upload_text("tokens") }}
         <div class="form-group">
             <label for="tokens">Tokens (as TSV content)</label>
             <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : form, lemma, POS, morph</small>
@@ -178,6 +180,7 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
 <script type="text/javascript">
 
 $(document).ready(function() {
+
     $("#submit-model").on("click", function(event) {
         event.preventDefault();
         // Get the parameters

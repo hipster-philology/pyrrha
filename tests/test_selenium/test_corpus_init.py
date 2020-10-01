@@ -3,6 +3,8 @@ from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
+import csv
+import os
 
 
 class TestCorpusRegistration(TestBase):
@@ -527,3 +529,20 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         )
         corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         self.assertEqual(corpus.delimiter_token, "____", "There should be a delimiter token")
+
+    def test_registration_upload_file(self):
+        """Test that an user can upload a file to fill in 'tokens' textarea."""
+
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+        upload = self.driver.find_element_by_id("upload")
+        temp_file = self.create_temp_example_file()
+        upload.send_keys(temp_file.name)
+        self.driver.implicitly_wait(15)
+        tokens = self.driver.find_element_by_id("tokens")
+        with open(temp_file.name) as fp:
+            self.assertCountEqual(
+                [row for row in csv.reader(tokens.get_attribute("value").split("\n"), delimiter="\t") if row],
+                [row for row in csv.reader(open(fp.name), delimiter="\t")]
+            )
+        os.remove(temp_file.name)
