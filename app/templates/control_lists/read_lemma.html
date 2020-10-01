@@ -7,6 +7,7 @@
 <h1>{{control_list.name}}</h1>
 <h2>Control List for Lemmas</h2>
 
+{% if can_edit %}
 <div class="form" style="padding-bottom: 10px;">
   <form id="lemma_update" class="form" style="margin-top:1em;" method="POST" action="{{url_for('control_lists_bp.lemma_list', control_list_id=control_list.id)}}">
     <div class="form-group row">
@@ -24,6 +25,7 @@
     </div>
   </form>
 </div>
+{% endif %}
 
 <div class="row">
   <div class="col-sm-12">
