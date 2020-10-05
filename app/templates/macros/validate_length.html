@@ -2,13 +2,13 @@
     <script type="text/javascript">
         document.getElementById("form").addEventListener("submit", (evt => validateLength(evt, "{{textArea}}", {{index}}, {{length}})));
 
-        function insertValidateLengthError(validatedField, fieldValue, length, siblingId) {
+        function insertValidateLengthError(validatedField, fieldValue, length, siblingId, index) {
             // create unique ID for each error message
             validateLengthErrorId = `validateLengthError${Date.now()}`;
             var validateLengthError = document.createElement("div");
             validateLengthError.id = validateLengthErrorId;
             validateLengthError.className = "alert alert-danger mt-3 mb-3";
-            validateLengthError.textContent = `column '${validatedField}': '${fieldValue}' is too long (maximum ${length} characters)`;
+            validateLengthError.textContent = `ln. ${index}, column '${validatedField}': '${fieldValue}' is too long (maximum ${length} characters)`;
             if (!siblingId) {
                 document.getElementById("tokensLabel").insertBefore(validateLengthError, parent.firstChild);
             }
@@ -38,7 +38,7 @@
                 for (let i=1; i < fields.length; i++){
                     fieldValue = fields[i][index]
                     if (fieldValue.length > length){
-                        siblingId = insertValidateLengthError(validatedField, fieldValue, length, siblingId);
+                        siblingId = insertValidateLengthError(validatedField, fieldValue, length, siblingId, i+1);
                         evt.preventDefault();
                         // highlight first erroneous line
                         if (!highlighted) {
