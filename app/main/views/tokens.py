@@ -2,6 +2,7 @@ from flask import request, jsonify, url_for, abort, render_template, current_app
 from flask_login import current_user, login_required
 from slugify import slugify
 from sqlalchemy.sql.elements import or_, and_
+from sqlalchemy import func
 import math
 from csv import DictWriter
 
@@ -279,20 +280,32 @@ def tokens_search_through_fields(corpus_id):
         value_filters.append([WordToken.corpus == corpus_id])
 
     # there is at least one OR clause
+    # get sort arguments (sort per default by WordToken.order_id)
+    order_by = {
+        "order_id": WordToken.order_id,
+        "lemma": func.lower(WordToken.lemma),
+        "pos": func.lower(WordToken.POS),
+        "form": func.lower(WordToken.form),
+        "morph": func.lower(WordToken.morph),
+    }.get(request.args.get("orderBy"), WordToken.order_id)
     if len(value_filters) > 1:
         and_filters = [and_(*branch_filters) for branch_filters in value_filters]
-        flattened_filters = or_(*and_filters)
-        tokens = WordToken.query.filter(flattened_filters).order_by(WordToken.order_id)
+        args = [or_(*and_filters)]
     else:
         if len(value_filters) == 1:
-            value_filters = value_filters[0]
-        tokens = WordToken.query.filter(*value_filters).order_by(WordToken.order_id)
+            args = value_filters[0]
+    tokens = WordToken.query.filter(*args).order_by(
+        order_by.desc()
+        if bool(int(request.args.get("desc", "0")))  # default sort order is ascending
+        else order_by
+    )
 
     page = int_or(request.args.get("page"), 1)
     per_page = int_or(request.args.get("limit"), 100)
     tokens = tokens.paginate(page=page, per_page=per_page)
 
     return render_template_with_nav_info('main/tokens_search_through_fields.html',
+                                         search_kwargs = {"corpus_id": corpus.id, **kargs},
                                          changed=corpus.changed(tokens.items),
                                          corpus=corpus, tokens=tokens, **kargs)
 

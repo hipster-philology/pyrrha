@@ -1,9 +1,10 @@
+{% import 'macros/table_macros.html' as table_macros %}
 
 {%- macro token_context(token, tag="b") %}
 {{ token.left_context }} <{{tag}}>{{ token.form }}</{{tag}}> {{ token.right_context }}
 {% endmacro -%}
 
-{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False)%}
+{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False, endpoint="", sortable=False, search_kwargs={})%}
 {% if editable %}
     {%- if checkbox %}
         <div>
@@ -22,7 +23,33 @@
 
     <table class="table table-bordered">
         <thead>
-        <tr><th>Id</th><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+            <tr>
+                <th>Id</th>
+                <th>
+                    Form
+                    {% if sortable %}
+                        {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="form") }}
+                    {% endif %}
+                </th>
+                <th>
+                    Lemma
+                    {% if sortable %}
+                        {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="lemma") }}
+                    {% endif %}
+                </th>
+                <th>
+                    POS
+                    {% if sortable %}
+                        {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="pos") }}
+                    {% endif %}
+                </th>
+                <th>
+                    Morph
+                    {% if sortable %}
+                        {{ table_macros.sortable_table_row('main.tokens_search_through_fields', search_kwargs=search_kwargs, orderBy="morph") }}
+                    {% endif %}
+                </th>
+                <th>Context</th>
                 {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th>{% if not checkbox %}<th class="dd">+</th>{% endif %}</tr>
         </thead>
         <tbody>
