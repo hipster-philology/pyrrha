@@ -574,7 +574,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver.implicitly_wait(15)
         self.assertEqual(
             self.driver.find_elements_by_css_selector(".alert.alert-danger")[0].text.strip(),
-            f"column 'form': '{invalid}' is too long (maximum 64 characters)"
+            f"ln. 2, column 'form': '{invalid}' is too long (maximum 64 characters)"
         )
 
     def test_registration_without_field_length_violation(self):
