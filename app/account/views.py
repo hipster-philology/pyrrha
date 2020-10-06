@@ -64,6 +64,7 @@ def register():
             subject='Confirm Your Account',
             template='account/email/confirm',
             user=user,
+            mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             confirm_link=confirm_link)
         flash('A confirmation link has been sent to {}.'.format(user.email),
               'warning')
@@ -106,6 +107,7 @@ def reset_password_request():
                 template='account/email/reset_password',
                 user=user,
                 reset_link=reset_link,
+                mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 next=request.args.get('next'))
         flash('A password reset link has been sent to {}.'.format(
             form.email.data), 'warning')
@@ -170,6 +172,7 @@ def change_email_request():
                 # current_user is a LocalProxy, we want the underlying user
                 # object
                 user=current_user._get_current_object(),
+                mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 change_email_link=change_email_link)
             flash('A confirmation link has been sent to {}.'.format(new_email),
                   'warning')
@@ -203,6 +206,7 @@ def confirm_request():
         template='account/email/confirm',
         # current_user is a LocalProxy, we want the underlying user object
         user=current_user._get_current_object(),
+        mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
         confirm_link=confirm_link)
     flash('A new confirmation link has been sent to {}.'.format(current_user.email), 'warning')
     return redirect(url_for('main.index'))
@@ -266,6 +270,7 @@ def join_from_invite(user_id, token):
             subject='You Are Invited To Join',
             template='account/email/invite',
             user=new_user,
+            mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             invite_link=invite_link)
     return redirect(url_for('main.index'))
 
