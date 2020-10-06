@@ -66,7 +66,7 @@ def register():
             user=user,
             mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             confirm_link=confirm_link)
-        if (current_app.config["SEND_MAIL_STATUS"]):
+        if current_app.config["SEND_MAIL_STATUS"]:
             flash('A confirmation link has been sent to {}.'.format(user.email),
               'warning')
         else:
@@ -113,7 +113,7 @@ def reset_password_request():
                 reset_link=reset_link,
                 mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 next=request.args.get('next'))
-        if (current_app.config["SEND_MAIL_STATUS"]):
+        if current_app.config["SEND_MAIL_STATUS"]:
             flash('A password reset link has been sent to {}.'.format(
                     form.email.data), 'warning')
         else:
@@ -183,7 +183,7 @@ def change_email_request():
                 user=current_user._get_current_object(),
                 mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 change_email_link=change_email_link)
-            if (current_app.config["SEND_MAIL_STATUS"]):
+            if current_app.config["SEND_MAIL_STATUS"]:
                 flash('A confirmation link has been sent to {}.'.format(new_email),
                   'warning')
             else:
@@ -221,7 +221,7 @@ def confirm_request():
         user=current_user._get_current_object(),
         mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
         confirm_link=confirm_link)
-    if (current_app.config["SEND_MAIL_STATUS"]):
+    if current_app.config["SEND_MAIL_STATUS"]:
         flash('A new confirmation link has been sent to {}.'.format(
             current_user.email), 'warning')
     else:
@@ -291,6 +291,10 @@ def join_from_invite(user_id, token):
             user=new_user,
             mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             invite_link=invite_link)
+            if not current_app.config["SEND_MAIL_STATUS"]:
+                flash('You are running this application without mail server.' 
+                ' This functionnality can\'t work: no email was sent. '
+                'Check the CLI or use SQL commands to confirm the account.')
     return redirect(url_for('main.index'))
 
 
