@@ -35,6 +35,31 @@ def make_cli():
         global app
         app = create_app(config)
 
+    @click.command("edit-user")
+    @click.argument("user_id")
+    @click.option("--confirm-mail", "is_confirmed", is_flag=True,
+                  help="Confirm mail address.")
+    @click.option("--role", "role", type=click.Choice(['User', 'Administrator'], case_sensitive=False), required=False,
+                  help="Set role. Default: User.")
+    def edit_user(user_id, is_confirmed=False, role=None):
+        """Edits a registered user
+        """
+        with app.app_context():
+            user = User.query.filter(User.id == user_id).first()
+            if not user:
+                click.echo(f"User with id '{user_id}' not found.")
+                return
+            
+            if is_confirmed and not user.confirmed:
+                User.query.filter(User.id == user_id).update({User.confirmed: True})
+                db.session.commit()
+            
+            if role is not None:
+                new_role = Role.query.filter(Role.name == role.title()).first()
+                if user.role_id != new_role.id:      
+                    User.query.filter(User.id == user_id).update({User.role_id: new_role.id})
+                    db.session.commit()
+
     @click.command("db-create")
     def db_create():
         """ Creates a local database
@@ -291,6 +316,7 @@ def make_cli():
     cli.add_command(db_fixtures)
     cli.add_command(db_recreate)
     cli.add_command(db_add_table)
+    cli.add_command(edit_user)
     cli.add_command(run)
     cli.add_command(corpus_ingest)
     cli.add_command(corpus_import)
