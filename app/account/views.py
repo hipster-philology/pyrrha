@@ -66,8 +66,12 @@ def register():
             user=user,
             mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             confirm_link=confirm_link)
-        flash('A confirmation link has been sent to {}.'.format(user.email),
+        if (current_app.config["SEND_MAIL_STATUS"]):
+            flash('A confirmation link has been sent to {}.'.format(user.email),
               'warning')
+        else:
+            flash('You are running in dev or test mode. Your account needs'
+            ' to be confirmed via the command line interface or through the CLI')
         return redirect(url_for('main.index'))
     return render_template_with_nav_info('account/register.html', form=form)
 
@@ -109,8 +113,13 @@ def reset_password_request():
                 reset_link=reset_link,
                 mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 next=request.args.get('next'))
-        flash('A password reset link has been sent to {}.'.format(
-            form.email.data), 'warning')
+        if (current_app.config["SEND_MAIL_STATUS"]):
+            flash('A password reset link has been sent to {}.'.format(
+                    form.email.data), 'warning')
+        else:
+            flash('You are running in dev or test mode. No emails can be sent'
+                'for this function. Use the admin account'
+                ' (check source code for passwords)')
         return redirect(url_for('account.login'))
     return render_template_with_nav_info('account/reset_password.html', form=form)
 
@@ -174,8 +183,12 @@ def change_email_request():
                 user=current_user._get_current_object(),
                 mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 change_email_link=change_email_link)
-            flash('A confirmation link has been sent to {}.'.format(new_email),
+            if (current_app.config["SEND_MAIL_STATUS"]):
+                flash('A confirmation link has been sent to {}.'.format(new_email),
                   'warning')
+            else:
+                flash('You are running in dev or test mode. Your account needs' 
+                ' to be confirmed via the command line interface or through the CLI')
             return redirect(url_for('main.index'))
         else:
             flash('Invalid email or password.', 'form-error')
@@ -208,7 +221,13 @@ def confirm_request():
         user=current_user._get_current_object(),
         mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
         confirm_link=confirm_link)
-    flash('A new confirmation link has been sent to {}.'.format(current_user.email), 'warning')
+    if (current_app.config["SEND_MAIL_STATUS"]):
+        flash('A new confirmation link has been sent to {}.'.format(
+            current_user.email), 'warning')
+    else:
+        flash('You are running in dev or test mode.'
+        ' Your account needs to be confirmed via the command line'
+        ' interface or through the CLI')
     return redirect(url_for('main.index'))
 
 
