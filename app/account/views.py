@@ -291,7 +291,7 @@ def join_from_invite(user_id, token):
             user=new_user,
             mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             invite_link=invite_link)
-            if not current_app.config["SEND_MAIL_STATUS"]:
+        if not current_app.config["SEND_MAIL_STATUS"]:
                 flash('You are running this application without mail server.' 
                 ' This functionnality can\'t work: no email was sent. '
                 'Check the CLI or use SQL commands to confirm the account.')
