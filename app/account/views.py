@@ -71,7 +71,7 @@ def register():
               'warning')
         else:
             flash('You are running in dev or test mode. Your account needs'
-            ' to be confirmed via the command line interface or through the CLI')
+            ' to be confirmed via the command line interface or through the CLI', 'warning')
         return redirect(url_for('main.index'))
     return render_template_with_nav_info('account/register.html', form=form)
 
@@ -119,7 +119,7 @@ def reset_password_request():
         else:
             flash('You are running in dev or test mode. No emails can be sent'
                 'for this function. Use the admin account'
-                ' (check source code for passwords)')
+                ' (check source code for passwords)', 'warning')
         return redirect(url_for('account.login'))
     return render_template_with_nav_info('account/reset_password.html', form=form)
 
@@ -188,7 +188,8 @@ def change_email_request():
                   'warning')
             else:
                 flash('You are running in dev or test mode. Your account needs' 
-                ' to be confirmed via the command line interface or through the CLI')
+                ' to be confirmed via the command line interface or through the CLI',
+                'warning')
             return redirect(url_for('main.index'))
         else:
             flash('Invalid email or password.', 'form-error')
@@ -227,7 +228,7 @@ def confirm_request():
     else:
         flash('You are running in dev or test mode.'
         ' Your account needs to be confirmed via the command line'
-        ' interface or through the CLI')
+        ' interface or through the CLI', 'warning')
     return redirect(url_for('main.index'))
 
 
@@ -294,7 +295,8 @@ def join_from_invite(user_id, token):
         if not current_app.config["SEND_MAIL_STATUS"]:
             flash('You are running this application without mail server.'
                 ' This functionnality can\'t work: no email was sent. '
-                'Check the CLI or use SQL commands to confirm the account.')
+                'Check the CLI or use SQL commands to confirm the account.', 
+                'warning')
     return redirect(url_for('main.index'))
 
 
