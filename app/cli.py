@@ -40,7 +40,7 @@ def make_cli():
     @click.option("--confirm-mail", "is_confirmed", is_flag=True,
                   help="Confirm mail address.")
     @click.option("--role", "role", type=click.Choice(['User', 'Administrator'], case_sensitive=False), required=False,
-                  help="Set role. Default: User.")
+                  help="Set role.")
     def edit_user(user_id, is_confirmed=False, role=None):
         """Edits a user
         """
