@@ -42,7 +42,7 @@ def make_cli():
     @click.option("--role", "role", type=click.Choice(['User', 'Administrator'], case_sensitive=False), required=False,
                   help="Set role. Default: User.")
     def edit_user(user_id, is_confirmed=False, role=None):
-        """Edits a registered user
+        """Edits a user
         """
         with app.app_context():
             user = User.query.filter(User.id == user_id).first()
