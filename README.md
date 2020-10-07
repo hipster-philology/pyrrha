@@ -11,7 +11,8 @@ of lemmatized and morpho-syntactic tagged corpora.
 
 # How to cite
 
-This web application and its maintenance is done by Julien Pilla (@MrGecko) and Thibault Clérice (@ponteineptique). To learn **how to cite** this repository, go check [our releases](https://github.com/hipster-philology/pyrrha/releases).
+This web application and its maintenance is done by Julien Pilla (@MrGecko) and Thibault Clérice (@ponteineptique). As software is research
+please cite the software if you use it using the following informations:
 
 ```latex
 @software{thibault_clerice_2019_3524771,
@@ -29,6 +30,7 @@ This web application and its maintenance is done by Julien Pilla (@MrGecko) and 
 # Credits
 
 This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
+It can connect to lemmatization service like [Deucalion](https://github.com/chartes/deucalion-chartes).
 
 ## Demo
 ![Pandora Post-Correction Editor](./demo.gif)
@@ -55,9 +57,35 @@ python manage.py db-create
 python manage.py run
 ```
 
+### Creating a new user localy
+
+1. Run the application
+2. Click register and register. Remember to note the user email you register with.
+3. Stop the application
+4. Run `python manage.py edit-user [EMAIL] --confirm-mail -role Administrator` or simply 
+`python manage.py edit-user [EMAIL] --confirm-mail -role Administrator` if you don't want administrator role. Replace `[EMAIL]`
+with the mail you used.
+5. Run the application, login and enjoy !
+
 ## How to contribute
 
-- See [Contribute.md](contribute.md)
+- See [Contribute.md](CONTRIBUTING.md)
+
+## Maintainers
+
+- [Julien Pilla](https://github.com/MrGecko)
+- [Thibault Clérice](https://github.com/ponteineptique)
+
+## Contributors
+
+-[Jean-Baptiste Camps](https://github.com/Jean-Baptiste-Camps)
+-[ngawangtrinley](https://github.com/ngawangtrinley)
+-[FrFerry](https://github.com/FrFerry)
+-[Vincent Jolivet](https://github.com/architexte)
+-[Ariane Pinche](https://github.com/ArianePinche)
+-[saisiddhant12](https://github.com/saisiddhant12)
+-[jhrdt](https://github.com/jhrdt)
+-[AdityaJ7](https://github.com/AdityaJ7)
 
 ## Source
 
