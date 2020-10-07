@@ -5,7 +5,7 @@ from click.testing import CliRunner
 
 from app import db, create_app
 from app.cli import make_cli
-from app.models import Corpus, ControlLists
+from app.models import Corpus, ControlLists, Role, User
 
 
 class TestGenericScript(TestCase):
@@ -34,6 +34,118 @@ class TestGenericScript(TestCase):
 
     def invoke(self, commands):
         return self.runner.invoke(self.cli, ["--config", "test"] + commands)
+
+    def test_edit_user_should_get_user_by_email(self):
+        """Test that user gets identified by email"""
+
+        TEST_USER_ID = 1
+        TEST_USER_EMAIL = 'test@example.org'
+
+        with self.app.app_context():
+            db.create_all()
+            Role.add_default_roles()
+            db.session.commit()
+        
+        with self.app.app_context():
+            role_user = Role.query.filter(Role.name == 'User').first()
+            unconfirmed_user = User(
+                id=TEST_USER_ID,
+                first_name='test',
+                last_name='test',
+                email=TEST_USER_EMAIL,
+                password='password',
+                confirmed=False,
+                role=role_user,
+            )
+            db.session.add(unconfirmed_user)
+            db.session.commit()
+
+        with self.app.app_context():
+            role_user = Role.query.filter(Role.name == 'User').first()
+            self.assertIsNotNone(role_user)
+            user = User.query.get(TEST_USER_ID)
+            self.assertEqual(user.role_id, role_user.id)
+        
+        response = self.invoke(["edit-user", f"{TEST_USER_EMAIL}", "--role", "Administrator"])
+
+        with self.app.app_context():
+            role_administrator = Role.query.filter(Role.name == 'Administrator').first()
+            self.assertIsNotNone(role_administrator)
+            user = User.query.get(TEST_USER_ID)
+            self.assertEqual(user.role_id, role_administrator.id)
+
+    def test_edit_user_should_set_role_to_administrator(self):
+        """Test that user has role administrator"""
+
+        TEST_USER_ID = 1
+
+        with self.app.app_context():
+            db.create_all()
+            Role.add_default_roles()
+            db.session.commit()
+        
+        with self.app.app_context():
+            role_user = Role.query.filter(Role.name == 'User').first()
+            unconfirmed_user = User(
+                id=TEST_USER_ID,
+                first_name='test',
+                last_name='test',
+                email='test@example.org',
+                password='password',
+                confirmed=False,
+                role=role_user,
+            )
+            db.session.add(unconfirmed_user)
+            db.session.commit()
+
+        with self.app.app_context():
+            role_user = Role.query.filter(Role.name == 'User').first()
+            self.assertIsNotNone(role_user)
+            user = User.query.get(TEST_USER_ID)
+            self.assertEqual(user.role_id, role_user.id)
+        
+        response = self.invoke(["edit-user", f"{TEST_USER_ID}", "--role", "Administrator"])
+
+        with self.app.app_context():
+            role_administrator = Role.query.filter(Role.name == 'Administrator').first()
+            self.assertIsNotNone(role_administrator)
+            user = User.query.get(TEST_USER_ID)
+            self.assertEqual(user.role_id, role_administrator.id)
+
+
+    def test_edit_user_should_confirm_user(self):
+        """Test that user is confirmed"""
+
+        TEST_USER_ID = 1
+
+        with self.app.app_context():
+            db.create_all()
+            Role.add_default_roles()
+            db.session.commit()
+        
+        with self.app.app_context():
+            role_user = Role.query.filter(Role.name == 'User').first()
+            unconfirmed_user = User(
+                id=TEST_USER_ID,
+                first_name='test',
+                last_name='test',
+                email='test@example.org',
+                password='password',
+                confirmed=False,
+                role=role_user,
+            )
+            db.session.add(unconfirmed_user)
+            db.session.commit()
+
+        with self.app.app_context():
+            user = User.query.get(TEST_USER_ID)
+            self.assertFalse(user.confirmed)
+
+        response = self.invoke(["edit-user", f"{TEST_USER_ID}", "--confirm-mail"])
+
+        with self.app.app_context():
+            user = User.query.get(TEST_USER_ID)
+            self.assertTrue(user.confirmed)
 
     def test_db_create(self):
         """ Test that db is created """
