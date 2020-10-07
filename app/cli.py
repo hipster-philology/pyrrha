@@ -36,15 +36,25 @@ def make_cli():
         app = create_app(config)
 
     @click.command("edit-user")
-    @click.argument("user_id")
+    @click.argument("user_id_or_email")
     @click.option("--confirm-mail", "is_confirmed", is_flag=True,
                   help="Confirm mail address.")
     @click.option("--role", "role", type=click.Choice(['User', 'Administrator'], case_sensitive=False), required=False,
                   help="Set role.")
-    def edit_user(user_id, is_confirmed=False, role=None):
-        """Edits a user
+    def edit_user(user_id_or_email, is_confirmed=False, role=None):
+        """Edits a user by id or email
         """
         with app.app_context():
+            try:
+                int(user_id_or_email)
+                user_id = user_id_or_email
+            except ValueError:
+                lookup = User.query.filter(User.email == user_id_or_email).first()
+                user_id = lookup.id if lookup else None
+
+            if not user_id:
+                click.echo(f"User with email '{user_id_or_email}' not found.")
+
             user = User.query.filter(User.id == user_id).first()
             if not user:
                 click.echo(f"User with id '{user_id}' not found.")
