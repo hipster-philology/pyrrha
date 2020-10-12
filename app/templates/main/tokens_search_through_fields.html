@@ -5,6 +5,13 @@
 
 {% block content %}
 
+{% set visible = [] %}
+{% for column in corpus.columns %}
+    {% if not column.hidden %}
+        {{ visible.append(column.heading) }}
+    {% endif %}
+{% endfor %}
+
     <h1 class="mt-3"><i class="fa fa-search mr-2"></i>Corpus {{ corpus.name }} - Search tokens within the corpus </h1>
 
     <form id="search_form" method="GET"
@@ -16,42 +23,44 @@
                 <th>
                     <label id="formHelp" for="form">Form</label>
                 </th>
-                <th>
-                    <label id="lemma_help" for="lemma">Lemma</label>
-                </th>
-                <th>
-                    <label id="POS_help" for="POS">POS</label>
-                </th>
-                <th>
-                    <label id="morph_help" for="morph">Morph</label>
-                </th>
+                {% for heading in visible %}
+                    <th>
+                        <label id={{ heading }}"Help" for={{ heading.lower() }}>{{ heading}}</label>
+                    </th>
+                {% endfor %}
             </thead>
             <tbody>
-            <tr id="filter_row">
+                <tr id="filter_row">
                 <td>
                     <div class="form-group">
                         <input name="form" type="text" class="form-control" id="form" aria-describedby="formHelp"
                                placeholder="Enter form" value="{% if form %}{{ form }}{% endif %}"/>
                     </div>
                 </td>
+                {% if "Lemma" in visible %}
                 <td>
                     <div class="form-group">
-                        <input type="text" aria-describedby="lemma_help" class="form-control" id="lemma" name="lemma"
+                        <input type="text" aria-describedby="lemmaHelp" class="form-control" id="lemma" name="lemma"
                                value="{% if lemma %}{{ lemma }}{% endif %}">
                     </div>
                 </td>
+                {% endif %}
+                {% if "POS" in visible %}
                 <td>
                     <div class="form-group">
-                        <input type="text" aria-describedby="POS_help" class="form-control" id="POS" name="POS"
+                        <input type="text" aria-describedby="POSHelp" class="form-control" id="POS" name="POS"
                                value="{% if POS %}{{ POS }}{% endif %}">
                     </div>
                 </td>
+                {% endif %}
+                {% if "Morph" in visible %}
                 <td>
                     <div class="form-group">
-                        <input type="text" aria-describedby="morph_help" class="form-control" id="morph" name="morph"
+                        <input type="text" aria-describedby="morphHelp" class="form-control" id="morph" name="morph"
                                value="{% if morph %}{{ morph }}{% endif %}">
                     </div>
                 </td>
+                {% endif %}
             </tr>
             </tbody>
         </table>

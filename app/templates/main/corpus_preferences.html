@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<form method="POST" action="{{ url_for("main.preferences", corpus_id=corpus_id) }}">
+<form method="POST" action="{{ url_for("main.preferences", corpus_id=corpus.id) }}">
         <h1>
             <i class="fa fa-cog"></i> Preferences
         </h1>
@@ -25,7 +25,30 @@
                 </small>
             </div>
         </fieldset>
-    </div>
+        <fieldset class="form-fieldset">
+            <legend>Layout</legend>
+            <div class="form-group">
+                <label for="hideColumns">Hide columns</label>
+                <ul>
+                    {% for column in corpus.columns %}
+                    <li>
+                        <input
+                            name="{{ column.heading.lower() }}Column"
+                            type="checkbox"
+                            value="true"
+                            {% if read_only %}
+                            readOnly="true"
+                            {% endif %}
+                            {% if column.hidden %}
+                                checked
+                            {% endif %}
+                        />
+                        <label for="{{ column.heading.lower() }}Column">{{ column.heading }}</label>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+        </fieldset>
     <button type="submit" id="submit" class="btn btn-primary">Submit</button>
 </form>
 {% endblock %}

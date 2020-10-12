@@ -1,8 +1,18 @@
-from app.models import Corpus, WordToken
+from app.models import Corpus, WordToken, Column
 from app.models import ControlLists
 
 control_list = ControlLists(id=3, name="Latin")
-corpus = Corpus(name="Priapees", id=3, control_lists_id=control_list.id)
+corpus = Corpus(
+    name="Priapees",
+    id=3,
+    control_lists_id=control_list.id,
+    columns=[
+        Column(heading="Lemma"),
+        Column(heading="POS"),
+        Column(heading="Morph"),
+        Column(heading="Similar"),
+    ]
+)
 tokens = [
     WordToken(corpus=corpus.id, form="Carminis", lemma="carmen1", POS="NOMcom", left_context="Carminis incompti lusus lecture", right_context="procaces ,", label_uniform="carmen1", morph="Case=Gen|Numb=Sing"),
     WordToken(corpus=corpus.id, form="incompti", lemma="incomptus", POS="ADJqua", left_context="Carminis incompti lusus lecture", right_context="procaces , conueniens", label_uniform="incomptus", morph="Case=Gen|Numb=Sing|Deg=Pos"),
