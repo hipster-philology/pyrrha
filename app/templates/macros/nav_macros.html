@@ -166,6 +166,9 @@
     <a id="overview_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
         {{corpus.name}}</a>
 </header>
+    <a class="nav-link" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
+        <i class="fa fa-cog"></i> Preferences
+    </a>
 Quick links
 <ul class="nav flex-column">
     <li class="nav-item">
