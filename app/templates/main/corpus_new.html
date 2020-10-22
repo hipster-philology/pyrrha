@@ -1,8 +1,10 @@
 {% extends 'layouts/base.html' %}
 {% import 'macros/upload_text.html' as upload_text %}
+{% import 'macros/validate_length.html' as validateLength %}
 
 {% block content %}
-<form method="POST" action="{{url_for("main.corpus_new")}}">
+    <form method="POST" action="{{url_for("main.corpus_new")}}" id="form">
+    {{ validateLength.validateLength("tokens", {0: 64}) }}
     <h1>Create a new corpus</h1>
     <fieldset class="form-fieldset">
         <legend>Metadata</legend>
@@ -32,7 +34,7 @@
         <legend>Data</legend>
         {{ upload_text.upload_text("tokens") }}
         <div class="form-group">
-            <label for="tokens">Tokens (as TSV content)</label>
+            <label for="tokens" id="tokensLabel">Tokens (as TSV content)</label>
             <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : form, lemma, POS, morph</small>
             <small>Example :</small>
             <pre>form	lemma	POS	morph
