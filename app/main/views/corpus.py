@@ -2,10 +2,11 @@ from flask import request, flash, redirect, url_for, abort, current_app, jsonify
 from flask_login import current_user, login_required
 import sqlalchemy.exc
 from sqlalchemy import func, distinct, text
+from typing import List
 
 
 from app import db
-from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord, Bookmark, Favorite
+from app.models import CorpusUser, ControlLists, ControlListsUser, WordToken, ChangeRecord, Bookmark, Favorite, User
 from .utils import render_template_with_nav_info
 from app.utils import ValidationError
 from app.utils.forms import create_input_format_convertion, read_input_tokens
@@ -20,6 +21,18 @@ from ..forms import Delete
 AUTOCOMPLETE_LIMIT = 20
 
 
+def _get_available():
+    """Prepare dictionary of available control lists.
+
+    :returns: available control lists
+    :rtype: dict
+    """
+    lists = {"public": [], "submitted": [], "private": []}
+    for cl in ControlLists.get_available(current_user):
+        lists[cl.str_public].append(cl)
+    return lists
+
+
 @main.route('/corpus/new', methods=["POST", "GET"])
 @login_required
 def corpus_new():
@@ -28,14 +41,10 @@ def corpus_new():
     lemmatizers = current_app.config.get("LEMMATIZERS", [])
 
     def normal_view():
-        lists = {"public": [], "submitted": [], "private": []}
-        for cl in ControlLists.get_available(current_user):
-            lists[cl.str_public].append(cl)
-
         return render_template_with_nav_info(
             'main/corpus_new.html',
             lemmatizers=lemmatizers,
-            public_control_lists=lists,
+            public_control_lists=_get_available(),
             tsv=request.form.get("tsv", "")
         )
 
@@ -223,6 +232,74 @@ def corpus_delete(corpus_id: int):
     return render_template_with_nav_info(
         template="main/corpus_delete.html", corpus=corpus, form=form
     )
+
+
+def switch_control_lists_access(
+    corpus: Corpus,
+    users: List[User],
+    old_control_lists_id: int,
+):
+    """Switch user access from one control list to another.
+
+    :param list users: list of users to switch
+    :param int old_control_lists_id: ID of old control list
+    """
+    for user in users:
+        # do not delete access to old control list if another corpus uses it
+        for user_corpus in Corpus.for_user(user):
+            if user_corpus.control_lists_id == old_control_lists_id and user_corpus.id != corpus.id:
+                break
+        else:
+            control_lists_user = ControlListsUser.query.filter(
+                ControlListsUser.control_lists_id == old_control_lists_id,
+                ControlListsUser.user_id == user.id,
+            ).one_or_none()
+            # do not delete access to old control list if user is owner
+            if control_lists_user and not control_lists_user.is_owner:
+                db.session.delete(control_lists_user)
+        # add access to new control list
+        ControlLists.link(corpus, user)
+    db.session.commit()
+
+
+@main.route('/corpus/<int:corpus_id>/switch_cl', methods=["GET"])
+@login_required
+@requires_corpus_admin_access("corpus_id")
+def control_list_switch(corpus_id: int):
+    """Switch control list."""
+    corpus = Corpus.query.get_or_404(corpus_id)
+    current_control_lists = ControlLists.query.get_or_404(corpus.control_lists_id)
+    if request.args.get("control_list_select"):
+        try:
+            control_list = ControlLists.query.get_or_404(
+                request.args.get("control_list_select")
+            )
+            users = [
+                current_user,
+                *[
+                    User.query.filter(User.id == corpus_user.user_id).one()
+                    for corpus_user in CorpusUser.query.filter(CorpusUser.corpus_id == corpus_id)
+                ]
+            ]
+            corpus.control_lists_id = control_list.id
+            switch_control_lists_access(corpus, users, current_control_lists.id)
+            flash(
+                "The control list has been switched to {}".format(control_list.name),
+                category="success"
+            )
+            current_control_lists = control_list
+        except Exception:
+            db.session.rollback()
+            flash(
+                "An unknown error occurred, the control list has not been switched",
+                category="error"
+            )
+    return render_template_with_nav_info(
+        template="main/control_list_switch.html",
+        public_control_lists=_get_available(),
+        current_control_lists=current_control_lists
+    )
+
 
 
 @main.route('/corpus/<int:corpus_id>/fixtures')
