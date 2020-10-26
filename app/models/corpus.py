@@ -16,6 +16,7 @@ from ..utils import validate_length
 from ..utils.forms import strip_or_none
 from ..utils.tsv import TSV_CONFIG
 from ..errors import MissingTokenColumnValue, NoTokensInput
+from app.utils import PreferencesUpdateError
 # Models
 from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
@@ -397,6 +398,23 @@ class Corpus(db.Model):
                 Favorite(corpus_id=self.id, user_id=user_id)
             )
         db.session.commit()
+
+    def update_delimiter_token(self, delimiter_token: Optional[str] = None):
+        """Update delimiter token.
+
+        :param str delimiter_token: token
+        """
+        if delimiter_token != self.delimiter_token:
+            try:
+                self.delimiter_token = delimiter_token
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise PreferencesUpdateError(
+                    f"cannot set delimiter token to '{delimiter_token}'"
+                )
+
+
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation

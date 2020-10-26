@@ -6,7 +6,9 @@ from typing import List
 
 
 from app import db
+
 from app.models import CorpusUser, ControlLists, ControlListsUser, WordToken, ChangeRecord, Bookmark, Favorite, User
+
 from .utils import render_template_with_nav_info
 from app.utils import ValidationError
 from app.utils.forms import create_input_format_convertion, read_input_tokens
@@ -17,6 +19,7 @@ from ...utils.response import format_api_like_reply
 from ...errors import MissingTokenColumnValue, NoTokensInput
 from .utils import requires_corpus_admin_access, requires_corpus_access
 from ..forms import Delete
+from app.utils import PreferencesUpdateError
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -341,4 +344,41 @@ def search_value_api(corpus_id, allowed_type):
             ).limit(AUTOCOMPLETE_LIMIT)
             if result is not None
         ]
+    )
+
+
+@main.route("/corpus/<int:corpus_id>/preferences", methods=["GET", "POST"])
+@login_required
+@requires_corpus_access("corpus_id")
+def preferences(corpus_id: int):
+    """Show preferences view."""
+    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus_user = CorpusUser.query.filter(
+        CorpusUser.corpus_id == corpus_id,
+        CorpusUser.user_id == current_user.id
+    ).one_or_none()
+    if corpus_user:
+        is_owner = corpus_user.is_owner
+    else:
+        is_owner = current_user.id in (admin.id for admin in User.get_admins())
+    if is_owner and request.method == "POST":
+        try:
+            corpus.update_delimiter_token(
+                delimiter_token=request.form.get("sep_token", "").strip()
+            )
+        except PreferencesUpdateError as exception:
+            flash(
+                f"Faild to update preferences: {exception}",
+                category="error"
+            )
+        else:
+            flash(
+                f"Updated preferences",
+                category="success"
+            )
+    return render_template_with_nav_info(
+        "main/corpus_preferences.html",
+        sep_token=corpus.delimiter_token or "",
+        read_only=not is_owner,
+        corpus_id=corpus_id
     )

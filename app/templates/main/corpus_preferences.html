@@ -1,0 +1,31 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+<form method="POST" action="{{ url_for("main.preferences", corpus_id=corpus_id) }}">
+        <h1>
+            <i class="fa fa-cog"></i> Preferences
+        </h1>
+        <fieldset class="form-fieldset">
+            <legend>Metadata</legend>
+            <div class="form-group">
+                <label for="sep_token">Delimiter token</label>
+                <input
+                    name="sep_token"
+                    type="text"
+                    class="form-control"
+                    id="sep_token"
+                    aria-describedby="sep_tokenHelp"
+                    value="{{ sep_token }}"
+                    {% if read_only %}
+                    readOnly="true"
+                    {% endif %}
+                />
+                <small id="sep_tokenHelp" class="form-text text-muted">
+                    [Optional] A specific token that is used as a delimiter
+                    between passages.
+                </small>
+            </div>
+        </fieldset>
+    </div>
+    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}
