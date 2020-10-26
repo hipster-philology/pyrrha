@@ -263,23 +263,6 @@ def search_value_api(corpus_id, allowed_type):
     )
 
 
-def _update_delimiter_token(corpus: Corpus):
-    """Update delimiter token.
-
-    :param Corpus corpus: corpus
-    """
-    delimiter_token = request.form.get("sep_token", "").strip() or None
-    if delimiter_token != corpus.delimiter_token:
-        try:
-            corpus.delimiter_token = delimiter_token
-            db.session.commit()
-        except Exception:
-            db.session.rollback()
-            raise PreferencesUpdateError(
-                f"cannot set delimiter token to '{delimiter_token}'"
-            )
-
-
 @main.route("/corpus/<int:corpus_id>/preferences", methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
@@ -296,7 +279,9 @@ def preferences(corpus_id: int):
         is_owner = current_user.id in (admin.id for admin in User.get_admins())
     if is_owner and request.method == "POST":
         try:
-            _update_delimiter_token(corpus)
+            corpus.update_delimiter_token(
+                delimiter_token=request.form.get("sep_token", "").strip()
+            )
         except PreferencesUpdateError as exception:
             flash(
                 f"Faild to update preferences: {exception}",
