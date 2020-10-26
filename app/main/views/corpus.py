@@ -5,7 +5,7 @@ from sqlalchemy import func, distinct, text
 
 
 from app import db
-from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord, Bookmark, Favorite
+from app.models import CorpusUser, ControlLists, WordToken, ChangeRecord, Bookmark, Favorite, User
 from .utils import render_template_with_nav_info
 from app.utils.forms import create_input_format_convertion, read_input_tokens
 from .. import main
@@ -293,8 +293,7 @@ def preferences(corpus_id: int):
     if corpus_user:
         is_owner = corpus_user.is_owner
     else:
-        # admin
-        is_owner = True
+        is_owner = current_user.id in (admin.id for admin in User.get_admins())
     if is_owner and request.method == "POST":
         try:
             _update_delimiter_token(corpus)
