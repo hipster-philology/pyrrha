@@ -268,6 +268,7 @@ def switch_control_lists_access(
 def control_list_switch(corpus_id: int):
     """Switch control list."""
     corpus = Corpus.query.get_or_404(corpus_id)
+    current_control_lists = ControlLists.query.get_or_404(corpus.control_lists_id)
     if request.args.get("control_list_select"):
         try:
             control_list = ControlLists.query.get_or_404(
@@ -280,13 +281,13 @@ def control_list_switch(corpus_id: int):
                     for corpus_user in CorpusUser.query.filter(CorpusUser.corpus_id == corpus_id)
                 ]
             ]
-            old_control_lists_id = corpus.control_lists_id
             corpus.control_lists_id = control_list.id
-            switch_control_lists_access(corpus, users, old_control_lists_id)
+            switch_control_lists_access(corpus, users, current_control_lists.id)
             flash(
                 "The control list has been switched to {}".format(control_list.name),
                 category="success"
             )
+            current_control_lists = control_list
         except Exception:
             db.session.rollback()
             flash(
@@ -294,7 +295,9 @@ def control_list_switch(corpus_id: int):
                 category="error"
             )
     return render_template_with_nav_info(
-        template="main/control_list_switch.html", public_control_lists=_get_available()
+        template="main/control_list_switch.html",
+        public_control_lists=_get_available(),
+        current_control_lists=current_control_lists
     )
 
 
