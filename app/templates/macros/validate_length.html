@@ -1,0 +1,55 @@
+{% macro validateLength(textArea, index, length) %}
+    <script type="text/javascript">
+        document.getElementById("form").addEventListener("submit", (evt => validateLength(evt, "{{textArea}}", {{index}}, {{length}})));
+
+        function insertValidateLengthError(validatedField, fieldValue, length, siblingId, index) {
+            // create unique ID for each error message
+            validateLengthErrorId = `validateLengthError${Date.now()}`;
+            var validateLengthError = document.createElement("div");
+            validateLengthError.id = validateLengthErrorId;
+            validateLengthError.className = "alert alert-danger mt-3 mb-3";
+            validateLengthError.textContent = `ln. ${index}, column '${validatedField}': '${fieldValue}' is too long (maximum ${length} characters)`;
+            if (!siblingId) {
+                document.getElementById("tokensLabel").insertBefore(validateLengthError, parent.firstChild);
+            }
+            else {
+                document.getElementById(siblingId).after(validateLengthError);
+            }
+            return validateLengthErrorId;
+        };
+
+        function clearError(tokensLabel){
+            newTokensLabel = tokensLabel.cloneNode(false);
+            tokensLabel.parentNode.replaceChild(newTokensLabel, tokensLabel)
+        };
+
+        function validateLength(evt, textAreaId, lengths){
+            // clear previous error messages
+            clearError(document.getElementById("tokensLabel"))
+            textArea = document.getElementById(textAreaId)
+            var text = textArea.value;
+            lines = text.split(/\r\n|\n\r|\r|\n/);
+            fields = lines.map((x) => x.split(/\t+/));
+            for (const index in lengths) {
+                length = lengths[index];
+                var validatedField = fields[0][index];
+                var siblingId = "";
+                var highlighted = false;
+                for (let i=1; i < fields.length; i++){
+                    fieldValue = fields[i][index]
+                    if (fieldValue.length > length){
+                        siblingId = insertValidateLengthError(validatedField, fieldValue, length, siblingId, i+1);
+                        evt.preventDefault();
+                        // highlight first erroneous line
+                        if (!highlighted) {
+                            startPos = text.search(new RegExp(fieldValue));
+                            textArea.setSelectionRange(startPos, startPos + fieldValue.length)
+                            textArea.focus();
+                            highlighted = true;
+                        };
+                    };
+                };
+            };
+        };
+</script>
+{% endmacro %}

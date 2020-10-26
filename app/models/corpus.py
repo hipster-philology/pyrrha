@@ -12,6 +12,7 @@ from werkzeug.exceptions import BadRequest
 from flask import url_for
 # Application imports
 from .. import db
+from ..utils import validate_length
 from ..utils.forms import strip_or_none
 from ..utils.tsv import TSV_CONFIG
 from ..errors import MissingTokenColumnValue, NoTokensInput
@@ -888,6 +889,8 @@ class WordToken(db.Model):
                 corpus=corpus_id,
                 order_id=i+1  # Asked by JB Camps...
             )
+            for k in ("form",):
+                validate_length(k, wt[k], {"form": 64})
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
