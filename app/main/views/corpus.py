@@ -362,9 +362,17 @@ def preferences(corpus_id: int):
     else:
         is_owner = current_user.id in (admin.id for admin in User.get_admins())
     if is_owner and request.method == "POST":
+        context_left = corpus.context_left
+        context_right = corpus.context_right
+        new_context_left = int(request.form.get("context_left", context_left))
+        new_context_right = int(request.form.get("context_right", context_right))
         try:
             corpus.update_delimiter_token(
                 delimiter_token=request.form.get("sep_token", "").strip()
+            )
+            corpus.update_contexts(
+                context_left=new_context_left,
+                context_right=new_context_right,
             )
         except PreferencesUpdateError as exception:
             flash(
@@ -380,5 +388,7 @@ def preferences(corpus_id: int):
         "main/corpus_preferences.html",
         sep_token=corpus.delimiter_token or "",
         read_only=not is_owner,
-        corpus_id=corpus_id
+        corpus_id=corpus_id,
+        context_left=corpus.context_left,
+        context_right=corpus.context_right,
     )

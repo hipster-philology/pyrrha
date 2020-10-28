@@ -24,6 +24,40 @@
                     between passages.
                 </small>
             </div>
+            <div class="form-group">
+                <label for="context_left">Left Context</label>
+                <input
+                    name="context_left"
+                    type="number"
+                    class="form-control"
+                    id="context_left"
+                    aria-describedby="context_leftHelp"
+                    value="{{ context_left }}"
+                    {% if read_only %}
+                    readOnly="true"
+                    {% endif %}
+                />
+                <small id="context_leftHelp" class="form-text text-muted">
+                    Number of words to display on the left of the word to annotate
+                </small>
+            </div>
+            <div class="form-group">
+                <label for="context_right">Right Context</label>
+                <input
+                    name="context_right"
+                    type="number"
+                    class="form-control"
+                    id="context_right"
+                    aria-describedby="context_rightHelp"
+                    value="{{ context_right }}"
+                    {% if read_only %}
+                    readOnly="true"
+                    {% endif %}
+                />
+                <small id="context_rightHelp" class="form-text text-muted">
+                    Number of words to display on the right of the word to annotate
+                </small>
+            </div>
         </fieldset>
     </div>
     <button type="submit" id="submit" class="btn btn-primary">Submit</button>
