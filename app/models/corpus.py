@@ -414,6 +414,21 @@ class Corpus(db.Model):
                     f"cannot set delimiter token to '{delimiter_token}'"
                 )
 
+    def update_contexts(self, context_left: int, context_right: int):
+        if context_left == self.context_left and context_right == self.context_right:
+            return
+        try:
+            self.context_left = context_left
+            self.context_right = context_right
+            word_tokens = self.get_tokens()
+            for token in word_tokens:
+                token.rebuild_context(corpus=self, _commit=False)
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
+            raise PreferencesUpdateError(
+                f"cannot set context to 'left: {context_left}, right: {context_right}'"
+            )
 
 
 class WordToken(db.Model):
@@ -542,6 +557,57 @@ class WordToken(db.Model):
                 )
             ])
             db.session.add(tok)
+        if _commit:
+            db.session.commit()
+
+    def rebuild_context(
+            self,
+            corpus: Corpus,
+            _commit: bool = True
+    ):
+        """
+        Recomputes the context of token around the current token.
+        This method is called after changing corpus left and right context.
+        :param corpus: Corpus object to look for settings
+        :param _commit: Autocommit
+        """
+
+        token_count = corpus.tokens_count
+        select_range = (
+            # Start is the current order id minus the context
+            max(self.order_id - corpus.context_left, 1),
+            min(self.order_id + corpus.context_right + 1, token_count)
+        )
+
+        tokens = {}
+        # Get the required tokens
+        tokens.update({
+            tok.order_id: tok
+            for tok in WordToken.query.filter(
+                db.and_(
+                    WordToken.corpus == self.corpus,
+                    WordToken.order_id.between(
+                        *select_range
+                    )
+                )
+            ).all()
+        })
+
+        self.left_context = " ".join([
+            tokens[order_id].form for order_id in range(
+                max(self.order_id - corpus.context_left, 1),
+                self.order_id
+            )
+        ])
+
+        self.right_context = " ".join([
+            tokens[order_id].form for order_id in range(
+                # We need min on both because editing the last one would make the range fail
+                min(token_count, self.order_id + 1),
+                min(token_count, corpus.context_right + self.order_id + 1)
+            )
+        ])
+
         if _commit:
             db.session.commit()
 
