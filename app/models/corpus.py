@@ -344,7 +344,13 @@ class Corpus(db.Model):
             if allowed_morph is not None and len(allowed_morph) > 0:
                 AllowedMorph.add_batch(allowed_morph, control_list.id)
 
-        c = Corpus(name=name, control_lists_id=control_list.id, delimiter_token=delimiter_token)
+        c = Corpus(
+            name=name,
+            control_lists_id=control_list.id,
+            delimiter_token=delimiter_token,
+            context_left=context_left,
+            context_right=context_right,
+        )
         db.session.add(c)
         db.session.flush()
 
