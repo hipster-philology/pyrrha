@@ -423,17 +423,15 @@ class Corpus(db.Model):
     def update_contexts(self, context_left: int, context_right: int):
         if context_left == self.context_left and context_right == self.context_right:
             return
+
         try:
             self.context_left = context_left
             self.context_right = context_right
-            word_tokens = self.get_tokens()
-            for token in word_tokens:
-                token.rebuild_context(corpus=self, _commit=False)
-            db.session.commit()
+            WordToken.update_batch_context(self.id, context_left, context_right)
         except Exception:
             db.session.rollback()
             raise PreferencesUpdateError(
-                f"cannot set context to 'left: {context_left}, right: {context_right}'"
+                f"Cannot set context to 'left: {context_left}, right: {context_right}'"
             )
 
 
@@ -563,57 +561,6 @@ class WordToken(db.Model):
                 )
             ])
             db.session.add(tok)
-        if _commit:
-            db.session.commit()
-
-    def rebuild_context(
-            self,
-            corpus: Corpus,
-            _commit: bool = True
-    ):
-        """
-        Recomputes the context of token around the current token.
-        This method is called after changing corpus left and right context.
-        :param corpus: Corpus object to look for settings
-        :param _commit: Autocommit
-        """
-
-        token_count = corpus.tokens_count
-        select_range = (
-            # Start is the current order id minus the context
-            max(self.order_id - corpus.context_left, 1),
-            min(self.order_id + corpus.context_right + 1, token_count)
-        )
-
-        tokens = {}
-        # Get the required tokens
-        tokens.update({
-            tok.order_id: tok
-            for tok in WordToken.query.filter(
-                db.and_(
-                    WordToken.corpus == self.corpus,
-                    WordToken.order_id.between(
-                        *select_range
-                    )
-                )
-            ).all()
-        })
-
-        self.left_context = " ".join([
-            tokens[order_id].form for order_id in range(
-                max(self.order_id - corpus.context_left, 1),
-                self.order_id
-            )
-        ])
-
-        self.right_context = " ".join([
-            tokens[order_id].form for order_id in range(
-                # We need min on both because editing the last one would make the range fail
-                min(token_count, self.order_id + 1),
-                min(token_count, corpus.context_right + self.order_id + 1)
-            )
-        ])
-
         if _commit:
             db.session.commit()
 
@@ -967,6 +914,52 @@ class WordToken(db.Model):
 
         db.session.bulk_insert_mappings(WordToken, tokens)
         return len(tokens)
+
+    @staticmethod
+    def update_batch_context(
+            corpus_id: int,
+            context_left: int,
+            context_right: int,
+            _commit: bool = True
+    ):
+        """
+        Recomputes the context around each tokens of a given corpus.
+        This method is called after changing corpus left and right context.
+        :param corpus_id: identifier of the corpus
+        :param context_left: left context length
+        :param context_right: right context length
+        :param _commit: Autocommit
+        """
+        tokens = WordToken.query.filter_by(corpus=corpus_id).order_by(WordToken.order_id).all()
+        token_count = len(tokens)
+
+        updated_tokens = []
+        for i, token in enumerate(tokens):
+            left_context = " ".join([
+                tokens[order_id].form for order_id in range(
+                    max(i - context_left, 1), i
+                )
+            ])
+            right_context = " ".join([
+                tokens[order_id].form for order_id in range(
+                    min(token_count, i + 1),
+                    min(token_count, context_right + i + 1)
+                )
+            ])
+            updated_tokens.append(
+                dict(
+                    id=token.id,
+                    left_context=left_context,
+                    right_context=right_context,
+                )
+            )
+
+        db.session.bulk_update_mappings(WordToken, updated_tokens)
+
+        if _commit:
+            db.session.commit()
+
+        return len(updated_tokens)
 
     @staticmethod
     def to_input_format(query):
