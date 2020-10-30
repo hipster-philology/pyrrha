@@ -63,3 +63,8 @@ class TestWordToken(TestModels):
         right_context = token.right_context.split(" ")
         self.assertEqual(len(left_context), 4)
         self.assertEqual(len(right_context), 4)
+        # WordToken order_id starts at 1, form_list indices starts at 0
+        self.assertEqual(left_context[0], form_list[10]["form"])
+        self.assertEqual(left_context[3], form_list[13]["form"])
+        self.assertEqual(right_context[0], form_list[15]["form"])
+        self.assertEqual(right_context[3], form_list[18]["form"])

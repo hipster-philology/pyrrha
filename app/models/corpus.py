@@ -930,7 +930,13 @@ class WordToken(db.Model):
         :param context_right: right context length
         :param _commit: Autocommit
         """
-        tokens = WordToken.query.filter_by(corpus=corpus_id).order_by(WordToken.order_id).all()
+        tokens = WordToken.query.filter_by(
+            corpus=corpus_id
+        ).order_by(
+            WordToken.order_id
+        ).with_entities(
+            WordToken.id, WordToken.order_id, WordToken.form
+        ).all()
         token_count = len(tokens)
 
         updated_tokens = []
