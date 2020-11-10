@@ -78,10 +78,13 @@ class TestBase(LiveServerTestCase):
         ControlLists.add_default_lists()
         db.session.commit()
 
-    def create_app(self):
+    def create_app(self, config_overwrite=None):
         config_name = 'test'
         app = create_app(config_name)
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+        if config_overwrite:
+            app.config.update(config_overwrite)
+        print(app.config)
         app.DEBUG = True
         app.client = app.test_client()
         app.config.update(
