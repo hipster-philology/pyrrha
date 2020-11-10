@@ -1,4 +1,4 @@
-from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash
+from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response
 from flask_login import current_user, login_required
 from slugify import slugify
 from sqlalchemy.sql.elements import or_, and_
@@ -11,7 +11,8 @@ from .. import main
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
-from ...utils.tsv import TSV_CONFIG
+from ...utils.tsv import TSV_CONFIG, stream_tsv
+from ...utils.response import stream_template
 from io import StringIO
 
 
@@ -183,32 +184,38 @@ def tokens_export(corpus_id):
             writer.writeheader()
             for tok in tokens:
                 writer.writerow({"form": tok.form, "lemma": tok.lemma, "POS": tok.POS, "morph": tok.morph})
-            return output.getvalue().encode('utf-8'), \
-                   200, \
-                   {
-                       "Content-Type": "text/tab-separated-values; charset= utf-8",
-                       "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
-                   }
+            output.seek(0)
+
+            return Response(
+                response=stream_tsv(output),
+                status=200,
+                content_type="text/tab-separated-values",
+                headers={
+                    "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
+                }
+            )
     elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        response = render_template("tei/geste.xml", base=base, tokens=tokens,
+        return Response(
+            stream_template("tei/geste.xml", base=base, tokens=tokens,
                                    history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                                   delimiter=corpus.delimiter_token)
-        return response, 200, {
-           "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
-        }
+                                   delimiter=corpus.delimiter_token),
+            status=200,
+            headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
+            mimetype="text/xml"
+        )
     elif format == "tei-msd":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        response = render_template("tei/TEI.xml", base=base, tokens=tokens,
-                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                                   delimiter=corpus.delimiter_token)
-        return response, 200, {
-           "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
-        }
+        return Response(
+            stream_template("tei/TEI.xml", base=base, tokens=tokens,
+                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                            delimiter=corpus.delimiter_token),
+            status=200,
+            headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
+            mimetype="text/xml"
+        )
 
     return render_template_with_nav_info(
         template="main/tokens_export.html",
