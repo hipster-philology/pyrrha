@@ -5,6 +5,7 @@ from app.models import Role, User, ControlLists
 from . import create_app, db
 from .models import (
     Corpus,
+    Column,
     AllowedPOS,
     AllowedLemma,
     AllowedMorph,
@@ -158,7 +159,13 @@ def make_cli():
                 allowed_POS=POS,
                 allowed_morph=morph,
                 context_left=left,
-                context_right=right
+                context_right=right,
+                columns=[
+                    Column(heading="Lemma"),
+                    Column(heading="POS"),
+                    Column(heading="Morph"),
+                    Column(heading="Similar"),
+                ]
             )
             db.session.commit()
             click.echo(
@@ -215,7 +222,13 @@ def make_cli():
                     name=name, word_tokens_dict=input_tokens,
                     allowed_lemma=allowed_lemma, allowed_morph=allowed_morph,
                     allowed_POS=allowed_POS, context_left=left,
-                    context_right=right
+                    context_right=right,
+                    columns=[
+                        Column(heading="Lemma"),
+                        Column(heading="POS"),
+                        Column(heading="Morph"),
+                        Column(heading="Similar"),
+                    ]
                 )
                 db.session.commit()
                 click.echo(data.control_lists_id)
@@ -275,11 +288,11 @@ def make_cli():
 
     @cli.command("db-upgrade", help="Do small migrations")
     @click.argument("migration_name",
-              type=click.Choice(['controllist-markdown'], case_sensitive=False))
+              type=click.Choice(['controllist-markdown', 'add-columns'], case_sensitive=False))
     def db_add_table(migration_name):
         columns = {
             "controllist-markdown": [
-                ("control_lists", db.Column("notes", db.Text))
+                ("control_lists", (db.Column("notes", db.Text),))
             ]
         }
 
@@ -291,11 +304,26 @@ def make_cli():
 
         migration_name = migration_name.lower()
         with app.app_context():
+            if migration_name == "add-columns":
+                import app.models as tables
+                Model = getattr(tables, "Column", None)
+                if Model:
+                    with app.app_context():
+                        Model.__table__.create(db.session.bind, checkfirst=True)
+                for corpus in Corpus.query.all():
+                    corpus.columns = [
+                        Column(corpus_id=corpus.id, heading="Lemma"),
+                        Column(corpus_id=corpus.id, heading="POS"),
+                        Column(corpus_id=corpus.id, heading="Morph"),
+                        Column(corpus_id=corpus.id, heading="Similar"),
+                    ]
+                return
             if migration_name in columns:
                 changes = []
-                for table, column in columns[migration_name]:
-                    name, _ = add_column(db.engine, table, column)
-                    changes.append(str(name))
+                for table, columns in columns[migration_name]:
+                    for column in columns:
+                        name, _ = add_column(db.engine, table, column)
+                        changes.append(str(name))
 
                 click.echo(
                     "Success: {} columns added [{}]".format(

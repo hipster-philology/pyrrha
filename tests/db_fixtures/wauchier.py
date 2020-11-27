@@ -1,7 +1,17 @@
-from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph
+from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph, Column
 from app.models import ControlLists, ControlListsUser
 
-Wauchier = Corpus(name="Wauchier", id=1, control_lists_id=1)
+Wauchier = Corpus(
+    name="Wauchier",
+    id=1,
+    control_lists_id=1,
+    columns=[
+        Column(heading="Lemma"),
+        Column(heading="POS"),
+        Column(heading="Morph"),
+        Column(heading="Similar"),
+    ]
+)
 WCL = ControlLists(id=1, name="Wauchier")
 WauchierTokens = [
     WordToken(corpus=Wauchier.id, form="De", lemma="de", POS="PRE", left_context="", right_context="seint Martin mout", label_uniform="de", morph="None"),

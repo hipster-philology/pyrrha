@@ -14,7 +14,7 @@ from app.utils import ValidationError
 from app.utils.forms import create_input_format_convertion, read_input_tokens
 from .. import main
 from ...utils.forms import strip_or_none
-from ...models import Corpus
+from ...models import Corpus, Column
 from ...utils.response import format_api_like_reply
 from ...errors import MissingTokenColumnValue, NoTokensInput
 from .utils import requires_corpus_admin_access, requires_corpus_access
@@ -65,8 +65,18 @@ def corpus_new():
                 "name": request.form.get("name"),
                 "context_left": request.form.get("context_left", None),
                 "context_right": request.form.get("context_right", None),
-                "delimiter_token": strip_or_none(request.form.get("sep_token", "")) or None
+                "delimiter_token": strip_or_none(request.form.get("sep_token", "")) or None,
+                "columns": [
+                    Column(heading="Lemma"),
+                    Column(heading="POS"),
+                    Column(heading="Morph"),
+                    Column(heading="Similar"),
+                ]
             }
+            for column in form_kwargs["columns"]:
+                column.hidden = bool(
+                    request.form.get(f"{column.heading.lower()}Column", "")
+                )
 
             if request.form.get("control_list") == "reuse":
                 tokens = read_input_tokens(request.form.get("tsv"))
@@ -373,6 +383,11 @@ def preferences(corpus_id: int):
             corpus.update_contexts(
                 context_left=new_context_left,
                 context_right=new_context_right,
+            corpus.update_columns(
+                {
+                    column.heading.lower(): bool(request.form.get(f"{column.heading.lower()}Column", ""))
+                    for column in corpus.columns
+                }
             )
         except PreferencesUpdateError as exception:
             flash(
@@ -391,4 +406,5 @@ def preferences(corpus_id: int):
         corpus_id=corpus_id,
         context_left=corpus.context_left,
         context_right=corpus.context_right,
+        corpus=corpus
     )

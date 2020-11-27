@@ -5,6 +5,16 @@
 {% endmacro -%}
 
 {% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False, endpoint="", sortable=False, search_kwargs={})%}
+
+{% set visible = [] %}
+{% for column in corpus.columns %}
+    {% if not column.hidden %}
+        {{ visible.append(column.heading) }}
+    {% endif %}
+{% endfor %}
+
+{% set similar = similar and "Similar" in visible %}
+
 {% if editable %}
     {%- if checkbox %}
         <div>
@@ -31,24 +41,16 @@
                         {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="form") }}
                     {% endif %}
                 </th>
-                <th>
-                    Lemma
-                    {% if sortable %}
-                        {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="lemma") }}
+                {% for heading in visible %}
+                    {% if heading != "Similar" %}
+                        <th>
+                            {{ heading }}
+                            {% if sortable %}
+                                {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy=heading.lower()) }}
+                            {% endif %}
+                        </th>
                     {% endif %}
-                </th>
-                <th>
-                    POS
-                    {% if sortable %}
-                        {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="pos") }}
-                    {% endif %}
-                </th>
-                <th>
-                    Morph
-                    {% if sortable %}
-                        {{ table_macros.sortable_table_row('main.tokens_search_through_fields', search_kwargs=search_kwargs, orderBy="morph") }}
-                    {% endif %}
-                </th>
+                {% endfor%}
                 <th>Context</th>
                 {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th>{% if not checkbox %}<th class="dd">+</th>{% endif %}</tr>
         </thead>
@@ -57,9 +59,15 @@
                 <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor {% if current_user and current_user.bookmark.token_id == token.id %}bookmark{% endif %}" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
                     <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
+                    {% if "Lemma" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
+                    {% endif%}
+                    {% if "POS" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_pos"{% endif %}>{{token.POS}}</td>
+                    {% endif%}
+                    {% if "Morph" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
+                    {% endif %}
                     <td class="small">{{token_context(token)}}</td>
                     {%- if similar -%}
                         <td><a tabindex="-1" class="similar-link" href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}"><span class="badge badge-secondary">{{token.similar}}</span></a></td>
@@ -288,16 +296,26 @@
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+                <th>Form</th>
+                {% for heading in visible %}
+                <th>heading</th>
+                {% endfor %}
+                <th>Context</th>
             </tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
                 <tr class="editable">
                     <td>{{token.form}}</td>
+                    {% if "Lemma" in visible %}
                     <td class="token_lemma">{{token.lemma}}</td>
+                    {% endif %}
+                    {% if "POS" in visible %}
                     <td class="token_pos">{{token.POS}}</td>
+                    {% endif %}
+                    {% if "Morph" in visible %}
                     <td class="token_morph">{{token.morph}}</td>
+                    {% endif %}
                     <td class="small">{{token_context(token)}}</td>
                 </tr>
             {% endfor %}

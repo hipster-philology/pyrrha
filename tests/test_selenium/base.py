@@ -15,7 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from app import db, create_app
-from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite, Column
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
@@ -185,7 +185,16 @@ elit
 
         user = User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first()
         for n in range(n_corpus):
-            corpus = Corpus(name="a"*n, control_lists_id=1)
+            corpus = Corpus(
+                name="a"*n,
+                control_lists_id=1,
+                columns=[
+                    Column(heading="Lemma"),
+                    Column(heading="POS"),
+                    Column(heading="Morph"),
+                    Column(heading="Similar"),
+                ]
+            )
             new_cu = CorpusUser(corpus=corpus, user=user, is_owner=True)
             db.session.add(corpus)
             db.session.add(new_cu)
