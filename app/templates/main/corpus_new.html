@@ -29,6 +29,24 @@
             <small id="sep_tokenHelp" class="form-text text-muted">[Optional] A specific token that is used as a delimiter between passages.</small>
         </div>
     </fieldset>
+    <fieldset class="form-fieldset">
+        <legend>Layout</legend>
+        <div class="form-group">
+            <label for="hideColumns">Hide columns</label>
+            <ul>
+                {% for heading in ["Lemma", "POS", "Morph", "Similar"] %}
+                <li>
+                    <input
+                        name="{{ heading.lower() }}Column"
+                        type="checkbox"
+                        value="true"
+                    />
+                    <label for="{{ heading.lower() }}Column">{{ heading }}</label>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+    </fieldset>
 
     <fieldset class="form-fieldset">
         <legend>Data</legend>

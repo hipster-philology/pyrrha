@@ -50,6 +50,14 @@ class CorpusUser(db.Model):
         self.is_owner = is_owner
 
 
+class Column(db.Model):
+    """Column."""
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"))
+    heading = db.Column(db.String(32))
+    hidden = db.Column(db.Boolean, default=False)
+
+
 class Corpus(db.Model):
     """ A corpus is a set of tokens that is independent from others.
     This allows for multi-text management
@@ -76,6 +84,7 @@ class Corpus(db.Model):
     users = association_proxy('corpus_users', 'user')
     word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
     changes = db.relationship("ChangeRecord", cascade="all,delete")
+    columns = db.relationship("Column", cascade="all,delete")
 
     def allowed_search_route(self, allowed_type):
         """ Returns the API search routes and parameters
@@ -314,7 +323,7 @@ class Corpus(db.Model):
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
             context_left=None, context_right=None, control_list=None,
-            delimiter_token=None
+            delimiter_token=None, columns=None
     ):
         """ Create a corpus
 
@@ -344,7 +353,12 @@ class Corpus(db.Model):
             if allowed_morph is not None and len(allowed_morph) > 0:
                 AllowedMorph.add_batch(allowed_morph, control_list.id)
 
-        c = Corpus(name=name, control_lists_id=control_list.id, delimiter_token=delimiter_token)
+        c = Corpus(
+            name=name,
+            control_lists_id=control_list.id,
+            delimiter_token=delimiter_token,
+            columns=columns
+        )
         db.session.add(c)
         db.session.flush()
 
@@ -412,6 +426,21 @@ class Corpus(db.Model):
                 db.session.rollback()
                 raise PreferencesUpdateError(
                     f"cannot set delimiter token to '{delimiter_token}'"
+                )
+
+    def update_columns(self, columns):
+        """Update columns.
+
+        :param dict columns: column states (hidden or not hidden)
+        """
+        for column in self.columns:
+            try:
+                column.hidden = columns.get(column.heading.lower(), False)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise PreferencesUpdateError(
+                    f"cannot toggle hiding column '{column.heading}'"
                 )
 
 
