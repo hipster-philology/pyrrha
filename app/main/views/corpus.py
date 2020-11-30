@@ -383,6 +383,7 @@ def preferences(corpus_id: int):
             corpus.update_contexts(
                 context_left=new_context_left,
                 context_right=new_context_right,
+            )
             corpus.update_columns(
                 {
                     column.heading.lower(): bool(request.form.get(f"{column.heading.lower()}Column", ""))
