@@ -21,12 +21,19 @@
         <body xml:lang="fro">
             <div>
                 <ab>
-                {% for token in tokens %}{%- if token.form == delimiter %}
+                {% for token in tokens %}
+                    {%- if token.form == delimiter %}
+                        </ab>
+                        <ab>
+                    {%- else %}
+                        <w xml:id="t{{token.id - base}}" n="{{token.order_id}}"
+                           {% if "lemma" in allowed_columns %}lemma="{{token.lemma}}"{% endif %}
+                           type="POS={% if "POS" in allowed_columns %}{{token.POS}}{% endif %}
+                           {% if "morph" in allowed_columns and token.morph and token.morph != "None" %}|{{token.morph}}{% endif %}"
+                        >{{token.form}}</w>
+                    {% endif -%}
+                {% endfor %}
                 </ab>
-                <ab>{%- else %}
-                    <w xml:id="t{{token.id - base}}" n="{{token.order_id}}" lemma="{{token.lemma}}"
-                       type="POS={{token.POS}}{% if token.morph and token.morph != "None" %}|{{token.morph}}{% endif %}" >{{token.form}}</w>{% endif -%}
-                {% endfor %}</ab>
             </div>
        </body>
      </text>

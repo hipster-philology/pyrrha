@@ -33,7 +33,8 @@ def tokens_correct(corpus_id):
             per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
         )
 
-    WordToken.get_similar_for_batch(corpus, tokens.items)
+    if "similar" in corpus.displayed_columns_by_name:
+        WordToken.get_similar_for_batch(corpus, tokens.items)
 
     changed = corpus.changed(tokens.items)
 
@@ -133,12 +134,17 @@ def tokens_correct_single(corpus_id, token_id):
             POS=string_to_none(request.form.get("POS")),
             morph=string_to_none(request.form.get("morph"))
         )
-        return jsonify({
-            "token": token.to_dict(),
-            "similar": {
+        if "similar" in corpus.displayed_columns_by_name:
+            similar = {
                 "count": change_record.similar_remaining,
                 "link": url_for(".tokens_similar_to_record", corpus_id=corpus_id, record_id=change_record.id)
-            }})
+            }
+        else:
+            similar = None
+        return jsonify({
+            "token": token.to_dict(),
+            "similar": similar
+        })
     except WordToken.ValidityError as E:
         response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
         response.status_code = 403
@@ -175,6 +181,7 @@ def tokens_export(corpus_id):
     corpus = Corpus.query.get_or_404(corpus_id)
     format = request.args.get("format", "").lower()
     filename = slugify(corpus.name)
+    allowed_columns = corpus.displayed_columns_by_name
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
         if format == "tsv":
@@ -182,7 +189,14 @@ def tokens_export(corpus_id):
             writer = DictWriter(output, fieldnames=["form", "lemma", "POS", "morph"], **TSV_CONFIG)
             writer.writeheader()
             for tok in tokens:
-                writer.writerow({"form": tok.form, "lemma": tok.lemma, "POS": tok.POS, "morph": tok.morph})
+                writer.writerow(
+                    {
+                        "form": tok.form,
+                        "lemma": tok.lemma if "lemma" in allowed_columns else "",
+                        "POS": tok.POS if "POS" in allowed_columns else "",
+                        "morph": tok.morph if "morph" in allowed_columns else "",
+                    }
+                )
             return output.getvalue().encode('utf-8'), \
                    200, \
                    {
@@ -192,9 +206,11 @@ def tokens_export(corpus_id):
     elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        response = render_template("tei/geste.xml", base=base, tokens=tokens,
-                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                                   delimiter=corpus.delimiter_token)
+        response = render_template(
+            "tei/geste.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
+            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+            delimiter=corpus.delimiter_token
+        )
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
            "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
@@ -202,9 +218,11 @@ def tokens_export(corpus_id):
     elif format == "tei-msd":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        response = render_template("tei/TEI.xml", base=base, tokens=tokens,
-                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                                   delimiter=corpus.delimiter_token)
+        response = render_template(
+            "tei/TEI.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
+            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+            delimiter=corpus.delimiter_token
+        )
         return response, 200, {
            "Content-Type": "text/xml; charset= utf-8",
            "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
