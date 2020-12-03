@@ -28,8 +28,7 @@
                     {%- else %}
                         <w xml:id="t{{token.id - base}}" n="{{token.order_id}}"
                            {% if "lemma" in allowed_columns %}lemma="{{token.lemma}}"{% endif %}
-                           type="POS={% if "POS" in allowed_columns %}{{token.POS}}{% endif %}
-                           {% if "morph" in allowed_columns and token.morph and token.morph != "None" %}|{{token.morph}}{% endif %}"
+                           type="POS={% if "POS" in allowed_columns %}{{token.POS}}{% endif %}{% if "morph" in allowed_columns and token.morph and token.morph != "None" %}|{{token.morph}}{% endif %}"
                         >{{token.form}}</w>
                     {% endif -%}
                 {% endfor %}

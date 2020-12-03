@@ -30,7 +30,7 @@
                            {% if "lemma" in allowed_columns %}lemma="{{token.lemma}}"{% endif %}
                            {% if "POS" in allowed_columns %}pos="{{token.POS}}"{% endif %}
                            {% if "morph" in allowed_columns and token.morph and token.morph != "None" %}msd="{{token.morph}}"{% endif %}
-                        > {{token.form}}</w>
+                        >{{token.form}}</w>
                     {% endif -%}
                 {% endfor %}
                 </ab>
