@@ -721,15 +721,16 @@ class WordToken(db.Model):
             return 0
         else:
             cnt = 0
+            visible_columns = corpus.displayed_columns_by_name
             for w in corpus.word_token:
                 if w.form == form:
                     if (
-                        "lemma" not in corpus.displayed_columns_by_name and w.lemma == lemma
+                        "lemma" in visible_columns and w.lemma == lemma
                     ) or (
-                        "POS" in corpus.displayed_columns_by_name and w.POS == POS
+                        "POS" in visible_columns and w.POS == POS
                     ) or (
-                        "morph" in corpus.displayed_columns_by_name and w.morph == morph
-                    ) or corpus.displayed_columns_by_name == ("similar",):
+                        "morph" in visible_columns and w.morph == morph
+                    ) or visible_columns == ("similar",):
                         cnt += 1
             return cnt - 1
 
