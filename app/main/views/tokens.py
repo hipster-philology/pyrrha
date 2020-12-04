@@ -186,17 +186,18 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         if format == "tsv":
             output = StringIO()
-            writer = DictWriter(output, fieldnames=["form", "lemma", "POS", "morph"], **TSV_CONFIG)
+            fieldnames = ["form"]
+            for field in ("lemma", "POS", "morph"):
+                if field in allowed_columns:
+                    fieldnames.append(field)
+            writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)
             writer.writeheader()
             for tok in tokens:
-                writer.writerow(
-                    {
-                        "form": tok.form,
-                        "lemma": tok.lemma if "lemma" in allowed_columns else "",
-                        "POS": tok.POS if "POS" in allowed_columns else "",
-                        "morph": tok.morph if "morph" in allowed_columns else "",
-                    }
-                )
+                row = {"form": tok.form}
+                for field in ("lemma", "POS", "morph"):
+                    if field in allowed_columns:
+                        row[field] = getattr(tok, field)
+                writer.writerow(row)
             return output.getvalue().encode('utf-8'), \
                    200, \
                    {
