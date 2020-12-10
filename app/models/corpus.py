@@ -471,6 +471,10 @@ class Corpus(db.Model):
 
         :param dict columns: column states (hidden or not hidden)
         """
+        if columns.get("lemma") and columns.get("pos") and columns.get("morph"):
+            raise PreferencesUpdateError(
+                "You can't disable Lemma and POS and Morph. Keep at least one of them."
+            )
         for column in self.columns:
             try:
                 column.hidden = columns.get(column.heading.lower(), False)

@@ -77,6 +77,16 @@ def corpus_new():
                 column.hidden = bool(
                     request.form.get(f"{column.heading.lower()}Column", "")
                 )
+            if (
+                "lemmaColumn" in request.form
+                and "posColumn" in request.form
+                and "morphColumn" in request.form
+            ):
+                flash(
+                    "You can't disable Lemma and POS and Morph. Keep at least one of them.",
+                    category="error"
+                )
+                return error()
 
             if request.form.get("control_list") == "reuse":
                 tokens = read_input_tokens(request.form.get("tsv"))
