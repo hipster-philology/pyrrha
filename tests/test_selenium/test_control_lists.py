@@ -37,8 +37,17 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text for link in links]),
-            sorted(["Edit informations", "Guidelines",
-                    'Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier', 'Rename']),
+            sorted([
+                "Edit informations",
+                "Guidelines",
+                'Lemma',
+                'Make public',
+                'Morphologies',
+                'POS',
+                'Propose changes',
+                'Wauchier',
+                'Rename'
+            ]),
             "Full rewrite are limited to control lists users"
         )
 

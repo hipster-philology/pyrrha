@@ -1,4 +1,4 @@
-from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash
+from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response
 from flask_login import current_user, login_required
 from slugify import slugify
 from sqlalchemy.sql.elements import or_, and_
@@ -11,7 +11,8 @@ from .. import main
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
-from ...utils.tsv import TSV_CONFIG
+from ...utils.tsv import TSV_CONFIG, stream_tsv
+from ...utils.response import stream_template
 from io import StringIO
 
 
@@ -186,10 +187,7 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         if format == "tsv":
             output = StringIO()
-            fieldnames = ["form"]
-            for field in ("lemma", "POS", "morph"):
-                if field in allowed_columns:
-                    fieldnames.append(field)
+            fieldnames = ["form", "lemma", "POS", "morph"]
             writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)
             writer.writeheader()
             for tok in tokens:
@@ -198,37 +196,37 @@ def tokens_export(corpus_id):
                     if field in allowed_columns:
                         row[field] = getattr(tok, field)
                 writer.writerow(row)
-            return output.getvalue().encode('utf-8'), \
-                   200, \
-                   {
-                       "Content-Type": "text/tab-separated-values; charset= utf-8",
-                       "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
-                   }
+            output.seek(0)
+            return Response(
+                response=stream_tsv(output),
+                status=200,
+                content_type="text/tab-separated-values",
+                headers={
+                    "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
+                }
+            )
     elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        response = render_template(
-            "tei/geste.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
-            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-            delimiter=corpus.delimiter_token
+        return Response(
+            stream_template("tei/geste.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
+                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                            delimiter=corpus.delimiter_token),
+            status=200,
+            headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
+            mimetype="text/xml"
         )
-        return response, 200, {
-           "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
-        }
     elif format == "tei-msd":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        response = render_template(
-            "tei/TEI.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
-            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-            delimiter=corpus.delimiter_token
+        return Response(
+            stream_template("tei/TEI.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
+                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                            delimiter=corpus.delimiter_token),
+            status=200,
+            headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
+            mimetype="text/xml"
         )
-        return response, 200, {
-           "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)
-        }
-
     return render_template_with_nav_info(
         template="main/tokens_export.html",
         corpus=corpus
