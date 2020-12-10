@@ -6,14 +6,9 @@
 
 {% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False, endpoint="", sortable=False, search_kwargs={})%}
 
-{% set visible = [] %}
-{% for column in corpus.columns %}
-    {% if not column.hidden %}
-        {{ visible.append(column.heading) }}
-    {% endif %}
-{% endfor %}
+{% set visible = corpus.displayed_columns_by_name %}
 
-{% set similar = similar and "Similar" in visible %}
+{% set similar = similar and "similar" in visible %}
 
 {% if editable %}
     {%- if checkbox %}
@@ -41,10 +36,10 @@
                         {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="form") }}
                     {% endif %}
                 </th>
-                {% for heading in visible %}
-                    {% if heading != "Similar" %}
+                {% for heading in ("lemma", "POS", "morph") %}
+                    {% if heading in visible %}
                         <th>
-                            {{ heading }}
+                            {{ heading.capitalize() if heading != "POS" else "POS" }}
                             {% if sortable %}
                                 {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy=heading.lower()) }}
                             {% endif %}
@@ -59,13 +54,13 @@
                 <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor {% if current_user and current_user.bookmark.token_id == token.id %}bookmark{% endif %}" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
                     <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
                     <td>{{token.form}}</td>
-                    {% if "Lemma" in visible %}
+                    {% if "lemma" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
                     {% endif%}
                     {% if "POS" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_pos"{% endif %}>{{token.POS}}</td>
                     {% endif%}
-                    {% if "Morph" in visible %}
+                    {% if "morph" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
                     {% endif %}
                     <td class="small">{{token_context(token)}}</td>
@@ -260,12 +255,18 @@
                 <th>User</th>
                 <th>Edit</th>
                 <th class="line">Context</th>
+                {% if "lemma" in visible %}
                 <th>Old Lemma</th>
                 <th class="line">Corr Lemma</th>
+                {% endif %}
+                {% if "POS" in visible %}
                 <th>Previous POS</th>
                 <th class="line">Actual POS</th>
+                {% endif %}
+                {% if "morph" in visible %}
                 <th>Previous Morph</th>
                 <th class="line">Actual Morph</th>
+                {% endif %}
                 <th>Similar</th>
             </tr>
         </thead>
@@ -275,12 +276,18 @@
                     <td class="detail">{{ token.user.first_name[0] }}.{{ token.user.last_name }}</td>
                     <td class="detail datetime">{{token.created_on}}</td>
                     <td class="detail text">{{token_context(token.word_token, "b")}}</td>
+                    {% if "lemma" in visible %}
                     <td class="{% if token.lemma != token.lemma_new%}red{%endif%}">{{token.lemma}}</td>
                     <td class="line {% if token.lemma != token.lemma_new%}green{%endif%}">{{token.lemma_new}}</td>
+                    {% endif %}
+                    {% if "POS" in visible %}
                     <td class="{% if token.POS != token.POS_new%}red{%endif%}">{{token.POS}}</td>
                     <td class="line {% if token.POS != token.POS_new%}green{%endif%}">{{token.POS_new}}</td>
+                    {% endif %}
+                    {% if "morph" in visible %}
                     <td class="{% if token.morph != token.morph_new%}red{%endif%}">{{token.morph}}</td>
                     <td class="line {% if token.morph != token.morph_new%}green{%endif%}">{{token.morph_new}}</td>
+                    {% endif %}
                     <td>
                         <a href="{{url_for('main.tokens_similar_to_record', corpus_id=corpus.id, record_id=token.id)}}" class="badge badge-info">
                         {{token.similar_remaining}} similar</a>
@@ -303,9 +310,15 @@
         <thead>
             <tr>
                 <th>Form</th>
-                {% for heading in visible %}
-                <th>heading</th>
-                {% endfor %}
+                {% if "lemma" in visible %}
+                <th>Lemma</th>
+                {% endif %}
+                {% if "POS" in visible %}
+                <th>POS</th>
+                {% endif %}
+                {% if "morph" in visible %}
+                <th>Morph</th>
+                {% endif %}
                 <th>Context</th>
             </tr>
         </thead>
@@ -313,13 +326,13 @@
             {% for token in tokens.items %}
                 <tr class="editable">
                     <td>{{token.form}}</td>
-                    {% if "Lemma" in visible %}
+                    {% if "lemma" in visible %}
                     <td class="token_lemma">{{token.lemma}}</td>
                     {% endif %}
                     {% if "POS" in visible %}
                     <td class="token_pos">{{token.POS}}</td>
                     {% endif %}
-                    {% if "Morph" in visible %}
+                    {% if "morph" in visible %}
                     <td class="token_morph">{{token.morph}}</td>
                     {% endif %}
                     <td class="small">{{token_context(token)}}</td>

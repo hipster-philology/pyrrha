@@ -162,42 +162,51 @@ def corpus_get(corpus_id):
         else:
             limit_corr = 10
 
-    lemma_cor = db.session.query(
-            func.count(ChangeRecord.lemma_new).label("record_count"),
-            ChangeRecord.lemma_new,
-            ChangeRecord.lemma
-        ).group_by(
-            ChangeRecord.lemma_new, ChangeRecord.lemma
-        ).filter(
-            ChangeRecord.corpus == corpus.id,
-            ChangeRecord.lemma_new != ChangeRecord.lemma
-        ).order_by(
-            text("record_count DESC")
-        ).limit(limit_corr).all()
-    morph_cor = db.session.query(
-            func.count(ChangeRecord.morph_new).label("record_count"),
-            ChangeRecord.morph_new,
-            ChangeRecord.morph
-        ).group_by(
-            ChangeRecord.morph_new, ChangeRecord.morph
-        ).filter(
-            ChangeRecord.corpus == corpus.id,
-            ChangeRecord.morph_new != ChangeRecord.morph
-        ).order_by(
-            text("record_count DESC")
-        ).limit(limit_corr).all()
-    pos_cor = db.session.query(
-            func.count(ChangeRecord.POS_new).label("record_count"),
-            ChangeRecord.POS_new,
-            ChangeRecord.POS
-        ).group_by(
-            ChangeRecord.POS, ChangeRecord.POS_new
-        ).filter(
-            ChangeRecord.corpus == corpus.id,
-            ChangeRecord.POS_new != ChangeRecord.POS
-        ).order_by(
-            text("record_count DESC")
-        ).limit(limit_corr).all()
+    if "lemma" in corpus.displayed_columns_by_name:
+        lemma_cor = db.session.query(
+                func.count(ChangeRecord.lemma_new).label("record_count"),
+                ChangeRecord.lemma_new,
+                ChangeRecord.lemma
+            ).group_by(
+                ChangeRecord.lemma_new, ChangeRecord.lemma
+            ).filter(
+                ChangeRecord.corpus == corpus.id,
+                ChangeRecord.lemma_new != ChangeRecord.lemma
+            ).order_by(
+                text("record_count DESC")
+            ).limit(limit_corr).all()
+    else:
+        lemma_cor = None
+    if "morph" in corpus.displayed_columns_by_name:
+        morph_cor = db.session.query(
+                func.count(ChangeRecord.morph_new).label("record_count"),
+                ChangeRecord.morph_new,
+                ChangeRecord.morph
+            ).group_by(
+                ChangeRecord.morph_new, ChangeRecord.morph
+            ).filter(
+                ChangeRecord.corpus == corpus.id,
+                ChangeRecord.morph_new != ChangeRecord.morph
+            ).order_by(
+                text("record_count DESC")
+            ).limit(limit_corr).all()
+    else:
+        morph_cor = None
+    if "POS" in corpus.displayed_columns_by_name:
+        pos_cor = db.session.query(
+                func.count(ChangeRecord.POS_new).label("record_count"),
+                ChangeRecord.POS_new,
+                ChangeRecord.POS
+            ).group_by(
+                ChangeRecord.POS, ChangeRecord.POS_new
+            ).filter(
+                ChangeRecord.corpus == corpus.id,
+                ChangeRecord.POS_new != ChangeRecord.POS
+            ).order_by(
+                text("record_count DESC")
+            ).limit(limit_corr).all()
+    else:
+        pos_cor = None
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus, stats=corpus.statistics,
                                          lemma_cor=lemma_cor, pos_cor=pos_cor, morph_cor=morph_cor)
 

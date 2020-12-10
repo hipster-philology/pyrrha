@@ -149,46 +149,56 @@ class Corpus(db.Model):
 
         forms_edited = TokenHistory.query.filter(TokenHistory.corpus == self.id).count()
 
-        lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+        lemma_acc = pos_acc = morph_acc = None
+        all_type = all_lemma = all_morph = False
+
+        if "lemma" in self.displayed_columns_by_name:
+            lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.lemma != ChangeRecord.lemma_new
                 )
             ).count()
-        pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            # Todo: Make sure this is optimized.
+            all_lemma = db.session.query(
+                AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
+
+        if "POS" in self.displayed_columns_by_name:
+            pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.POS != ChangeRecord.POS_new
                 )
             ).count()
-        morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            # Todo: Make sure this is optimized.
+            all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
+
+        if "morph" in self.displayed_columns_by_name:
+            morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.morph != ChangeRecord.morph_new
                 )
             ).count()
-
-        # Todo: Make sure this is optimized.
-        all_lemma = db.session.query(AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
-        all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
-        all_morph = db.session.query(AllowedMorph.label).filter(AllowedMorph.control_list == self.control_lists_id)
+            # Todo: Make sure this is optimized.
+            all_morph = db.session.query(AllowedMorph.label).filter(AllowedMorph.control_list == self.control_lists_id)
 
         unallowed = db.session.query(WordToken.id).filter(
             db.and_(
                 WordToken.corpus == self.id,
                 db.or_(
-                    WordToken.morph.notin_(all_morph),
-                    WordToken.lemma.notin_(all_lemma),
-                    WordToken.POS.notin_(all_type)
+                    WordToken.morph.notin_(all_morph) if all_morph else False,
+                    WordToken.lemma.notin_(all_lemma) if all_lemma else False,
+                    WordToken.POS.notin_(all_type) if all_type else False,
                 )
             )
         ).count()
 
         return CorpusStatistics(
             total, changes, forms_edited, unallowed,
-            lemma_acc / total * 100 if total > 0 else 0,
-            pos_acc / total * 100 if total > 0 else 0,
-            morph_acc / total * 100 if total > 0 else 0,
+            lemma_acc and lemma_acc / total * 100 if total > 0 else 0,
+            pos_acc and pos_acc / total * 100 if total > 0 else 0,
+            morph_acc and morph_acc / total * 100 if total > 0 else 0,
             lemma_acc, pos_acc, morph_acc
         )
 
@@ -293,6 +303,18 @@ class Corpus(db.Model):
         :rtype: int
         """
         return WordToken.query.filter_by(corpus=self.id).count()
+
+    @property
+    def displayed_columns_by_name(self):
+        displayed_columns_by_name = {}
+        for column in self.columns:
+            if column.hidden:
+                continue
+            if column.heading != "POS":
+                displayed_columns_by_name[column.heading.lower()] = column
+            else:
+                displayed_columns_by_name["POS"] = column
+        return displayed_columns_by_name
 
     def get_tokens(self):
         """ Retrieve WordTokens from the Corpus
@@ -699,9 +721,16 @@ class WordToken(db.Model):
             return 0
         else:
             cnt = 0
+            visible_columns = corpus.displayed_columns_by_name
             for w in corpus.word_token:
                 if w.form == form:
-                    if w.lemma == lemma or w.POS == POS or w.morph == morph:
+                    if (
+                        "lemma" in visible_columns and w.lemma == lemma
+                    ) or (
+                        "POS" in visible_columns and w.POS == POS
+                    ) or (
+                        "morph" in visible_columns and w.morph == morph
+                    ) or visible_columns == ("similar",):
                         cnt += 1
             return cnt - 1
 
@@ -842,18 +871,25 @@ class WordToken(db.Model):
             "POS": True,
             "morph": True
         }
+
+        allowed_column = corpus.displayed_columns_by_name
+
         if lemma is not None \
+                and "lemma" in allowed_column \
                 and allowed_lemma.count() > 0 \
                 and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
             statuses["lemma"] = False
 
         if POS is not None \
+                and "POS" in allowed_column \
                 and allowed_POS.count() > 0 \
                 and corpus.get_allowed_values("POS", label=POS).count() == 0:
             statuses["POS"] = False
 
-        if morph is not None and allowed_morph.count() > 0 and \
-                        corpus.get_allowed_values("morph", label=morph).count() == 0:
+        if morph is not None \
+                and "morph" in allowed_column \
+                and allowed_morph.count() > 0 \
+                and corpus.get_allowed_values("morph", label=morph).count() == 0:
             statuses["morph"] = False
         return statuses
 

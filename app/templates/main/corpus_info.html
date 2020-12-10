@@ -4,6 +4,8 @@
 
 {% block page_title %}Corpus {{corpus.name}}{% endblock %}
 
+{% set visible = corpus.displayed_columns_by_name %}
+
 {% block content %}
     <p class="container">
 
@@ -35,6 +37,7 @@
             </div>
             <div class="row">
                 <div class="offset-md-3 col-md-2">
+                    {% if "lemma" in visible %}
                     <div class="single-chart">
                         <svg viewBox="0 0 36 36" class="circular-chart green">
                             <path class="circle-bg"
@@ -54,8 +57,10 @@
                         lemma were correct from lemmatization. It means you corrected {{stats.lemma_count}} lemma.
                         </p>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-2">
+                    {% if "morph" in visible %}
                     <div class="single-chart">
                         <svg viewBox="0 0 36 36" class="circular-chart green">
                             <path class="circle-bg"
@@ -73,8 +78,10 @@
                         morphologies were correct from lemmatization. It means you corrected {{stats.morph_count}} morphologies.
                         </p>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="col-md-2">
+                    {% if "POS" in visible %}
                     <div class="single-chart">
                         <svg viewBox="0 0 36 36" class="circular-chart green">
                             <path class="circle-bg"
@@ -94,6 +101,7 @@
                         POS were correct from lemmatization. It means you corrected {{stats.pos_count}} POS.
                         </p>
                     </div>
+                    {% endif %}
                 </div>
             </div>
             <h3>Annotations over time</h3>
@@ -115,6 +123,7 @@
             </form>
             <div class="row">
                 <div class="col-lg-3">
+                    {% if "lemma" in visible %}
                     <h4>Lemma</h4>
                     <table class="table table-xs table-striped">
                         <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
@@ -124,8 +133,10 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    {% endif %}
                 </div>
                 <div class="col-lg-6">
+                    {% if "morph" in visible %}
                     <h4>Morphology</h4>
                     <table class="table table-xs table-striped">
                         <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
@@ -135,8 +146,10 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    {% endif %}
                 </div>
                 <div class="col-lg-3">
+                    {% if "POS" in visible %}
                     <h4>POS</h4>
                     <table class="table table-xs table-striped">
                         <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
@@ -146,6 +159,7 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    {% endif %}
                 </div>
             </div>
         </section>

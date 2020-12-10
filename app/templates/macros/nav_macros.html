@@ -162,6 +162,9 @@
 {%  endmacro %}
 
 {% macro single_corpus_nav(corpus, current_user) %}
+
+{% set visible = corpus.displayed_columns_by_name %}
+
 <header>
     <a id="overview_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
         {{corpus.name}}</a>
@@ -200,9 +203,15 @@ Quick links
 </ul>
 Correct tokens with
 <ul class="nav flex-column">
-  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Unallowed lemma</a></li>
-  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Unallowed POS</a></li>
-  <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Unallowed morph</a></li>
+    {% if "lemma" in visible %}
+    <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">Unallowed lemma</a></li>
+    {% endif %}
+    {% if "POS" in visible %}
+    <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">Unallowed POS</a></li>
+    {% endif %}
+    {% if "morph" in visible %}
+    <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">Unallowed morph</a></li>
+    {% endif %}
 </ul>
 {% endmacro %}
 
