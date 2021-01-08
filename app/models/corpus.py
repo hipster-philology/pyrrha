@@ -465,7 +465,7 @@ class Corpus(db.Model):
             raise PreferencesUpdateError(
                 f"Cannot set context to 'left: {context_left}, right: {context_right}'"
             )
-            
+
     def update_columns(self, columns):
         """Update columns.
 
@@ -484,7 +484,7 @@ class Corpus(db.Model):
                 raise PreferencesUpdateError(
                     f"cannot toggle hiding column '{column.heading}'"
                 )
-                
+
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -1103,9 +1103,8 @@ class WordToken(db.Model):
             morph = token.morph
 
         record = ChangeRecord.track(user, token, lemma, POS, morph)
-
         token.lemma = lemma
-        token.label_uniform = unidecode.unidecode(lemma)
+        token.label_uniform = unidecode.unidecode(lemma) if lemma else None
         token.POS = POS
         token.morph = morph
         db.session.add(token)

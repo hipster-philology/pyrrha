@@ -229,7 +229,7 @@
                     morph: parent.find(".token_morph").text().trim()
                 }
             }).done(function(response){
-                    if(response.similar.count > 0) {
+                    if(response.similar && response.similar.count > 0) {
                         link.parent().append("<a class='similar-link badge badge-primary' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
                     }
                     parent.addClass("table-changed");
