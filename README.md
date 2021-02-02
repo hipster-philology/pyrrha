@@ -57,14 +57,14 @@ python manage.py db-create
 python manage.py run
 ```
 
-### Creating a new user localy
+### Creating a new user locally
 
 1. Run the application
 2. Click register and register. Remember to note the user email you register with.
 3. Stop the application
-4. Run `python manage.py edit-user [EMAIL] --confirm-mail -role Administrator` or simply 
-`python manage.py edit-user [EMAIL] --confirm-mail -role Administrator` if you don't want administrator role. Replace `[EMAIL]`
-with the mail you used.
+4. Run `python manage.py edit-user [EMAIL] --confirm-mail --role Administrator` or simply 
+`python manage.py edit-user [EMAIL] --confirm-mail` if you don't want administrator role. Replace `[EMAIL]`
+with the mail you used. If you are simply running it for yourself, we would definitely recommend to use the Administrator role though.
 5. Run the application, login and enjoy !
 
 ## How to contribute
