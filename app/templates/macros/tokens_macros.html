@@ -269,6 +269,13 @@
 
         });
 
+        const getFormData = function(object) {
+            const formData = new FormData();
+            Object.keys(object).forEach(key => formData.append(key, object[key]));
+            return formData;
+        }
+
+
         const add_to_custom_dict = function(link) {
             /** Updated a token row
              **/
@@ -281,18 +288,20 @@
             link.before(spinner);
             td_parent.find(".badge-status").remove();
 
-            jQuery.ajax({
-                url: target,
-                type: 'PATCH',
-                data: {
+            fetch(target, {
+                method: 'PATCH',
+                body: getFormData({
                     value: value,
                     category: category
+                })
+            })
+            .then(resp => { return resp.json();})
+            .then(res => {
+                if (res.status == false) {
+                    td_parent.append(`<span class="badge badge-danger badge-status">${res.message}</span>`);
+                } else {
+                    td_parent.append('<span class="badge badge-success badge-status">Custom dictionary updated</span>');
                 }
-            }).done(function(response){
-                td_parent.append('<span class="badge badge-success badge-status">Custom dictionary updated</span>');
-            }).fail(function(jqXHR){
-                td_parent.append(`<span class="badge badge-danger badge-status">${jqXHR.responseJSON.message}</span>`);
-            }).always(function() {
                 spinner.remove();
             });
         };
