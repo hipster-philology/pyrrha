@@ -7,7 +7,7 @@
         <fieldset class="form-fieldset">
             <legend>Dictionaries</legend>
             <div class="form-group">
-                <label for="lemma">Delimiter token</label>
+                <label for="lemma">Lemma</label>
                 <textarea
                     name="lemma"
                     type="text"
@@ -15,11 +15,11 @@
                     id="lemma"
                     aria-describedby="sep_tokenHelp">{{ lemma }}</textarea>
                 <small id="sep_tokenHelp" class="form-text text-muted">
-                    List of supplementaries lemma for this corpus.
+                    List of supplementaries lemma for this corpus. One per line
                 </small>
             </div>
             <div class="form-group">
-                <label for="morph">Delimiter token</label>
+                <label for="morph">Morph</label>
                 <textarea
                     name="morph"
                     type="text"
@@ -27,7 +27,9 @@
                     id="morph"
                     aria-describedby="sep_tokenHelp">{{ morph }}</textarea>
                 <small id="sep_tokenHelp" class="form-text text-muted">
-                    List of supplementaries morph for this corpus.
+                    List of supplementaries morph for this corpus. One per line, a human readable version of the code
+                    can be given after a tabulation (4 spaces are automatically transformed into tabulation). eg.
+                    <pre>Morph=MyMorph    My human readable morph</pre>
                 </small>
             </div>
             <div class="form-group">
@@ -39,7 +41,7 @@
                     id="POS"
                     aria-describedby="sep_tokenHelp">{{ POS }}</textarea>
                 <small id="sep_tokenHelp" class="form-text text-muted">
-                    List of supplementaries POS for this corpus.
+                    List of supplementaries POS for this corpus. Separated by coma: <pre>MyPos,MyPos2</pre>
                 </small>
             </div>
         </fieldset>

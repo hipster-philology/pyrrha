@@ -19,7 +19,7 @@ from ...utils.response import format_api_like_reply
 from ...errors import MissingTokenColumnValue, NoTokensInput
 from .utils import requires_corpus_admin_access, requires_corpus_access
 from ..forms import Delete
-from app.utils import PreferencesUpdateError
+from app.utils import PreferencesUpdateError, PersonalDictionaryError
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -457,7 +457,7 @@ def corpus_custom_dict(corpus_id: int):
             corpus.custom_dictionaries_update(
                 "morph", morph
             )
-        except PreferencesUpdateError as exception:
+        except PersonalDictionaryError as exception:
             flash(
                 f"Faild to update dictionary: {exception}",
                 category="error"

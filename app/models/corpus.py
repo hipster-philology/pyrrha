@@ -2,7 +2,7 @@
 import csv
 import io
 import enum
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Dict
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -484,6 +484,48 @@ class Corpus(db.Model):
                 raise PreferencesUpdateError(
                     f"cannot toggle hiding column '{column.heading}'"
                 )
+
+    def get_custom_dictionary(self, category: str, formatted: bool = False):
+        """ Retrieve custom dictionary's values
+        """
+        values = CorpusCustomDictionary.query.filter(
+            db.and_(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == category
+            )
+        ).all()
+        if not formatted:
+            return values
+
+        if category == "lemma":
+            return "\n".join([token.label for token in values])
+        elif category == "pos":
+            return ",".join([token.label for token in values])
+        elif category == "morph":
+            return "\n".join(["{}\t{}".format(token.label, token.secondary_label) for token in values])
+
+    def custom_dictionaries_update(self, category: str, values: str, _commit: bool = True):
+        splits = {"POS": ",", "lemma": "\n", "morph": "\n"}
+        preproc = getattr(CorpusCustomDictionary, category+"_preproc")
+        values = [
+            preproc(x.strip(), self.id)
+            for x in values.split(splits[category])
+            if x.strip()
+        ]
+        CorpusCustomDictionary.query.filter(
+            db.and_(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == category,
+            )
+        ).delete()
+        if values:
+            db.session.bulk_insert_mappings(
+                CorpusCustomDictionary,
+                values
+            )
+        if _commit:
+            db.session.commit()
+        return len(values)
 
 
 class WordToken(db.Model):
@@ -1220,25 +1262,6 @@ class WordToken(db.Model):
                 )
             )
 
-    def get_custom_dictionary(self, category: str, formatted: bool = False):
-        """ Retrieve custom dictionary's values
-        """
-        values = CorpusCustomDictionary.query.get(corpus=self.id, category=category).all()
-        if not formatted:
-            return values
-
-        if category == "lemma":
-            return "\n".join([token.label for token in values])
-        elif category == "pos":
-            return ",".join([token.label for token in values])
-        elif category == "morph":
-            return "\n".join([token.label for token in values])
-
-    def custom_dictionaries_update(self, category: str, values: str):
-        splits = {"POS": ",", "lemma": "\n", "morph": "\n"}
-        values = [x.strip() for x in values.split(splits[category]) if x.strip()]
-        
-
 
 class TokenHistory(db.Model):
     """ A change record keep track of tokens row edition, deletion and addition"""
@@ -1260,12 +1283,29 @@ class TokenHistory(db.Model):
     user = db.relationship(User, lazy='select')
 
 
-class CorpusCustomDictionary(db.Model)
+class CorpusCustomDictionary(db.Model):
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'), nullable=False)
     label = db.Column(db.String(64), nullable=False)
-    label_uniform = db.Column(db.String(64))
-    category = db.Column(db.Enum(["POS", "lemma", "morph"]), nullable=False)
+    secondary_label = db.Column(db.String(64))
+    category = db.Column(db.String(10), nullable=False)
+
+    search_index = db.Index("ccd-search", "corpus", "label", "secondary_label", "category")
+    retrieve_index = db.Index("ccd-retrieve", "corpus", "category")
+
+    @staticmethod
+    def lemma_preproc(string: str, corpus: int) -> Dict[str, str]:
+        return {"label": string, "corpus": corpus, "secondary_label": unidecode.unidecode(string), "category": "lemma"}
+
+    @staticmethod
+    def morph_preproc(string: str, corpus: int) -> Dict[str, str]:
+        morph, readable = string.split("\t")
+        return {"label": morph, "corpus": corpus, "secondary_label": readable, "category": "morph"}
+
+    @staticmethod
+    def POS_preproc(string: str, corpus: int) -> Dict[str, str]:
+        return {"label": string, "corpus": corpus, "secondary_label": "", "category": "morph"}
 
 
 class ChangeRecord(db.Model):
