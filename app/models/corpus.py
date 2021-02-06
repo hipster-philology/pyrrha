@@ -2,7 +2,7 @@
 import csv
 import io
 import enum
-from typing import Iterable, Optional, Dict
+from typing import Iterable, Optional, Dict, List
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -241,12 +241,13 @@ class Corpus(db.Model):
             ).exists()
         ).scalar()
 
-    def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
+    def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label", extend_to_custom: bool = True):
         """ List values that are allowed (without label) or checks that given label is part
         of the existing corpus
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
         :param label: Value to match with as the POS, lemma or morph
+        :param extend_to_custom: Whether to use custom dictionary
         :return: Flask SQL Alchemy Query
         :rtype: BaseQuery
         """
@@ -261,6 +262,7 @@ class Corpus(db.Model):
             order_by = getattr(cls, order_by)
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
+
         if label is not None:
             return db.session.query(cls).filter(
                 db.and_(cls.control_list == self.control_lists_id, cls.label == label)
@@ -527,6 +529,22 @@ class Corpus(db.Model):
             db.session.commit()
         return len(values)
 
+    def has_custom_dictionary_value(self, category: str, string: str) -> bool:
+        return CorpusCustomDictionary.query.filter(
+            db.and_(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == category,
+                CorpusCustomDictionary.label == string
+            )
+        ).count() >= 1
+
+    def insert_custom_dictionary_value(self, category: str, string: str) -> bool:
+        preproc = getattr(CorpusCustomDictionary, category+"_preproc")
+        db.session.add(CorpusCustomDictionary(
+            **preproc(string, self.id)
+        ))
+        db.session.commit()
+
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -572,8 +590,11 @@ class WordToken(db.Model):
 
     class ValidityError(ValueError):
         """ Error for values which are not allowed """
-        statuses = {}
-        msg = ""
+        def __init__(self, *args, **kwargs):
+            self.statuses: Dict[str, bool] = {}
+            self.msg: str = ""
+            self.invalid_columns: List[str] = []
+            super(WordToken.ValidityError, self).__init__()
 
     class NothingChangedError(ValueError):
         """ Error when an update is triggered and nothing is updated """
@@ -924,19 +945,22 @@ class WordToken(db.Model):
                 and "lemma" in allowed_column \
                 and allowed_lemma.count() > 0 \
                 and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
-            statuses["lemma"] = False
+            if not corpus.has_custom_dictionary_value("lemma", lemma):
+                statuses["lemma"] = False
 
         if POS is not None \
                 and "POS" in allowed_column \
                 and allowed_POS.count() > 0 \
                 and corpus.get_allowed_values("POS", label=POS).count() == 0:
-            statuses["POS"] = False
+            if not corpus.has_custom_dictionary_value("POS", POS):
+                statuses["POS"] = False
 
         if morph is not None \
                 and "morph" in allowed_column \
                 and allowed_morph.count() > 0 \
                 and corpus.get_allowed_values("morph", label=morph).count() == 0:
-            statuses["morph"] = False
+            if not corpus.has_custom_dictionary_value("morph", morph):
+                statuses["morph"] = False
         return statuses
 
     @staticmethod
@@ -1134,6 +1158,7 @@ class WordToken(db.Model):
             error = WordToken.ValidityError(error_msg)
             error.msg = error_msg
             error.statuses = validity
+            error.invalid_columns = [key for key in validity.keys() if validity[key] is False]
             raise error
 
         # Updating
@@ -1300,7 +1325,10 @@ class CorpusCustomDictionary(db.Model):
 
     @staticmethod
     def morph_preproc(string: str, corpus: int) -> Dict[str, str]:
-        morph, readable = string.split("\t")
+        if "\t" in string:
+            morph, readable = string.split("\t")
+        else:
+            morph, readable = string, ""
         return {"label": morph, "corpus": corpus, "secondary_label": readable, "category": "morph"}
 
     @staticmethod

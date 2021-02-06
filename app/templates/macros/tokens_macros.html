@@ -70,7 +70,11 @@
                     {%- if checkbox -%}
                         <td><input class="form-check word-token" type="checkbox" checked="checked" value="{{token.id}}" /></td>
                     {%- else -%}
-                        <td class="save"><a class="save" href="{{url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
+                        <td class="save">
+                            <a class="save" href="{{url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=token.id)}}">
+                                Save
+                            </a>
+                        </td>
                         <td class="dd">
                           <a id="dd_t{{token.order_id}}" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="More options" tabindex="-1">
                             <i class="fa fa-plus-square"></i>
@@ -106,8 +110,6 @@
 
             al.style.display = "none";
             er.style.display = "none";
-
-
             var selected_tokens = $.map($(".word-token:checked"), function(elem) { return $(elem).val(); });
             jQuery.ajax({
                 url: event.target.href,
@@ -212,7 +214,12 @@
                 clear_br(elem)
             }
         });
+
         $('.editable a.save').on("click", function (event) {
+            /** Updated a token row
+             *
+             *
+             */
             event.preventDefault();
             var link = $(this),
                 parent = link.parents("tr.editable"),
@@ -236,15 +243,60 @@
                     link.parent().append('<span class="badge badge-success badge-status">Saved</span>');
             }).fail(function(jqXHR){
                 link.parent().append('<span class="badge badge-danger badge-status">'+jqXHR.responseJSON.message+"</span>");
+                /* Shows error for each column in red as well as proposes to save into custom dictionary*/
                 $.each(jqXHR.responseJSON.details, function(key, status) {
+
                     var selector = ".token_"+key.toLowerCase();
-                    if (status === false) { parent.find(selector).addClass("table-danger"); }
+                    if (status === false) {
+                        parent.find(selector).addClass("table-danger");
+                        var element = $(
+                            `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
+                                Add <code>${parent.find(selector).text().trim()}</code> to custom dictionary of <em>${key}</em>
+                            </a>`
+                        );
+                        element.on("click", function(child_event) {
+                           child_event.preventDefault();
+                           add_to_custom_dict(element);
+                        });
+                        link.parent().append(element);
+                    }
                     else { parent.find(selector).removeClass("table-danger");  }
+
                 });
             }).always(function() {
                 spinner.remove();
             });
+
         });
+
+        const add_to_custom_dict = function(link) {
+            /** Updated a token row
+             **/
+            var spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>'),
+                td_parent = link.parent(),
+                value = link.find("code").text().trim(),
+                target = link.attr("href"),
+                category = link.find("em").text().trim();
+
+            link.before(spinner);
+            td_parent.find(".badge-status").remove();
+
+            jQuery.ajax({
+                url: target,
+                type: 'PATCH',
+                data: {
+                    value: value,
+                    category: category
+                }
+            }).done(function(response){
+                td_parent.append('<span class="badge badge-success badge-status">Custom dictionary updated</span>');
+            }).fail(function(jqXHR){
+                td_parent.append(`<span class="badge badge-danger badge-status">${jqXHR.responseJSON.message}</span>`);
+            }).always(function() {
+                spinner.remove();
+            });
+        };
+
     });
     </script>
     {% endif %}

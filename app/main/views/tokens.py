@@ -147,7 +147,7 @@ def tokens_correct_single(corpus_id, token_id):
             "similar": similar
         })
     except WordToken.ValidityError as E:
-        response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
+        response = jsonify({"status": False, "message": E.msg, "details": E.statuses, "new-values": E.invalid_columns})
         response.status_code = 403
         return response
     except WordToken.NothingChangedError as E:

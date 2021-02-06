@@ -430,7 +430,7 @@ def preferences(corpus_id: int):
     )
 
 
-@main.route("/corpus/<int:corpus_id>/custom-dict", methods=["GET", "POST"])
+@main.route("/corpus/<int:corpus_id>/custom-dict", methods=["GET", "POST", "PATCH"])
 @login_required
 @requires_corpus_access("corpus_id")
 def corpus_custom_dict(corpus_id: int):
@@ -443,7 +443,28 @@ def corpus_custom_dict(corpus_id: int):
 
     is_owner = corpus_user.is_owner
 
-    if is_owner and request.method == "POST":
+    if is_owner and request.method == "PATCH":
+        category = request.form.get("category", None)
+        value = request.form.get("value", None)
+
+        try:
+            if not category:
+                raise PersonalDictionaryError("Category is missing")
+            elif not value:
+                raise PersonalDictionaryError("Value is missing")
+            corpus.insert_custom_dictionary_value(category=category, string=value)
+            return jsonify({
+                "status": True,
+                "message": "New value saved."
+            })
+        except PersonalDictionaryError:
+            resp = jsonify({
+                "message": "Unable to add to custom dictionary",
+                "status": False
+            })
+            resp.status_code = 403
+            return resp
+    elif is_owner and request.method == "POST":
         pos = request.form.get("pos", "")
         lemma = request.form.get("lemma", "")
         morph = request.form.get("morph", "")
