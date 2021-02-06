@@ -1220,6 +1220,25 @@ class WordToken(db.Model):
                 )
             )
 
+    def get_custom_dictionary(self, category: str, formatted: bool = False):
+        """ Retrieve custom dictionary's values
+        """
+        values = CorpusCustomDictionary.query.get(corpus=self.id, category=category).all()
+        if not formatted:
+            return values
+
+        if category == "lemma":
+            return "\n".join([token.label for token in values])
+        elif category == "pos":
+            return ",".join([token.label for token in values])
+        elif category == "morph":
+            return "\n".join([token.label for token in values])
+
+    def custom_dictionaries_update(self, category: str, values: str):
+        splits = {"POS": ",", "lemma": "\n", "morph": "\n"}
+        values = [x.strip() for x in values.split(splits[category]) if x.strip()]
+        
+
 
 class TokenHistory(db.Model):
     """ A change record keep track of tokens row edition, deletion and addition"""
@@ -1239,6 +1258,14 @@ class TokenHistory(db.Model):
     created_on = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship(User, lazy='select')
+
+
+class CorpusCustomDictionary(db.Model)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'), nullable=False)
+    label = db.Column(db.String(64), nullable=False)
+    label_uniform = db.Column(db.String(64))
+    category = db.Column(db.Enum(["POS", "lemma", "morph"]), nullable=False)
 
 
 class ChangeRecord(db.Model):

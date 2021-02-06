@@ -428,3 +428,49 @@ def preferences(corpus_id: int):
         context_right=corpus.context_right,
         corpus=corpus
     )
+
+
+@main.route("/corpus/<int:corpus_id>/custom-dict", methods=["GET", "POST"])
+@login_required
+@requires_corpus_access("corpus_id")
+def corpus_custom_dict(corpus_id: int):
+    """Show preferences view."""
+    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus_user = CorpusUser.query.filter(
+        CorpusUser.corpus_id == corpus_id,
+        CorpusUser.user_id == current_user.id
+    ).one_or_none()
+
+    is_owner = corpus_user.is_owner
+
+    if is_owner and request.method == "POST":
+        pos = request.form.get("pos", "")
+        lemma = request.form.get("lemma", "")
+        morph = request.form.get("morph", "")
+        try:
+            corpus.custom_dictionaries_update(
+                "POS", pos
+            )
+            corpus.custom_dictionaries_update(
+                "lemma", lemma
+            )
+            corpus.custom_dictionaries_update(
+                "morph", morph
+            )
+        except PreferencesUpdateError as exception:
+            flash(
+                f"Faild to update dictionary: {exception}",
+                category="error"
+            )
+        else:
+            flash(
+                f"Updated custom dictionary",
+                category="success"
+            )
+    return render_template_with_nav_info(
+        "main/corpus_custom_dictionary.html",
+        pos=corpus.get_custom_dictionary("POS", formatted=True),
+        lemma=corpus.get_custom_dictionary("lemma", formatted=True),
+        morph=corpus.get_custom_dictionary("morph", formatted=True),
+        corpus=corpus
+    )
