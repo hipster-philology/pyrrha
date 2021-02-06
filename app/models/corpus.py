@@ -1333,7 +1333,7 @@ class CorpusCustomDictionary(db.Model):
 
     @staticmethod
     def POS_preproc(string: str, corpus: int) -> Dict[str, str]:
-        return {"label": string, "corpus": corpus, "secondary_label": "", "category": "morph"}
+        return {"label": string, "corpus": corpus, "secondary_label": "", "category": "POS"}
 
 
 class ChangeRecord(db.Model):

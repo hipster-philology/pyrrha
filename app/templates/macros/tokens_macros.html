@@ -138,18 +138,64 @@
     <select id="autocomplete" style="display: none"></select>
     <script type="text/javascript">
     $(document).ready(function(){
-        var clear_br = function (elem) {
-            elem.find("br").remove();
+        const clear_br = function (elem) {
+            try {
+                return elem.querySelectorAll("br").forEach(elem => {
+                    elem.remove()
+                });
+            } catch {
+                return elem;
+            }
         };
+        const cleanUp = function(string) {
+            return createElement(`<div>${string}</div>`).innerText.toLowerCase().trim();
+        };
+        const clearBadges = function(element) {
+            element.querySelectorAll(".badge-status").forEach(elem => { elem.remove(); });
+        };
+
+        const createElement = function (html) {
+            /** Create an element from an HTML string
+             * Source : https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro/35385518#35385518
+             *
+             **/
+            let template = document.createElement('template');
+            html = html.trim(); // Never return a text node of whitespace as the result
+            template.innerHTML = html;
+            return template.content.firstChild;
+        };
+
+        const getFormData = function(object) {
+            const formData = new FormData();
+            Object.keys(object).forEach(key => formData.append(key, object[key]));
+            return formData;
+        };
+
+        /**
+         *
+         * https://stackoverflow.com/a/36846308 : Prevents pasting rich content
+         *
+         */
+
+        [].forEach.call(document.querySelectorAll('td[contenteditable="true"]'), function (el) {
+            el.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var text = e.clipboardData.getData("text/plain");
+                document.execCommand("insertHTML", false, text);
+            }, false);
+        });
+
+        /**
+         *
+         * Auto-complete stuff
+         *
+         **/
         var original = $.fn.val;
         $.fn.val = function() {
             if ($(this).is('*[contenteditable=true]')) {
                 return $.fn.html.apply(this, arguments);
             }
             return original.apply(this, arguments);
-        };
-        var cleanUp = function(string) {
-            return $("<div>"+string+"</div>").text().toLowerCase().trim();
         };
         $('td.token_lemma').autoComplete({
             minChars: 1,
@@ -186,15 +232,6 @@
             }
         });
 
-        // https://stackoverflow.com/a/36846308 : Prevents pasting rich content
-        [].forEach.call(document.querySelectorAll('td[contenteditable="true"]'), function (el) {
-            el.addEventListener('paste', function(e) {
-                e.preventDefault();
-                var text = e.clipboardData.getData("text/plain");
-                document.execCommand("insertHTML", false, text);
-            }, false);
-        });
-
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
@@ -215,78 +252,124 @@
             }
         });
 
-        $('.editable a.save').on("click", function (event) {
-            /** Updated a token row
-             *
-             *
-             */
-            event.preventDefault();
-            var link = $(this),
-                parent = link.parents("tr.editable"),
-                spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>');
-            link.parent().find(".badge-status").remove();
-            link.before(spinner);
-            //link.text("(Saving) Save");
-            jQuery.ajax({
-                url: event.target.href,
-                type: 'POST',
-                data: {
-                    lemma: parent.find(".token_lemma").text().trim(),
-                    POS: parent.find(".token_pos").text().trim(),
-                    morph: parent.find(".token_morph").text().trim()
-                }
-            }).done(function(response){
-                    if(response.similar && response.similar.count > 0) {
-                        link.parent().append("<a class='similar-link badge badge-primary' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
-                    }
-                    parent.addClass("table-changed");
-                    link.parent().append('<span class="badge badge-success badge-status">Saved</span>');
-            }).fail(function(jqXHR){
-                link.parent().append('<span class="badge badge-danger badge-status">'+jqXHR.responseJSON.message+"</span>");
-                /* Shows error for each column in red as well as proposes to save into custom dictionary*/
-                $.each(jqXHR.responseJSON.details, function(key, status) {
+        const create_info_tr_or_return_the_one = function (tr) {
+          /**
+           * tr : TR related to the details that will be shown
+           */
+          if (tr.nextElementSibling.getAttribute("rel") == tr.id) {
+              return tr.nextSibling.firstChild; // Returns firstChild because we return TD
+          }
+            let tdCount = tr.querySelectorAll("td").length,
+                tr_receptor = tr.parentNode.insertBefore(
+                    createElement(`<tr rel="${tr.id}"><td colspan="${tdCount-1}" style="text-align: right;"></td><td></td></tr>`),
+                    tr.nextSibling
+                ),
+                receptor = tr_receptor.firstChild;
 
-                    var selector = ".token_"+key.toLowerCase();
+            tr_receptor.lastChild.appendChild(createElement(`<a href="#"><i class="fa fa-remove"></i></a>`))
+
+            tr_receptor.lastChild.firstChild.addEventListener("click", (event => {
+                event.preventDefault();
+                tr_receptor.remove();
+            }));
+            return receptor
+        };
+
+        const update_row = function(event) {
+            event.preventDefault();
+            let link = event.target,
+                td = link.parentNode,
+                tr = link.parentNode.parentNode, // Twice parent: 1 for td, 1 for tr
+                spinner = createElement(`<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>`);
+
+            // Remove previous badges
+            clearBadges(td);
+
+            let receptor = create_info_tr_or_return_the_one(tr);
+            clearBadges(receptor);
+
+            // Add the spinner, syntax is container.insertBefore(newElem, refElement);
+            receptor.appendChild(spinner);
+
+            fetch(event.target.href, {
+                method: 'POST',
+                body: getFormData({
+                    lemma: tr.querySelector(".token_lemma").innerText.trim(),
+                    POS: tr.querySelector(".token_pos").innerText.trim(),
+                    morph: tr.querySelector(".token_morph").innerText.trim()
+                })
+            })
+            .then(resp => {
+              let json = resp.json(); // there's always a body
+              if (resp.status >= 200 && resp.status < 300) {
+                return json;
+              } else {
+                return json.then(Promise.reject.bind(Promise));
+              }
+            })
+            .then(response => {
+                if(response.similar && response.similar.count > 0) {
+                    receptor.appendChild(
+                        createElement(
+                            `<a class="similar-link badge badge-primary" href="${response.similar.link}">
+                                ${response.similar.count} similar to see
+                            </a>`
+                        )
+                    );
+                }
+                tr.classList.add("table-changed");
+
+                receptor.appendChild(
+                    createElement('<span class="badge badge-success badge-status">Saved</span>')
+                );
+
+            }).catch(function(error){
+                receptor.appendChild(
+                    createElement(
+                        `<span class="badge badge-danger badge-status">
+                            ${error.message}
+                        </span>`
+                    )
+                );
+                /* Shows error for each column in red as well as proposes to save into custom dictionary*/
+                Object.entries(error.details).forEach(([key, status]) => {
+                    let selector = ".token_"+key.toLowerCase();
                     if (status === false) {
-                        parent.find(selector).addClass("table-danger");
-                        var element = $(
+                        tr.querySelector(selector).classList.add("table-danger");
+                        let element = createElement(
                             `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
-                                Add <code>${parent.find(selector).text().trim()}</code> to custom dictionary of <em>${key}</em>
+                                Add <code>${tr.querySelector(selector).innerText.trim()}</code> to custom dictionary of <em>${key}</em>
                             </a>`
                         );
-                        element.on("click", function(child_event) {
+                        element.addEventListener("click", function(child_event) {
                            child_event.preventDefault();
                            add_to_custom_dict(element);
                         });
-                        link.parent().append(element);
+                        receptor.appendChild(element);
                     }
-                    else { parent.find(selector).removeClass("table-danger");  }
-
+                    else { tr.querySelector(selector).classList.remove("table-danger");  }
                 });
-            }).always(function() {
+            }).then(function() {
                 spinner.remove();
             });
 
-        });
+        };
 
-        const getFormData = function(object) {
-            const formData = new FormData();
-            Object.keys(object).forEach(key => formData.append(key, object[key]));
-            return formData;
-        }
-
+        Array.from(document.querySelectorAll('.editable a.save')).forEach(
+            element => { element.addEventListener("click", update_row)}
+        );
 
         const add_to_custom_dict = function(link) {
             /** Updated a token row
              **/
-            var spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>'),
-                td_parent = link.parent(),
-                value = link.find("code").text().trim(),
-                target = link.attr("href"),
-                category = link.find("em").text().trim();
+            let spinner = createElement('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>'),
+                td = link.parentNode,
+                value = link.querySelector("code").innerText.trim(),
+                target = link.href,
+                category = link.querySelector("em").innerText.trim();
 
-            link.before(spinner);
-            td_parent.find(".badge-status").remove();
+            td.insertBefore(spinner, link);
+            clearBadges(td);
 
             fetch(target, {
                 method: 'PATCH',
@@ -297,12 +380,19 @@
             })
             .then(resp => { return resp.json();})
             .then(res => {
-                if (res.status == false) {
-                    td_parent.append(`<span class="badge badge-danger badge-status">${res.message}</span>`);
+                if (res.status === false) {
+                    td.appendChild(
+                        createElement(`<span class="badge badge-danger badge-status">${res.message}</span>`)
+                    );
                 } else {
-                    td_parent.append('<span class="badge badge-success badge-status">Custom dictionary updated</span>');
+                    td.appendChild(
+                        createElement(
+                            '<span class="badge badge-success badge-status">Custom dictionary updated</span>'
+                        )
+                    );
                 }
                 spinner.remove();
+                return true;
             });
         };
 
