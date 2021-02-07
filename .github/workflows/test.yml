@@ -31,6 +31,9 @@ jobs:
     - name: Test with nose
       run: |
         nosetests ./tests --with-coverage --cover-package=app --cover-xml --verbose
+    - name: Coverage
+      run: |
+        coverage combine
     - name: Coveralls Parallel
       uses: AndreMiras/coveralls-python-action@develop
       if: runner.os == 'Linux'
