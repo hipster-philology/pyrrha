@@ -9,20 +9,19 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", id_row="1")
-        self.assertEqual(token.lemma, "un", "Lemma should have been changed")
+        self.assert_token_has_values(token, lemma="un")
         self.assert_saved(row)
 
         # Try with an unallowed lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("WRONG", id_row="2")
-        self.assertEqual(token.lemma, "saint", "Lemma should have not been changed")
+        self.assert_token_has_values(token, lemma="saint")
         self.assert_invalid_value(row, "lemma")
 
         # Try with a POS update but keeping the lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
-        self.assertEqual(token.lemma, "martin", "Lemma should have not been changed")
-        self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
+        self.assert_token_has_values(token, lemma="martin", POS="ADJqua")
         self.assert_saved(row)
 
     def test_edit_token_lemma_with_allowed_values_autocomplete(self):
@@ -34,8 +33,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
             "d", id_row="1",
             autocomplete_selector=".autocomplete-suggestion[data-val='devoir']"
         )
-        self.assertEqual(token.lemma, "devoir", "Lemma should have been changed to devoir")
-        self.assertEqual(token.POS, "PRE", "POS should not have been changed")
+        self.assert_token_has_values(token, lemma="devoir", POS="PRE")
         self.assert_saved(row)
 
     def test_edit_POS(self):
@@ -45,8 +43,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         token, status_text, row = self.edith_nth_row_value(
             "ADJqua", id_row="1", value_type="POS"
         )
-        self.assertEqual(token.lemma, "de", "Lemma should have been changed to devoir")
-        self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
+        self.assert_token_has_values(token, lemma="de", POS="ADJqua")
         self.assert_saved(row)
 
     def test_edit_morph(self):
@@ -56,19 +53,17 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         token, status_text, row = self.edith_nth_row_value(
             "_", id_row="1", value_type="morph"
         )
-        self.assertEqual(token.lemma, "de", "Lemma should not have been changed")
-        self.assertEqual(token.POS, "PRE", "POS should not have been changed")
-        self.assertEqual(token.morph, "_", "Morph has been changed")
         self.assert_saved(row)
+        self.assert_token_has_values(token, lemma="de", POS="PRE", morph="_")
 
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(
             "Not Allowed", id_row="2", value_type="morph"
         )
-        self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
-        self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
-        self.assertEqual(token.morph, "Not Allowed", "Morph should have been changed")
+
         self.assert_saved(row)
+        self.assert_token_has_values(token, lemma="saint", POS="ADJqua", morph="Not Allowed")
+
 
     def test_edit_morph_with_allowed(self):
         """ [Wauchier] Edit morph of a token with allowed values as control"""
@@ -77,39 +72,31 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         token, status_text, row = self.edith_nth_row_value(
             "_", id_row="1", value_type="morph"
         )
-        self.assertEqual(token.lemma, "de", "Lemma should not have been changed")
-        self.assertEqual(token.POS, "PRE", "POS should not have been changed")
-        self.assertEqual(token.morph, "_", "Morph has been changed")
         self.assert_saved(row)
+        self.assert_token_has_values(token, lemma="de", POS="PRE", morph="_")
 
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(
             "Not Allowed", id_row="2", value_type="morph"
         )
-        self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
-        self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
-        self.assertEqual(token.morph, "None", "Morph should not have been changed")
         self.assert_invalid_value(row, "morph")
+        self.assert_token_has_values(token, lemma="saint", POS="ADJqua", morph="None")
 
         # With auto complete
         token, status_text, row = self.edith_nth_row_value(
             "masc sing", id_row="3", corpus_id="1", value_type="morph",
             autocomplete_selector=".autocomplete-suggestion[data-val='NOMB.=s|GENRE=m|CAS=n']"
         )
-        self.assertEqual(token.lemma, "martin", "Lemma should not have been changed")
-        self.assertEqual(token.POS, "NOMpro", "POS should not have been changed")
-        self.assertEqual(token.morph, "NOMB.=s|GENRE=m|CAS=n", "Morph should not have been changed")
         self.assert_saved(row)
+        self.assert_token_has_values(token, lemma="martin", POS="NOMpro", morph="NOMB.=s|GENRE=m|CAS=n")
 
         # With auto complete based on value and not label
         token, status_text, row = self.edith_nth_row_value(
             "NOMB.=s GENRE=m", id_row="4", corpus_id="1", value_type="morph",
             autocomplete_selector=".autocomplete-suggestion[data-val='NOMB.=s|GENRE=m|CAS=n']"
         )
-        self.assertEqual(token.lemma, "mout", "Lemma should not have been changed")
-        self.assertEqual(token.POS, "ADVgen", "POS should not have been changed")
-        self.assertEqual(token.morph, "NOMB.=s|GENRE=m|CAS=n", "Morph should not have been changed")
         self.assert_saved(row)
+        self.assert_token_has_values(token, lemma="mout", POS="ADVgen", morph="NOMB.=s|GENRE=m|CAS=n")
 
 
 class TestTokensCorrectFloovant(TokenCorrectBase):
@@ -224,7 +211,7 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
             autocomplete_selector=".autocomplete-suggestion[data-val='seignor']"
         )
         self.assert_saved(row)
-        self.assert_token_has_values(token.lemma, lemma="seignor")
+        self.assert_token_has_values(token, lemma="seignor")
 
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()
