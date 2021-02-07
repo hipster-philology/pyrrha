@@ -319,7 +319,7 @@ class AllowedLemma(db.Model):
         db.session.bulk_insert_mappings(
             AllowedLemma,
             [
-                dict(label=item, control_list=control_lists_id, label_uniform=AllowedLemma.preproc(item))
+                dict(label=item, control_list=control_lists_id, label_uniform=unidecode.unidecode(item))
                 for item in allowed_values
             ]
         )
