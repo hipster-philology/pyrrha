@@ -302,18 +302,31 @@ class TokenCorrectBase(TestBase):
     CORPUS = "wauchier"
     CORPUS_ID = "1"
 
-    def get_badge_for_token(self, row: "Element", badge_class: str):
+    def assert_token_has_values(self, token, lemma=None, POS=None, morph=None):
+        """ Checks that value, if not None, have been updated
+        """
+        if lemma:
+            self.assertEqual(token.lemma, lemma, f"[Lemma] {token.lemma} should have been updated to {lemma}")
+        if POS:
+            self.assertEqual(token.POS, POS, f"[POS] {token.POS} should have been updated to {POS}")
+        if morph:
+            self.assertEqual(token.morph, morph, f"[Morph] {token.morph} should have been updated to {morph}")
+
+    def get_badge_text_for_token(self, row, badge_class: str):
         return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] {badge_class}").text.strip()
 
+    def get_similar_badge(self, row):
+        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] .similar-link")
+
     def assert_saved(self, row):
-        self.assertEqual(self.get_badge_for_token(row, ".badge-status.badge-success"), "Saved")
+        self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-success"), "Saved")
 
     def assert_invalid_value(self, row, category):
-        self.assertEqual(self.get_badge_for_token(row, ".badge-status.badge-danger"), f"Invalid value in {category}")
+        self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-danger"), f"Invalid value in {category}")
 
     def assert_unchanged(self, row):
         self.assertEqual(
-            self.get_badge_for_token(row, ".badge-status.badge-danger"), "No value where changed"
+            self.get_badge_text_for_token(row, ".badge-status.badge-danger"), "No value where changed"
         )
 
     def go_to_edit_token_page(self, corpus_id, as_callback=True):
