@@ -54,7 +54,12 @@ class TestUserAccount(TestBase):
         self.driver.find_element_by_id("email").send_keys(self.app.config['ADMIN_EMAIL'])
         self.driver.find_element_by_id("submit").click()
         warning = self.driver.find_element_by_class_name("alert-warning").text
-        self.assertTrue(warning == "A password reset link has been sent to %s." % self.app.config['ADMIN_EMAIL'])
+        self.assertTrue(
+            warning,
+            'You are running in dev or test mode. No emails can be sent'
+            'for this function. Use the admin account'
+            ' (check source code for passwords)'
+        )
 
         # test not being anonymous, you are redirected to the index page
         self.admin_login()
@@ -82,7 +87,11 @@ class TestUserAccount(TestBase):
         self.driver.find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'])
         self.driver.find_element_by_id("submit").click()
         warning = self.driver.find_element_by_class_name("alert-warning").text
-        self.assertTrue(warning == "A confirmation link has been sent to %s." % "bar.foo@ppa.fr")
+        self.driver.save_screenshot("email.png")
+        self.assertEqual(
+            warning, 'You are running in dev or test mode. Your account needs' + \
+                ' to be confirmed via the command line interface or through the CLI'
+        )
 
     def test_admin_change_user_email(self):
         foo_email = self.add_user("foo", "bar")
