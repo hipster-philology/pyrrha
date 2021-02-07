@@ -10,30 +10,20 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", id_row="1")
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
-
+        self.assert_saved(row)
 
         # Try with an unallowed lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("WRONG", id_row="2")
         self.assertEqual(token.lemma, "saint", "Lemma should have not been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-danger").text.strip(),
-            "Invalid value in lemma"
-        )
+        self.assert_invalid_value(row, "lemma")
 
         # Try with a POS update but keeping the lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
         self.assertEqual(token.lemma, "martin", "Lemma should have not been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_token_lemma_with_allowed_values_autocomplete(self):
         """ [Wauchier] Test the edition of a token with the use of autocompletion"""
@@ -46,10 +36,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         )
         self.assertEqual(token.lemma, "devoir", "Lemma should have been changed to devoir")
         self.assertEqual(token.POS, "PRE", "POS should not have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_POS(self):
         """ [Wauchier] Edit POS of a token """
@@ -60,10 +47,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         )
         self.assertEqual(token.lemma, "de", "Lemma should have been changed to devoir")
         self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_morph(self):
         """ [Wauchier]  Edit morph of a token """
@@ -75,10 +59,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assertEqual(token.lemma, "de", "Lemma should not have been changed")
         self.assertEqual(token.POS, "PRE", "POS should not have been changed")
         self.assertEqual(token.morph, "_", "Morph has been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(
@@ -87,10 +68,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
         self.assertEqual(token.morph, "Not Allowed", "Morph should have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_morph_with_allowed(self):
         """ [Wauchier] Edit morph of a token with allowed values as control"""
@@ -102,10 +80,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assertEqual(token.lemma, "de", "Lemma should not have been changed")
         self.assertEqual(token.POS, "PRE", "POS should not have been changed")
         self.assertEqual(token.morph, "_", "Morph has been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
         # Try with an unallowed morph
         token, status_text, row = self.edith_nth_row_value(
@@ -114,10 +89,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
         self.assertEqual(token.morph, "None", "Morph should not have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-danger").text.strip(),
-            "Invalid value in morph"
-        )
+        self.assert_invalid_value(row, "morph")
 
         # With auto complete
         token, status_text, row = self.edith_nth_row_value(
@@ -127,10 +99,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assertEqual(token.lemma, "martin", "Lemma should not have been changed")
         self.assertEqual(token.POS, "NOMpro", "POS should not have been changed")
         self.assertEqual(token.morph, "NOMB.=s|GENRE=m|CAS=n", "Morph should not have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
         # With auto complete based on value and not label
         token, status_text, row = self.edith_nth_row_value(
@@ -140,10 +109,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assertEqual(token.lemma, "mout", "Lemma should not have been changed")
         self.assertEqual(token.POS, "ADVgen", "POS should not have been changed")
         self.assertEqual(token.morph, "NOMB.=s|GENRE=m|CAS=n", "Morph should not have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
 
 class TestTokensCorrectFloovant(TokenCorrectBase):
@@ -159,10 +125,7 @@ class TestTokensCorrectFloovant(TokenCorrectBase):
         )
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed to devoir")
         self.assertEqual(token.POS, "ADJqua", "POS should not have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_token_lemma_with_allowed_values_lemma_pos(self):
         """ [Floovant] Test the edition of a token with allowed lemma and POS"""
@@ -171,29 +134,20 @@ class TestTokensCorrectFloovant(TokenCorrectBase):
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("estoire1", id_row="1")
         self.assertEqual(token.lemma, "estoire1", "Lemma should have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
         # Try with an unallowed lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("WRONG", id_row="2")
         self.assertEqual(token.lemma, "or4", "Lemma should have not been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-danger").text.strip(),
-            "Invalid value in lemma"
-        )
+        self.assert_invalid_value(row, "lemma")
 
         # Try with a POS update but keeping the lemma
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("ADJqua", value_type="POS", id_row="3")
         self.assertEqual(token.lemma, "escouter", "Lemma should have not been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_token_morph_with_allowed_values_lemma(self):
         """  [Floovant] Test the edition of a token's morph  with allowed_lemma """
@@ -203,10 +157,7 @@ class TestTokensCorrectFloovant(TokenCorrectBase):
         token, status_text, row = self.edith_nth_row_value("SomeMorph", id_row="1", value_type="morph")
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
         self.assertEqual(token.morph, "SomeMorph", "Lemma should have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_token_morph(self):
         """ [Floovant] Test the edition of a token's morph"""
@@ -216,10 +167,7 @@ class TestTokensCorrectFloovant(TokenCorrectBase):
         token, status_text, row = self.edith_nth_row_value("SomeMorph", id_row="1", value_type="morph")
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
         self.assertEqual(token.morph, "SomeMorph", "Lemma should have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_token_with_same_value(self):
         """ [Floovant] Test the edition of a token's lemma with the same value"""
@@ -227,10 +175,7 @@ class TestTokensCorrectFloovant(TokenCorrectBase):
         self.addCorpus(with_token=True)
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("seignor", id_row="1", value_type="lemma")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-danger").text.strip(),
-            "No value where changed"
-        )
+        self.assert_unchanged(row)
         self.assertNotIn("table-changed", row.get_attribute("class"))
 
 
@@ -244,20 +189,13 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
         self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_pos=True, tokens_up_to=24)
         token, status_text, row = self.edith_nth_row_value("saint", id_row="1")
         self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
-
+        self.assert_saved(row)
 
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("seignor", id_row="2")
         self.assertEqual(token.lemma, "saint", "Lemma should not have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-danger").text.strip(),
-            "Invalid value in lemma"
-        )
+        self.assert_invalid_value(row, "lemma")
 
         # Try with a POS update but keeping the lemma
         self.driver.refresh()
@@ -265,10 +203,7 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
         print(status_text)
         self.assertEqual(token.lemma, "martin", "Lemma should have not been changed")
         self.assertEqual(token.POS, "ADJqua", "POS should have been changed to ADJqua")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
     def test_edit_token_lemma_with_typeahead_click(self):
         """ [TwoCorpora] Test the edition of a token using typeahead"""
@@ -279,10 +214,7 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
             autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
         )
         self.assertEqual(token.lemma, "saint", "Lemma should have been changed")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
         self.assertEqual(
             row.find_elements_by_tag_name("b")[0].text,
             token.form,
@@ -296,11 +228,7 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
             autocomplete_selector=".autocomplete-suggestion[data-val='seignor']"
         )
         self.assertEqual(token.lemma, "seignor", "Lemma should have been changed")
-
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
 
         # Try with an allowed lemma from the second corpus
         self.driver.refresh()
