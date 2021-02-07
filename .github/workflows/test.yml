@@ -3,11 +3,11 @@ name: Test library
 on: [push, pull_request]
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7]
+        python-version: [3.7]
 
     steps:
     - uses: actions/checkout@v2
@@ -31,7 +31,9 @@ jobs:
     - name: Test with nose
       run: |
         nosetests ./tests --with-coverage --cover-package=app --cover-xml --verbose
-    - name: Coverage
-      run: |
-        coverage combine
-        coveralls
+    - name: Coveralls Parallel
+      uses: AndreMiras/coveralls-python-action@develop
+      if: runner.os == 'Linux'
+      with:
+        flag-name: run-${{ matrix.test_number }}
+        parallel: true
