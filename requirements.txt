@@ -20,6 +20,6 @@ unidecode==1.1.1
 mock==4.0.2
 pbr==4.0.3
 python-slugify==4.0.0
-PyYAML==3.13
+PyYAML==5.4
 redis==2.10.6
 rq==0.10.0
