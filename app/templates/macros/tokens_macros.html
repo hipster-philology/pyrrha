@@ -200,9 +200,17 @@
         $('td.token_lemma').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var url = "{{corpus.allowed_search_route('lemma')}}?form="+cleanUp(term);
+	            const clean_term = cleanUp(term);
+	            var url = "{{corpus.allowed_search_route('lemma')}}?form=" + clean_term;
                 $.getJSON(url, function(data) {
-                    suggest(data);
+	                url = "{{corpus.custom_dictionary_search_route('lemma')}}?form=" + clean_term;
+	                $.getJSON(url, function (custom_data) {
+		                var allowed_and_custom = data.concat(custom_data)
+		                allowed_and_custom.sort(function (a, b) {
+			                return a.localeCompare(b);
+		                })
+		                suggest(allowed_and_custom);
+	                })
                 });
             },
             onSelect: function(e, term, item){
@@ -220,9 +228,17 @@
         $('td.token_pos').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var url = "{{corpus.allowed_search_route('POS')}}?form="+cleanUp(term);
+            	  const clean_term = cleanUp(term);
+                var url = "{{corpus.allowed_search_route('POS')}}?form="+clean_term;
                 $.getJSON(url, function(data) {
-                    suggest(data);
+                	  url = "{{corpus.custom_dictionary_search_route('POS')}}?form=" + clean_term;
+	                  $.getJSON(url, function (custom_data) {
+	                      var allowed_and_custom = data.concat(custom_data)
+                        allowed_and_custom.sort(function (a, b) {
+	                          return a.localeCompare(b);
+                        })
+                        suggest(allowed_and_custom);
+	                  })
                 });
             },
             onSelect: function(e, term, item){
@@ -235,11 +251,22 @@
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                fetch("{{corpus.allowed_search_route('morph')}}?form="+cleanUp(term))
-                    .then(function(response) {
-                        return response.json();
-                    }).then(function(responseJson) {
-                       suggest(responseJson);
+	            const clean_term = cleanUp(term);
+	            fetch("{{corpus.allowed_search_route('morph')}}?form=" + clean_term)
+                    .then(function(allowed) {
+                        return allowed.json();
+                    }).then(function(allowedJSON) {
+
+                    	fetch("{{corpus.custom_dictionary_search_route('morph')}}?form=" + clean_term).then(custom => {
+                    		return custom.json()
+                      }).then(customJSON => {
+		                    let allowed_and_custom = allowedJSON.concat(customJSON)
+		                    allowed_and_custom.sort(function (a, b) {
+			                    return a.value.localeCompare(b.value);
+		                    })
+		                    suggest(allowed_and_custom);
+                      })
+
                     });
             },
             renderItem: function (item, search){

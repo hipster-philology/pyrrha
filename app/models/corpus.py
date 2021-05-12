@@ -98,6 +98,14 @@ class Corpus(db.Model):
                                allowed_type=allowed_type)
         return url_for("main.search_value_api", corpus_id=self.id, allowed_type=allowed_type)
 
+    def custom_dictionary_search_route(self, category):
+        """ Returns the API search routes and parameters
+
+        :param category: category to search values for
+        :return: Corpus Custom Dictionary Search route
+        """
+        return url_for("main.custom_dictionary_search_value_api", corpus_id=self.id, category=category)
+
     @staticmethod
     def static_has_access(corpus_id, user):
         """
@@ -501,7 +509,7 @@ class Corpus(db.Model):
 
         if category == "lemma":
             return "\n".join([token.label for token in values])
-        elif category == "pos":
+        elif category == "POS":
             return ",".join([token.label for token in values])
         elif category == "morph":
             return "\n".join(["{}\t{}".format(token.label, token.secondary_label) for token in values])
@@ -878,7 +886,7 @@ class WordToken(db.Model):
 
         query = cls.query.with_entities(*retrieve_fields)
 
-        if form is None:
+        if form == "":
             query = query.filter(
                 db.and_(
                     getattr(cls, control_field) == filter_id
@@ -1327,6 +1335,8 @@ class CorpusCustomDictionary(db.Model):
     def morph_preproc(string: str, corpus: int) -> Dict[str, str]:
         if "\t" in string:
             morph, readable = string.split("\t")
+        elif "    " in string:
+            morph, readable = string.split("    ")
         else:
             morph, readable = string, ""
         return {"label": morph, "corpus": corpus, "secondary_label": readable, "category": "morph"}
@@ -1334,6 +1344,74 @@ class CorpusCustomDictionary(db.Model):
     @staticmethod
     def POS_preproc(string: str, corpus: int) -> Dict[str, str]:
         return {"label": string, "corpus": corpus, "secondary_label": "", "category": "POS"}
+
+    @staticmethod
+    def get_like(corpus_id, form, group_by, category="lemma"):
+        """ Get values starting with given form
+
+        :param corpus_id: Id of the corpus
+        :type corpus_id: int
+        :param form: Plaintext string to search for
+        :type form: str
+        :param group_by: Group by the form used (Avoid duplicate values)
+        :type group_by: bool
+        :param category: Type of value to match on (lemma, POS, morph)
+        :type category: str
+        :return: BaseQuery
+        """
+        normalised = unidecode.unidecode(form)
+        if category == "morph":
+            query_fields = [CorpusCustomDictionary.label, CorpusCustomDictionary.secondary_label]
+            retrieve_fields = [CorpusCustomDictionary.label, CorpusCustomDictionary.secondary_label]
+        else:
+            query_fields = [CorpusCustomDictionary.label]
+            retrieve_fields = [CorpusCustomDictionary.label]
+
+        query = CorpusCustomDictionary.query.with_entities(*retrieve_fields)
+
+        query = query.filter(
+            db.and_(
+                CorpusCustomDictionary.category == category
+            )
+        )
+
+        if form is None:
+            query = query.filter(
+                db.and_(
+                    CorpusCustomDictionary.corpus == corpus_id
+                )
+            )
+        else:
+            if category == "morph":
+                form = form.split()
+                query = query.filter(
+                    db.and_(
+                        CorpusCustomDictionary.corpus == corpus_id,
+                        # This or is applied on the different field : you can either have readable or label with a match
+                        db.or_(*[
+                            # But all the values that are given should match !
+                            db.and_(*[
+                                query_field.ilike("%{}%".format(fsplitted))
+                                for fsplitted in form
+                            ])
+                            for query_field in query_fields
+                        ])
+                    )
+                )
+            else:
+                query = query.filter(
+                    db.and_(
+                        CorpusCustomDictionary.corpus == corpus_id,
+                        *[
+                            query_field.ilike("{}%".format(form))
+                            for query_field in query_fields
+                        ]
+                    )
+                )
+        if group_by is True:
+            return query.group_by(retrieve_fields[0])
+
+        return query
 
 
 class ChangeRecord(db.Model):

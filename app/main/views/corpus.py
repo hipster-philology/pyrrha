@@ -7,7 +7,8 @@ from typing import List
 
 from app import db
 
-from app.models import CorpusUser, ControlLists, ControlListsUser, WordToken, ChangeRecord, Bookmark, Favorite, User
+from app.models import CorpusUser, ControlLists, ControlListsUser, WordToken, ChangeRecord, Bookmark, Favorite, User, \
+    CorpusCustomDictionary
 
 from .utils import render_template_with_nav_info
 from app.utils import ValidationError
@@ -376,6 +377,33 @@ def search_value_api(corpus_id, allowed_type):
     )
 
 
+@main.route('/corpus/<int:corpus_id>/api/custom-dictionary/<category>')
+def custom_dictionary_search_value_api(corpus_id, category):
+    """ Find values in the corpus custom dictionary
+
+    :param corpus_id: Id of the Corpus
+    :param allowed_type: Type of value (lemma, morph, POS)
+    """
+    form = request.args.get("form", "")
+    if not form.strip():
+        return jsonify([])
+    corpus = Corpus.query.get_or_404(corpus_id)
+    if not corpus.has_access(current_user):
+        abort(403)
+    return jsonify(
+        [
+            format_api_like_reply(result, category)
+            for result in CorpusCustomDictionary.get_like(
+                corpus_id=corpus_id,
+                form=form,
+                group_by=True,
+                category=category
+            ).limit(AUTOCOMPLETE_LIMIT)
+            if result is not None
+        ]
+    )
+
+
 @main.route("/corpus/<int:corpus_id>/preferences", methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
@@ -436,14 +464,8 @@ def preferences(corpus_id: int):
 def corpus_custom_dict(corpus_id: int):
     """Show preferences view."""
     corpus = Corpus.query.get_or_404(corpus_id)
-    corpus_user = CorpusUser.query.filter(
-        CorpusUser.corpus_id == corpus_id,
-        CorpusUser.user_id == current_user.id
-    ).one_or_none()
 
-    is_owner = corpus_user.is_owner
-
-    if is_owner and request.method == "PATCH":
+    if request.method == "PATCH":
         category = request.form.get("category", None)
         value = request.form.get("value", None)
         print(category)
@@ -464,8 +486,8 @@ def corpus_custom_dict(corpus_id: int):
             })
             resp.status_code = 403
             return resp
-    elif is_owner and request.method == "POST":
-        pos = request.form.get("pos", "")
+    elif request.method == "POST":
+        pos = request.form.get("POS", "")
         lemma = request.form.get("lemma", "")
         morph = request.form.get("morph", "")
         try:
@@ -490,7 +512,7 @@ def corpus_custom_dict(corpus_id: int):
             )
     return render_template_with_nav_info(
         "main/corpus_custom_dictionary.html",
-        pos=corpus.get_custom_dictionary("POS", formatted=True),
+        POS=corpus.get_custom_dictionary("POS", formatted=True),
         lemma=corpus.get_custom_dictionary("lemma", formatted=True),
         morph=corpus.get_custom_dictionary("morph", formatted=True),
         corpus=corpus
