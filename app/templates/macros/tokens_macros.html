@@ -4,7 +4,7 @@
 {{ token.left_context }} <{{tag}}>{{ token.form }}</{{tag}}> {{ token.right_context }}
 {% endmacro -%}
 
-{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False, endpoint="", sortable=False, search_kwargs={})%}
+{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False, endpoint="", sortable=False, search_kwargs={}, link_back=False)%}
 
 {% set visible = corpus.displayed_columns_by_name %}
 
@@ -52,7 +52,13 @@
         <tbody>
             {% for token in tokens.items %}
                 <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor {% if current_user and current_user.bookmark.token_id == token.id %}bookmark{% endif %}" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
-                    <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
+                    <td class="tok-anc">
+                        {% if link_back %}
+                            <a tabindex="-1" href="{{ token | get_token_uri }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a>
+                        {% else %}
+                            <a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a>
+                        {% endif %}
+                    </td>
                     <td>{{token.form}}</td>
                     {% if "lemma" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
@@ -426,7 +432,8 @@
                 <tr class="history">
                     <td class="detail">{{ token.user.first_name[0] }}.{{ token.user.last_name }}</td>
                     <td class="detail datetime">{{token.created_on}}</td>
-                    <td class="detail text">{{token_context(token.word_token, "b")}}</td>
+                    <td class="detail text">{{token_context(token.word_token, "b")}}
+                        {% if link_back %}<a tabindex="-1" href="{{ token.word_token | get_token_uri }}" id="tok{{ token.word_token.order_id }}"><i class="fa fa-link"></i></a>{% endif %}</td>
                     {% if "lemma" in visible %}
                     <td class="{% if token.lemma != token.lemma_new%}red{%endif%}">{{token.lemma}}</td>
                     <td class="line {% if token.lemma != token.lemma_new%}green{%endif%}">{{token.lemma_new}}</td>
