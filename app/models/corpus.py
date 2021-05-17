@@ -7,7 +7,7 @@ from typing import Iterable, Optional, Dict, List
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func, literal
+from sqlalchemy import func, literal, not_
 from werkzeug.exceptions import BadRequest
 from flask import url_for
 # Application imports
@@ -279,7 +279,7 @@ class Corpus(db.Model):
 
     def get_unallowed(self, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
-        AllowedPOS, AllowedMorph)
+        AllowedPOS, AllowedMorph) nor with a corpus custom dictionary
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
         :return: Flask SQL Alchemy Query
@@ -297,12 +297,20 @@ class Corpus(db.Model):
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
 
-        # Todo: Make sure this is optimized.
-        allowed = db.session.query(cls.label).filter(cls.control_list == self.control_lists_id)
+        allowed = db.session.query(cls).filter(
+            cls.control_list == self.control_lists_id,
+            cls.label == prop
+        )
+        custom_dict = db.session.query(CorpusCustomDictionary).filter(
+            CorpusCustomDictionary.corpus == self.id,
+            CorpusCustomDictionary.category == allowed_type,
+            CorpusCustomDictionary.label == prop
+        )
         return db.session.query(WordToken).filter(
             db.and_(
                 WordToken.corpus == self.id,
-                prop.notin_(allowed)
+                not_(allowed.exists()),
+                not_(custom_dict.exists())
             )
         ).order_by(WordToken.order_id)
 
@@ -1359,16 +1367,19 @@ class CorpusCustomDictionary(db.Model):
         :type category: str
         :return: BaseQuery
         """
-        normalised = unidecode.unidecode(form)
         if category == "morph":
             query_fields = [CorpusCustomDictionary.label, CorpusCustomDictionary.secondary_label]
             retrieve_fields = [CorpusCustomDictionary.label, CorpusCustomDictionary.secondary_label]
-        else:
+        elif category == "POS":
+            retrieve_fields = [CorpusCustomDictionary.secondary_label]
             query_fields = [CorpusCustomDictionary.label]
+        else:
             retrieve_fields = [CorpusCustomDictionary.label]
+            normalised = unidecode.unidecode(form)
+            if normalised == form:
+                query_fields = [CorpusCustomDictionary.secondary_label]
 
         query = CorpusCustomDictionary.query.with_entities(*retrieve_fields)
-
         query = query.filter(
             db.and_(
                 CorpusCustomDictionary.category == category

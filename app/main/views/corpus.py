@@ -382,7 +382,7 @@ def custom_dictionary_search_value_api(corpus_id, category):
     """ Find values in the corpus custom dictionary
 
     :param corpus_id: Id of the Corpus
-    :param allowed_type: Type of value (lemma, morph, POS)
+    :param category: Type of value (lemma, morph, POS)
     """
     form = request.args.get("form", "")
     if not form.strip():
