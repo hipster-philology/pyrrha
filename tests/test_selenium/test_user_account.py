@@ -47,7 +47,6 @@ class TestUserAccount(TestBase):
         ).first()
         self.assertIsNotNone(user)
 
-
     def test_reset_password_token(self):
         self.logout()
         # test when you receive the mail and click on the link

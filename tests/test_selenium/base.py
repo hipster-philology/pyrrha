@@ -305,6 +305,33 @@ class TokenCorrectBase(TestBase):
     CORPUS = "wauchier"
     CORPUS_ID = "1"
 
+    def assert_token_has_values(self, token, lemma=None, POS=None, morph=None):
+        """ Checks that value, if not None, have been updated
+        """
+        if lemma:
+            self.assertEqual(token.lemma, lemma, f"[Lemma] {token.lemma} should have been updated to {lemma}")
+        if POS:
+            self.assertEqual(token.POS, POS, f"[POS] {token.POS} should have been updated to {POS}")
+        if morph:
+            self.assertEqual(token.morph, morph, f"[Morph] {token.morph} should have been updated to {morph}")
+
+    def get_badge_text_for_token(self, row, badge_class: str):
+        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] {badge_class}").text.strip()
+
+    def get_similar_badge(self, row):
+        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] .similar-link")
+
+    def assert_saved(self, row):
+        self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-success"), "Saved")
+
+    def assert_invalid_value(self, row, category):
+        self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-danger"), f"Invalid value in {category}")
+
+    def assert_unchanged(self, row):
+        self.assertEqual(
+            self.get_badge_text_for_token(row, ".badge-status.badge-danger"), "No value where changed"
+        )
+
     def go_to_edit_token_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's edit token page """
 
@@ -386,7 +413,7 @@ class TokenCorrectBase(TestBase):
 
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, "#token_{}_row .badge-status".format(id_row))
+                (By.CSS_SELECTOR, "[rel='token_{}_row'] .badge-status".format(id_row))
             )
         )
 
@@ -423,10 +450,8 @@ class TokenCorrectBase(TestBase):
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "Save")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
+
         self.assertIn("table-changed", row.get_attribute("class"))
         self.driver.refresh()
         row = self.driver.find_element_by_id("token_1_row")

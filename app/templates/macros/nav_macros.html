@@ -169,9 +169,18 @@
     <a id="overview_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
         {{corpus.name}}</a>
 </header>
-    <a class="nav-link" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
-        <i class="fa fa-cog"></i> Preferences
-    </a>
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
+                <i class="fa fa-cog"></i> Preferences
+            </a>
+        </li>
+        <li>
+            <a class="nav-link" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
+                <i class="fa fa-book"></i> Custom Dictionary
+            </a>
+        </li>
+    </ul>
 Quick links
 <ul class="nav flex-column">
     <li class="nav-item">

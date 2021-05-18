@@ -7,7 +7,8 @@ from typing import List
 
 from app import db
 
-from app.models import CorpusUser, ControlLists, ControlListsUser, WordToken, ChangeRecord, Bookmark, Favorite, User
+from app.models import CorpusUser, ControlLists, ControlListsUser, WordToken, ChangeRecord, Bookmark, Favorite, User, \
+    CorpusCustomDictionary
 
 from .utils import render_template_with_nav_info
 from app.utils import ValidationError
@@ -19,7 +20,7 @@ from ...utils.response import format_api_like_reply
 from ...errors import MissingTokenColumnValue, NoTokensInput
 from .utils import requires_corpus_admin_access, requires_corpus_access
 from ..forms import Delete
-from app.utils import PreferencesUpdateError
+from app.utils import PreferencesUpdateError, PersonalDictionaryError
 
 AUTOCOMPLETE_LIMIT = 20
 
@@ -376,6 +377,33 @@ def search_value_api(corpus_id, allowed_type):
     )
 
 
+@main.route('/corpus/<int:corpus_id>/api/custom-dictionary/<category>')
+def custom_dictionary_search_value_api(corpus_id, category):
+    """ Find values in the corpus custom dictionary
+
+    :param corpus_id: Id of the Corpus
+    :param category: Type of value (lemma, morph, POS)
+    """
+    form = request.args.get("form", "")
+    if not form.strip():
+        return jsonify([])
+    corpus = Corpus.query.get_or_404(corpus_id)
+    if not corpus.has_access(current_user):
+        abort(403)
+    return jsonify(
+        [
+            format_api_like_reply(result, category)
+            for result in CorpusCustomDictionary.get_like(
+                corpus_id=corpus_id,
+                form=form,
+                group_by=True,
+                category=category
+            ).limit(AUTOCOMPLETE_LIMIT)
+            if result is not None
+        ]
+    )
+
+
 @main.route("/corpus/<int:corpus_id>/preferences", methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
@@ -426,5 +454,66 @@ def preferences(corpus_id: int):
         corpus_id=corpus_id,
         context_left=corpus.context_left,
         context_right=corpus.context_right,
+        corpus=corpus
+    )
+
+
+@main.route("/corpus/<int:corpus_id>/custom-dict", methods=["GET", "POST", "PATCH"])
+@login_required
+@requires_corpus_access("corpus_id")
+def corpus_custom_dict(corpus_id: int):
+    """Show preferences view."""
+    corpus = Corpus.query.get_or_404(corpus_id)
+
+    if request.method == "PATCH":
+        category = request.form.get("category", None)
+        value = request.form.get("value", None)
+        print(category)
+        try:
+            if not category:
+                raise PersonalDictionaryError("Category is missing")
+            elif not value:
+                raise PersonalDictionaryError("Value is missing")
+            corpus.insert_custom_dictionary_value(category=category, string=value)
+            return jsonify({
+                "status": True,
+                "message": "New value saved."
+            })
+        except PersonalDictionaryError:
+            resp = jsonify({
+                "message": "Unable to add to custom dictionary",
+                "status": False
+            })
+            resp.status_code = 403
+            return resp
+    elif request.method == "POST":
+        pos = request.form.get("POS", "")
+        lemma = request.form.get("lemma", "")
+        morph = request.form.get("morph", "")
+        try:
+            corpus.custom_dictionaries_update(
+                "POS", pos
+            )
+            corpus.custom_dictionaries_update(
+                "lemma", lemma
+            )
+            corpus.custom_dictionaries_update(
+                "morph", morph
+            )
+        except PersonalDictionaryError as exception:
+            flash(
+                f"Faild to update dictionary: {exception}",
+                category="error"
+            )
+        else:
+            flash(
+                f"Updated custom dictionary",
+                category="success"
+            )
+    return render_template_with_nav_info(
+        "main/corpus_custom_dictionary.html",
+        POS=corpus.get_custom_dictionary("POS", formatted=True),
+        lemma=corpus.get_custom_dictionary("lemma", formatted=True),
+        morph=corpus.get_custom_dictionary("morph", formatted=True),
         corpus=corpus
     )

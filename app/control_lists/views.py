@@ -7,7 +7,7 @@ from werkzeug.exceptions import BadRequest, NotFound, Forbidden
 
 
 from app.main.views.utils import render_template_with_nav_info
-from app.models import ControlLists, AllowedLemma, WordToken, User, PublicationStatus
+from app.models import ControlLists, AllowedLemma, WordToken, User, PublicationStatus, CorpusCustomDictionary
 from app import db, email
 from ..utils import PyrrhaError
 from ..utils.forms import strip_or_none

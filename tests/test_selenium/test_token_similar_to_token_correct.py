@@ -31,20 +31,14 @@ class TokenEditBase(TokenCorrect2CorporaBase):
             additional_action_before=self.go_to_filter_similar_with(token_id="2"),
 
         )
-        self.assertEqual(token.lemma, "saint", "Lemma has been kept")
-        self.assertEqual(token.POS, "NOMcom", "POS has been changed")
+        self.assert_saved(row)
+        self.assert_token_has_values(token, lemma="saint", POS="NOMcom")
 
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
-
-        self.assertEqual(
-            row.find_element_by_css_selector(".similar-link").text.strip(),
-            "2 similar to see"
-        )
+        similar_elem = self.get_similar_badge(row)
+        self.assertEqual(similar_elem.text.strip(), "2 similar to see")
         # Go to find similar
-        row.find_element_by_class_name("similar-link").click()
+        similar_elem.click()
+
         # Count the number of similar case
         self.assertEqual(len(self.get_main_table_body_rows()), 2, "There is two similar POS to edit")
         # Apply changes to the two others
