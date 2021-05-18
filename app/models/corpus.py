@@ -125,11 +125,16 @@ class Corpus(db.Model):
         return True
 
     def changes_per_day(self):
-        return list(db.session.query(
-            db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
-        ) \
-            .filter(ChangeRecord.corpus == self.id) \
-            .group_by(db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)).all())
+        return list([
+            tuple(elem)
+            for elem in db.session.query(
+                    db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                ).filter(
+                    ChangeRecord.corpus == self.id
+                ).group_by(
+                    db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                ).all()
+        ])
 
     def has_access(self, user):
         """ Can this corpus be accessed by the given user ?

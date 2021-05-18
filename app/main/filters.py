@@ -1,6 +1,10 @@
+from flask import request, url_for
+from json import dumps
+import math
+
 import locale
 from . import main
-from json import dumps
+from ..models import WordToken
 
 locale.setlocale(locale.LC_ALL, '')
 
@@ -20,3 +24,15 @@ def thousands(integer):
 @main.app_template_filter("json")
 def json(obj):
     return dumps(obj)
+
+
+@main.app_template_filter("get_token_uri")
+def get_token_uri(token: WordToken):
+    per_page = request.args.get("per_page", 100, int)
+    page = int(math.ceil(token.order_id / 100))
+    return url_for(
+        "main.tokens_correct",
+        corpus_id=token.corpus,
+        page=page,
+        per_page=per_page
+    ) + f"#tok{token.order_id}"
