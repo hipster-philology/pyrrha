@@ -468,7 +468,6 @@ def corpus_custom_dict(corpus_id: int):
     if request.method == "PATCH":
         category = request.form.get("category", None)
         value = request.form.get("value", None)
-        print(category)
         try:
             if not category:
                 raise PersonalDictionaryError("Category is missing")
