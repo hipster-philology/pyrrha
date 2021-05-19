@@ -132,7 +132,7 @@ def tokens_correct_single(corpus_id, token_id):
         token, change_record = WordToken.update(
             user_id=current_user.id,
             token_id=token_id, corpus_id=corpus_id,
-            lemma=request.form.get("lemma"),
+            lemma=string_to_none(request.form.get("lemma")),
             POS=string_to_none(request.form.get("POS")),
             morph=string_to_none(request.form.get("morph"))
         )
@@ -143,6 +143,7 @@ def tokens_correct_single(corpus_id, token_id):
             }
         else:
             similar = None
+
         return jsonify({
             "token": token.to_dict(),
             "similar": similar

@@ -203,6 +203,13 @@
             }
             return original.apply(this, arguments);
         };
+
+        $('td[contenteditable="true"]').on("keyup", function(e){
+            if (e.keyCode == 13)  {
+                $(this).html($(this).text())
+            }
+        });
+        {% if 'lemma' in visible %}
         $('td.token_lemma').autoComplete({
             minChars: 1,
             source: function(term, suggest){
@@ -225,12 +232,9 @@
                 clear_br(elem);
             }
         });
-        $('td[contenteditable="true"]').on("keyup", function(e){
-            if (e.keyCode == 13)  {
-                $(this).html($(this).text())
-            }
-        });
+        {% endif %}
 
+        {% if 'pos' in visible %}
         $('td.token_pos').autoComplete({
             minChars: 1,
             source: function(term, suggest){
@@ -253,7 +257,9 @@
                 clear_br(elem);
             }
         });
+        {% endif %}
 
+        {% if 'morph' in visible %}
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
@@ -284,7 +290,7 @@
                 clear_br(elem)
             }
         });
-
+        {% endif %}
         const create_info_tr_or_return_the_one = function (tr) {
           /**
            * tr : TR related to the details that will be shown
@@ -327,9 +333,15 @@
             fetch(event.target.href, {
                 method: 'POST',
                 body: getFormData({
+                    {% if "lemma" in visible %}
                     lemma: tr.querySelector(".token_lemma").innerText.trim(),
+                    {%  endif %}
+                    {% if "POS" in visible %}
                     POS: tr.querySelector(".token_pos").innerText.trim(),
-                    morph: tr.querySelector(".token_morph").innerText.trim()
+                    {% endif %}
+                    {% if "morph" in visible %}
+                    morph: tr.querySelector(".token_morph").innerText.trim(),
+                    {% endif %}
                 })
             })
             .then(resp => {
@@ -367,20 +379,22 @@
                 /* Shows error for each column in red as well as proposes to save into custom dictionary*/
                 Object.entries(error.details).forEach(([key, status]) => {
                     let selector = ".token_"+key.toLowerCase();
-                    if (status === false) {
-                        tr.querySelector(selector).classList.add("table-danger");
-                        let element = createElement(
-                            `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
-                                Add <code>${tr.querySelector(selector).innerText.trim()}</code> to custom dictionary of <em>${key}</em>
-                            </a>`
-                        );
-                        element.addEventListener("click", function(child_event) {
-                           child_event.preventDefault();
-                           add_to_custom_dict(element);
-                        });
-                        receptor.appendChild(element);
+                    if (tr.querySelector(selector) !== null) {
+                        if (status === false) {
+                            tr.querySelector(selector).classList.add("table-danger");
+                            let element = createElement(
+                                `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
+                                    Add <code>${tr.querySelector(selector).innerText.trim()}</code> to custom dictionary of <em>${key}</em>
+                                </a>`
+                            );
+                            element.addEventListener("click", function(child_event) {
+                               child_event.preventDefault();
+                               add_to_custom_dict(element);
+                            });
+                            receptor.appendChild(element);
+                        }
+                        else { tr.querySelector(selector).classList.remove("table-danger");  }
                     }
-                    else { tr.querySelector(selector).classList.remove("table-danger");  }
                 });
             }).then(function() {
                 spinner.remove();
@@ -420,7 +434,7 @@
                 } else {
                     td.appendChild(
                         createElement(
-                            '<span class="badge badge-success badge-status">Custom dictionary updated</span>'
+                            '<span class="badge badge-success badge-status">Custom dictionary updated. You can save now save your annotation.</span>'
                         )
                     );
                 }
