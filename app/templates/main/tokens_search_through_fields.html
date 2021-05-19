@@ -5,12 +5,7 @@
 
 {% block content %}
 
-{% set visible = [] %}
-{% for column in corpus.columns %}
-    {% if not column.hidden %}
-        {{ visible.append(column.heading) }}
-    {% endif %}
-{% endfor %}
+{% set visible = corpus.get_columns_headings %}
 
     <h1 class="mt-3"><i class="fa fa-search mr-2"></i>Corpus {{ corpus.name }} - Search tokens within the corpus </h1>
 
