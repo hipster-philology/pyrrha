@@ -260,7 +260,10 @@ def tokens_search_through_fields(corpus_id):
     if not corpus.has_access(current_user):
         abort(403)
 
-    columns = tuple(["form"] + list(corpus.displayed_columns_by_name.keys()))
+    columns = tuple(["form"] + [
+        col if col == "POS" else col.lower()
+        for col in corpus.get_columns_headings()
+    ])
 
     input_values = {}
 
