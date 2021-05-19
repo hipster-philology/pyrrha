@@ -339,12 +339,11 @@ class Corpus(db.Model):
                 displayed_columns_by_name["POS"] = column
         return displayed_columns_by_name
 
-    @property
-    def get_columns_headings(self):
+    def get_columns_headings(self, ignore=("Similar", )):
         return [
             col.heading
             for col in self.columns
-            if not col.hidden
+            if not col.hidden and col.heading not in ignore
         ]
 
     def get_tokens(self):

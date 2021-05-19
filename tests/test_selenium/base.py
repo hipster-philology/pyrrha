@@ -84,7 +84,7 @@ class TestBase(LiveServerTestCase):
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
         if config_overwrite:
             app.config.update(config_overwrite)
-        print(app.config)
+
         app.DEBUG = True
         app.client = app.test_client()
         app.config.update(
@@ -545,6 +545,7 @@ class TokensSearchThroughFieldsBase(TestBase):
 
         # load each page to get the (partials) result tables
         pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        self.driver.save_screenshot("first.results.png")
         for page_index in range(0, len(pagination)):
             self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
 
