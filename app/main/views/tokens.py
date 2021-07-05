@@ -15,6 +15,7 @@ from ...utils.pagination import int_or
 from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
 from io import StringIO
+from itertools import product
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
@@ -259,29 +260,34 @@ def tokens_search_through_fields(corpus_id):
     if not corpus.has_access(current_user):
         abort(403)
 
-    kargs = {}
+    columns = tuple(["form"] + [
+        col if col == "POS" else col.lower()
+        for col in corpus.get_columns_headings()
+    ])
+
+    input_values = {}
 
     # make a dict with values splitted for each OR operator
     fields = {}
-    for name in ("lemma", "form", "POS", "morph"):
-        if request.method == "POST":
-            value = strip_or_none(request.form.get(name))
-        else:
-            value = strip_or_none(request.args.get(name))
+    source_dict = request.form if request.method == "POST" else request.args
+
+    for name in columns:
+        value = strip_or_none(source_dict.get(name))
+        input_values[name] = value
+
         # split values with the '|' OR operator but keep escaped '\|' ones
-        if value is None:
-            fields[name] = ""
-        else:
-            fields[name] = prepare_search_string(value)
-        kargs[name] = value
+        fields[name] = prepare_search_string(value) if value is not None else ""
 
     # all search combinations
     search_branches = [
-        {"lemma": lemma, "form": form, "POS": pos, "morph": morph}
-        for lemma in fields["lemma"]
-        for form in fields["form"]
-        for pos in fields["POS"]
-        for morph in fields["morph"]
+        dict(prod)
+        for prod in product(*[
+            [
+                (field, value)
+                for value in fields[field]
+            ]
+            for field in fields
+        ])
     ]
 
     value_filters = []
@@ -294,6 +300,7 @@ def tokens_search_through_fields(corpus_id):
             branch_filters.extend(column_search_filter(getattr(WordToken, name), value))
 
         value_filters.append(branch_filters)
+
     if not value_filters:  # If the search is empty, we only search for the corpus_id
         value_filters.append([WordToken.corpus == corpus_id])
 
@@ -306,12 +313,15 @@ def tokens_search_through_fields(corpus_id):
         "form": func.lower(WordToken.form),
         "morph": func.lower(WordToken.morph),
     }.get(request.args.get("orderBy"), WordToken.order_id)
+
+    args = []
+
     if len(value_filters) > 1:
         and_filters = [and_(*branch_filters) for branch_filters in value_filters]
         args = [or_(*and_filters)]
-    else:
-        if len(value_filters) == 1:
-            args = value_filters[0]
+    elif len(value_filters) == 1:
+        args = value_filters[0]
+
     tokens = WordToken.query.filter(*args).order_by(
         order_by.desc()
         if bool(int(request.args.get("desc", "0")))  # default sort order is ascending
@@ -323,9 +333,9 @@ def tokens_search_through_fields(corpus_id):
     tokens = tokens.paginate(page=page, per_page=per_page)
 
     return render_template_with_nav_info('main/tokens_search_through_fields.html',
-                                         search_kwargs = {"corpus_id": corpus.id, **kargs},
+                                         search_kwargs={"corpus_id": corpus.id, **input_values},
                                          changed=corpus.changed(tokens.items),
-                                         corpus=corpus, tokens=tokens, **kargs)
+                                         corpus=corpus, tokens=tokens, **input_values)
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["GET", "POST"])
