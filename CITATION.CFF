@@ -1,0 +1,12 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Clérice
+    given-names: Thibault
+    orcid: https://orcid.org/0000-0003-1852-9204
+  - family-names: Pilla
+    given-names: Julien
+title: "Pyrrha"
+version: 3.0.0
+doi: 10.5281/zenodo.2325427
+date-released: 2021-07-29
