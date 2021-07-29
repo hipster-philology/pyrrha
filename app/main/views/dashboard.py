@@ -1,5 +1,6 @@
 from flask import request, url_for, redirect, abort, flash
 from flask_login import login_required, current_user
+from typing import List
 
 from app import db
 from app.main.views.utils import render_template_with_nav_info
@@ -82,6 +83,27 @@ def manage_control_lists_user(cl_id):
         return abort(403)
 
 
+def update_control_list_user(
+        corpus: Corpus,
+        clu_list: List[ControlListsUser],
+        users: List[User],
+        _commit: bool = True
+):
+    """ Update control list user list permission for a given corpus. """
+    clu_owner_id_list = []
+    for clu in clu_list:
+        if clu.is_owner:
+            clu_owner_id_list.append(clu.user_id)
+        db.session.delete(clu)
+    for clu in [
+        ControlListsUser(
+            control_lists_id=corpus.control_lists_id,
+            user_id=user.id, is_owner=user.id in clu_owner_id_list) for user in users]:
+        db.session.add(clu)
+    if _commit:
+        db.session.commit()
+
+
 @main.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
 @login_required
 def manage_corpus_users(corpus_id):
@@ -104,6 +126,8 @@ def manage_corpus_users(corpus_id):
 
             # previous rights
             prev_cu = CorpusUser.query.filter(CorpusUser.corpus_id == corpus_id).all()
+            prev_clu = ControlListsUser.query.filter(
+                ControlListsUser.control_lists_id == corpus.control_lists_id).all()
 
             # should not be able to delete the last owner
             if len(prev_cu) > 0 and True not in set([user.id in ownerships for user in users]):
@@ -116,6 +140,7 @@ def manage_corpus_users(corpus_id):
                 for cu in [CorpusUser(corpus=corpus, user=user, is_owner=user.id in ownerships)
                            for user in users]:
                     db.session.add(cu)
+                update_control_list_user(corpus, prev_clu, users, _commit=False)
                 db.session.commit()
                 flash('Modifications have been saved.', 'success')
             except Exception as e:

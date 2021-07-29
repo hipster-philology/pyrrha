@@ -8,6 +8,6 @@
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_history") }}
 
-{{ tokens_macros.table(tokens, corpus=corpus, tracking=True) }}
+{{ tokens_macros.table(tokens, corpus=corpus, tracking=True, link_back=True) }}
 
 {% endblock %}

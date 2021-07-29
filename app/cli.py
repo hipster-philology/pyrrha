@@ -5,6 +5,7 @@ from app.models import Role, User, ControlLists
 from . import create_app, db
 from .models import (
     Corpus,
+    Column,
     AllowedPOS,
     AllowedLemma,
     AllowedMorph,
@@ -34,6 +35,41 @@ def make_cli():
         click.echo("Loading the application")
         global app
         app = create_app(config)
+
+    @click.command("edit-user")
+    @click.argument("user_id_or_email")
+    @click.option("--confirm-mail", "is_confirmed", is_flag=True,
+                  help="Confirm mail address.")
+    @click.option("--role", "role", type=click.Choice(['User', 'Administrator'], case_sensitive=False), required=False,
+                  help="Set role.")
+    def edit_user(user_id_or_email, is_confirmed=False, role=None):
+        """Edits a user by id or email
+        """
+        with app.app_context():
+            try:
+                int(user_id_or_email)
+                user_id = user_id_or_email
+            except ValueError:
+                lookup = User.query.filter(User.email == user_id_or_email).first()
+                user_id = lookup.id if lookup else None
+
+            if not user_id:
+                click.echo(f"User with email '{user_id_or_email}' not found.")
+
+            user = User.query.filter(User.id == user_id).first()
+            if not user:
+                click.echo(f"User with id '{user_id}' not found.")
+                return
+            
+            if is_confirmed and not user.confirmed:
+                User.query.filter(User.id == user_id).update({User.confirmed: True})
+                db.session.commit()
+            
+            if role is not None:
+                new_role = Role.query.filter(Role.name == role.title()).first()
+                if user.role_id != new_role.id:      
+                    User.query.filter(User.id == user_id).update({User.role_id: new_role.id})
+                    db.session.commit()
 
     @click.command("db-create")
     def db_create():
@@ -123,7 +159,13 @@ def make_cli():
                 allowed_POS=POS,
                 allowed_morph=morph,
                 context_left=left,
-                context_right=right
+                context_right=right,
+                columns=[
+                    Column(heading="Lemma"),
+                    Column(heading="POS"),
+                    Column(heading="Morph"),
+                    Column(heading="Similar"),
+                ]
             )
             db.session.commit()
             click.echo(
@@ -180,7 +222,13 @@ def make_cli():
                     name=name, word_tokens_dict=input_tokens,
                     allowed_lemma=allowed_lemma, allowed_morph=allowed_morph,
                     allowed_POS=allowed_POS, context_left=left,
-                    context_right=right
+                    context_right=right,
+                    columns=[
+                        Column(heading="Lemma"),
+                        Column(heading="POS"),
+                        Column(heading="Morph"),
+                        Column(heading="Similar"),
+                    ]
                 )
                 db.session.commit()
                 click.echo(data.control_lists_id)
@@ -238,9 +286,75 @@ def make_cli():
                 ))
                 click.echo("--- Allowed POS Values dumped")
 
+    @cli.command("db-upgrade", help="Do small migrations")
+    @click.argument("migration_name",
+              type=click.Choice(['controllist-markdown', 'add-columns'], case_sensitive=False))
+    def db_add_table(migration_name):
+        columns = {
+            "controllist-markdown": [
+                ("control_lists", (db.Column("notes", db.Text),))
+            ]
+        }
+
+        def add_column(engine, table_name, column):
+            column_name = column.compile(dialect=engine.dialect)
+            column_type = column.type.compile(engine.dialect)
+            engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % (table_name, column_name, column_type))
+            return column_name, column_type
+
+        migration_name = migration_name.lower()
+        with app.app_context():
+            if migration_name == "add-columns":
+                import app.models as tables
+                Model = getattr(tables, "Column", None)
+                if Model:
+                    with app.app_context():
+                        Model.__table__.create(db.session.bind, checkfirst=True)
+                for corpus in Corpus.query.all():
+                    corpus.columns = [
+                        Column(corpus_id=corpus.id, heading="Lemma"),
+                        Column(corpus_id=corpus.id, heading="POS"),
+                        Column(corpus_id=corpus.id, heading="Morph"),
+                        Column(corpus_id=corpus.id, heading="Similar"),
+                    ]
+                return
+            if migration_name in columns:
+                changes = []
+                for table, columns in columns[migration_name]:
+                    for column in columns:
+                        name, _ = add_column(db.engine, table, column)
+                        changes.append(str(name))
+
+                click.echo(
+                    "Success: {} columns added [{}]".format(
+                        len(changes),
+                        ", ".join(changes))
+                )
+
+    cli.add_command(db_create)
+    
+    @click.command("db-add", help="Small tool to add new table instead of migrating")
+    @click.argument("model")
+    def db_add_table(model):
+        import app.models as tables
+        Model = getattr(tables, model, None)
+        if Model:
+            with app.app_context():
+                Model.__table__.create(db.session.bind, checkfirst=True)
+        else:
+            click.echo("Model not found.")
+            click.echo(
+                "Model available: " + ", ".join(sorted([
+                    x for x in dir(tables)
+                    if x[0] != "_" and x[0].isupper()
+                ]))
+            )
+
     cli.add_command(db_create)
     cli.add_command(db_fixtures)
     cli.add_command(db_recreate)
+    cli.add_command(db_add_table)
+    cli.add_command(edit_user)
     cli.add_command(run)
     cli.add_command(corpus_ingest)
     cli.add_command(corpus_import)

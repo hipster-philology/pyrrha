@@ -24,6 +24,7 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    SEND_MAIL_STATUS = os.environ.get('SEND_MAIL_STATUS', True)
 
     # Admin account
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
@@ -47,6 +48,7 @@ class DevelopmentConfig(Config):
     ASSETS_DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
         'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
+    #SQLALCHEMY_DATABASE_URI = "postgres://postgres:mysecretpassword@172.17.0.2:5432/postgres"
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Email
@@ -61,6 +63,7 @@ class DevelopmentConfig(Config):
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
+    SEND_MAIL_STATUS = os.environ.get('SEND_MAIL_STATUS', False)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
     LEMMATIZERS = [
@@ -86,6 +89,7 @@ class TestConfig(Config):
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'postmaster@sandboxfa7a873303c1425f8fda7947aa195696.mailgun.org'
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'c3c7cc3c785815a8728a6266745a70db-b6183ad4-c78d7487'
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    SEND_MAIL_STATUS = os.environ.get('SEND_MAIL_STATUS', False)
 
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'

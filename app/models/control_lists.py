@@ -15,6 +15,7 @@ from sqlalchemy import literal, case
 from werkzeug.exceptions import BadRequest
 # APP Logic
 from .. import db
+from ..utils import PyrrhaError
 from ..utils.forms import prepare_search_string, column_search_filter, read_input_POS, read_input_morph, \
     read_input_lemma
 # Models
@@ -41,6 +42,7 @@ class ControlLists(db.Model):
     description = db.Column(db.String(255), nullable=True)
     bibliography = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(10), nullable=True)
+    notes = db.Column(db.Text, nullable=True)
 
     # For caching purposes, we record the last time these fields were edited
     #last_lemma_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
@@ -159,7 +161,7 @@ class ControlLists(db.Model):
                 filters,
                 db.or_(
                     *(
-                        db.and_(*tuple(column_search_filter(AllowedLemma.label_uniform, search_string)))
+                        db.and_(*tuple(column_search_filter(AllowedLemma.label_uniform, unidecode.unidecode(search_string))))
                         for search_string in prepare_search_string(kw)
                     )
                 )
@@ -215,8 +217,7 @@ class ControlLists(db.Model):
         except Exception as E:
             print(E)
             db.session.rollback()
-            return False
-        return True
+            raise
 
     def has_list(self, allowed_type):
         """ Check if the Control List has the specific allowed_type
@@ -261,7 +262,7 @@ class ControlLists(db.Model):
             for file, model, parser in configs:
                 filepath = os.path.join(directory, file)
                 if os.path.exists(filepath):
-                    with open(filepath) as f:
+                    with open(filepath, encoding='utf-8') as f:
                         model.add_batch(parser(f.read()), control_lists_id=cl.id)
 
                     print("[ControlLists] [%s] Loading %s " % (data["name"], os.path.basename(filepath)))
@@ -308,7 +309,7 @@ class AllowedLemma(db.Model):
         :param _commit: Force commit (Default: false)
         """
         if len(allowed_values) != len(set(allowed_values)):
-            raise Exception("Following values are duplicated: " + ", ".join(
+            raise PyrrhaError("Following values are duplicated: " + ", ".join(
                 [
                     lemma
                     for lemma, cnt in Counter(allowed_values).items()

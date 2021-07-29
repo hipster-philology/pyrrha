@@ -1,6 +1,7 @@
 {% extends 'layouts/base.html' %}
 {% import 'macros/tokens_macros.html' as tokens_macros %}
 {% import 'macros/header_macros.html' as header_macros %}
+{% import 'macros/upload_text.html' as upload_text %}
 
 {% block page_title %}Control List {{control_list.name}}{% endblock %}
 
@@ -11,6 +12,7 @@
     <div class="form-group">
         <label for="allowed_values">Allowed {{allowed_type}}</label>
         <small id="allowed_values_help" class="form-text text-muted">{{format_message}}</small>
+        {{ upload_text.upload_text("allowed_values") }}
         <textarea aria-describedby="allowed_values_help" class="form-control" id="allowed_values" name="allowed_values">{{values}}</textarea>
     </div>
     <button type="submit" id="submit" class="btn btn-primary">Submit</button>

@@ -1,9 +1,15 @@
+{% import 'macros/table_macros.html' as table_macros %}
 
 {%- macro token_context(token, tag="b") %}
 {{ token.left_context }} <{{tag}}>{{ token.form }}</{{tag}}> {{ token.right_context }}
 {% endmacro -%}
 
-{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False) %}
+{% macro table(tokens, corpus, changed, editable=False, tracking=False, checkbox=False, record=None, similar=False, current_user=False, endpoint="", sortable=False, search_kwargs={}, link_back=False)%}
+
+{% set visible = corpus.displayed_columns_by_name %}
+
+{% set similar = similar and "similar" in visible %}
+
 {% if editable %}
     {%- if checkbox %}
         <div>
@@ -22,17 +28,47 @@
 
     <table class="table table-bordered">
         <thead>
-        <tr><th>Id</th><th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+            <tr>
+                <th>Id</th>
+                <th>
+                    Form
+                    {% if sortable %}
+                        {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="form") }}
+                    {% endif %}
+                </th>
+                {% for heading in ("lemma", "POS", "morph") %}
+                    {% if heading in visible %}
+                        <th>
+                            {{ heading.capitalize() if heading != "POS" else "POS" }}
+                            {% if sortable %}
+                                {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy=heading.lower()) }}
+                            {% endif %}
+                        </th>
+                    {% endif %}
+                {% endfor%}
+                <th>Context</th>
                 {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th>{% if not checkbox %}<th class="dd">+</th>{% endif %}</tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
-                <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
-                    <td class="tok-anc"><a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a></td>
+                <tr class="editable{% if token.id in changed %} table-changed{% endif %} token-anchor {% if current_user and current_user.bookmark.token_id == token.id %}bookmark{% endif %}" data-token-order="{{ token.order_id }}" id="token_{{token.id}}_row">
+                    <td class="tok-anc">
+                        {% if link_back %}
+                            <a tabindex="-1" href="{{ token | get_token_uri }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a>
+                        {% else %}
+                            <a tabindex="-1" href="#tok{{ token.order_id }}" id="tok{{ token.order_id }}">{{ token.order_id }}</a>
+                        {% endif %}
+                    </td>
                     <td>{{token.form}}</td>
+                    {% if "lemma" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_lemma typeahead"{% endif %}>{{token.lemma}}</td>
+                    {% endif%}
+                    {% if "POS" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_pos"{% endif %}>{{token.POS}}</td>
+                    {% endif%}
+                    {% if "morph" in visible %}
                     <td {% if not checkbox %}contenteditable="true" class="token_morph"{% endif %}>{{token.morph}}</td>
+                    {% endif %}
                     <td class="small">{{token_context(token)}}</td>
                     {%- if similar -%}
                         <td><a tabindex="-1" class="similar-link" href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}"><span class="badge badge-secondary">{{token.similar}}</span></a></td>
@@ -40,7 +76,11 @@
                     {%- if checkbox -%}
                         <td><input class="form-check word-token" type="checkbox" checked="checked" value="{{token.id}}" /></td>
                     {%- else -%}
-                        <td class="save"><a class="save" href="{{url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=token.id)}}">Save</a></td>
+                        <td class="save">
+                            <a class="save" href="{{url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=token.id)}}">
+                                Save
+                            </a>
+                        </td>
                         <td class="dd">
                           <a id="dd_t{{token.order_id}}" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="More options" tabindex="-1">
                             <i class="fa fa-plus-square"></i>
@@ -49,6 +89,7 @@
                             <a class="dropdown-item" href="{{ url_for('main.tokens_edit_form', corpus_id=corpus.id, token_id=token.id) }}">Edit the form</a>
                             <a class="dropdown-item" href="{{ url_for('main.tokens_del_row', corpus_id=corpus.id, token_id=token.id) }}">Delete the row</a>
                             <a class="dropdown-item" href="{{ url_for('main.tokens_add_row', corpus_id=corpus.id, token_id=token.id) }}">Add a token after this one</a>
+                            <a class="dropdown-item bookmark" href="{{ url_for('main.corpus_bookmark', corpus_id=corpus.id, token_id=token.id, page=tokens.page) }}">Set as bookmark</a>
                           </div>
                         </td>
                     {%- endif -%}
@@ -75,8 +116,6 @@
 
             al.style.display = "none";
             er.style.display = "none";
-
-
             var selected_tokens = $.map($(".word-token:checked"), function(elem) { return $(elem).val(); });
             jQuery.ajax({
                 url: event.target.href,
@@ -102,11 +141,61 @@
     });
     </script>
     {% else %}
+    <select id="autocomplete" style="display: none"></select>
     <script type="text/javascript">
     $(document).ready(function(){
-        var clear_br = function (elem) {
-            elem.find("br").remove();
+        const clear_br = function (elem) {
+            try {
+                return elem.querySelectorAll("br").forEach(elem => {
+                    elem.remove()
+                });
+            } catch {
+                return elem;
+            }
         };
+        const cleanUp = function(string) {
+            return createElement(`<div>${string}</div>`).innerText.toLowerCase().trim();
+        };
+        const clearBadges = function(element) {
+            element.querySelectorAll(".badge-status").forEach(elem => { elem.remove(); });
+        };
+
+        const createElement = function (html) {
+            /** Create an element from an HTML string
+             * Source : https://stackoverflow.com/questions/494143/creating-a-new-dom-element-from-an-html-string-using-built-in-dom-methods-or-pro/35385518#35385518
+             *
+             **/
+            let template = document.createElement('template');
+            html = html.trim(); // Never return a text node of whitespace as the result
+            template.innerHTML = html;
+            return template.content.firstChild;
+        };
+
+        const getFormData = function(object) {
+            const formData = new FormData();
+            Object.keys(object).forEach(key => formData.append(key, object[key]));
+            return formData;
+        };
+
+        /**
+         *
+         * https://stackoverflow.com/a/36846308 : Prevents pasting rich content
+         *
+         */
+
+        [].forEach.call(document.querySelectorAll('td[contenteditable="true"]'), function (el) {
+            el.addEventListener('paste', function(e) {
+                e.preventDefault();
+                var text = e.clipboardData.getData("text/plain");
+                document.execCommand("insertHTML", false, text);
+            }, false);
+        });
+
+        /**
+         *
+         * Auto-complete stuff
+         *
+         **/
         var original = $.fn.val;
         $.fn.val = function() {
             if ($(this).is('*[contenteditable=true]')) {
@@ -114,34 +203,27 @@
             }
             return original.apply(this, arguments);
         };
-        var cleanUp = function(string) {
-            return $("<div>"+string+"</div>").text().toLowerCase().trim();
-        };
-        $('td.token_lemma').autoComplete({
-            minChars: 1,
-            source: function(term, suggest){
-                var url = "{{corpus.allowed_search_route('lemma')}}?form="+cleanUp(term);
-                $.getJSON(url, function(data) {
-                    suggest(data);
-                });
-            },
-            onSelect: function(e, term, item){
-                var elem = $(this);
-                elem.val(item.data("value"));
-                clear_br(elem);
-            }
-        });
+
         $('td[contenteditable="true"]').on("keyup", function(e){
             if (e.keyCode == 13)  {
                 $(this).html($(this).text())
             }
         });
-        $('td.token_pos').autoComplete({
+        {% if 'lemma' in visible %}
+        $('td.token_lemma').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var url = "{{corpus.allowed_search_route('POS')}}?form="+cleanUp(term);
+	            const clean_term = cleanUp(term);
+	            var url = "{{corpus.allowed_search_route('lemma')}}?form=" + clean_term;
                 $.getJSON(url, function(data) {
-                    suggest(data);
+	                url = "{{corpus.custom_dictionary_search_route('lemma')}}?form=" + clean_term;
+	                $.getJSON(url, function (custom_data) {
+		                var allowed_and_custom = data.concat(custom_data)
+		                allowed_and_custom.sort(function (a, b) {
+			                return a.localeCompare(b);
+		                })
+		                suggest(allowed_and_custom);
+	                })
                 });
             },
             onSelect: function(e, term, item){
@@ -150,14 +232,54 @@
                 clear_br(elem);
             }
         });
+        {% endif %}
+
+        {% if 'pos' in visible %}
+        $('td.token_pos').autoComplete({
+            minChars: 1,
+            source: function(term, suggest){
+            	  const clean_term = cleanUp(term);
+                var url = "{{corpus.allowed_search_route('POS')}}?form="+clean_term;
+                $.getJSON(url, function(data) {
+                	  url = "{{corpus.custom_dictionary_search_route('POS')}}?form=" + clean_term;
+	                  $.getJSON(url, function (custom_data) {
+	                      var allowed_and_custom = data.concat(custom_data)
+                        allowed_and_custom.sort(function (a, b) {
+	                          return a.localeCompare(b);
+                        })
+                        suggest(allowed_and_custom);
+	                  })
+                });
+            },
+            onSelect: function(e, term, item){
+                var elem = $(this);
+                elem.val(item.data("value"));
+                clear_br(elem);
+            }
+        });
+        {% endif %}
+
+        {% if 'morph' in visible %}
         $('td.token_morph').autoComplete({
             minChars: 1,
             source: function(term, suggest){
-                var url = "{{corpus.allowed_search_route('morph')}}?form="+cleanUp(term);
-                $.getJSON(url, function(data) {
-                    suggest(data);
-                });
+	            const clean_term = cleanUp(term);
+	            fetch("{{corpus.allowed_search_route('morph')}}?form=" + clean_term)
+                    .then(function(allowed) {
+                        return allowed.json();
+                    }).then(function(allowedJSON) {
 
+                    	fetch("{{corpus.custom_dictionary_search_route('morph')}}?form=" + clean_term).then(custom => {
+                    		return custom.json()
+                      }).then(customJSON => {
+		                    let allowed_and_custom = allowedJSON.concat(customJSON)
+		                    allowed_and_custom.sort(function (a, b) {
+			                    return a.value.localeCompare(b.value);
+		                    })
+		                    suggest(allowed_and_custom);
+                      })
+
+                    });
             },
             renderItem: function (item, search){
                 return '<div><a class="autocomplete-suggestion" data-val="'+item.value+'" title="'+item.label+'">'+item.label+'</a></div>';
@@ -168,39 +290,159 @@
                 clear_br(elem)
             }
         });
-        $('.editable a.save').on("click", function (event) {
+        {% endif %}
+        const create_info_tr_or_return_the_one = function (tr) {
+          /**
+           * tr : TR related to the details that will be shown
+           */
+          if (tr.nextElementSibling.getAttribute("rel") == tr.id) {
+              return tr.nextSibling.firstChild; // Returns firstChild because we return TD
+          }
+            let tdCount = tr.querySelectorAll("td").length,
+                tr_receptor = tr.parentNode.insertBefore(
+                    createElement(`<tr rel="${tr.id}"><td colspan="${tdCount-1}" style="text-align: right;"></td><td></td></tr>`),
+                    tr.nextSibling
+                ),
+                receptor = tr_receptor.firstChild;
+
+            tr_receptor.lastChild.appendChild(createElement(`<a href="#"><i class="fa fa-remove"></i></a>`))
+
+            tr_receptor.lastChild.firstChild.addEventListener("click", (event => {
+                event.preventDefault();
+                tr_receptor.remove();
+            }));
+            return receptor
+        };
+
+        const update_row = function(event) {
             event.preventDefault();
-            var link = $(this),
-                parent = link.parents("tr.editable"),
-                spinner = $('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>');
-            link.parent().find(".badge-status").remove();
-            link.before(spinner);
-            //link.text("(Saving) Save");
-            jQuery.ajax({
-                url: event.target.href,
-                type: 'POST',
-                data: {
-                    lemma: parent.find(".token_lemma").text().trim(),
-                    POS: parent.find(".token_pos").text().trim(),
-                    morph: parent.find(".token_morph").text().trim()
+            let link = event.target,
+                td = link.parentNode,
+                tr = link.parentNode.parentNode, // Twice parent: 1 for td, 1 for tr
+                spinner = createElement(`<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>`);
+
+            // Remove previous badges
+            clearBadges(td);
+
+            let receptor = create_info_tr_or_return_the_one(tr);
+            clearBadges(receptor);
+
+            // Add the spinner, syntax is container.insertBefore(newElem, refElement);
+            receptor.appendChild(spinner);
+
+            fetch(event.target.href, {
+                method: 'POST',
+                body: getFormData({
+                    {% if "lemma" in visible %}
+                    lemma: tr.querySelector(".token_lemma").innerText.trim(),
+                    {%  endif %}
+                    {% if "POS" in visible %}
+                    POS: tr.querySelector(".token_pos").innerText.trim(),
+                    {% endif %}
+                    {% if "morph" in visible %}
+                    morph: tr.querySelector(".token_morph").innerText.trim(),
+                    {% endif %}
+                })
+            })
+            .then(resp => {
+              let json = resp.json(); // there's always a body
+              if (resp.status >= 200 && resp.status < 300) {
+                return json;
+              } else {
+                return json.then(Promise.reject.bind(Promise));
+              }
+            })
+            .then(response => {
+                if(response.similar && response.similar.count > 0) {
+                    receptor.appendChild(
+                        createElement(
+                            `<a class="similar-link badge badge-primary" href="${response.similar.link}">
+                                ${response.similar.count} similar to see
+                            </a>`
+                        )
+                    );
                 }
-            }).done(function(response){
-                    if(response.similar.count > 0) {
-                        link.parent().append("<a class='similar-link badge badge-primary' href='"+response.similar.link+"'> "+response.similar.count+" similar to see</a>");
+                tr.classList.add("table-changed");
+
+                receptor.appendChild(
+                    createElement('<span class="badge badge-success badge-status">Saved</span>')
+                );
+
+            }).catch(function(error){
+                receptor.appendChild(
+                    createElement(
+                        `<span class="badge badge-danger badge-status">
+                            ${error.message}
+                        </span>`
+                    )
+                );
+                /* Shows error for each column in red as well as proposes to save into custom dictionary*/
+                Object.entries(error.details).forEach(([key, status]) => {
+                    let selector = ".token_"+key.toLowerCase();
+                    if (tr.querySelector(selector) !== null) {
+                        if (status === false) {
+                            tr.querySelector(selector).classList.add("table-danger");
+                            let element = createElement(
+                                `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
+                                    Add <code>${tr.querySelector(selector).innerText.trim()}</code> to custom dictionary of <em>${key}</em>
+                                </a>`
+                            );
+                            element.addEventListener("click", function(child_event) {
+                               child_event.preventDefault();
+                               add_to_custom_dict(element);
+                            });
+                            receptor.appendChild(element);
+                        }
+                        else { tr.querySelector(selector).classList.remove("table-danger");  }
                     }
-                    parent.addClass("table-changed");
-                    link.parent().append('<span class="badge badge-success badge-status">Saved</span>');
-            }).fail(function(jqXHR){
-                link.parent().append('<span class="badge badge-danger badge-status">'+jqXHR.responseJSON.message+"</span>");
-                $.each(jqXHR.responseJSON.details, function(key, status) {
-                    var selector = ".token_"+key.toLowerCase();
-                    if (status === false) { parent.find(selector).addClass("table-danger"); }
-                    else { parent.find(selector).removeClass("table-danger");  }
                 });
-            }).always(function() {
+            }).then(function() {
                 spinner.remove();
             });
-        });
+
+        };
+
+        Array.from(document.querySelectorAll('.editable a.save')).forEach(
+            element => { element.addEventListener("click", update_row)}
+        );
+
+        const add_to_custom_dict = function(link) {
+            /** Updated a token row
+             **/
+            let spinner = createElement('<span><i class="fa fa-spin fa-spinner"></i>&nbsp;</span>'),
+                td = link.parentNode,
+                value = link.querySelector("code").innerText.trim(),
+                target = link.href,
+                category = link.querySelector("em").innerText.trim();
+
+            td.insertBefore(spinner, link);
+            clearBadges(td);
+
+            fetch(target, {
+                method: 'PATCH',
+                body: getFormData({
+                    value: value,
+                    category: category
+                })
+            })
+            .then(resp => { return resp.json();})
+            .then(res => {
+                if (res.status === false) {
+                    td.appendChild(
+                        createElement(`<span class="badge badge-danger badge-status">${res.message}</span>`)
+                    );
+                } else {
+                    td.appendChild(
+                        createElement(
+                            '<span class="badge badge-success badge-status">Custom dictionary updated. You can save now save your annotation.</span>'
+                        )
+                    );
+                }
+                spinner.remove();
+                return true;
+            });
+        };
+
     });
     </script>
     {% endif %}
@@ -211,12 +453,18 @@
                 <th>User</th>
                 <th>Edit</th>
                 <th class="line">Context</th>
+                {% if "lemma" in visible %}
                 <th>Old Lemma</th>
                 <th class="line">Corr Lemma</th>
+                {% endif %}
+                {% if "POS" in visible %}
                 <th>Previous POS</th>
                 <th class="line">Actual POS</th>
+                {% endif %}
+                {% if "morph" in visible %}
                 <th>Previous Morph</th>
                 <th class="line">Actual Morph</th>
+                {% endif %}
                 <th>Similar</th>
             </tr>
         </thead>
@@ -225,13 +473,20 @@
                 <tr class="history">
                     <td class="detail">{{ token.user.first_name[0] }}.{{ token.user.last_name }}</td>
                     <td class="detail datetime">{{token.created_on}}</td>
-                    <td class="detail text">{{token_context(token.word_token, "b")}}</td>
+                    <td class="detail text">{{token_context(token.word_token, "b")}}
+                        {% if link_back %}<a tabindex="-1" href="{{ token.word_token | get_token_uri }}" id="tok{{ token.word_token.order_id }}"><i class="fa fa-link"></i></a>{% endif %}</td>
+                    {% if "lemma" in visible %}
                     <td class="{% if token.lemma != token.lemma_new%}red{%endif%}">{{token.lemma}}</td>
                     <td class="line {% if token.lemma != token.lemma_new%}green{%endif%}">{{token.lemma_new}}</td>
+                    {% endif %}
+                    {% if "POS" in visible %}
                     <td class="{% if token.POS != token.POS_new%}red{%endif%}">{{token.POS}}</td>
                     <td class="line {% if token.POS != token.POS_new%}green{%endif%}">{{token.POS_new}}</td>
+                    {% endif %}
+                    {% if "morph" in visible %}
                     <td class="{% if token.morph != token.morph_new%}red{%endif%}">{{token.morph}}</td>
                     <td class="line {% if token.morph != token.morph_new%}green{%endif%}">{{token.morph_new}}</td>
+                    {% endif %}
                     <td>
                         <a href="{{url_for('main.tokens_similar_to_record', corpus_id=corpus.id, record_id=token.id)}}" class="badge badge-info">
                         {{token.similar_remaining}} similar</a>
@@ -253,16 +508,32 @@
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Form</th><th>Lemma</th><th>POS</th><th>Morph</th><th>Context</th>
+                <th>Form</th>
+                {% if "lemma" in visible %}
+                <th>Lemma</th>
+                {% endif %}
+                {% if "POS" in visible %}
+                <th>POS</th>
+                {% endif %}
+                {% if "morph" in visible %}
+                <th>Morph</th>
+                {% endif %}
+                <th>Context</th>
             </tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
                 <tr class="editable">
                     <td>{{token.form}}</td>
+                    {% if "lemma" in visible %}
                     <td class="token_lemma">{{token.lemma}}</td>
+                    {% endif %}
+                    {% if "POS" in visible %}
                     <td class="token_pos">{{token.POS}}</td>
+                    {% endif %}
+                    {% if "morph" in visible %}
                     <td class="token_morph">{{token.morph}}</td>
+                    {% endif %}
                     <td class="small">{{token_context(token)}}</td>
                 </tr>
             {% endfor %}

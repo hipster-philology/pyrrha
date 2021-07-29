@@ -1,5 +1,7 @@
 from tests.test_selenium.base import TestBase
 from collections import namedtuple
+import csv
+import os
 from tests.db_fixtures.wauchier import WauchierAllowedPOS, WauchierAllowedMorph
 
 
@@ -35,7 +37,17 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text for link in links]),
-            sorted(['Lemma', 'Make public', 'Morphologies', 'POS', 'Wauchier', 'Rename']),
+            sorted([
+                "Edit informations",
+                "Guidelines",
+                'Lemma',
+                'Make public',
+                'Morphologies',
+                'POS',
+                'Propose changes',
+                'Wauchier',
+                'Rename'
+            ]),
             "Full rewrite are limited to control lists users"
         )
 
@@ -124,6 +136,16 @@ class TestUpdateControlList(TestBase):
             "We should be able to read the POS"
         )
 
+        # Check that we can edit informations about markdown or whatever
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_edit", control_list_id=1))
+        self.driver.find_element_by_id("cl_notes").send_keys("# This is some notes")
+        self.driver.find_element_by_id("submit").click()
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_read", control_list_id=1))
+        self.assertEqual(
+            self.driver.find_element_by_tag_name("h1").text, "This is some notes",
+            "Check that edition works"
+        )
+
     def test_action_as_admin_but_not_owner(self):
         """ [ControlLists Administration] App Admin can propose changes and turn a list public """
         self.addControlLists("wauchier", no_corpus_user=True, for_users=[User(self.app.config['ADMIN_EMAIL'], False)])
@@ -135,7 +157,8 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("right-column").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(['Make public', 'Rewrite Lemma List', 'Rewrite POS List', 'Rewrite Morphology List']),
+            sorted(['Make public', 'Rewrite Lemma List', 'Rewrite POS List',
+                    'Rewrite Morphology List']),
             "Full rewrite are limited to control lists users and admin. Admin can make list public"
         )
 
@@ -143,7 +166,8 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(['Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
+            sorted(["Guidelines",
+                    "Edit informations", 'Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -196,6 +220,17 @@ class TestUpdateControlList(TestBase):
             'WOOHOOO'
         )
 
+        # Check that we can edit informations about markdown or whatever
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_edit", control_list_id=1))
+        self.driver.find_element_by_id("cl_notes").send_keys("# This is some notes")
+        self.driver.find_element_by_id("submit").click()
+        self.driver.get(self.url_for_with_port("control_lists_bp.information_read", control_list_id=1))
+        self.assertEqual(
+            self.driver.find_element_by_tag_name("h1").text, "This is some notes",
+            "Check that edition works"
+        )
+
+
     def test_action_as_user(self):
         """ [ControlLists Administration] Normal users can only propose changes"""
         foor_bar = self.add_user("foo", "bar", False)
@@ -215,7 +250,8 @@ class TestUpdateControlList(TestBase):
         links = self.driver.find_element_by_id("left-menu").find_elements_by_tag_name("a")
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
-            sorted(['Lemma', 'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
+            sorted(['Lemma', "Guidelines",
+                    'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
             "Only contacting and reading is possible to users"
         )
 
@@ -253,7 +289,30 @@ class TestUpdateControlList(TestBase):
         self.driver.get(self.url_for_with_port("control_lists_bp.edit", cl_id=1, allowed_type="lemma"))
         self.driver.implicitly_wait(5)
         self.assertEqual(
-            self.driver.find_element_by_id("error_message").text.strip(),
-            "Forbidden: You do not have the right to access this page.",
-            "403 is generated when accessing something forbidden"
+            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            'You are not an owner of the list.',
+            "User cannot edit control list they don't own"
         )
+
+    def test_edit_upload_file(self):
+        """Test that an user can upload a file to fill in 'allowed_values' textarea."""
+        self.addControlLists(
+            "wauchier",
+            no_corpus_user=True,
+            for_users=[User(self.app.config['ADMIN_EMAIL'], False)]
+        )
+        self.admin_login()
+        self.go_to_control_lists_management("Wauchier")
+        self.driver.find_element_by_class_name("settings-lemma").click()
+        self.driver.implicitly_wait(15)
+        upload = self.driver.find_element_by_id("upload")
+        temp_file = self.create_temp_example_file()
+        upload.send_keys(temp_file.name)
+        self.driver.implicitly_wait(15)
+        allowed_values = self.driver.find_element_by_id("allowed_values")
+        with open(temp_file.name) as fp:
+            self.assertCountEqual(
+                [row for row in csv.reader(allowed_values.get_attribute("value").split("\n"), delimiter="\t") if row],
+                [row for row in csv.reader(open(fp.name), delimiter="\t")]
+            )
+        os.remove(temp_file.name)

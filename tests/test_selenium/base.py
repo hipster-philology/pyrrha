@@ -2,17 +2,20 @@ from flask import url_for, current_app, Flask
 from flask_testing import LiveServerTestCase
 import flask_login
 import os
+import csv
 import signal
 import logging
+import tempfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from app import db, create_app
-from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite, Column
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
@@ -75,10 +78,13 @@ class TestBase(LiveServerTestCase):
         ControlLists.add_default_lists()
         db.session.commit()
 
-    def create_app(self):
+    def create_app(self, config_overwrite=None):
         config_name = 'test'
         app = create_app(config_name)
         app.config["JSONIFY_PRETTYPRINT_REGULAR"] = False
+        if config_overwrite:
+            app.config.update(config_overwrite)
+
         app.DEBUG = True
         app.client = app.test_client()
         app.config.update(
@@ -89,15 +95,29 @@ class TestBase(LiveServerTestCase):
             _force_authenticated(app)
         return app
 
+    def add_favorite(self, user_id, corpora_ids):
+        for corpus_id in corpora_ids:
+            db.session.add(Favorite(user_id=user_id, corpus_id=corpus_id))
+        db.session.commit()
+        self.driver.refresh()
+
     def create_driver(self, options=None):
         if not options:
             options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
         options.add_experimental_option('w3c', False)
-        self.driver = webdriver.Chrome(options=options)
+
+        desired = DesiredCapabilities.CHROME
+        desired['loggingPrefs'] = {'browser': 'ALL'}
+        desired["goog:loggingPrefs"] = {'browser': 'ALL'}
+        self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
         self.driver.set_window_size(1920, 1080)
         return self.driver
+
+    def pprint_log(self):
+        for log in self.driver.get_log("browser"):
+            print(log)
 
     def setUp(self):
         """Setup the test driver and create test users"""
@@ -162,22 +182,58 @@ elit
     def tearDown(self):
         self.driver.quit()
 
+    def add_n_corpora(self, n_corpus: int, **kwargs):
+        if not self.AUTO_LOG_IN:
+            raise Exception("This function only works with autologin")
+
+        user = User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first()
+        for n in range(n_corpus):
+            corpus = Corpus(
+                name="a"*n,
+                control_lists_id=1,
+                columns=[
+                    Column(heading="Lemma"),
+                    Column(heading="POS"),
+                    Column(heading="Morph"),
+                    Column(heading="Similar"),
+                ]
+            )
+            new_cu = CorpusUser(corpus=corpus, user=user, is_owner=True)
+            db.session.add(corpus)
+            db.session.add(new_cu)
+            db.session.flush()
+        db.session.commit()
+
+    def create_temp_example_file(self):
+        """Create temporary example file.
+
+        :returns: temporary example file
+        :rtype: NamedTemporaryFile
+        """
+        fp = tempfile.NamedTemporaryFile("w", delete=False)
+        csv.writer(fp, delimiter="\t").writerows(
+            (
+                ("form", "lemma", "POS", "morph"),
+                ("SOIGNORS", "seignor", "NOMcom", "NOMB.=p|GENRE=m|CAS=n")
+            )
+        )
+        fp.close()
+        return fp
+
     def addCorpus(self, corpus, *args, **kwargs):
-        if corpus == "wauchier":
-            corpus = add_corpus("wauchier", db, *args, **kwargs)
-        else:
-            corpus = add_corpus("floovant", db, *args, **kwargs)
-        self.driver.get(self.get_server_url())
+        corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
+        self.driver.get(self.get_server_url())
         return corpus
 
-    def addCorpusUser(self, corpus_name, email, is_owner=False):
+    def addCorpusUser(self, corpus_name, email, is_owner=False, _commit=True):
         corpus = Corpus.query.filter(Corpus.name == corpus_name).first()
         user = User.query.filter(User.email == email).first()
         new_cu = CorpusUser(corpus=corpus, user=user, is_owner=is_owner)
         self.db.session.add(new_cu)
-        self.db.session.commit()
+        if _commit:
+            self.db.session.commit()
         return new_cu
 
     def addControlLists(self, cl_name, *args, **kwargs):
@@ -228,6 +284,10 @@ elit
         self.driver.implicitly_wait(5)
         self.login(email, self.app.config['ADMIN_PASSWORD'])
 
+    def get_admin_id(self):
+        user = User.query.filter(User.email == self.app.config['ADMIN_EMAIL']).first()
+        return user.id
+
     def admin_login(self):
         self.login_with_user(self.app.config['ADMIN_EMAIL'])
 
@@ -245,14 +305,43 @@ class TokenCorrectBase(TestBase):
     CORPUS = "wauchier"
     CORPUS_ID = "1"
 
+    def assert_token_has_values(self, token, lemma=None, POS=None, morph=None):
+        """ Checks that value, if not None, have been updated
+        """
+        if lemma:
+            self.assertEqual(token.lemma, lemma, f"[Lemma] {token.lemma} should have been updated to {lemma}")
+        if POS:
+            self.assertEqual(token.POS, POS, f"[POS] {token.POS} should have been updated to {POS}")
+        if morph:
+            self.assertEqual(token.morph, morph, f"[Morph] {token.morph} should have been updated to {morph}")
+
+    def get_badge_text_for_token(self, row, badge_class: str):
+        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] {badge_class}").text.strip()
+
+    def get_similar_badge(self, row):
+        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] .similar-link")
+
+    def assert_saved(self, row):
+        self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-success"), "Saved")
+
+    def assert_invalid_value(self, row, category):
+        self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-danger"), f"Invalid value in {category}")
+
+    def assert_unchanged(self, row):
+        self.assertEqual(
+            self.get_badge_text_for_token(row, ".badge-status.badge-danger"), "No value where changed"
+        )
+
     def go_to_edit_token_page(self, corpus_id, as_callback=True):
         """ Go to the corpus's edit token page """
 
+        #def callback():
+        #    # Show the dropdown
+        #    self.driver.find_element_by_id("toggle_corpus_corpora").click()
+        #    # Click on the edit link
+        #    self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
         def callback():
-            # Show the dropdown
-            self.driver.find_element_by_id("toggle_corpus_corpora").click()
-            # Click on the edit link
-            self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
+            self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id=corpus_id))
 
         if as_callback:
             return callback
@@ -305,9 +394,13 @@ class TokenCorrectBase(TestBase):
             td = row.find_element_by_class_name("token_lemma")
 
         # Click, clear the td and send a new value
-        td.click(), td.clear(), td.send_keys(value)
-
+        td.click()
+        td.clear()
+        td.send_keys(value)
         if autocomplete_selector is not None:
+            # For some reason, screenshot was working as well, screenshot makes
+            #   autocomplete appear...
+            self.driver.save_screenshot("debug-autocomplete.png")
             WebDriverWait(self.driver, 10).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
             )
@@ -320,7 +413,7 @@ class TokenCorrectBase(TestBase):
 
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, "#token_{}_row .badge-status".format(id_row))
+                (By.CSS_SELECTOR, "[rel='token_{}_row'] .badge-status".format(id_row))
             )
         )
 
@@ -356,12 +449,9 @@ class TokenCorrectBase(TestBase):
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
-        print(status_text)
         self.assertEqual(status_text, "Save")
-        self.assertEqual(
-            row.find_element_by_css_selector(".badge-status.badge-success").text.strip(),
-            "Saved"
-        )
+        self.assert_saved(row)
+
         self.assertIn("table-changed", row.get_attribute("class"))
         self.driver.refresh()
         row = self.driver.find_element_by_id("token_1_row")
@@ -455,6 +545,7 @@ class TokensSearchThroughFieldsBase(TestBase):
 
         # load each page to get the (partials) result tables
         pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        self.driver.save_screenshot("first.results.png")
         for page_index in range(0, len(pagination)):
             self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
 

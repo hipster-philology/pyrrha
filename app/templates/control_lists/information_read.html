@@ -1,0 +1,19 @@
+{% extends 'layouts/base.html' %}
+
+{% block page_title %}Control List {{control_list.name}} : Guidelines{% endblock %}
+
+{% block content %}
+
+<h3>Guidelines</h3>
+{% if control_list.notes %}
+  {{ control_list.notes | markdown }}
+{% else %}
+  {{ "*No guidelines available at this moment.*" | markdown}}
+{% endif %}
+
+{% if control_list.bibliography %}
+<h3>Bibliography</h3>
+<p>{{control_list.bibliography | markdown}}</p>
+{% endif %}
+
+{% endblock %}

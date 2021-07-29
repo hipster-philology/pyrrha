@@ -7,6 +7,7 @@
     ('admin.user_info', 'User information'),
     ('admin.change_user_email', 'Change email address'),
     ('admin.change_account_type', 'Change account type'),
+    ('admin.change_account_status', 'Change account status'),
     (deletion_endpoint, 'Delete user')
 ] %}
 
@@ -22,20 +23,26 @@
 {% endmacro %}
 
 {% macro user_info(user) %}
-    <table class="table">
-        <tr>
-            <td>Full name</td>
-            <td>{{ '%s %s' % (user.first_name, user.last_name) }}</td>
-        </tr>
-        <tr>
-            <td>Email address</td>
-            <td>{{ user.email }}</td>
-        </tr>
-        <tr>
-            <td>Account type</td>
-            <td>{{ user.role.name }}</td>
-        </tr>
-    </table>
+    <form>
+        <table class="table">
+            <tr>
+                <td>Full name</td>
+                <td>{{ '%s %s' % (user.first_name, user.last_name) }}</td>
+            </tr>
+            <tr>
+                <td>Email address</td>
+                <td>{{ user.email }}</td>
+            </tr>
+            <tr>
+                <td>Account type</td>
+                <td>{{ user.role.name }}</td>
+            </tr>
+            <tr>
+              <td>Account status</td>
+               <td>{{'Confirmed' if user.confirmed else 'Unconfirmed'}} </td>
+            </tr>
+        </table>
+    </form>
 {% endmacro %}
 
 {% block content %}
@@ -75,6 +82,9 @@
                     </div>
                     </div>
                 {% elif form %}
+                    {% if request.endpoint == 'admin.change_account_status' %}
+                      This account is actually {{'confirmed' if user.confirmed else 'unconfirmed'}}.
+                    {% endif %}
                     {{ f.render_form(form) }}
                 {% else %}
                     {{ user_info(user) }}

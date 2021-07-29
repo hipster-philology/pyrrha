@@ -7,6 +7,7 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
+from flaskext.markdown import Markdown
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -14,7 +15,6 @@ mail = Mail()
 db = SQLAlchemy()
 csrf = CSRFProtect()
 compress = Compress()
-
 # Set up Flask-Login
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
@@ -43,6 +43,7 @@ def create_app(config_name="dev"):
     login_manager.init_app(app)
     #csrf.init_app(app)
     compress.init_app(app)
+    md = Markdown(app, safe_mode=True)
     #assets_env = Environment(app)
 
     # Register Jinja template functions

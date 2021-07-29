@@ -5,6 +5,9 @@
         <a id="overview_{{control_list.id}}" href="{{url_for("control_lists_bp.get", control_list_id=control_list.id)}}">{{control_list.name}}</a>
     </header>
     <div class="text-right">{{ utils.status_badge(control_list.str_public) }}</div>
+    <ul class="nav flex-column">
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.information_read", control_list_id=control_list.id)}}"><i class="fa fa-book"></i> Guidelines</a></li>
+    </ul>
     Manage Lists
     <ul class="nav flex-column">
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='lemma')}}">Lemma</a></li>
@@ -13,14 +16,15 @@
     </ul>
     Others
     <ul class="nav flex-column">
-      {% if not control_list.can_edit() %}
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.contact", control_list_id=control_list.id)}}"><i class="fa fa-envelope"></i> Propose changes</a></li>
-      {% endif %}
       {%  if control_list.can_edit() and not current_user.is_admin() %}
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.propose_as_public", control_list_id=control_list.id)}}"><i class="fa fa-share-alt"></i> Make public</a></li>
       {% endif %}
       {%  if control_list.can_edit() or current_user.is_admin() %}
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.rename", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> Rename</a></li>
+      {% endif %}
+      {%  if control_list.can_edit() or current_user.is_admin() %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.information_edit", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> Edit informations</a></li>
       {% endif %}
     </ul>
 {% endmacro -%}

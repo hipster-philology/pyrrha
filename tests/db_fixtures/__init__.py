@@ -1,5 +1,6 @@
-from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier, WauchierAllowedMorph, WCL
-from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph, FCL
+from .wauchier import WauchierAllowedPOS, WauchierAllowedLemma, WauchierTokens, Wauchier, WauchierAllowedMorph, WCL, WauchierColumns
+from .floovant import FloovantTokens, FloovantAllowedPOS, FloovantAllowedLemma, Floovant, FloovantAllowedMorph, FCL, FloovantColumns
+from . import priapees
 import copy
 import unidecode
 from app.models.corpus import WordToken
@@ -12,7 +13,8 @@ DB_CORPORA = {
         "lemma": WauchierAllowedLemma,
         "POS": WauchierAllowedPOS,
         "morph": WauchierAllowedMorph,
-        "control_list": WCL
+        "control_list": WCL,
+        "columns": WauchierColumns
     },
     "floovant": {
         "corpus": Floovant,
@@ -20,7 +22,17 @@ DB_CORPORA = {
         "lemma": FloovantAllowedLemma,
         "POS": FloovantAllowedPOS,
         "morph": FloovantAllowedMorph,
-        "control_list": FCL
+        "control_list": FCL,
+        "columns": FloovantColumns
+    },
+    "priapees": {
+        "corpus": priapees.corpus,
+        "tokens": priapees.tokens,
+        "lemma": [],
+        "POS": [],
+        "morph": [],
+        "control_list": priapees.control_list,
+        "columns": priapees.PriapeeColumns
     }
 }
 
@@ -79,7 +91,7 @@ def add_corpus(
         with_allowed_lemma=False, partial_allowed_lemma=False,
         with_allowed_pos=False, partial_allowed_pos=False,
         with_allowed_morph=False, partial_allowed_morph=False,
-        with_delimiter=False,
+        with_delimiter=False, with_columns=True,
         **nobodycares
 ):
     """ Add the Wauchier Corpus to fixtures
@@ -112,6 +124,9 @@ def add_corpus(
 
     db.session.add(corpus_object)
     db.session.flush()
+    if with_columns is True:
+        for col in copy.deepcopy(DB_CORPORA[corpus]["columns"]):
+            db.session.add(col)
     if with_token is True:
         if tokens_up_to is not None:
             add = DB_CORPORA[corpus]["tokens"][:tokens_up_to]

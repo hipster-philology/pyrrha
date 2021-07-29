@@ -1,16 +1,21 @@
-from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash
+from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response
 from flask_login import current_user, login_required
-from sqlalchemy.sql.elements import or_, and_
+from slugify import slugify
+from sqlalchemy.sql.elements import or_, and_, not_
+from sqlalchemy import func
 import math
 from csv import DictWriter
 
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
-from ...models import WordToken, Corpus, ChangeRecord, TokenHistory
+from ... import db
+from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark, CorpusCustomDictionary
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
-from ...utils.tsv import TSV_CONFIG
+from ...utils.tsv import TSV_CONFIG, stream_tsv
+from ...utils.response import stream_template
 from io import StringIO
+from itertools import product
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
@@ -22,6 +27,7 @@ def tokens_correct(corpus_id):
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    current_user.bookmark: Bookmark = corpus.get_bookmark(current_user)
 
     tokens = corpus\
         .get_tokens()\
@@ -30,7 +36,8 @@ def tokens_correct(corpus_id):
             per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
         )
 
-    WordToken.get_similar_for_batch(corpus, tokens.items)
+    if "similar" in corpus.displayed_columns_by_name:
+        WordToken.get_similar_for_batch(corpus, tokens.items)
 
     changed = corpus.changed(tokens.items)
 
@@ -126,18 +133,24 @@ def tokens_correct_single(corpus_id, token_id):
         token, change_record = WordToken.update(
             user_id=current_user.id,
             token_id=token_id, corpus_id=corpus_id,
-            lemma=request.form.get("lemma"),
+            lemma=string_to_none(request.form.get("lemma")),
             POS=string_to_none(request.form.get("POS")),
             morph=string_to_none(request.form.get("morph"))
         )
-        return jsonify({
-            "token": token.to_dict(),
-            "similar": {
+        if "similar" in corpus.displayed_columns_by_name:
+            similar = {
                 "count": change_record.similar_remaining,
                 "link": url_for(".tokens_similar_to_record", corpus_id=corpus_id, record_id=change_record.id)
-            }})
+            }
+        else:
+            similar = None
+
+        return jsonify({
+            "token": token.to_dict(),
+            "similar": similar
+        })
     except WordToken.ValidityError as E:
-        response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
+        response = jsonify({"status": False, "message": E.msg, "details": E.statuses, "new-values": E.invalid_columns})
         response.status_code = 403
         return response
     except WordToken.NothingChangedError as E:
@@ -170,35 +183,55 @@ def tokens_export(corpus_id):
     :param corpus_id: ID of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
-    format = request.args.get("format")
+    format = request.args.get("format", "").lower()
+    filename = slugify(corpus.name)
+    allowed_columns = corpus.displayed_columns_by_name
     if format in ["tsv"]:
         tokens = corpus.get_tokens().all()
         if format == "tsv":
             output = StringIO()
-            writer = DictWriter(output, fieldnames=["form", "lemma", "POS", "morph"], **TSV_CONFIG)
+            fieldnames = ["form", "lemma", "POS", "morph"]
+            writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)
             writer.writeheader()
             for tok in tokens:
-                writer.writerow({"form": tok.form, "lemma": tok.lemma, "POS": tok.POS, "morph": tok.morph})
-            return output.getvalue().encode('utf-8'), \
-                   200, \
-                   {
-                       "Content-Type": "text/tab-separated-values; charset= utf-8",
-                       "Content-Disposition": 'attachment; filename="pyrrha-correction.tsv"'
-                   }
-    elif format in ["tei", "tei-geste"]:
+                row = {"form": tok.form}
+                for field in ("lemma", "POS", "morph"):
+                    if field in allowed_columns:
+                        row[field] = getattr(tok, field)
+                writer.writerow(row)
+            output.seek(0)
+            return Response(
+                response=stream_tsv(output),
+                status=200,
+                content_type="text/tab-separated-values",
+                headers={
+                    "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
+                }
+            )
+    elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
-        #if format == "tei-geste": Right now only 1 format
-        response = render_template("tei/geste.xml", base=base, tokens=tokens,
-                                   history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                                   delimiter=corpus.delimiter_token)
-        return response, 200, {
-           "Content-Type": "text/xml; charset= utf-8",
-           "Content-Disposition": 'attachment; filename="pyrrha-correction.xml"'
-        }
-
+        return Response(
+            stream_template("tei/geste.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
+                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                            delimiter=corpus.delimiter_token),
+            status=200,
+            headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
+            mimetype="text/xml"
+        )
+    elif format == "tei-msd":
+        tokens = corpus.get_tokens().all()
+        base = tokens[0].id - 1
+        return Response(
+            stream_template("tei/TEI.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
+                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                            delimiter=corpus.delimiter_token),
+            status=200,
+            headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
+            mimetype="text/xml"
+        )
     return render_template_with_nav_info(
-        template="main/tokens_view.html",
+        template="main/tokens_export.html",
         corpus=corpus
     )
 
@@ -228,29 +261,34 @@ def tokens_search_through_fields(corpus_id):
     if not corpus.has_access(current_user):
         abort(403)
 
-    kargs = {}
+    columns = tuple(["form"] + [
+        col if col == "POS" else col.lower()
+        for col in corpus.get_columns_headings()
+    ])
+
+    input_values = {}
 
     # make a dict with values splitted for each OR operator
     fields = {}
-    for name in ("lemma", "form", "POS", "morph"):
-        if request.method == "POST":
-            value = strip_or_none(request.form.get(name))
-        else:
-            value = strip_or_none(request.args.get(name))
+    source_dict = request.form if request.method == "POST" else request.args
+
+    for name in columns:
+        value = strip_or_none(source_dict.get(name))
+        input_values[name] = value
+
         # split values with the '|' OR operator but keep escaped '\|' ones
-        if value is None:
-            fields[name] = ""
-        else:
-            fields[name] = prepare_search_string(value)
-        kargs[name] = value
+        fields[name] = prepare_search_string(value) if value is not None else ""
 
     # all search combinations
     search_branches = [
-        {"lemma": lemma, "form": form, "POS": pos, "morph": morph}
-        for lemma in fields["lemma"]
-        for form in fields["form"]
-        for pos in fields["POS"]
-        for morph in fields["morph"]
+        dict(prod)
+        for prod in product(*[
+            [
+                (field, value)
+                for value in fields[field]
+            ]
+            for field in fields
+        ])
     ]
 
     value_filters = []
@@ -263,26 +301,42 @@ def tokens_search_through_fields(corpus_id):
             branch_filters.extend(column_search_filter(getattr(WordToken, name), value))
 
         value_filters.append(branch_filters)
+
     if not value_filters:  # If the search is empty, we only search for the corpus_id
         value_filters.append([WordToken.corpus == corpus_id])
 
     # there is at least one OR clause
+    # get sort arguments (sort per default by WordToken.order_id)
+    order_by = {
+        "order_id": WordToken.order_id,
+        "lemma": func.lower(WordToken.lemma),
+        "pos": func.lower(WordToken.POS),
+        "form": func.lower(WordToken.form),
+        "morph": func.lower(WordToken.morph),
+    }.get(request.args.get("orderBy"), WordToken.order_id)
+
+    args = []
+
     if len(value_filters) > 1:
         and_filters = [and_(*branch_filters) for branch_filters in value_filters]
-        flattened_filters = or_(*and_filters)
-        tokens = WordToken.query.filter(flattened_filters).order_by(WordToken.order_id)
-    else:
-        if len(value_filters) == 1:
-            value_filters = value_filters[0]
-        tokens = WordToken.query.filter(*value_filters).order_by(WordToken.order_id)
+        args = [or_(*and_filters)]
+    elif len(value_filters) == 1:
+        args = value_filters[0]
+
+    tokens = WordToken.query.filter(*args).order_by(
+        order_by.desc()
+        if bool(int(request.args.get("desc", "0")))  # default sort order is ascending
+        else order_by
+    )
 
     page = int_or(request.args.get("page"), 1)
     per_page = int_or(request.args.get("limit"), 100)
     tokens = tokens.paginate(page=page, per_page=per_page)
 
     return render_template_with_nav_info('main/tokens_search_through_fields.html',
+                                         search_kwargs={"corpus_id": corpus.id, **input_values},
                                          changed=corpus.changed(tokens.items),
-                                         corpus=corpus, tokens=tokens, **kargs)
+                                         corpus=corpus, tokens=tokens, **input_values)
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["GET", "POST"])

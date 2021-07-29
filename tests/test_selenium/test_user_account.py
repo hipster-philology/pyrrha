@@ -47,20 +47,6 @@ class TestUserAccount(TestBase):
         ).first()
         self.assertIsNotNone(user)
 
-    def test_reset_password(self):
-        self.logout()
-        self.driver.find_element_by_link_text('Log In').click()
-        self.driver.find_element_by_link_text('Forgot password?').click()
-        self.driver.find_element_by_id("email").send_keys(self.app.config['ADMIN_EMAIL'])
-        self.driver.find_element_by_id("submit").click()
-        warning = self.driver.find_element_by_class_name("alert-warning").text
-        self.assertTrue(warning == "A password reset link has been sent to %s." % self.app.config['ADMIN_EMAIL'])
-
-        # test not being anonymous, you are redirected to the index page
-        self.admin_login()
-        self.driver.get(url_for("account.reset_password_request", _external=True))
-        self.assertNotEqual(url_for("main.index", _external=True), self.driver.current_url)
-
     def test_reset_password_token(self):
         self.logout()
         # test when you receive the mail and click on the link
@@ -72,17 +58,6 @@ class TestUserAccount(TestBase):
         self.driver.find_element_by_id("submit").click()
         # wrong token so you are redirected to the index page
         self.assertEqual(self.url_for_with_port("main.index", _external=True), self.driver.current_url)
-
-    def test_change_email(self):
-        foo_email = self.add_user("foo", "bar")
-        self.login_with_user(foo_email)
-        self.driver.find_element_by_link_text('Your Account').click()
-        self.driver.find_element_by_link_text('Change email address').click()
-        self.driver.find_element_by_id("email").send_keys("bar.foo@ppa.fr")
-        self.driver.find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'])
-        self.driver.find_element_by_id("submit").click()
-        warning = self.driver.find_element_by_class_name("alert-warning").text
-        self.assertTrue(warning == "A confirmation link has been sent to %s." % "bar.foo@ppa.fr")
 
     def test_admin_change_user_email(self):
         foo_email = self.add_user("foo", "bar")
@@ -275,3 +250,41 @@ class TestUserAccount(TestBase):
             User.confirmed.is_(False)
         ).first()
         self.assertIsNotNone(user)
+
+
+class TestUserWithMail(TestBase):
+    AUTO_LOG_IN = False
+
+    def create_app(self, config_overwrite=None):
+        app = super(TestUserWithMail, self).create_app(config_overwrite={"SEND_MAIL_STATUS": True})
+
+        return app
+
+    def test_change_email(self):
+        foo_email = self.add_user("foo", "bar")
+        self.login_with_user(foo_email)
+        self.driver.find_element_by_link_text('Your Account').click()
+        self.driver.find_element_by_link_text('Change email address').click()
+        self.driver.find_element_by_id("email").send_keys("bar.foo@ppa.fr")
+        self.driver.find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'])
+        self.driver.find_element_by_id("submit").click()
+        warning = self.driver.find_element_by_class_name("alert-warning").text
+        self.assertTrue(warning == "A confirmation link has been sent to %s." % "bar.foo@ppa.fr")
+
+    def test_reset_password(self):
+        self.logout()
+        self.driver.find_element_by_link_text('Log In').click()
+        self.driver.find_element_by_link_text('Forgot password?').click()
+        self.driver.find_element_by_id("email").send_keys(self.app.config['ADMIN_EMAIL'])
+        self.driver.find_element_by_id("submit").click()
+        warning = self.driver.find_element_by_class_name("alert-warning").text
+        self.assertTrue(warning == "A password reset link has been sent to %s." % self.app.config['ADMIN_EMAIL'])
+
+        # When anonymous, not redirected to index
+        self.driver.get(self.url_for_with_port("account.reset_password_request"))
+        self.assertNotEqual(self.url_for_with_port("main.index"), self.driver.current_url)
+
+        # test not being anonymous, you are redirected to the index page
+        self.admin_login()
+        self.driver.get(self.url_for_with_port("account.reset_password_request"))
+        self.assertEqual(self.url_for_with_port("main.index"), self.driver.current_url)

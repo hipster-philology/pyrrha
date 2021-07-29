@@ -1,0 +1,57 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+{% set visible = corpus.displayed_columns_by_name %}
+<form method="POST" action="{{ url_for("main.corpus_custom_dict", corpus_id=corpus.id) }}">
+        <h1>
+            <i class="fa fa-book"></i> Custom dictionary
+        </h1>
+        <fieldset class="form-fieldset">
+            <legend>Dictionaries</legend>
+            {% if "lemma" in visible %}
+            <div class="form-group">
+                <label for="lemma">Lemma</label>
+                <textarea
+                    name="lemma"
+                    type="text"
+                    class="form-control"
+                    id="lemma"
+                    aria-describedby="sep_tokenHelp">{{ lemma }}</textarea>
+                <small id="sep_tokenHelp" class="form-text text-muted">
+                    List of supplementaries lemma for this corpus. One per line
+                </small>
+            </div>
+          {% endif %}
+          {% if "morph" in visible %}
+          <div class="form-group">
+                <label for="morph">Morph</label>
+                <textarea
+                    name="morph"
+                    type="text"
+                    class="form-control"
+                    id="morph"
+                    aria-describedby="sep_tokenHelp">{{ morph }}</textarea>
+                <small id="sep_tokenHelp" class="form-text text-muted">
+                    List of supplementaries morph for this corpus. One per line, a human readable version of the code
+                    can be given after a tabulation (4 spaces are automatically transformed into tabulation). eg.
+                    <pre>Morph=MyMorph    My human readable morph</pre>
+                </small>
+            </div>
+        {% endif %}
+        {% if "POS" in visible %}
+          <div class="form-group">
+                <label for="POS">POS</label>
+                <textarea
+                    name="POS"
+                    type="text"
+                    class="form-control"
+                    id="POS"
+                    aria-describedby="sep_tokenHelp">{{ POS }}</textarea>
+                <small id="sep_tokenHelp" class="form-text text-muted">
+                    List of supplementaries POS for this corpus. Separated by coma: <pre>MyPos,MyPos2</pre>
+                </small>
+            </div>
+        {% endif %}
+        </fieldset>
+    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}

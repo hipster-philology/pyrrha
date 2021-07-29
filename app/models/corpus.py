@@ -2,19 +2,21 @@
 import csv
 import io
 import enum
-from typing import Iterable
+from typing import Iterable, Optional, Dict, List
 # PIP Packages
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func, literal
+from sqlalchemy import func, literal, not_
 from werkzeug.exceptions import BadRequest
 from flask import url_for
 # Application imports
 from .. import db
+from ..utils import validate_length
 from ..utils.forms import strip_or_none
 from ..utils.tsv import TSV_CONFIG
 from ..errors import MissingTokenColumnValue, NoTokensInput
+from app.utils import PreferencesUpdateError
 # Models
 from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
@@ -48,6 +50,14 @@ class CorpusUser(db.Model):
         self.is_owner = is_owner
 
 
+class Column(db.Model):
+    """Column."""
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"))
+    heading = db.Column(db.String(32))
+    hidden = db.Column(db.Boolean, default=False)
+
+
 class Corpus(db.Model):
     """ A corpus is a set of tokens that is independent from others.
     This allows for multi-text management
@@ -74,6 +84,7 @@ class Corpus(db.Model):
     users = association_proxy('corpus_users', 'user')
     word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
     changes = db.relationship("ChangeRecord", cascade="all,delete")
+    columns = db.relationship("Column", cascade="all,delete")
 
     def allowed_search_route(self, allowed_type):
         """ Returns the API search routes and parameters
@@ -86,6 +97,14 @@ class Corpus(db.Model):
                 return url_for("control_lists_bp.search_api", control_list_id=self.control_lists_id,
                                allowed_type=allowed_type)
         return url_for("main.search_value_api", corpus_id=self.id, allowed_type=allowed_type)
+
+    def custom_dictionary_search_route(self, category):
+        """ Returns the API search routes and parameters
+
+        :param category: category to search values for
+        :return: Corpus Custom Dictionary Search route
+        """
+        return url_for("main.custom_dictionary_search_value_api", corpus_id=self.id, category=category)
 
     @staticmethod
     def static_has_access(corpus_id, user):
@@ -106,11 +125,16 @@ class Corpus(db.Model):
         return True
 
     def changes_per_day(self):
-        return list(db.session.query(
-            db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
-        ) \
-            .filter(ChangeRecord.corpus == self.id) \
-            .group_by(db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)).all())
+        return list([
+            tuple(elem)
+            for elem in db.session.query(
+                    db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                ).filter(
+                    ChangeRecord.corpus == self.id
+                ).group_by(
+                    db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                ).all()
+        ])
 
     def has_access(self, user):
         """ Can this corpus be accessed by the given user ?
@@ -138,57 +162,86 @@ class Corpus(db.Model):
 
         forms_edited = TokenHistory.query.filter(TokenHistory.corpus == self.id).count()
 
-        lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+        lemma_acc = pos_acc = morph_acc = None
+        all_type = all_lemma = all_morph = False
+
+        if "lemma" in self.displayed_columns_by_name:
+            lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.lemma != ChangeRecord.lemma_new
                 )
             ).count()
-        pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            # Todo: Make sure this is optimized.
+            all_lemma = db.session.query(
+                AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
+
+        if "POS" in self.displayed_columns_by_name:
+            pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.POS != ChangeRecord.POS_new
                 )
             ).count()
-        morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            # Todo: Make sure this is optimized.
+            all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
+
+        if "morph" in self.displayed_columns_by_name:
+            morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.morph != ChangeRecord.morph_new
                 )
             ).count()
-
-        # Todo: Make sure this is optimized.
-        all_lemma = db.session.query(AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
-        all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
-        all_morph = db.session.query(AllowedMorph.label).filter(AllowedMorph.control_list == self.control_lists_id)
+            # Todo: Make sure this is optimized.
+            all_morph = db.session.query(AllowedMorph.label).filter(AllowedMorph.control_list == self.control_lists_id)
 
         unallowed = db.session.query(WordToken.id).filter(
             db.and_(
                 WordToken.corpus == self.id,
                 db.or_(
-                    WordToken.morph.notin_(all_morph),
-                    WordToken.lemma.notin_(all_lemma),
-                    WordToken.POS.notin_(all_type)
+                    WordToken.morph.notin_(all_morph) if all_morph else False,
+                    WordToken.lemma.notin_(all_lemma) if all_lemma else False,
+                    WordToken.POS.notin_(all_type) if all_type else False,
                 )
             )
         ).count()
 
         return CorpusStatistics(
             total, changes, forms_edited, unallowed,
-            lemma_acc / total * 100 if total > 0 else 0,
-            pos_acc / total * 100 if total > 0 else 0,
-            morph_acc / total * 100 if total > 0 else 0,
+            lemma_acc and lemma_acc / total * 100 if total > 0 else 0,
+            pos_acc and pos_acc / total * 100 if total > 0 else 0,
+            morph_acc and morph_acc / total * 100 if total > 0 else 0,
             lemma_acc, pos_acc, morph_acc
         )
 
     @staticmethod
-    def for_user(current_user):
-        return db.session.query(Corpus).filter(
+    def fav_for_user(current_user, _all=True):
+        corpora = db.session.query(Corpus).filter(
+            db.and_(
+                CorpusUser.corpus_id == Corpus.id,
+                CorpusUser.user_id == current_user.id,
+                Favorite.user_id == CorpusUser.user_id,
+                Favorite.corpus_id == Corpus.id
+            )
+        )
+        if _all:
+            return corpora.all()
+        else:
+            return corpora
+
+    @staticmethod
+    def for_user(current_user, _all=True):
+        corpora = db.session.query(Corpus).filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,
                 CorpusUser.user_id == current_user.id
             )
-        ).all()
+        )
+        if _all:
+            return corpora.all()
+        else:
+            return corpora
 
     def is_owned_by(self, user):
         return db.session.query(literal(True)).filter(
@@ -201,12 +254,13 @@ class Corpus(db.Model):
             ).exists()
         ).scalar()
 
-    def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label"):
+    def get_allowed_values(self, allowed_type="lemma", label=None, order_by="label", extend_to_custom: bool = True):
         """ List values that are allowed (without label) or checks that given label is part
         of the existing corpus
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
         :param label: Value to match with as the POS, lemma or morph
+        :param extend_to_custom: Whether to use custom dictionary
         :return: Flask SQL Alchemy Query
         :rtype: BaseQuery
         """
@@ -221,6 +275,7 @@ class Corpus(db.Model):
             order_by = getattr(cls, order_by)
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
+
         if label is not None:
             return db.session.query(cls).filter(
                 db.and_(cls.control_list == self.control_lists_id, cls.label == label)
@@ -229,7 +284,7 @@ class Corpus(db.Model):
 
     def get_unallowed(self, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
-        AllowedPOS, AllowedMorph)
+        AllowedPOS, AllowedMorph) nor with a corpus custom dictionary
 
         :param allowed_type: A value from the set "lemma", "POS", "morph"
         :return: Flask SQL Alchemy Query
@@ -247,12 +302,20 @@ class Corpus(db.Model):
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
 
-        # Todo: Make sure this is optimized.
-        allowed = db.session.query(cls.label).filter(cls.control_list == self.control_lists_id)
+        allowed = db.session.query(cls).filter(
+            cls.control_list == self.control_lists_id,
+            cls.label == prop
+        )
+        custom_dict = db.session.query(CorpusCustomDictionary).filter(
+            CorpusCustomDictionary.corpus == self.id,
+            CorpusCustomDictionary.category == allowed_type,
+            CorpusCustomDictionary.label == prop
+        )
         return db.session.query(WordToken).filter(
             db.and_(
                 WordToken.corpus == self.id,
-                prop.notin_(allowed)
+                not_(allowed.exists()),
+                not_(custom_dict.exists())
             )
         ).order_by(WordToken.order_id)
 
@@ -263,6 +326,25 @@ class Corpus(db.Model):
         :rtype: int
         """
         return WordToken.query.filter_by(corpus=self.id).count()
+
+    @property
+    def displayed_columns_by_name(self):
+        displayed_columns_by_name = {}
+        for column in self.columns:
+            if column.hidden:
+                continue
+            if column.heading != "POS":
+                displayed_columns_by_name[column.heading.lower()] = column
+            else:
+                displayed_columns_by_name["POS"] = column
+        return displayed_columns_by_name
+
+    def get_columns_headings(self, ignore=("Similar", )):
+        return [
+            col.heading
+            for col in self.columns
+            if not col.hidden and col.heading not in ignore
+        ]
 
     def get_tokens(self):
         """ Retrieve WordTokens from the Corpus
@@ -293,7 +375,7 @@ class Corpus(db.Model):
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
             context_left=None, context_right=None, control_list=None,
-            delimiter_token=None
+            delimiter_token=None, columns=None
     ):
         """ Create a corpus
 
@@ -323,7 +405,14 @@ class Corpus(db.Model):
             if allowed_morph is not None and len(allowed_morph) > 0:
                 AllowedMorph.add_batch(allowed_morph, control_list.id)
 
-        c = Corpus(name=name, control_lists_id=control_list.id, delimiter_token=delimiter_token)
+        c = Corpus(
+            name=name,
+            control_lists_id=control_list.id,
+            delimiter_token=delimiter_token,
+            context_left=context_left,
+            context_right=context_right,
+            columns=columns
+        )
         db.session.add(c)
         db.session.flush()
 
@@ -356,6 +445,133 @@ class Corpus(db.Model):
         data = db.session.query(cls).filter_by(control_list=self.control_lists_id).delete()
         cls.add_batch(allowed_values, self.id, _commit=True)
         return data
+
+    def get_bookmark(self, user: User) -> Optional["Bookmark"]:
+        """ Retrieve a bookmark for a given user. None if not found
+        """
+        return Bookmark.query.filter(db.and_(
+            Bookmark.user_id == user.id,
+            Bookmark.corpus_id == self.id
+        )).first()
+
+    def toggle_favorite(self, user_id: int) -> bool:
+        fav = Favorite.query.filter(db.and_(
+            Favorite.corpus_id == self.id,
+            Favorite.user_id == user_id
+        ))
+        if fav.first():
+            db.session.delete(fav.first())
+        else:
+            db.session.add(
+                Favorite(corpus_id=self.id, user_id=user_id)
+            )
+        db.session.commit()
+
+    def update_delimiter_token(self, delimiter_token: Optional[str] = None):
+        """Update delimiter token.
+
+        :param str delimiter_token: token
+        """
+        if delimiter_token != self.delimiter_token:
+            try:
+                self.delimiter_token = delimiter_token
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise PreferencesUpdateError(
+                    f"cannot set delimiter token to '{delimiter_token}'"
+                )
+
+    def update_contexts(self, context_left: int, context_right: int):
+        if context_left == self.context_left and context_right == self.context_right:
+            return
+
+        try:
+            self.context_left = context_left
+            self.context_right = context_right
+            WordToken.update_batch_context(self.id, context_left, context_right)
+        except Exception:
+            db.session.rollback()
+            raise PreferencesUpdateError(
+                f"Cannot set context to 'left: {context_left}, right: {context_right}'"
+            )
+
+    def update_columns(self, columns):
+        """Update columns.
+
+        :param dict columns: column states (hidden or not hidden)
+        """
+        if columns.get("lemma") and columns.get("pos") and columns.get("morph"):
+            raise PreferencesUpdateError(
+                "You can't disable Lemma and POS and Morph. Keep at least one of them."
+            )
+        for column in self.columns:
+            try:
+                column.hidden = columns.get(column.heading.lower(), False)
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                raise PreferencesUpdateError(
+                    f"cannot toggle hiding column '{column.heading}'"
+                )
+
+    def get_custom_dictionary(self, category: str, formatted: bool = False):
+        """ Retrieve custom dictionary's values
+        """
+        values = CorpusCustomDictionary.query.filter(
+            db.and_(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == category
+            )
+        ).all()
+        if not formatted:
+            return values
+
+        if category == "lemma":
+            return "\n".join([token.label for token in values])
+        elif category == "POS":
+            return ",".join([token.label for token in values])
+        elif category == "morph":
+            return "\n".join(["{}\t{}".format(token.label, token.secondary_label) for token in values])
+
+    def custom_dictionaries_update(self, category: str, values: str, _commit: bool = True):
+        splits = {"POS": ",", "lemma": "\n", "morph": "\n"}
+        preproc = getattr(CorpusCustomDictionary, category+"_preproc")
+        values = [
+            preproc(x.strip(), self.id)
+            for x in values.split(splits[category])
+            if x.strip()
+        ]
+        CorpusCustomDictionary.query.filter(
+            db.and_(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == category,
+            )
+        ).delete()
+        if values:
+            db.session.bulk_insert_mappings(
+                CorpusCustomDictionary,
+                values
+            )
+        if _commit:
+            db.session.commit()
+        return len(values)
+
+    def has_custom_dictionary_value(self, category: str, string: str) -> bool:
+        return CorpusCustomDictionary.query.filter(
+            db.and_(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == category,
+                CorpusCustomDictionary.label == string
+            )
+        ).count() >= 1
+
+    def insert_custom_dictionary_value(self, category: str, string: str) -> bool:
+        preproc = getattr(CorpusCustomDictionary, category+"_preproc")
+        db.session.add(CorpusCustomDictionary(
+            **preproc(string, self.id)
+        ))
+        db.session.commit()
 
 
 class WordToken(db.Model):
@@ -402,8 +618,11 @@ class WordToken(db.Model):
 
     class ValidityError(ValueError):
         """ Error for values which are not allowed """
-        statuses = {}
-        msg = ""
+        def __init__(self, *args, **kwargs):
+            self.statuses: Dict[str, bool] = {}
+            self.msg: str = ""
+            self.invalid_columns: List[str] = []
+            super(WordToken.ValidityError, self).__init__()
 
     class NothingChangedError(ValueError):
         """ Error when an update is triggered and nothing is updated """
@@ -597,9 +816,16 @@ class WordToken(db.Model):
             return 0
         else:
             cnt = 0
+            visible_columns = corpus.displayed_columns_by_name
             for w in corpus.word_token:
                 if w.form == form:
-                    if w.lemma == lemma or w.POS == POS or w.morph == morph:
+                    if (
+                        "lemma" in visible_columns and w.lemma == lemma
+                    ) or (
+                        "POS" in visible_columns and w.POS == POS
+                    ) or (
+                        "morph" in visible_columns and w.morph == morph
+                    ) or visible_columns == ("similar",):
                         cnt += 1
             return cnt - 1
 
@@ -680,7 +906,7 @@ class WordToken(db.Model):
 
         query = cls.query.with_entities(*retrieve_fields)
 
-        if form is None:
+        if form == "":
             query = query.filter(
                 db.and_(
                     getattr(cls, control_field) == filter_id
@@ -740,19 +966,29 @@ class WordToken(db.Model):
             "POS": True,
             "morph": True
         }
+
+        allowed_column = corpus.displayed_columns_by_name
+
         if lemma is not None \
+                and "lemma" in allowed_column \
                 and allowed_lemma.count() > 0 \
                 and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
-            statuses["lemma"] = False
+            if not corpus.has_custom_dictionary_value("lemma", lemma):
+                statuses["lemma"] = False
 
         if POS is not None \
+                and "POS" in allowed_column \
                 and allowed_POS.count() > 0 \
                 and corpus.get_allowed_values("POS", label=POS).count() == 0:
-            statuses["POS"] = False
+            if not corpus.has_custom_dictionary_value("POS", POS):
+                statuses["POS"] = False
 
-        if morph is not None and allowed_morph.count() > 0 and \
-                        corpus.get_allowed_values("morph", label=morph).count() == 0:
-            statuses["morph"] = False
+        if morph is not None \
+                and "morph" in allowed_column \
+                and allowed_morph.count() > 0 \
+                and corpus.get_allowed_values("morph", label=morph).count() == 0:
+            if not corpus.has_custom_dictionary_value("morph", morph):
+                statuses["morph"] = False
         return statuses
 
     @staticmethod
@@ -831,10 +1067,64 @@ class WordToken(db.Model):
                 corpus=corpus_id,
                 order_id=i+1  # Asked by JB Camps...
             )
+            for k in ("form",):
+                validate_length(k, wt[k], {"form": 64})
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
         return len(tokens)
+
+    @staticmethod
+    def update_batch_context(
+            corpus_id: int,
+            context_left: int,
+            context_right: int,
+            _commit: bool = True
+    ):
+        """
+        Recomputes the context around each tokens of a given corpus.
+        This method is called after changing corpus left and right context.
+        :param corpus_id: identifier of the corpus
+        :param context_left: left context length
+        :param context_right: right context length
+        :param _commit: Autocommit
+        """
+        tokens = WordToken.query.filter_by(
+            corpus=corpus_id
+        ).order_by(
+            WordToken.order_id
+        ).with_entities(
+            WordToken.id, WordToken.order_id, WordToken.form
+        ).all()
+        token_count = len(tokens)
+
+        updated_tokens = []
+        for i, token in enumerate(tokens):
+            left_context = " ".join([
+                tokens[order_id].form for order_id in range(
+                    max(i - context_left, 1), i
+                )
+            ])
+            right_context = " ".join([
+                tokens[order_id].form for order_id in range(
+                    min(token_count, i + 1),
+                    min(token_count, context_right + i + 1)
+                )
+            ])
+            updated_tokens.append(
+                dict(
+                    id=token.id,
+                    left_context=left_context,
+                    right_context=right_context,
+                )
+            )
+
+        db.session.bulk_update_mappings(WordToken, updated_tokens)
+
+        if _commit:
+            db.session.commit()
+
+        return len(updated_tokens)
 
     @staticmethod
     def to_input_format(query):
@@ -896,6 +1186,7 @@ class WordToken(db.Model):
             error = WordToken.ValidityError(error_msg)
             error.msg = error_msg
             error.statuses = validity
+            error.invalid_columns = [key for key in validity.keys() if validity[key] is False]
             raise error
 
         # Updating
@@ -907,9 +1198,8 @@ class WordToken(db.Model):
             morph = token.morph
 
         record = ChangeRecord.track(user, token, lemma, POS, morph)
-
         token.lemma = lemma
-        token.label_uniform = unidecode.unidecode(lemma)
+        token.label_uniform = unidecode.unidecode(lemma) if lemma else None
         token.POS = POS
         token.morph = morph
         db.session.add(token)
@@ -1046,6 +1336,107 @@ class TokenHistory(db.Model):
     user = db.relationship(User, lazy='select')
 
 
+class CorpusCustomDictionary(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'), nullable=False)
+    label = db.Column(db.String(64), nullable=False)
+    secondary_label = db.Column(db.String(64))
+    category = db.Column(db.String(10), nullable=False)
+
+    search_index = db.Index("ccd-search", "corpus", "label", "secondary_label", "category")
+    retrieve_index = db.Index("ccd-retrieve", "corpus", "category")
+
+    @staticmethod
+    def lemma_preproc(string: str, corpus: int) -> Dict[str, str]:
+        return {"label": string, "corpus": corpus, "secondary_label": unidecode.unidecode(string), "category": "lemma"}
+
+    @staticmethod
+    def morph_preproc(string: str, corpus: int) -> Dict[str, str]:
+        if "\t" in string:
+            morph, readable = string.split("\t")
+        elif "    " in string:
+            morph, readable = string.split("    ")
+        else:
+            morph, readable = string, ""
+        return {"label": morph, "corpus": corpus, "secondary_label": readable, "category": "morph"}
+
+    @staticmethod
+    def POS_preproc(string: str, corpus: int) -> Dict[str, str]:
+        return {"label": string, "corpus": corpus, "secondary_label": "", "category": "POS"}
+
+    @staticmethod
+    def get_like(corpus_id, form, group_by, category="lemma"):
+        """ Get values starting with given form
+
+        :param corpus_id: Id of the corpus
+        :type corpus_id: int
+        :param form: Plaintext string to search for
+        :type form: str
+        :param group_by: Group by the form used (Avoid duplicate values)
+        :type group_by: bool
+        :param category: Type of value to match on (lemma, POS, morph)
+        :type category: str
+        :return: BaseQuery
+        """
+        if category == "morph":
+            query_fields = [CorpusCustomDictionary.label, CorpusCustomDictionary.secondary_label]
+            retrieve_fields = [CorpusCustomDictionary.label, CorpusCustomDictionary.secondary_label]
+        elif category == "POS":
+            retrieve_fields = [CorpusCustomDictionary.secondary_label]
+            query_fields = [CorpusCustomDictionary.label]
+        else:
+            retrieve_fields = [CorpusCustomDictionary.label]
+            normalised = unidecode.unidecode(form)
+            if normalised == form:
+                query_fields = [CorpusCustomDictionary.secondary_label]
+
+        query = CorpusCustomDictionary.query.with_entities(*retrieve_fields)
+        query = query.filter(
+            db.and_(
+                CorpusCustomDictionary.category == category
+            )
+        )
+
+        if form is None:
+            query = query.filter(
+                db.and_(
+                    CorpusCustomDictionary.corpus == corpus_id
+                )
+            )
+        else:
+            if category == "morph":
+                form = form.split()
+                query = query.filter(
+                    db.and_(
+                        CorpusCustomDictionary.corpus == corpus_id,
+                        # This or is applied on the different field : you can either have readable or label with a match
+                        db.or_(*[
+                            # But all the values that are given should match !
+                            db.and_(*[
+                                query_field.ilike("%{}%".format(fsplitted))
+                                for fsplitted in form
+                            ])
+                            for query_field in query_fields
+                        ])
+                    )
+                )
+            else:
+                query = query.filter(
+                    db.and_(
+                        CorpusCustomDictionary.corpus == corpus_id,
+                        *[
+                            query_field.ilike("{}%".format(form))
+                            for query_field in query_fields
+                        ]
+                    )
+                )
+        if group_by is True:
+            return query.group_by(retrieve_fields[0])
+
+        return query
+
+
 class ChangeRecord(db.Model):
     """ A change record keep track of lemma, POS or morph that have been changed for a particular form"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -1133,3 +1524,40 @@ class ChangeRecord(db.Model):
             WordToken.update(**apply)
             changed.append(token)
         return changed
+
+
+class Bookmark(db.Model):
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
+    token_id = db.Column(db.Integer, db.ForeignKey(WordToken.id, ondelete="CASCADE"), primary_key=True)
+    page = db.Column(db.Integer, nullable=False)
+
+    @staticmethod
+    def mark(corpus: int, user: int, token_id: int, page: int):
+        bm = Bookmark(
+            corpus_id=corpus,
+            user_id=user,
+            token_id=token_id,
+            page=page
+        )
+        Bookmark.clear(corpus, user, _commit=False)
+        db.session.add(bm)
+        db.session.commit()
+        return bm
+
+    @staticmethod
+    def clear(corpus: int, user: int, _commit: bool = False):
+        bm = Bookmark.query.filter(db.and_(
+            Bookmark.corpus_id == corpus,
+            Bookmark.user_id == user
+        )).first()
+        if bm:
+            db.session.delete(bm)
+            if _commit:
+                db.session.commit()
+
+
+class Favorite(db.Model):
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(User.id, ondelete='CASCADE'), primary_key=True)
+

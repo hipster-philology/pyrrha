@@ -3,6 +3,8 @@ from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
+import csv
+import os
 
 
 class TestCorpusRegistration(TestBase):
@@ -527,3 +529,76 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         )
         corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         self.assertEqual(corpus.delimiter_token, "____", "There should be a delimiter token")
+
+    def test_registration_upload_file(self):
+        """Test that an user can upload a file to fill in 'tokens' textarea."""
+
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+        upload = self.driver.find_element_by_id("upload")
+        temp_file = self.create_temp_example_file()
+        upload.send_keys(temp_file.name)
+        self.driver.implicitly_wait(15)
+        tokens = self.driver.find_element_by_id("tokens")
+        with open(temp_file.name) as fp:
+            self.assertCountEqual(
+                [row for row in csv.reader(tokens.get_attribute("value").split("\n"), delimiter="\t") if row],
+                [row for row in csv.reader(open(fp.name), delimiter="\t")]
+            )
+        os.remove(temp_file.name)
+
+    def test_registration_with_field_length_violation(self):
+        """Test registrating tokens violating field length constraint.
+
+        Trying: column 'form' violates field length
+        Expecting: alert is displayed
+        """
+        self.add_control_lists()
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # prepare form
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.find_element_by_id("corpusName").send_keys("example")
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        invalid = "btOUZvzXARqNbnmvVIrcqjAbsRGIvZQsrhspGusZypNlUJSubtOztbiMiwipTpQJVTvSDZyIGCaONJ"
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            f"form\tlemma\tPOS\tmorph\n{invalid}\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
+        )
+
+        # submit and wait
+        self.driver.find_element_by_id("submit").click()
+        self.driver.implicitly_wait(15)
+        self.assertEqual(
+            self.driver.find_elements_by_css_selector(".alert.alert-danger")[0].text.strip(),
+            f"ln. 2, column 'form': '{invalid}' is too long (maximum 64 characters)"
+        )
+
+    def test_registration_without_field_length_violation(self):
+        """Test registrating tokens respecting field length constraint.
+
+        Trying: field length violations
+        Expecting: no alert is displayed
+        """
+        self.add_control_lists()
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # prepare form
+        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver.find_element_by_id("corpusName").send_keys("example")
+        self.driver.find_element_by_id("label_checkbox_reuse").click()
+        self.driver.find_element_by_id("control_list_select").click()
+        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        self.writeMultiline(
+            self.driver.find_element_by_id("tokens"),
+            f"form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
+        )
+
+        # submit and wait
+        self.driver.find_element_by_id("submit").click()
+        self.driver.implicitly_wait(15)
+        self.assertFalse(self.driver.find_elements_by_css_selector(".alert.alert-danger"))

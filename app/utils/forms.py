@@ -5,7 +5,9 @@ from app.utils.tsv import TSV_CONFIG
 
 
 def string_to_none(string):
-    if string.strip() == "None":
+    if string is None:
+        return
+    elif string.strip() == "None":
         return None
     else:
         return string

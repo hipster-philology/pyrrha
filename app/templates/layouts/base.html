@@ -9,7 +9,7 @@
     </head>
     <body>
         {% block nav %}
-            {{ nav.render_nav(current_user, corpora=corpora, control_lists=control_lists) }}
+            {{ nav.render_nav(current_user, corpora=favorites, control_lists=control_lists) }}
         {%  endblock %}
         <div class="container-fluid" id="main-container">
             <div class="row">

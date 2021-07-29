@@ -10,14 +10,8 @@
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
 
-{{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=True) }}
+{{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=True, current_user=current_user) }}
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
 
-<script type="text/javascript">
-    // These lines allows to remember what was the last page edited.
-    var corpus = {{ request.view_args.get("corpus_id") }},
-        page = {{ request.args.get("page", 1) }};
-    localStorage.setItem("corpus-"+corpus.toString(), page);
-</script>
 {% endblock %}

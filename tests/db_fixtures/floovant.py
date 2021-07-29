@@ -1,8 +1,18 @@
-from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph
+from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph, Column
 from app.models import ControlLists, ControlListsUser
 
 
-Floovant = Corpus(name="Floovant", id=2, control_lists_id=2)
+Floovant = Corpus(
+    name="Floovant",
+    id=2,
+    control_lists_id=2
+)
+FloovantColumns = [
+    Column(heading="Lemma", corpus_id=2),
+    Column(heading="POS", corpus_id=2),
+    Column(heading="Morph", corpus_id=2),
+    Column(heading="Similar", corpus_id=2),
+]
 FCL = ControlLists(id=2, name="Floovant")
 FloovantTokens = [
     WordToken(corpus=Floovant.id, form="SOIGNORS", lemma="seignor", left_context="", right_context="or escoutez que",

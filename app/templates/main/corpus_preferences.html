@@ -1,0 +1,88 @@
+{% extends "layouts/base.html" %}
+{% block content %}
+<form method="POST" action="{{ url_for("main.preferences", corpus_id=corpus.id) }}">
+        <h1>
+            <i class="fa fa-cog"></i> Preferences
+        </h1>
+        <fieldset class="form-fieldset">
+            <legend>Metadata</legend>
+            <div class="form-group">
+                <label for="sep_token">Delimiter token</label>
+                <input
+                    name="sep_token"
+                    type="text"
+                    class="form-control"
+                    id="sep_token"
+                    aria-describedby="sep_tokenHelp"
+                    value="{{ sep_token }}"
+                    {% if read_only %}
+                    readOnly="true"
+                    {% endif %}
+                />
+                <small id="sep_tokenHelp" class="form-text text-muted">
+                    [Optional] A specific token that is used as a delimiter
+                    between passages.
+                </small>
+            </div>
+            <div class="form-group">
+                <label for="context_left">Left Context</label>
+                <input
+                    name="context_left"
+                    type="number"
+                    class="form-control"
+                    id="context_left"
+                    aria-describedby="context_leftHelp"
+                    value="{{ context_left }}"
+                    {% if read_only %}
+                    readOnly="true"
+                    {% endif %}
+                />
+                <small id="context_leftHelp" class="form-text text-muted">
+                    Number of words to display on the left of the word to annotate
+                </small>
+            </div>
+            <div class="form-group">
+                <label for="context_right">Right Context</label>
+                <input
+                    name="context_right"
+                    type="number"
+                    class="form-control"
+                    id="context_right"
+                    aria-describedby="context_rightHelp"
+                    value="{{ context_right }}"
+                    {% if read_only %}
+                    readOnly="true"
+                    {% endif %}
+                />
+                <small id="context_rightHelp" class="form-text text-muted">
+                    Number of words to display on the right of the word to annotate
+                </small>
+            </div>
+        </fieldset>
+        <fieldset class="form-fieldset">
+            <legend>Layout</legend>
+            <div class="form-group">
+                <label for="hideColumns">Hide columns</label>
+                <ul>
+                    {% for column in corpus.columns %}
+                    <li>
+                        <input
+                            name="{{ column.heading.lower() }}Column"
+                            type="checkbox"
+                            value="true"
+                            {% if read_only %}
+                            readOnly="true"
+                            {% endif %}
+                            {% if column.hidden %}
+                                checked
+                            {% endif %}
+                        />
+                        <label for="{{ column.heading.lower() }}Column">{{ column.heading }}</label>
+                    </li>
+                {% endfor %}
+                </ul>
+            </div>
+        </fieldset>
+    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock %}

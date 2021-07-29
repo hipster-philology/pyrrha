@@ -4,8 +4,7 @@ from wtforms.ext.sqlalchemy.fields import QuerySelectField
 from wtforms.fields import (
     PasswordField,
     StringField,
-    SubmitField,
-)
+    SubmitField)
 from wtforms.fields.html5 import EmailField
 from wtforms.validators import (
     Email,
@@ -37,6 +36,10 @@ class ChangeAccountTypeForm(FlaskForm):
         get_label='name',
         query_factory=lambda: db.session.query(Role).order_by('permissions'))
     submit = SubmitField('Update role')
+
+
+class ChangeAccountStatusForm(FlaskForm):
+    submit = SubmitField('Toggle status')
 
 
 class InviteUserForm(FlaskForm):

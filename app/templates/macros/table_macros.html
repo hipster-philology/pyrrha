@@ -1,0 +1,6 @@
+{% macro sortable_table_row(endpoint, search_kwargs, orderBy) %}
+
+<a class="fa fa-angle-down" href="{{ url_for(endpoint, orderBy=orderBy, desc="0", **search_kwargs) }}"></a>
+<a class="fa fa-angle-up" href="{{ url_for(endpoint, orderBy=orderBy, desc="1", **search_kwargs) }}"></a>
+
+{% endmacro %}

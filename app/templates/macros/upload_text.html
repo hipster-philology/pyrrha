@@ -1,0 +1,25 @@
+{% macro upload_text(textArea) %}
+<div class="form-group row">
+    <div class="col-md-3">
+        <label for="upload">Text file</label>
+        <small id="upload help", class="form-text form-group">Upload a text file (.txt) which will be read</small>
+    </div>
+    <div class="col-md-9">
+        <input type="file" id="upload" placeholder="Text file" />
+    </div>
+</div>
+
+<script type="text/javascript">
+    document.getElementById("upload").addEventListener('change', (evt) => readFile(evt, "{{ textArea }}"), false);
+
+    function readFile (evt, textArea) {
+        var files = evt.target.files;
+        var file = files[0];
+        var reader = new FileReader();
+        reader.onload = function(event) {
+            document.getElementById(textArea).value = event.target.result;
+        };
+        reader.readAsText(file);
+    }
+</script>
+{% endmacro %}

@@ -1,27 +1,32 @@
-blinker==1.4
-click==6.7
-cov-core==1.15.0
-coverage==4.5.3
-Flask==1.0.3
-Flask-Compress==1.4.0
-Flask-Login==0.4.1
+# Main components
+Flask==2.0.0
+Jinja2==3.0.0
+Werkzeug==2.0.0
+
+# DB
+Flask-SQLAlchemy==2.5.1
+SQLAlchemy==1.4.15
+
+# Forms
+Flask-WTF==0.14.3
+WTForms==2.3.3
+
+# Extensions
+Flask-Login==0.5.0
 Flask-Mail==0.9.1
-Flask-SQLAlchemy==2.4.0
-Flask-Testing==0.7.1
-Flask-WTF==0.14.2
-itsdangerous==0.24
-Jinja2>=2.10.1
-MarkupSafe==1.0
-mock==3.0.5
+email_validator<2.0.0
+Flask-Compress==1.9.0
+flask-markdown==0.3
+python-slugify==5.0.2
+
+# Other libraries
+unidecode==1.2.0 # For normalization
+PyYaml<6.0.0 # Control list loading
+
+# Testing utilities
+coverage
+cov-core==1.15.0
 nose==1.3.7
-nose2==0.6.5
-pbr==4.0.3
-PyYAML==3.13
-redis==2.10.6
-rq==0.10.0
-selenium==3.141.0
-six==1.11.0
-SQLAlchemy>=1.3.0
-Unidecode==1.0.23
-Werkzeug==0.15.3
-WTForms==2.2.1
+selenium>=3.141.0
+Flask-Testing==0.8.1
+mock==4.0.3

@@ -1,7 +1,10 @@
 {% extends 'layouts/base.html' %}
+{% import 'macros/upload_text.html' as upload_text %}
+{% import 'macros/validate_length.html' as validateLength %}
 
 {% block content %}
-<form method="POST" action="{{url_for("main.corpus_new")}}">
+    <form method="POST" action="{{url_for("main.corpus_new")}}" id="form">
+    {{ validateLength.validateLength("tokens", {0: 64}) }}
     <h1>Create a new corpus</h1>
     <fieldset class="form-fieldset">
         <legend>Metadata</legend>
@@ -26,11 +29,30 @@
             <small id="sep_tokenHelp" class="form-text text-muted">[Optional] A specific token that is used as a delimiter between passages.</small>
         </div>
     </fieldset>
+    <fieldset class="form-fieldset">
+        <legend>Layout</legend>
+        <div class="form-group">
+            <label for="hideColumns">Hide columns</label>
+            <ul>
+                {% for heading in ["Lemma", "POS", "Morph", "Similar"] %}
+                <li>
+                    <input
+                        name="{{ heading.lower() }}Column"
+                        type="checkbox"
+                        value="true"
+                    />
+                    <label for="{{ heading.lower() }}Column">{{ heading }}</label>
+                </li>
+            {% endfor %}
+            </ul>
+        </div>
+    </fieldset>
 
     <fieldset class="form-fieldset">
         <legend>Data</legend>
+        {{ upload_text.upload_text("tokens") }}
         <div class="form-group">
-            <label for="tokens">Tokens (as TSV content)</label>
+            <label for="tokens" id="tokensLabel">Tokens (as TSV content)</label>
             <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : form, lemma, POS, morph</small>
             <small>Example :</small>
             <pre>form	lemma	POS	morph
@@ -178,6 +200,7 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
 <script type="text/javascript">
 
 $(document).ready(function() {
+
     $("#submit-model").on("click", function(event) {
         event.preventDefault();
         // Get the parameters
