@@ -204,3 +204,14 @@ https://codepen.io/sergiopedercini/pen/jmKdbj/?source=post_page-----------------
             #statistics > div {
                 margin-bottom: 1em !important;
             }
+/** Folding panel */
+.folded-left-col {
+    width: 50px;
+    flex-grow: initial !important;
+}
+.animated {
+    transition:all 1s;
+}
+.folded-left-col .corpus-menu {
+    display:none;
+}

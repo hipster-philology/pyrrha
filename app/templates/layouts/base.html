@@ -14,15 +14,20 @@
         <div class="container-fluid" id="main-container">
             <div class="row">
               {%  if corpus or control_list %}
-              <div class="col-lg-2 bg-light" id="left-menu">
+              <div class="col bg-light {% if resizedLeftMenu=="true" and corpus %}folded-left-col animated{% else %}col-lg-2{% endif %}" id="left-menu">
                   {%- if corpus %}
-                      {{ nav.quick_nav(corpus) }}
-                      {{ nav.single_corpus_nav(corpus, current_user=current_user) }}
+                  <div class="text-right">
+                      <a class="btn btn-outline-info btn-sm" id="resize-menu"><i class="fa fa-compress"></i></a>
+                  </div>
+                      <div class="corpus-menu">
+                          {{ nav.quick_nav(corpus) }}
+                          {{ nav.single_corpus_nav(corpus, current_user=current_user) }}
+                      </div>
                   {% elif control_list %}
                       {{ control_list_macros.nav_control_list(control_list) }}
                   {% endif %}
               </div>
-              <div class="col-lg-10" id="right-column">
+              <div class="col" id="right-column">
               {% else %}
               <div class="col-lg-12">
               {%  endif %}
