@@ -14,7 +14,7 @@
         <div class="container-fluid" id="main-container">
             <div class="row">
               {%  if corpus or control_list %}
-              <div class="col bg-light {% if resizedLeftMenu=="true" and corpus %}folded-left-col{% else %}col-lg-2{% endif %}" id="left-menu">
+              <div class="col bg-light {% if resizedLeftMenu=="true" and corpus %}folded-left-col animated{% else %}col-lg-2{% endif %}" id="left-menu">
                   {%- if corpus %}
                   <div class="text-right">
                       <a class="btn btn-outline-info btn-sm" id="resize-menu"><i class="fa fa-compress"></i></a>
