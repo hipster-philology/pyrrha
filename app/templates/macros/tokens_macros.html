@@ -295,7 +295,7 @@
           /**
            * tr : TR related to the details that will be shown
            */
-          if (tr.nextElementSibling.getAttribute("rel") == tr.id) {
+          if (tr.nextElementSibling !== null && tr.nextElementSibling.getAttribute("rel") == tr.id) {
               return tr.nextSibling.firstChild; // Returns firstChild because we return TD
           }
             let tdCount = tr.querySelectorAll("td").length,
