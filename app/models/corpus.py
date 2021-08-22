@@ -86,6 +86,12 @@ class Corpus(db.Model):
     changes = db.relationship("ChangeRecord", cascade="all,delete")
     columns = db.relationship("Column", cascade="all,delete")
 
+    @property
+    def last_change(self):
+        return ChangeRecord.query.filter(
+            ChangeRecord.corpus == self.id
+        ).order_by(ChangeRecord.id.desc()).first()
+
     def allowed_search_route(self, allowed_type):
         """ Returns the API search routes and parameters
 
@@ -232,7 +238,7 @@ class Corpus(db.Model):
 
     @staticmethod
     def for_user(current_user, _all=True):
-        corpora = db.session.query(Corpus).filter(
+        corpora = Corpus.query.filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,
                 CorpusUser.user_id == current_user.id
@@ -325,7 +331,8 @@ class Corpus(db.Model):
 
         :rtype: int
         """
-        return WordToken.query.filter_by(corpus=self.id).count()
+        # ToDo: This is so slow that it is impossible to use it on the Dashboard page
+        return db.session.query(db.func.count()).filter(WordToken.corpus==self.id).scalar()
 
     @property
     def displayed_columns_by_name(self):
@@ -1451,8 +1458,8 @@ class ChangeRecord(db.Model):
     POS_new = db.Column(db.String(64))
     morph_new = db.Column(db.String(64))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
-    word_token = db.relationship('WordToken', lazy='select')
-    user = db.relationship(User, lazy='select')
+    word_token = db.relationship('WordToken', lazy='select', viewonly=True)
+    user = db.relationship(User, lazy='select', viewonly=True)
 
     @property
     def similar_remaining(self):

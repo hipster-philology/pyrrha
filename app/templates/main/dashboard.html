@@ -16,8 +16,17 @@
                                         icon='fa fa-user-plus') }}
 
             </div>
+            <div class="row">
+                <div class="col-6">
+                    {{ dashboard.corpora_users(current_user, dashboard_corpora) }}
+                </div>
+                <div class="col-6">
+                    {{ dashboard.control_lists_users(current_user, dashboard_control_lists) }}
+                </div>
+            </div>
+        {% else %}
+            {{ dashboard.corpora_users(current_user, dashboard_corpora) }}
+            {{ dashboard.control_lists_users(current_user, dashboard_control_lists) }}
         {% endif %}
-        {{ dashboard.corpora_users(current_user, dashboard_corpora) }}
-        {{ dashboard.control_lists_users(current_user, dashboard_control_lists) }}
     </div>
 {% endblock %}

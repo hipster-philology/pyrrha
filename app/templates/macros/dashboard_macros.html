@@ -117,7 +117,11 @@
     <div class="mt-5">
         <h2>View and manage corpora users</h2>
         <p class="form-text">Add or remove corpus access to users</p>
-
+        {% if corpora|length > 10 %}
+            <a href="{{ url_for("main.list_corpora") }}">See all as administrator</a>
+        {% elif corpora|length > 10 %}
+            <a href="{{ url_for("main.list_corpora") }}">More detailed view...</a>
+        {% endif %}
         <div id="corpora-dashboard" class="list-group">
             <h3 class="list-group-item bg-dark text-white">Corpora</h3>
             {% for corpus in corpora %}
@@ -128,6 +132,7 @@
         </div>
     </div>
 {% endmacro %}
+
 {% macro control_lists_users(current_user, control_lists) %}
     <div class="mt-5">
         <h2>View and manage corpora users</h2>

@@ -4,7 +4,7 @@ from typing import List
 
 from app import db
 from app.main.views.utils import render_template_with_nav_info
-from app.models import Corpus, User, Role, ControlLists, CorpusUser, ControlListsUser
+from app.models import Corpus, User, Role, ControlLists, CorpusUser, ControlListsUser, WordToken
 from .. import main
 
 
@@ -12,11 +12,10 @@ from .. import main
 @login_required
 def dashboard():
     """admin dashboard page."""
+    corpora = Corpus.for_user(current_user)
     if current_user.is_admin():
-        corpora = db.session.query(Corpus).all()
         control_lists = db.session.query(ControlLists).all()
     else:
-        corpora = Corpus.for_user(current_user)
         control_lists = ControlLists.for_user(current_user)
     return render_template_with_nav_info(
         'main/dashboard.html',
@@ -102,6 +101,27 @@ def update_control_list_user(
         db.session.add(clu)
     if _commit:
         db.session.commit()
+
+
+@main.route('/dashboard/corpora', methods=['GET'])
+@login_required
+def list_corpora():
+
+    if current_user.is_admin():
+        corpora = Corpus.query.all()
+    else:
+        corpora = Corpus.for_user(current_user)
+    # ToDo: To Slow
+    # amounts = {
+    #     wt.corpus: wt.order_id
+    #     for wt in WordToken.query.filter(
+    #             db.and_(
+    #                 Corpus.id.in_([corpus.id for corpus in corpora]),
+    #                 WordToken.corpus == Corpus.id
+    #             )
+    #         ).order_by(WordToken.order_id.desc()).distinct(WordToken.corpus).all()
+    # }
+    return render_template_with_nav_info("main/dashboard_corpus_table.html", corpora=corpora)
 
 
 @main.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
