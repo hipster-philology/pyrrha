@@ -18,7 +18,7 @@
 {% endmacro %}
 
 {% macro users_table(current_user, users, redirect=False) %}
-    <table class="table table-hover" id="users-table">
+    <table class="table table-hover sortable" id="users-table">
         <thead>
         <tr>
             <th scope="col">ID</th>
@@ -28,11 +28,14 @@
                 <th scope="col">Email address</th>
             {% endif %}
             <th scope="col">Account type</th>
+            {% if current_user.is_admin() %}
+                <th scope="col">Status</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody>
         {% for u in users | sort(attribute='last_name') %}
-            <tr style="cursor: pointer" class="u-{{ u.id }}"
+            <tr style="cursor: pointer" class="u-{{ u.id }} "
                     {% if current_user.is_admin() and redirect %}
                 onclick="window.location.href = '{{ url_for('admin.user_info', user_id=u.id) }}';"
                     {% endif %} >
@@ -43,6 +46,9 @@
                     <td>{{ u.email }}</td>
                 {% endif %}
                 <td class="user role">{{ u.role.name }}</td>
+                {% if current_user.is_admin() %}
+                <td>{% if u.confirmed %}<span class="px1">Confirmed</span><span class="fa fa-check-circle" aria-label="Confirmed"></span>{% else %}<span class="px1">Not Confirmed</span><span class="fa fa-circle"  aria-label="Not Confirmed"></span>{% endif %}</td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>

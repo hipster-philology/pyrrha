@@ -22,3 +22,7 @@
 
     {{ dashboard.insert_search_script() }}
 {% endblock %}
+
+{% block custom_head_tags  %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sortable.min.js') }}"></script>
+{% endblock %}
