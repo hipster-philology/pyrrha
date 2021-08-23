@@ -117,7 +117,7 @@
     <div class="mt-5">
         <h2>View and manage corpora users</h2>
         <p class="form-text">Add or remove corpus access to users</p>
-        {% if corpora|length > 10 %}
+        {% if current_user.is_admin() %}
             <a href="{{ url_for("main.list_corpora") }}">See all as administrator</a>
         {% elif corpora|length > 10 %}
             <a href="{{ url_for("main.list_corpora") }}">More detailed view...</a>

@@ -112,7 +112,7 @@ class TestBase(LiveServerTestCase):
         desired['loggingPrefs'] = {'browser': 'ALL'}
         desired["goog:loggingPrefs"] = {'browser': 'ALL'}
         self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
-        self.driver.set_window_size(1920, 1080)
+        self.driver.set_window_size(1920, 1080, self.driver.window_handles[0])
         return self.driver
 
     def pprint_log(self):
@@ -403,6 +403,13 @@ class TokenCorrectBase(TestBase):
             self.driver.save_screenshot("debug-autocomplete.png")
             WebDriverWait(self.driver, 10).until(
                 EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
+            )
+            self.driver.execute_script(
+                "arguments[0].scrollIntoView();",
+                self.driver.find_element_by_css_selector(autocomplete_selector)
+            )
+            WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, autocomplete_selector))
             )
             self.driver.find_element_by_css_selector(autocomplete_selector).click()
 

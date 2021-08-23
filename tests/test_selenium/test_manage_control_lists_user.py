@@ -131,7 +131,7 @@ class TestManageControlListsUser(TestBase):
         el = self.get_ownership_table()
         self.assertTrue(len(el) == 1)
 
-    def test_corpus_has_at_least_one_owner(self):
+    def test_control_list_has_at_least_one_owner(self):
         self.addControlLists("wauchier", no_corpus_user=True)
         self.addControlLists("floovant", no_corpus_user=True)
 

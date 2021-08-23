@@ -18,11 +18,11 @@
                 {% for corpus in corpora %}
                 <tr>
                     <td>
-                        <a href="{{ url_for('main.manage_corpus_users', corpus_id=corpus.id) }}"><span class="fa fa-cog" aria-label="Manager"></span></span></a>
+                        <a href="{{ url_for('main.manage_corpus_users', corpus_id=corpus.id) }}"><span class="fa fa-cog" aria-label="Manage"></span></a>
                         <a href="{{ url_for('main.corpus_get', corpus_id=corpus.id) }}"><span class="fa fa-link" aria-label="Go"></span></a>
                     </td>
                     <td>{{ loop.index }}</td>
-                    <td>{{ corpus.name }}</td>
+                    <td class="name">{{ corpus.name }}</td>
                     <td>{% if corpus.last_change %}{{ corpus.last_change.created_on.strftime('%Y-%m-%d') }}{% endif %}</td>
                     <td>{% for user in corpus.users %}{{ user.full_name() }}{% if corpus.users|length > loop.index %}, {% endif %}{% endfor %}</td>
                 </tr>
