@@ -64,6 +64,7 @@ class TestDashboard(TestBase):
         """
         self.addCorpus("wauchier")
         self.addCorpus("floovant")
+
         inserted_corpora = sorted([
             DB_CORPORA["wauchier"]["corpus"].name,
             DB_CORPORA["floovant"]["corpus"].name
@@ -75,9 +76,10 @@ class TestDashboard(TestBase):
         ))
         self.admin_login()
         self.driver.find_element_by_link_text("Dashboard").click()
+        self.driver.find_element_by_link_text("See all as administrator").click()
 
-        corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
-        corpora_items = corpora_dashboard.find_elements_by_class_name("col")
+        corpora_dashboard = self.driver.find_element_by_css_selector("table.sortable tbody")
+        corpora_items = corpora_dashboard.find_elements_by_class_name("name")
         corpora_names = sorted([item.text for item in corpora_items])
 
         self.assertEqual(
@@ -105,14 +107,25 @@ class TestDashboard(TestBase):
         corpora_items = corpora_dashboard.find_elements_by_class_name("col")
         corpora_names = sorted([item.text for item in corpora_items])
 
-        self.assertNotEqual(header_names, corpora_names,
-                            "Quick-link corpora are different from dashboard for admins")
+        self.driver.find_element_by_link_text("See all as administrator").click()
+
+        corpora_dashboard = self.driver.find_element_by_css_selector("table.sortable tbody")
+        corpora_items = corpora_dashboard.find_elements_by_class_name("name")
+        full_corpora_names = sorted([item.text for item in corpora_items])
+
+        self.assertEqual(header_names, corpora_names,
+                            "Quick-link corpora are the same even for admins")
         self.assertEqual(
             header_names, ["FreshNewCorpus"],
             "FreshNewCorpus is owned by admin so it's shown in header"
         )
         self.assertEqual(
             corpora_names,
+            ["FreshNewCorpus"],
+            "Admin's main dashboard contains their corpora"
+        )
+        self.assertEqual(
+            full_corpora_names,
             sorted(["FreshNewCorpus"] + inserted_corpora),
-            "Admin's dashboard contains all corpora"
+            "Admin's corpora dashboard contains all corpora"
         )

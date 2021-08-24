@@ -4,9 +4,11 @@ from tests.test_selenium.base import TestBase
 class TestManageCorpusUser(TestBase):
 
     def go_to_corpus_management(self, corpus_name):
-        self.driver.find_element_by_link_text("Dashboard").click()
-        corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
-        corpora_dashboard.find_element_by_link_text(corpus_name).click()
+        self.driver.get(self.url_for_with_port("main.list_corpora"))
+        for tr in self.driver.find_elements_by_css_selector("tbody > tr"):
+            if tr.find_element_by_css_selector(".name").text.strip() == corpus_name:
+                return tr.find_element_by_css_selector("a span[aria-label='Manage']").click()
+        raise ValueError(f"Corpus not found {corpus_name}")
 
     def get_ownership_table(self):
         accesses_table = self.driver.find_element_by_id("accesses-table")
