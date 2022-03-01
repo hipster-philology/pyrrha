@@ -2,6 +2,7 @@
 Flask==2.0.0
 Jinja2==3.0.0
 Werkzeug==2.0.0
+psycopg2-binary
 
 # DB
 Flask-SQLAlchemy==2.5.1
