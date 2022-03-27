@@ -61,7 +61,7 @@
 
               {% if current_user.is_authenticated %}
               <li class="nav-item">
-                <a class="nav-link" id="new_corpus_link" href="{{url_for("main.corpus_new")}}">New Corpus</a>
+                <a class="nav-link" id="new_corpus_link" href="{{url_for("main.corpus_new")}}">{{ _('New Corpus') }}</a>
               </li>
               {% endif %}
               {%- if corpora %}
@@ -100,8 +100,19 @@
               {% endif -%}
             </ul>
             <ul class="navbar-nav"> 
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-language"  aria-hidden="true"></i>
+                      Language
+                    </a>
+                    <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+                      <a class="dropdown-item" href="#">Tibetan</a>
+                      <a class="dropdown-item" href="#">English</a>
+                      <div class="dropdown-divider"></div>
+                      <a class="dropdown-item" href="">Update</a>
+                    </div>
+                  </li>
                   <li class="nav-item"><a class="nav-link" href="https://github.com/hipster-philology/pyrrha/issues/new/choose" target="_blank"><i class="fa fa-bug"  aria-hidden="true"></i> Bug or request ?</a></li>
-                  <li class="nav-item"><a class="nav-link" href="https://pyrrha.readthedocs.io/en/latest/" target="_blank"><i class="fa fa-question-circle"  aria-hidden="true"></i> Help</a></li>
+                  <li class="nav-item"><a class="nav-link" href="https://pyrrha.readthedocs.io/en/latest/" target="_blank"><i class="fa fa-question-circle"  aria-hidden="true"></i>{{ _('Help') }}</a></li>
                 {{ account_items(current_user) }}
             </ul>
           </div>
