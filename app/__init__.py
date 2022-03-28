@@ -10,7 +10,7 @@ from flask_wtf import CSRFProtect
 from flaskext.markdown import Markdown
 from flask_babel import Babel 
 
-basedir = os.path.abspath(os.path.dirname(__file__))
+basedir = os.path.abspath(os.path.dirname(__file__)) 
 
 mail = Mail()
 db = SQLAlchemy()
