@@ -12,9 +12,9 @@ class Permission:
     ADMINISTER = 0xff
 
 
-class Serializer:
-    def __init__(self, secret):
-        self._secret = secret
+#class Serializer:
+#    def __init__(self, secret):
+#        self._secret = secret
 
 
 
