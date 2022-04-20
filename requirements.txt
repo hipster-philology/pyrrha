@@ -3,6 +3,10 @@ Flask==2.0.0
 Jinja2==3.0.0
 Werkzeug==2.0.0
 
+# Security
+itsdangerous<2.0.0
+authlib~=1.0.1
+
 # DB
 Flask-SQLAlchemy==2.5.1
 SQLAlchemy==1.4.15
@@ -18,6 +22,7 @@ email_validator<2.0.0
 Flask-Compress==1.9.0
 flask-markdown==0.3
 python-slugify==5.0.2
+flask-babel~=2.0.0
 
 # Other libraries
 unidecode==1.2.0 # For normalization

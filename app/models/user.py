@@ -12,6 +12,12 @@ class Permission:
     ADMINISTER = 0xff
 
 
+class Serializer:
+    def __init__(self, secret):
+        self._secret = secret
+
+
+
 class Role(db.Model):
     __tablename__ = 'roles'
     id = db.Column(db.Integer, primary_key=True)

@@ -16,17 +16,20 @@ mail = Mail()
 db = SQLAlchemy()
 csrf = CSRFProtect()
 compress = Compress()
+babel = Babel()
+
 # Set up Flask-Login
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'account.login'
 
 app = Flask(
-        __name__,
-        template_folder=config["dev"].template_folder,
-        static_folder=config["dev"].static_folder,
-        static_url_path="/statics"
-    )
+    __name__,
+    template_folder=config["dev"].template_folder,
+    static_folder=config["dev"].static_folder,
+    static_url_path="/statics"
+)
+
 
 def create_app(config_name="dev"):
     """ Create the application """
@@ -46,7 +49,7 @@ def create_app(config_name="dev"):
     #csrf.init_app(app)
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
-    #assets_env = Environment(app)
+    babel.init_app(app)
 
     # Register Jinja template functions
     from .main import main as main_blueprint
@@ -64,9 +67,6 @@ def create_app(config_name="dev"):
     from .control_lists import control_lists_bp
     app.register_blueprint(control_lists_bp)
 
-    return app
+    from .ext_config import get_locale
 
-babel = Babel(app)
-@babel.localeselector
-def get_locale():
-    return 'bo_CN'
+    return app

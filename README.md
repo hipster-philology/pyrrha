@@ -32,6 +32,12 @@ please cite the software if you use it using the following informations:
 This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
 It can connect to lemmatization service like [Deucalion](https://github.com/chartes/deucalion-chartes).
 
+## Update the translations
+
+From the root directory, run:
+
+`pybabel compile -d translations`
+
 ## Demo
 ![Pandora Post-Correction Editor](./demo.gif)
 
