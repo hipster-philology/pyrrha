@@ -4,7 +4,7 @@ Jinja2==3.0.0
 Werkzeug==2.0.0
 
 # Security
-itsdangerous<2.0.0
+itsdangerous==2.0.0
 authlib~=1.0.1
 
 # DB

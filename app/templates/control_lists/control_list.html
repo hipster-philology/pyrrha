@@ -10,7 +10,7 @@
         <h2>Description</h2>
         <p>{{control_list.description or ""}}</p>
 
-        <h2>Bibliography</h2>
+        <h2>{{ _('Bibliography') }}</h2>
         <p>{{(control_list.bibliography or "")| markdown}}</p>
 
 
@@ -26,7 +26,7 @@
             </dl>
         {% endif -%}
         {%- if can_edit %}
-            <h2>Rewrite</h2>
+            <h2>{{ _('Rewrite') }}</h2>
             <p class="text-muted">The following pages are made to completely rewrite control lists. Use with caution !</p>
             <p>
                 <a class="btn btn-warning settings-lemma" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='lemma')}}">Rewrite Lemma List</a>

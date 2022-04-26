@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="ui text container">
-      <h1>Welcome to Pyrrha !</h1>
+      <h1>{{ _('Welcome to Pyrrha !') }}</h1>
         {{ nav.corpora_list(corpora, endpoint="main.index", favorites=favorites) }}
 
     </div>

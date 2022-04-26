@@ -4,7 +4,7 @@
 {% block content %}
 
 <form method="POST" action="{{ url_for('.tokens_add_row', token_id=token.id, corpus_id=corpus.id)}}" class="form col-md-9">
-    <h1>Corpus {{corpus.name}} - Add a token</h1>
+    <h1>{{ _('Corpus') }} {{corpus.name}} - Add a token</h1>
     <p>This page allows you to add a token after the following one</p>
     <table class="table table-bordered">
         <thead>

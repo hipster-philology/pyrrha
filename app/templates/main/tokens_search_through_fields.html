@@ -7,7 +7,7 @@
 
 {% set visible = corpus.get_columns_headings() %}
 
-    <h1 class="mt-3"><i class="fa fa-search mr-2"></i>Corpus {{ corpus.name }} - Search tokens within the corpus </h1>
+    <h1 class="mt-3"><i class="fa fa-search mr-2"></i>{{ _('Corpus') }} {{ corpus.name }} - {{ _('Search tokens within the corpus') }} </h1>
 
     <form id="search_form" method="GET"
           action="{{ url_for('main.tokens_search_through_fields', corpus_id=corpus.id) }}">
@@ -16,46 +16,44 @@
             <thead>
             <tr>
                 <th>
-                    <label id="formHelp" for="form">Form</label>
+                    <label id="formHelp" for="form">{{ _('Form') }}</label>
                 </th>
-                {% for heading in visible %}
-                    <th>
-                        <label id={{ heading }}"Help" for={{ heading.lower() }}>{{ heading}}</label>
-                    </th>
-                {% endfor %}
+                <th>
+                    <label id="lemma_help" for="lemma">{{ _('Lemma') }}</label>
+                </th>
+                <th>
+                    <label id="POS_help" for="POS">{{ _('POS') }}</label>
+                </th>
+                <th>
+                    <label id="morph_help" for="morph">{{ _('Morph') }}</label>
+                </th>
             </thead>
             <tbody>
-                <tr id="filter_row">
+            <tr id="filter_row">
                 <td>
                     <div class="form-group">
                         <input name="form" type="text" class="form-control" id="form" aria-describedby="formHelp"
                                placeholder="Enter form" value="{% if form %}{{ form }}{% endif %}"/>
                     </div>
                 </td>
-                {% if "Lemma" in visible %}
                 <td>
                     <div class="form-group">
-                        <input type="text" aria-describedby="lemmaHelp" class="form-control" id="lemma" name="lemma"
+                        <input type="text" aria-describedby="lemma_help" class="form-control" id="lemma" name="lemma"
                                value="{% if lemma %}{{ lemma }}{% endif %}">
                     </div>
                 </td>
-                {% endif %}
-                {% if "POS" in visible %}
                 <td>
                     <div class="form-group">
-                        <input type="text" aria-describedby="POSHelp" class="form-control" id="POS" name="POS"
+                        <input type="text" aria-describedby="POS_help" class="form-control" id="POS" name="POS"
                                value="{% if POS %}{{ POS }}{% endif %}">
                     </div>
                 </td>
-                {% endif %}
-                {% if "Morph" in visible %}
                 <td>
                     <div class="form-group">
-                        <input type="text" aria-describedby="morphHelp" class="form-control" id="morph" name="morph"
+                        <input type="text" aria-describedby="morph_help" class="form-control" id="morph" name="morph"
                                value="{% if morph %}{{ morph }}{% endif %}">
                     </div>
                 </td>
-                {% endif %}
             </tr>
             </tbody>
         </table>
@@ -67,7 +65,7 @@
             <small class="form-text text-muted">To search forms which do not contain 'e': <b>! *e*</b></small>
         </div>
 
-        <button type="submit" id="submit_search" class="btn btn-primary mb-2">Search</button>
+        <button type="submit" id="submit_search" class="btn btn-primary mb-2">{{ _('Search') }}</button>
     </form>
 
 

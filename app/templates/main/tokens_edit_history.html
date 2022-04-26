@@ -3,12 +3,12 @@
 
 {% block content %}
 
-<h1>Corpus {{corpus.name}} - History of tokens edition</h1>
+<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('History of tokens edition') }}</h1>
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit_history") }}
 
 <table class="table table-bordered">
-    <thead><tr><th>User</th><th>Date</th><th>Type</th><th>Ancienne valeur</th><th>Nouvelle valeur</th></tr></thead>
+    <thead><tr><th>{{ _('User') }}</th><th>{{ _('Data') }}</th><th>{{ _('Type') }}</th><th>Ancienne valeur</th><th>Nouvelle valeur</th></tr></thead>
     <tbody>
         {% for token in tokens.items -%}
         <tr>

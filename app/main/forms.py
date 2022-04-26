@@ -8,4 +8,4 @@ from wtforms.validators import InputRequired
 
 class Delete(FlaskForm):
     name = StringField("Name", validators=[InputRequired()])
-    submit = SubmitField('Delete this corpus')
+    submit = SubmitField ('Delete this corpus')

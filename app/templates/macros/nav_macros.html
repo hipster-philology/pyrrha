@@ -23,7 +23,7 @@
 {% macro header_items(current_user) %}
     {% set user = [] %}
     {% if current_user.is_authenticated %}
-      {% set user = ([('main.dashboard', 'Dashboard', 'fa fa-bars')]) %}
+      {% set user = ([('main.dashboard', _('Dashboard'), 'fa fa-bars')]) %}
     {% endif %}
     {{ render_menu_items( user ) }}
 {% endmacro %}
@@ -31,11 +31,11 @@
 {# This renders the right hand side of the navigation bar. If the user is logged in, it links to
    manage their account and logout (account routes). Otherwise, it links to register and login.
 #}
-{% macro account_items(current_user) %}
+{% macro account_items(current_user) %} 
     {% if current_user.is_authenticated %}
       {% set endpoints = [
         ('account.manage', 'Your Account', 'fa fa-user-circle'),
-        ('account.logout', 'Log out', 'fa fa-sign-out')
+        ('account.logout', _('Log out'), 'fa fa-sign-out')
       ] %}
       {{ render_menu_items(endpoints) }}
     {% else %}
@@ -86,7 +86,7 @@
                 <a id="toggle_controllists"
                    class="nav-link dropdown-toggle"
                    data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                    Control Lists
+                    {{ _('Control Lists') }}
                 </a>
                 <div class="dropdown-menu">
                     {% for control_list in control_lists %}
@@ -102,17 +102,15 @@
             <ul class="navbar-nav"> 
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-language"  aria-hidden="true"></i>
-                      Language
+                    Language
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
                       <a class="dropdown-item" href="#">Tibetan</a>
                       <a class="dropdown-item" href="#">English</a>
-                      <div class="dropdown-divider"></div>
-                      <a class="dropdown-item" href="">Update</a>
                     </div>
                   </li>
                   <li class="nav-item"><a class="nav-link" href="https://github.com/hipster-philology/pyrrha/issues/new/choose" target="_blank"><i class="fa fa-bug"  aria-hidden="true"></i> Bug or request ?</a></li>
-                  <li class="nav-item"><a class="nav-link" href="https://pyrrha.readthedocs.io/en/latest/" target="_blank"><i class="fa fa-question-circle"  aria-hidden="true"></i>{{ _('Help') }}</a></li>
+                  <li class="nav-item"><a class="nav-link" href="https://pyrrha.readthedocs.io/en/latest/" target="_blank"><i class="fa fa-question-circle"  aria-hidden="true"></i>Help</a></li>
                 {{ account_items(current_user) }}
             </ul>
           </div>
@@ -148,7 +146,7 @@
             {%- endfor -%}
             <div class="input-group input-group-sm">
               <div class="input-group-prepend">
-                <button class="btn btn-primary" type="submit" id="button-addon1">Go to</button>
+                <button class="btn btn-primary" type="submit" id="button-addon1">{{ _('Go to') }}</button>
               </div>
               <input type="number" name="page"
                      class="form-control" placeholder="Page" aria-label="Example text with button addon"
@@ -183,12 +181,12 @@
     <ul class="nav flex-column">
         <li class="nav-item">
             <a class="nav-link" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
-                <i class="fa fa-cog"></i> Preferences
+                <i class="fa fa-cog"></i>{{ _('Preferences') }}
             </a>
         </li>
         <li>
             <a class="nav-link" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
-                <i class="fa fa-book"></i> Custom Dictionary
+                <i class="fa fa-book"></i>{{ _('Custom Dictionary') }}
             </a>
         </li>
     </ul>
@@ -196,29 +194,29 @@ Quick links
 <ul class="nav flex-column">
     <li class="nav-item">
         <a id="stats_{{corpus.id}}" class="nav-link"  href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
-        <i class="fa fa-tachometer"></i> Statistics</a>
+        <i class="fa fa-tachometer"></i> {{ _('Statistics') }}</a>
     </li>
     <li class="nav-item"><a class="nav-link" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">
-        <i class="fa fa-search"></i> Search tokens</a></li>
+        <i class="fa fa-search"></i> {{ _('Search tokens') }}</a></li>
     <li class="nav-item"><a class="nav-link" href="{{ url_for("main.tokens_correct", corpus_id=corpus.id) }}">
-        <i class="fa fa-pencil"></i> Correct tokens
+        <i class="fa fa-pencil"></i> {{ _('Correct tokens') }} 
     </a></li>
    <li class="nav-item"> <a class="nav-link" id="bookmark_link" href="{{ url_for("main.corpus_bookmark", corpus_id=corpus.id) }}">
-        <i class="fa fa-bookmark"></i> Bookmark
+        <i class="fa fa-bookmark"></i> {{ _('Bookmark') }}
    </a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">
-      <i class="fa fa-download"></i> Export tokens</a></li>
+      <i class="fa fa-download"></i> {{ _('Export tokens') }}</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">
-      <i class="fa fa-list"></i> Corrections history</a></li>
+      <i class="fa fa-list"></i> {{ _('Corrections history') }}</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.get", control_list_id=corpus.control_lists_id)}}">
-      <i class="fa fa-cogs"></i> Control List</a></li>
+      <i class="fa fa-cogs"></i> {{ _('Control List') }}</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.tokens_edit_history", corpus_id=corpus.id)}}">
-      <i class="fa fa-calendar-times-o"></i> Editions history</a></li>
+      <i class="fa fa-calendar-times-o"></i> {{ _('Editions history') }}</a></li>
     {% if corpus.is_owned_by(current_user) or current_user.is_admin() %}
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.control_list_switch", corpus_id=corpus.id)}}">
-          <i class="fa fa-exchange"></i> Switch control list</a></li>
+          <i class="fa fa-exchange"></i> {{ _('Switch control list') }}</a></li>
   <li class="nav-item"><a class="nav-link" href="{{url_for("main.corpus_delete", corpus_id=corpus.id)}}">
-          <i class="fa fa-remove"></i> Delete the corpus</a></li>
+          <i class="fa fa-remove"></i> {{ _('Delete the corpus') }}</a></li>
     {% endif %}
 </ul>
 Correct tokens with
@@ -238,12 +236,12 @@ Correct tokens with
 
 {% macro corpora_list(corpora, endpoint='', favorites=[]) %}
     <div class="mt-5">
-        <h2>Your corpora</h2>
+        <h2>{{ _('Your corpora') }}</h2>
 
         {{ render_pagination(corpora, endpoint, get_params=[]) }}
 
         <div id="corpora-dashboard" class="list-group">
-            <h3 class="list-group-item bg-dark text-white">Corpora</h3>
+            <h3 class="list-group-item bg-dark text-white">{{ _('Corpus') }}</h3>
             {% for corpus in corpora.items %}
                 <div  class="list-group-item list-group-item-action">
                     <div class="content container">

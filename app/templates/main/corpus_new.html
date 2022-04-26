@@ -5,13 +5,13 @@
 {% block content %}
     <form method="POST" action="{{url_for("main.corpus_new")}}" id="form">
     {{ validateLength.validateLength("tokens", {0: 64}) }}
-    <h1>Create a new corpus</h1>
+    <h1>{{ _('Create a new corpus') }}</h1>
     <fieldset class="form-fieldset">
         <legend>Metadata</legend>
         <div class="form-group">
-            <label for="corpusName">Corpus Name</label>
+            <label for="corpusName">{{ _('Corpus Name') }}</label>
             <input name="name" type="text" class="form-control" id="corpusName" aria-describedby="corpusNameHelp" placeholder="Enter name of the corpus" value="{% if name %}{{name}}{%endif%}" />
-            <small id="corpusNameHelp" class="form-text text-muted">This should be a clear name</small>
+            <small id="corpusNameHelp" class="form-text text-muted">{{ _('This should be a clear name') }}</small>
         </div>
         <div class="form-group">
             <label for="context_left">Left Context</label>
@@ -24,9 +24,9 @@
             <small id="context_rightHelp" class="form-text text-muted">Number of words to display on the right of the word to annotate</small>
         </div>
         <div class="form-group">
-            <label for="sep_token">Delimiter token</label>
+            <label for="sep_token">{{ _('Delimiter token') }}</label>
             <input name="sep_token" type="text" class="form-control" id="sep_token" aria-describedby="sep_tokenHelp" value="{% if name %}{{sep_token}}{%endif%}" />
-            <small id="sep_tokenHelp" class="form-text text-muted">[Optional] A specific token that is used as a delimiter between passages.</small>
+            <small id="sep_tokenHelp" class="form-text text-muted">{{ _('[Optional] A specific token that is used as a delimiter between passages.') }}</small>
         </div>
     </fieldset>
     <fieldset class="form-fieldset">
@@ -49,25 +49,25 @@
     </fieldset>
 
     <fieldset class="form-fieldset">
-        <legend>Data</legend>
+        <legend>{{ _('Data') }}</legend>
         {{ upload_text.upload_text("tokens") }}
         <div class="form-group">
-            <label for="tokens" id="tokensLabel">Tokens (as TSV content)</label>
-            <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : form, lemma, POS, morph</small>
-            <small>Example :</small>
-            <pre>form	lemma	POS	morph
+            <label for="tokens" id="tokensLabel">{{ _('Tokens (as TSV content)') }}</label>
+            <small id="tsvHelp" class="form-text text-muted">{{ _('The TSV should at least have the headers : form, lemma, POS, morph') }}</small>
+            <small>{{ _('Example :') }}</small>
+            <pre>{{ _('form	lemma	POS	morph
 SOIGNORS	seignor	NOMcom	NOMB.=p|GENRE=m|CAS=n
 or	or4	ADVgen	DEGRE=-
-escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
+escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p') }}</pre>
             <textarea aria-describedby="tsvHelp" class="form-control" id="tokens" name="tsv">{% if tsv %}{{tsv}}{%endif%}</textarea>
         </div>
         {% if lemmatizers %}
         <div class="form-group row">
             <div class="col-md-3">
                 <label for="language-model" id="language-model-label" class="form-text text-muted">
-                    Lemmatize
+                   {{ _('Lemmatize') }}
                 </label>
-                <small class="form-text text-muted">If your text is not lemmatized, select the language and click on lemmatize.</small>
+                <small class="form-text text-muted">{{ _('If your text is not lemmatized, select the language and click on lemmatize.') }}</small>
             </div>
             <div class="col-md-9">
                 <div class="input-group">
@@ -77,7 +77,7 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
                       {% endfor -%}
                   </select>
                   <div class="input-group-append">
-                    <button id="submit-model" class="btn btn-outline-secondary" type="button">Lemmatize</button>
+                    <button id="submit-model" class="btn btn-outline-secondary" type="button">{{ _('Lemmatize') }}</button>
                   </div>
                 </div>
                 <div class="hidden-default font-italic" id="tokens-update">
@@ -95,22 +95,22 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
         <div class="form-group row">
             <div class="col-md-3">
                 <label for="tokenize" id="tokenize-label" class="form-text text-muted">
-                    Tokenize (beta)
+                    {{ _('Tokenize (beta)') }}
                 </label>
-                <small class="form-text text-muted">If your text is not tokenized and you don't need to pre-lemmatize it, you can use this function</small>
+                <small class="form-text text-muted">If your text is not tokenized and you don't need to pre-lemmatize it, you can use this function.</small>
             </div>
             <div class="col-md-6">
               <div class="form-check">
                 <input type="checkbox" class="form-check-input" id="hyphens-remove">
-                <label class="form-check-label" for="hyphens-remove">Remove hyphens (Be careful with this function)</label>
+                <label class="form-check-label" for="hyphens-remove">{{ _('Remove hyphens (Be careful with this function)') }}</label>
               </div>
               <div class="form-check">
                 <input type="checkbox" class="form-check-input" id="punct-keep" checked="true">
-                <label class="form-check-label" for="punct-keep">Keep punctuation</label>
+                <label class="form-check-label" for="punct-keep">{{ _('Keep punctuation') }}</label>
               </div>
             </div>
             <div class="col-md-3 text-right">
-                    <button id="tokenize" class="btn btn-outline-secondary" type="button">Tokenize</button>
+                    <button id="tokenize" class="btn btn-outline-secondary" type="button">{{ _('Tokenize') }}</button>
             </div>
         </div>
     </fieldset>
@@ -145,7 +145,7 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
             <div class="col-md-3">
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" id="checkbox_create" type="radio" name="control_list" value="create"/>
-                    <label class="form-check-label hide-toggle" data-toggle="#write_your_own" for="checkbox_create" id="label_checkbox_create">Write your own</label>
+                    <label class="form-check-label hide-toggle" data-toggle="#write_your_own" for="checkbox_create" id="label_checkbox_create">{{ _('Write your own') }}</label>
                 </div>
                 <p class="small text-muted">In case the configurations provided do not fit your need, you can create your own configuration.
                     You will be able to share it with collaborators, propose it as a canon setting for the whole base of users.
@@ -195,7 +195,7 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
             </div>
         </div>
     </fieldset>
-    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
 </form>
 <script type="text/javascript">
 
