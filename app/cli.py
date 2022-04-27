@@ -12,6 +12,7 @@ from .models import (
     WordToken
 )
 from app.utils.forms import create_input_format_convertion
+from sqlalchemy_utils import database_exists, create_database
 
 app = None
 
@@ -76,6 +77,8 @@ def make_cli():
         """ Creates a local database
         """
         with app.app_context():
+            if not database_exists(db.engine.url):
+                create_database(db.engine.url)
             db.create_all()
 
             Role.add_default_roles()
