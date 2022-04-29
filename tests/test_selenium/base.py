@@ -8,12 +8,11 @@ import logging
 import tempfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from app import db, create_app
 from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists, Favorite, Column
@@ -425,6 +424,69 @@ class TokenCorrectBase(TestBase):
             return callback
         return callback()
 
+    def _edit_nth_row_value_autocomplete(
+            self, value,
+            value_type="lemma",
+            id_row="1", corpus_id=None,
+            autocomplete_selector=None,
+            additional_action_before=None,
+            go_to_edit_token_page=None
+    ):
+        """ Helper to go to the right page and edit the first row
+
+        :param value: Value to write
+        :type value: str
+        :param value_type: Type of value to edit (lemma, form, context)
+        :type value_type: str
+        :param id_row: ID of the row to edit
+        :type corpus_id: str
+        :param corpus_id: ID of the corpus to edit
+        :type corpus_id: str
+        :param autocomplete_selector: Selector that match an autocomplete suggestion that will be clicked
+        :type autocomplete_selector: str
+        :param additional_action_before: Action to perform between page reaching and token editing
+        :type additional_action_before: Callable
+        :param go_to_edit_token_page: Action to perform to go to the edit token page
+
+        :returns: Token that has been edited, Content of the save link td
+        :rtype: WordToken, str
+        """
+        # Take the first row
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
+        # Take the td to edit
+        if value_type == "POS":
+            td = self.element_find_element_by_class_name(row, "token_pos")
+        elif value_type == "morph":
+            td = self.element_find_element_by_class_name(row, "token_morph")
+        else:
+            td = self.element_find_element_by_class_name(row, "token_lemma")
+
+        td.clear()
+
+        action = ActionChains(self.driver)
+        action.move_to_element(td).click(td).send_keys(value).pause(1).perform()
+
+        action = ActionChains(self.driver)
+        autocomplete_element = self.driver_find_element_by_css_selector(autocomplete_selector)
+        save_btn = self.element_find_element_by_css_selector(row, "a.save")
+        action.move_to_element(autocomplete_element).click(autocomplete_element)\
+            .move_to_element(save_btn).click(save_btn).perform()
+
+        # It's safer to wait for the AJAX call to be completed
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
+
+        WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, "[rel='token_{}_row'] .badge-status".format(id_row))
+            )
+        )
+
+        return (
+            self.db.session.query(WordToken).get(int(id_row)),
+            self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
+            row
+        )
+
     def edith_nth_row_value(
             self, value,
             value_type="lemma",
@@ -461,6 +523,12 @@ class TokenCorrectBase(TestBase):
         if additional_action_before is not None:
             additional_action_before()
 
+        if autocomplete_selector:
+            return self._edit_nth_row_value_autocomplete(
+                value=value, id_row=id_row,
+                value_type=value_type, autocomplete_selector=autocomplete_selector
+            )
+
         # Take the first row
         row = self.driver_find_element_by_id("token_" + id_row + "_row")
         # Take the td to edit
@@ -475,21 +543,6 @@ class TokenCorrectBase(TestBase):
         td.click()
         td.clear()
         td.send_keys(value)
-        if autocomplete_selector is not None:
-            # For some reason, screenshot was working as well, screenshot makes
-            #   autocomplete appear...
-            self.driver.save_screenshot("debug-autocomplete.png")
-            WebDriverWait(self.driver, 10).until(
-                EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
-            )
-            self.driver.execute_script(
-                "arguments[0].scrollIntoView();",
-                self.driver_find_element_by_css_selector(autocomplete_selector)
-            )
-            WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, autocomplete_selector))
-            )
-            self.driver_find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
         self.element_find_element_by_css_selector(row, "a.save").click()
