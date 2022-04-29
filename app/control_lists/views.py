@@ -364,6 +364,8 @@ def information_edit(control_list_id, control_list):
         control_list.language = request.form.get("cl_language")
         control_list.notes = request.form.get("cl_notes")
         control_list.bibliography = request.form.get("cl_bibliography")
+        db.session.add(control_list)
+        db.session.commit()
     return render_template_with_nav_info('control_lists/information_edit.html', control_list=control_list)
 
 
