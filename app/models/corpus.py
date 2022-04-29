@@ -361,9 +361,14 @@ class Corpus(db.Model):
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
 
     def changed(self, tokens):
-        data = db.session.query(ChangeRecord.word_token_id).distinct(ChangeRecord.word_token_id).filter(
-            ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
-        ).all()
+        if db.session.bind.dialect.name != "postgresql":
+            data = db.session.query(ChangeRecord.word_token_id).group_by(ChangeRecord.word_token_id).filter(
+                ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
+            ).all()
+        else:
+            data = db.session.query(ChangeRecord.word_token_id).distinct(ChangeRecord.word_token_id).filter(
+                ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
+            ).all()
         return set([token for token, *_ in data])
 
     def get_history(self, page=1, limit=100):
