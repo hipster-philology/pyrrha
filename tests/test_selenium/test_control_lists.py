@@ -26,7 +26,11 @@ class TestUpdateControlList(TestBase):
         self.login_with_user(foor_bar)
         self.go_to_control_lists_management("Wauchier")
         # This should work otherwise there is an issue
-        links = self.driver_find_element_by_id("right-column").find_elements_by_tag_name("a")
+        # links = self.driver_find_element_by_id("right-column").find_elements_by_tag_name("a")
+        links = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_id("right-column"),
+            "a"
+        )
         self.assertEqual(
             sorted([link.text for link in links]),
             sorted(['Rewrite Lemma List', 'Rewrite POS List', 'Rewrite Morphology List']),
@@ -34,7 +38,11 @@ class TestUpdateControlList(TestBase):
         )
 
         # Check that we can make public
-        links = self.driver_find_element_by_id("left-menu").find_elements_by_tag_name("a")
+        # links = self.driver_find_element_by_id("left-menu").find_elements_by_tag_name("a")
+        links = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_id("left-menu"),
+            "a"
+        )
         self.assertEqual(
             sorted([link.text for link in links]),
             sorted([
@@ -154,7 +162,11 @@ class TestUpdateControlList(TestBase):
         self.admin_login()
         self.go_to_control_lists_management("Wauchier")
         # This should work otherwise there is an issue
-        links = self.driver_find_element_by_id("right-column").find_elements_by_tag_name("a")
+        # links = self.driver_find_element_by_id("right-column").find_elements_by_tag_name("a")
+        links = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_id("right-column"),
+            "a"
+        )
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
             sorted(['Make public', 'Rewrite Lemma List', 'Rewrite POS List',
@@ -163,7 +175,11 @@ class TestUpdateControlList(TestBase):
         )
 
         # Check that we can make public
-        links = self.driver_find_element_by_id("left-menu").find_elements_by_tag_name("a")
+        #links = self.driver_find_element_by_id("left-menu").find_elements_by_tag_name("a")
+        links = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_id("left-menu"),
+            "a"
+        )
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
             sorted(["Guidelines",
@@ -240,14 +256,21 @@ class TestUpdateControlList(TestBase):
         self.login_with_user(foor_bar)
         self.go_to_control_lists_management("Wauchier")
         # This should work otherwise there is an issue
-        links = self.driver_find_element_by_id("right-column").find_elements_by_tag_name("a")
+        #links = self.driver_find_element_by_id("right-column").find_elements_by_tag_name("a")
+        links = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_id("right-column"),
+            "a"
+        )
         self.assertEqual(
             [link.text.strip() for link in links], [],
             "Users have no specific abilities on the dashboard"
         )
 
         # Check that we can make public
-        links = self.driver_find_element_by_id("left-menu").find_elements_by_tag_name("a")
+        links = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_id("left-menu"),
+            "a"
+        )
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
             sorted(['Lemma', "Guidelines",

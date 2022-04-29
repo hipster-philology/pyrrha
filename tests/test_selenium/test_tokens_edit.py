@@ -21,7 +21,10 @@ class TestTokenEdit(TestBase):
 
     def select_context_around(self, tok_id, max_id=len(WauchierTokens)):
         return [
-            self.driver_find_element_by_id("token_"+str(cur)+"_row").find_elements_by_tag_name("td")[5].text
+            self.element_find_elements_by_tag_name(
+                self.driver_find_element_by_id("token_"+str(cur)+"_row"),
+                "td"
+            )[5].text
             for cur in range(
                 max(tok_id - 3, 0),
                 min(max_id, tok_id + 3 + 2)

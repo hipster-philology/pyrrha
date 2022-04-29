@@ -629,10 +629,18 @@ class TokensSearchThroughFieldsBase(TestBase):
             return self.element_find_element_by_class_name(row, f).text.strip()
 
         # load each page to get the (partials) result tables
-        pagination = self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        # pagination = self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        pagination = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_class_name("pagination"),
+            "a"
+        )
         self.driver.save_screenshot("first.results.png")
         for page_index in range(0, len(pagination)):
-            self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
+            # self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
+            self.element_find_elements_by_tag_name(
+                self.driver_find_element_by_class_name("pagination"),
+                "a"
+            )[page_index].click()
 
             # find the result in the result table
             res_table = self.element_find_element_by_tag_name(
