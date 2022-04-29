@@ -11,9 +11,12 @@ class TestCorpusSettingsUpdate(TestBase):
         self.addControlLists("floovant", with_allowed_lemma=True, partial_allowed_lemma=False)
 
     def go_to(self, corpus="1"):
-        self.driver.find_element_by_id("toggle_controllists").click()
-        self.driver.find_element_by_id("dropdown_link_cl_"+corpus).click()
-        self.driver.find_element_by_id("left-menu").find_element_by_link_text("Lemma").click()
+        self.driver_find_element_by_id("toggle_controllists").click()
+        self.driver_find_element_by_id("dropdown_link_cl_"+corpus).click()
+        self.element_find_element_by_link_text(
+            self.driver_find_element_by_id("left-menu"),
+            "Lemma"
+        ).click()
 
     def search(self, control_list_id="1", token="", limit=1000):
         self.driver.get(
@@ -22,7 +25,7 @@ class TestCorpusSettingsUpdate(TestBase):
                 control_list_id=control_list_id,
             )+"?limit="+str(limit)
         )
-        keyword = self.driver.find_element_by_css_selector("input[name='kw']")
+        keyword = self.driver_find_element_by_css_selector("input[name='kw']")
         keyword.click()
         keyword.clear()
         keyword.send_keys(token)
@@ -31,14 +34,14 @@ class TestCorpusSettingsUpdate(TestBase):
         result = []
 
         # load each page to get the (partials) result tables
-        pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        pagination = self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")
         for page_index in range(0, len(pagination)):
-            self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
+            self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
 
             # find the result in the result table
-            res_table = self.driver.find_element_by_id("lemma-list")
+            res_table = self.driver_find_element_by_id("lemma-list")
             try:
-                rows = res_table.find_elements_by_tag_name("li")
+                rows = self.element_find_elements_by_tag_name(res_table, "li")
 
                 for row in rows:
                     result.append(row.text.strip())
@@ -64,19 +67,19 @@ class TestCorpusSettingsUpdate(TestBase):
 
     def add_allowed(self, *lemma, success=1):
         # Show the form
-        self.driver.find_element_by_id("show_lemma").click()
+        self.driver_find_element_by_id("show_lemma").click()
         # Write the data
-        textarea = self.driver.find_element_by_id("submit_lemma_textarea")
+        textarea = self.driver_find_element_by_id("submit_lemma_textarea")
         self.writeMultiline(textarea, "\n".join(lemma))
         # Submit
-        self.driver.find_element_by_id("submit_lemma").click()
+        self.driver_find_element_by_id("submit_lemma").click()
         # Waiting for the result
         if success == 1:
             self.wait_until_shown("lemma_saved")
         else:
             self.wait_until_shown("lemma_error")
 
-        for badge in self.driver.find_elements_by_css_selector(".lemma_badge"):
+        for badge in self.driver_find_elements_by_css_selector(".lemma_badge"):
             if badge.is_displayed():
                 return badge.is_displayed(), badge.text.strip()
 
@@ -113,9 +116,9 @@ class TestCorpusSettingsUpdate(TestBase):
         self.search("1", "hello")
 
         # Remove the item
-        self.driver.find_element_by_class_name("rm-lem").click()
+        self.driver_find_element_by_class_name("rm-lem").click()
         # Wait for the Lemma LIST to have no more LI
-        (WebDriverWait(self.driver, 5)).until(staleness_of(self.driver.find_element_by_css_selector("#lemma-list li")))
+        (WebDriverWait(self.driver, 5)).until(staleness_of(self.driver_find_element_by_css_selector("#lemma-list li")))
         # There should be no results anymore
         self.assertEqual(
             [], self.search("1", "hello"),

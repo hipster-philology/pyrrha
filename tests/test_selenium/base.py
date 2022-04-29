@@ -10,12 +10,13 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 from app import db, create_app
-from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite, Column
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists, Favorite, Column
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 
@@ -42,7 +43,7 @@ class _element_has_count(object):
         self.cnt = cnt
 
     def __call__(self, driver):
-        if self.cnt == len(driver.find_elements_by_css_selector(self.element)):
+        if self.cnt == len(driver.find_elements(By.CSS_SELECTOR, self.element)):
             return self.element
         else:
             return False
@@ -78,6 +79,84 @@ class TestBase(LiveServerTestCase):
         ControlLists.add_default_lists()
         db.session.commit()
 
+    @staticmethod
+    def element_find_element_by_id(element, *args, **kwargs):
+        return element.find_element(By.ID, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_css_selector(element, *args, **kwargs):
+        return element.find_element(By.CSS_SELECTOR, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_class_name(element, *args, **kwargs):
+        return element.find_element(By.CLASS_NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_link_text(element, *args, **kwargs):
+        return element.find_element(By.LINK_TEXT, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_tag_name(element, *args, **kwargs):
+        return element.find_element(By.TAG_NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_name(element, *args, **kwargs):
+        return element.find_element(By.NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_name(element, *args, **kwargs):
+        return element.find_elements(By.NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_partial_link_text(element, *args, **kwargs):
+        return element.find_element(By.PARTIAL_LINK_TEXT, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_css_selector(element, *args, **kwargs):
+        return element.find_elements(By.CSS_SELECTOR, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_class_name(element, *args, **kwargs):
+        return element.find_elements(By.CLASS_NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_link_text(element, *args, **kwargs):
+        return element.find_elements(By.LINK_TEXT, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_tag_name(element, *args, **kwargs):
+        return element.find_elements(By.TAG_NAME, *args, **kwargs)
+
+    def driver_find_element_by_id(self, *args, **kwargs):
+        return self.driver.find_element(By.ID, *args, **kwargs)
+
+    def driver_find_element_by_css_selector(self, *args, **kwargs):
+        return self.driver.find_element(By.CSS_SELECTOR, *args, **kwargs)
+
+    def driver_find_element_by_class_name(self, *args, **kwargs):
+        return self.driver.find_element(By.CLASS_NAME, *args, **kwargs)
+
+    def driver_find_element_by_link_text(self, *args, **kwargs):
+        return self.driver.find_element(By.LINK_TEXT, *args, **kwargs)
+
+    def driver_find_element_by_tag_name(self, *args, **kwargs):
+        return self.driver.find_element(By.TAG_NAME, *args, **kwargs)
+
+    def driver_find_element_by_partial_link_text(self, *args, **kwargs):
+        return self.driver.find_element(By.PARTIAL_LINK_TEXT, *args, **kwargs)
+
+    def driver_find_elements_by_css_selector(self, *args, **kwargs):
+        return self.driver.find_elements(By.CSS_SELECTOR, *args, **kwargs)
+
+    def driver_find_elements_by_class_name(self, *args, **kwargs):
+        return self.driver.find_elements(By.CLASS_NAME, *args, **kwargs)
+
+    def driver_find_elements_by_link_text(self, *args, **kwargs):
+        return self.driver.find_elements(By.LINK_TEXT, *args, **kwargs)
+
+    def driver_find_elements_by_tag_name(self, *args, **kwargs):
+        return self.driver.find_elements(By.TAG_NAME, *args, **kwargs)
+
     def create_app(self, config_overwrite=None):
         config_name = 'test'
         app = create_app(config_name)
@@ -108,10 +187,9 @@ class TestBase(LiveServerTestCase):
         options.add_argument("--disable-gpu")
         # options.add_experimental_option('w3c', False)
 
-        desired = DesiredCapabilities.CHROME
-        desired['loggingPrefs'] = {'browser': 'ALL'}
-        desired["goog:loggingPrefs"] = {'browser': 'ALL'}
-        self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
+        options.set_capability("loggingPrefs", {'browser': 'ALL'})
+        options.set_capability("goog:loggingPrefs", {'browser': 'ALL'})
+        self.driver = webdriver.Chrome(options=options)
         self.driver.set_window_size(1920, 1080)
         return self.driver
 
@@ -152,7 +230,7 @@ elit
 
     def write_lorem_impsum_tokens(self):
         self.writeMultiline(
-            self.driver.find_element_by_id("tokens"),
+            self.driver_find_element_by_id("tokens"),
             self.LOREM_IPSUM
         )
 
@@ -267,9 +345,9 @@ elit
 
     def login(self, email, password):
         self.driver.get(self.url_for_with_port("account.login"))
-        self.driver.find_element_by_id("email").send_keys(email)
-        self.driver.find_element_by_id("password").send_keys(password)
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("email").send_keys(email)
+        self.driver_find_element_by_id("password").send_keys(password)
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(5)
 
     def logout(self):
@@ -316,10 +394,10 @@ class TokenCorrectBase(TestBase):
             self.assertEqual(token.morph, morph, f"[Morph] {token.morph} should have been updated to {morph}")
 
     def get_badge_text_for_token(self, row, badge_class: str):
-        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] {badge_class}").text.strip()
+        return self.driver_find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] {badge_class}").text.strip()
 
     def get_similar_badge(self, row):
-        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] .similar-link")
+        return self.driver_find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] .similar-link")
 
     def assert_saved(self, row):
         self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-success"), "Saved")
@@ -337,9 +415,9 @@ class TokenCorrectBase(TestBase):
 
         #def callback():
         #    # Show the dropdown
-        #    self.driver.find_element_by_id("toggle_corpus_corpora").click()
+        #    self.driver_find_element_by_id("toggle_corpus_corpora").click()
         #    # Click on the edit link
-        #    self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
+        #    self.driver_find_element_by_id("dropdown_link_" + corpus_id).click()
         def callback():
             self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id=corpus_id))
 
@@ -384,14 +462,14 @@ class TokenCorrectBase(TestBase):
             additional_action_before()
 
         # Take the first row
-        row = self.driver.find_element_by_id("token_" + id_row + "_row")
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
         # Take the td to edit
         if value_type == "POS":
-            td = row.find_element_by_class_name("token_pos")
+            td = self.element_find_element_by_class_name(row, "token_pos")
         elif value_type == "morph":
-            td = row.find_element_by_class_name("token_morph")
+            td = self.element_find_element_by_class_name(row, "token_morph")
         else:
-            td = row.find_element_by_class_name("token_lemma")
+            td = self.element_find_element_by_class_name(row, "token_lemma")
 
         # Click, clear the td and send a new value
         td.click()
@@ -406,17 +484,17 @@ class TokenCorrectBase(TestBase):
             )
             self.driver.execute_script(
                 "arguments[0].scrollIntoView();",
-                self.driver.find_element_by_css_selector(autocomplete_selector)
+                self.driver_find_element_by_css_selector(autocomplete_selector)
             )
             WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, autocomplete_selector))
             )
-            self.driver.find_element_by_css_selector(autocomplete_selector).click()
+            self.driver_find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
-        row.find_element_by_css_selector("a.save").click()
+        self.element_find_element_by_css_selector(row, "a.save").click()
         # It's safer to wait for the AJAX call to be completed
-        row = self.driver.find_element_by_id("token_" + id_row + "_row")
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
 
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located(
@@ -426,7 +504,7 @@ class TokenCorrectBase(TestBase):
 
         return (
             self.db.session.query(WordToken).get(int(id_row)),
-            row.find_element_by_css_selector("#token_"+id_row+"_row > td a.save").text.strip(),
+            self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
 
@@ -461,7 +539,7 @@ class TokenCorrectBase(TestBase):
 
         self.assertIn("table-changed", row.get_attribute("class"))
         self.driver.refresh()
-        row = self.driver.find_element_by_id("token_1_row")
+        row = self.driver_find_element_by_id("token_1_row")
         self.assertIn("table-changed", row.get_attribute("class"))
 
 
@@ -488,11 +566,11 @@ class TokensSearchThroughFieldsBase(TestBase):
 
     def fill_filter_row(self, form, lemma, pos, morph):
         # Take the first row
-        row = self.driver.find_element_by_id("filter_row")
+        row = self.driver_find_element_by_id("filter_row")
 
         for field_name, field_value in (("lemma", lemma), ("form", form), ("POS", pos), ("morph", morph)):
             # Take the td to edit
-            td = row.find_element_by_name(field_name)
+            td = self.element_find_element_by_name(row, field_name)
             # Click, clear the td and send a new value
             if field_value is None:
                 field_value = 'None'
@@ -543,27 +621,30 @@ class TokensSearchThroughFieldsBase(TestBase):
 
         self.fill_filter_row(form, lemma, pos, morph)
 
-        self.driver.find_element_by_id("submit_search").click()
+        self.driver_find_element_by_id("submit_search").click()
 
         result = []
 
         def get_field(row, f):
-            return row.find_element_by_class_name(f).text.strip()
+            return self.element_find_element_by_class_name(row, f).text.strip()
 
         # load each page to get the (partials) result tables
-        pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        pagination = self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")
         self.driver.save_screenshot("first.results.png")
         for page_index in range(0, len(pagination)):
-            self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
+            self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
 
             # find the result in the result table
-            res_table = self.driver.find_element_by_id("result_table").find_element_by_tag_name("tbody")
+            res_table = self.element_find_element_by_tag_name(
+                self.driver_find_element_by_id("result_table"),
+                "tbody"
+            )
             try:
-                rows = res_table.find_elements_by_tag_name("tr")
+                rows = self.element_find_elements_by_tag_name(res_table, "tr")
 
                 for row in rows:
                     result.append({
-                        "form": row.find_elements_by_tag_name("td")[1].text.strip(),
+                        "form": self.element_find_elements_by_tag_name(row, "td")[1].text.strip(),
                         "lemma": get_field(row, "token_lemma"),
                         "morph": get_field(row, "token_morph"),
                         "pos": get_field(row, "token_pos"),

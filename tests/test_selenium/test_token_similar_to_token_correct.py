@@ -7,12 +7,12 @@ class TokenEditBase(TokenCorrect2CorporaBase):
     CORPUS_ID = "1"
 
     def apply_new_filter(self, css_selector):
-        self.driver.find_element_by_css_selector(css_selector).click()
+        self.driver_find_element_by_css_selector(css_selector).click()
 
     def go_to_filter_similar_with(self, css_selector="a.partial", token_id="1", as_callback=True):
         def callback():
-            row = self.driver.find_element_by_id("token_"+token_id+"_row")
-            similar_count_obj = row.find_element_by_css_selector("a.similar-link")
+            row = self.driver_find_element_by_id("token_"+token_id+"_row")
+            similar_count_obj = self.element_find_element_by_css_selector(row, "a.similar-link")
             similar_count = similar_count_obj.text
             similar_count_obj.click()
             self.apply_new_filter(css_selector)
@@ -22,7 +22,7 @@ class TokenEditBase(TokenCorrect2CorporaBase):
         return callback()
 
     def get_main_table_body_rows(self):
-        return self.driver.find_elements_by_css_selector(".main tbody tr")
+        return self.driver_find_elements_by_css_selector(".main tbody tr")
 
     def test_edit_token(self):
         self.addCorpus(with_token=True, with_allowed_lemma=True)
@@ -42,7 +42,7 @@ class TokenEditBase(TokenCorrect2CorporaBase):
         # Count the number of similar case
         self.assertEqual(len(self.get_main_table_body_rows()), 2, "There is two similar POS to edit")
         # Apply changes to the two others
-        self.driver.find_element_by_css_selector(".save-lemma").click()
+        self.driver_find_element_by_css_selector(".save-lemma").click()
         try:
             self.wait_until_count(".main tbody tr", 0)
         except Exception:

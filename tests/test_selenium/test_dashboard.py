@@ -16,10 +16,10 @@ class TestDashboard(TestBase):
         self.addCorpus("floovant")
 
         self.admin_login()
-        self.driver.find_element_by_link_text("Dashboard").click()
+        self.driver_find_element_by_link_text("Dashboard").click()
         # admin dashboard  displayed & corpora dashboard displayed
-        self.assertTrue(self.driver.find_element_by_id("admin-dashboard").is_displayed())
-        self.assertTrue(self.driver.find_element_by_id("corpora-dashboard").is_displayed())
+        self.assertTrue(self.driver_find_element_by_id("admin-dashboard").is_displayed())
+        self.assertTrue(self.driver_find_element_by_id("corpora-dashboard").is_displayed())
 
     def test_user_dashboard(self):
         """
@@ -34,25 +34,25 @@ class TestDashboard(TestBase):
         self.login_with_user(foo_email)
         self.addCorpusUser("Wauchier", foo_email, True)
 
-        self.driver.find_element_by_link_text("Dashboard").click()
+        self.driver_find_element_by_link_text("Dashboard").click()
 
         # admin dashboard not displayed & corpora dashboard displayed
         with self.assertRaises(NoSuchElementException):
-            self.driver.find_element_by_id("admin-dashboard")
-        corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
+            self.driver_find_element_by_id("admin-dashboard")
+        corpora_dashboard = self.driver_find_element_by_id("corpora-dashboard")
         self.assertTrue(corpora_dashboard.is_displayed())
 
         # Floovant not displayed & Wauchier displayed
-        c = corpora_dashboard.find_elements_by_class_name("col")
+        c = self.element_find_elements_by_class_name(corpora_dashboard, "col")
         self.assertTrue(len(c) == 1)
         self.assertTrue(c[0].text == "Wauchier")
 
         # Floovant & Wauchier displayed
         self.addCorpusUser("Floovant", foo_email, False)
         self.driver.refresh()
-        corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
+        corpora_dashboard = self.driver_find_element_by_id("corpora-dashboard")
 
-        c = corpora_dashboard.find_elements_by_class_name("col")
+        c = self.element_find_elements_by_class_name(corpora_dashboard, "col")
         self.assertTrue(len(c) == 2)
         self.assertTrue(c[0].text == "Wauchier")
         self.assertTrue(c[1].text == "Floovant")
@@ -75,11 +75,11 @@ class TestDashboard(TestBase):
             DB_CORPORA["floovant"]["corpus"].id
         ))
         self.admin_login()
-        self.driver.find_element_by_link_text("Dashboard").click()
-        self.driver.find_element_by_link_text("See all as administrator").click()
+        self.driver_find_element_by_link_text("Dashboard").click()
+        self.driver_find_element_by_link_text("See all as administrator").click()
 
-        corpora_dashboard = self.driver.find_element_by_css_selector("table.sortable tbody")
-        corpora_items = corpora_dashboard.find_elements_by_class_name("name")
+        corpora_dashboard = self.driver_find_element_by_css_selector("table.sortable tbody")
+        corpora_items = self.element_find_elements_by_class_name(corpora_dashboard, "name")
         corpora_names = sorted([item.text for item in corpora_items])
 
         self.assertEqual(
@@ -88,29 +88,29 @@ class TestDashboard(TestBase):
         )
 
         # add a new corpus and check again
-        self.driver.find_element_by_link_text("New Corpus").click()
-        self.driver.find_element_by_id("corpusName").send_keys("FreshNewCorpus")
+        self.driver_find_element_by_link_text("New Corpus").click()
+        self.driver_find_element_by_id("corpusName").send_keys("FreshNewCorpus")
         self.write_lorem_impsum_tokens()
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(3)
 
         self.add_favorite(user_id=self.get_admin_id(), corpora_ids=(3, ))
-        self.driver.find_element_by_link_text("Dashboard").click()
+        self.driver_find_element_by_link_text("Dashboard").click()
 
-        navbars = self.driver.find_element_by_id("main-nav")
-        navbars.find_element_by_id("toggle_corpus_corpora").click()
-        header_items = navbars.find_elements_by_class_name("dd-corpus")
+        navbars = self.driver_find_element_by_id("main-nav")
+        self.element_find_element_by_id(navbars, "toggle_corpus_corpora").click()
+        header_items = self.element_find_elements_by_class_name(navbars, "dd-corpus")
         header_names = sorted([item.text for item in header_items])
 
-        corpora_dashboard = self.driver.find_element_by_id("corpora-dashboard")
-        corpora_items = corpora_dashboard.find_elements_by_class_name("col")
+        corpora_dashboard = self.driver_find_element_by_id("corpora-dashboard")
+        corpora_items = self.element_find_elements_by_class_name(corpora_dashboard, "col")
         corpora_names = sorted([item.text for item in corpora_items])
 
-        self.driver.find_element_by_link_text("See all as administrator").click()
+        self.driver_find_element_by_link_text("See all as administrator").click()
 
-        corpora_dashboard = self.driver.find_element_by_css_selector("table.sortable tbody")
-        corpora_items = corpora_dashboard.find_elements_by_class_name("name")
+        corpora_dashboard = self.driver_find_element_by_css_selector("table.sortable tbody")
+        corpora_items = self.element_find_elements_by_class_name(corpora_dashboard, "name")
         full_corpora_names = sorted([item.text for item in corpora_items])
 
         self.assertEqual(header_names, corpora_names,

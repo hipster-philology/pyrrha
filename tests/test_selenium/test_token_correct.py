@@ -199,7 +199,7 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
         self.assert_saved(row)
         self.assert_token_has_values(token, lemma="saint")
         self.assertEqual(
-            row.find_elements_by_tag_name("b")[0].text,
+            self.element_find_elements_by_tag_name(row, "b")[0].text,
             token.form,
             "Bold should be used to highlight in-context word"
         )

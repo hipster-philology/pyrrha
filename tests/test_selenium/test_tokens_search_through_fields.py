@@ -17,14 +17,17 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
         result = []
 
         def get_field(row, f):
-            return row.find_element_by_class_name(f).text.strip()
+            return self.element_find_element_by_class_name(row, f).text.strip()
         
-        res_table = self.driver.find_element_by_id("result_table").find_element_by_tag_name("tbody")
-        rows = res_table.find_elements_by_tag_name("tr")
+        res_table = self.element_find_element_by_tag_name(
+            self.driver_find_element_by_id("result_table"),
+            "tbody"
+        )
+        rows = self.element_find_elements_by_tag_name(res_table, "tr")
 
         for row in rows:
             result.append({
-                "form": row.find_elements_by_tag_name("td")[1].text.strip(),
+                "form": self.element_find_elements_by_tag_name(row, "td")[1].text.strip(),
                 "lemma": get_field(row, "token_lemma"),
                 "morph": get_field(row, "token_morph"),
                 "pos": get_field(row, "token_pos")
