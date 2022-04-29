@@ -4,7 +4,7 @@ from app.admin.views import admin  # noqa
 # https://github.com/indico/indico/commit/c79c562866e5efdbeb5a3101cccc97df57906f76
 # monkeypatch for https://github.com/wtforms/wtforms/issues/373
 def _patch_wtforms_sqlalchemy():
-    from wtforms.ext.sqlalchemy import fields
+    from wtforms_sqlalchemy import fields
     from sqlalchemy.orm.util import identity_key
 
     def get_pk_from_identity(obj):
