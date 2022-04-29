@@ -68,9 +68,11 @@ class ControlLists(db.Model):
     @staticmethod
     def link(corpus, user, is_owner=False):
         if db.session.query(ControlLists.id).filter(
-                                                ControlListsUser.user_id == user.id,
-                                                ControlListsUser.control_lists_id == corpus.control_lists_id
-                                            ).count() == 0:
+            db.and_(
+                ControlListsUser.user_id == user.id,
+                ControlListsUser.control_lists_id == corpus.control_lists_id
+            )
+        ).count() == 0:
             db.session.add(ControlListsUser(
                 user_id=user.id,
                 control_lists_id=corpus.control_lists_id,
