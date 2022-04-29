@@ -1,4 +1,5 @@
-document.addEventListener("DOMContentLoaded", function() {
+/**
+ * document.addEventListener("DOMContentLoaded", function() {
     const resizeButton = document.getElementById("resize-menu");
     const menu_class = document.getElementById("left-menu").classList;
     const cookieName = "resized-menu";
@@ -49,3 +50,4 @@ document.addEventListener("DOMContentLoaded", function() {
     changeExpandIcon(getResizeCookie());
 
 });
+*/
