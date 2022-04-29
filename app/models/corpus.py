@@ -7,6 +7,7 @@ from typing import Iterable, Optional, Dict, List
 import unidecode
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
+import sqlalchemy.exc
 from sqlalchemy import func, literal, not_
 from werkzeug.exceptions import BadRequest
 from flask import url_for
@@ -386,7 +387,7 @@ class Corpus(db.Model):
     def create(
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
-            context_left=None, context_right=None, control_list=None,
+            context_left=None, context_right=None, control_list: ControlLists = None,
             delimiter_token=None, columns=None
     ):
         """ Create a corpus
@@ -403,30 +404,34 @@ class Corpus(db.Model):
         :return: Created Corpus
         :rtype: Corpus
         """
-        if not control_list:
-            control_list = ControlLists(name="Control List {}".format(name), public=PublicationStatus.private)
-            db.session.add(control_list)
-            db.session.flush()
+        try:
+            if not control_list:
+                control_list = ControlLists(name="Control List {}".format(name), public=PublicationStatus.private)
+                db.session.add(control_list)
+                db.session.flush()
 
-            if allowed_lemma is not None and len(allowed_lemma) > 0:
-                AllowedLemma.add_batch(allowed_lemma, control_list.id)
+                if allowed_lemma is not None and len(allowed_lemma) > 0:
+                    AllowedLemma.add_batch(allowed_lemma, control_list.id)
 
-            if allowed_POS is not None and len(allowed_POS) > 0:
-                AllowedPOS.add_batch(allowed_POS, control_list.id)
+                if allowed_POS is not None and len(allowed_POS) > 0:
+                    AllowedPOS.add_batch(allowed_POS, control_list.id)
 
-            if allowed_morph is not None and len(allowed_morph) > 0:
-                AllowedMorph.add_batch(allowed_morph, control_list.id)
+                if allowed_morph is not None and len(allowed_morph) > 0:
+                    AllowedMorph.add_batch(allowed_morph, control_list.id)
 
-        c = Corpus(
-            name=name,
-            control_lists_id=control_list.id,
-            delimiter_token=delimiter_token,
-            context_left=context_left,
-            context_right=context_right,
-            columns=columns
-        )
-        db.session.add(c)
-        db.session.flush()
+            c = Corpus(
+                name=name,
+                control_lists_id=control_list.id,
+                delimiter_token=delimiter_token,
+                context_left=context_left,
+                context_right=context_right,
+                columns=columns
+            )
+            db.session.add(c)
+            db.session.commit()
+        except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
+            db.session.rollback()
+            raise e
 
         token_count = WordToken.add_batch(
             corpus_id=c.id, word_tokens_dict=word_tokens_dict,

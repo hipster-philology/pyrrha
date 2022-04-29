@@ -66,16 +66,16 @@ class ControlLists(db.Model):
         ).all()
 
     @staticmethod
-    def link(corpus, user, is_owner=False):
-        if db.session.query(ControlLists.id).filter(
+    def link(control_list_id: int, user_id: int, is_owner=False):
+        if db.session.query(ControlListsUser.user_id).filter(
             db.and_(
-                ControlListsUser.user_id == user.id,
-                ControlListsUser.control_lists_id == corpus.control_lists_id
+                ControlListsUser.user_id == user_id,
+                ControlListsUser.control_lists_id == control_list_id
             )
         ).count() == 0:
             db.session.add(ControlListsUser(
-                user_id=user.id,
-                control_lists_id=corpus.control_lists_id,
+                user_id=user_id,
+                control_lists_id=control_list_id,
                 is_owner=is_owner
             ))
 
