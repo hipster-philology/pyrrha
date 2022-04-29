@@ -31,7 +31,6 @@ jobs:
     - name: Test with nose
       run: |
         nosetests ./tests --with-coverage --cover-package=app --cover-xml --verbose
-    - name: Coveralls
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Coveralls Python
+      uses: AndreMiras/coveralls-python-action@v20201129
+

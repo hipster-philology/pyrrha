@@ -1,5 +1,6 @@
 [run]
 # concurrency = multiprocessing
-parallel = True
+relative_files = True
+# parallel = True
 source = app
 omit = env
