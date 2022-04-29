@@ -106,13 +106,13 @@ class TestBase(LiveServerTestCase):
             options = Options()
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
-        options.add_experimental_option('w3c', False)
+        # options.add_experimental_option('w3c', False)
 
         desired = DesiredCapabilities.CHROME
         desired['loggingPrefs'] = {'browser': 'ALL'}
         desired["goog:loggingPrefs"] = {'browser': 'ALL'}
         self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
-        self.driver.set_window_size(1920, 1080, self.driver.window_handles[0])
+        self.driver.set_window_size(1920, 1080)
         return self.driver
 
     def pprint_log(self):

@@ -102,8 +102,10 @@ class TestExport(TestBase):
         self.driver.refresh()
 
         self.driver.get(self.url_for_with_port("main.tokens_export", corpus_id=1))
+        self.driver.get_screenshot_as_file("./beforedownload.png")
         self.driver.find_element_by_id("geste-tei").click()
 
+        self.driver.get_screenshot_as_file("./afterdownload.png")
         time.sleep(5)
 
         with open(os.path.join(self.download_path, "wauchier.xml")) as f:
