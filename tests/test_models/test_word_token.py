@@ -63,7 +63,7 @@ class TestWordToken(TestModels):
             } for j in range(200)
         ]
         WordToken.add_batch(corpus_id, form_list)
-        self.assertEqual(WordToken.update_batch_context(corpus_id, 4, 4), 200)
+        self.assertEqual(WordToken.update_batch_context(corpus_id, 4, 4), len(form_list))
         token = WordToken.query.filter_by(corpus=corpus_id, order_id=15).first()
         left_context = token.left_context.split(" ")
         right_context = token.right_context.split(" ")
