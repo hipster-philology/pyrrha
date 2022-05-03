@@ -28,7 +28,7 @@ class TestWordToken(TestModels):
         self.addCorpus("floovant", tokens_up_to=3)
         corpus_id = Corpus.query.one().id
         form = "".join(
-            string.ascii_letters[random.randint(0, len(string.ascii_letters)-1)] for i in range(100)
+            string.ascii_letters[random.randint(0, len(string.ascii_letters)-1)] for i in range(200)
         )
         with self.assertRaises(ValidationError):
             WordToken.add_batch(corpus_id, [{"form": form}])

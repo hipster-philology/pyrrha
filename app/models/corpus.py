@@ -1090,7 +1090,7 @@ class WordToken(db.Model):
                 order_id=i+1  # Asked by JB Camps...
             )
             for k in ("form",):
-                validate_length(k, wt[k], {"form": 64})
+                validate_length(k, wt[k], {"form": 128})
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
