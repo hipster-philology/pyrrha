@@ -52,7 +52,7 @@ class TestWordToken(TestModels):
 
         Trying: set right and left context to 4.
         """
-        self.addCorpus("floovant", tokens_up_to=3)
+        self.addCorpus("floovant", tokens_up_to=0)
         corpus_id = Corpus.query.one().id
         form_list = [
             {
