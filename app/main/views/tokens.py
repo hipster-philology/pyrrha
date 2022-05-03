@@ -1,4 +1,5 @@
-from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response
+from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response, \
+    stream_with_context
 from flask_login import current_user, login_required
 from slugify import slugify
 from sqlalchemy.sql.elements import or_, and_, not_
@@ -12,6 +13,7 @@ from ... import db
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark, CorpusCustomDictionary
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
+from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
 from io import StringIO
@@ -201,7 +203,7 @@ def tokens_export(corpus_id):
                 writer.writerow(row)
             output.seek(0)
             return Response(
-                response=stream_tsv(output),
+                response=stream_with_context(stream_tsv(output)),
                 status=200,
                 content_type="text/tab-separated-values",
                 headers={
@@ -212,9 +214,14 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         return Response(
-            stream_template("tei/geste.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
-                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                            delimiter=corpus.delimiter_token),
+            stream_with_context(stream_template(
+                "tei/geste.xml",
+                base=base,
+                tokens=tokens,
+                allowed_columns=allowed_columns,
+                history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                delimiter=corpus.delimiter_token
+            )),
             status=200,
             headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
             mimetype="text/xml"
@@ -223,9 +230,14 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         return Response(
-            stream_template("tei/TEI.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
-                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                            delimiter=corpus.delimiter_token),
+            stream_with_context(stream_template(
+                "tei/TEI.xml",
+                base=base,
+                tokens=tokens,
+                allowed_columns=allowed_columns,
+                history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                delimiter=corpus.delimiter_token
+            )),
             status=200,
             headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
             mimetype="text/xml"

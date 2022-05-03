@@ -11,7 +11,9 @@ class Config:
     else:
         SECRET_KEY = 'SECRET_KEY_ENV_VAR_NOT_SET'
         print('SECRET KEY ENV VAR NOT SET! SHOULD NOT SEE IN PRODUCTION')
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    # SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    # Deprecated
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     template_folder = os.path.join(basedir, "app", "templates")
     static_folder = os.path.join(basedir, "app", "statics")
     # SQLALCHEMY_ECHO = True

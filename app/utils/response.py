@@ -24,5 +24,5 @@ def stream_template(template_name, **context):
     current_app.update_template_context(context)
     t = current_app.jinja_env.get_template(template_name)
     rv = t.stream(context)
-    rv.enable_buffering(5)
+    rv.disable_buffering()
     return rv

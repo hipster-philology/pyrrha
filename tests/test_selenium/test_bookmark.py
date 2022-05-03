@@ -10,10 +10,10 @@ class TestBookmark(TestBase):
     def set_bookmark(self, tok_id, page=None):
         self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1", page=page))
         self.driver.save_screenshot("token.png")
-        self.driver.find_element_by_id("dd_t"+str(tok_id)).click()
+        self.driver_find_element_by_id("dd_t"+str(tok_id)).click()
         self.driver.implicitly_wait(2)
-        dd = self.driver.find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
-        dd.find_element_by_partial_link_text("Set as bookmark").click()
+        dd = self.driver_find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
+        self.element_find_element_by_partial_link_text(dd, "Set as bookmark").click()
         self.driver.implicitly_wait(2)
 
     def test_create_bookmark(self):
@@ -64,7 +64,7 @@ class TestBookmark(TestBase):
         self.addCorpus("wauchier")
         # Check first cases where there is nothing
         self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))
-        self.driver.find_element_by_id("bookmark_link").click()
+        self.driver_find_element_by_id("bookmark_link").click()
         self.driver.implicitly_wait(1)
         self.assertEqual(
             self.driver.current_url, self.url_for_with_port("main.tokens_correct", corpus_id="1"),
@@ -74,7 +74,7 @@ class TestBookmark(TestBase):
         self.set_bookmark(220, 3)
         # Reset page
         self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))
-        self.driver.find_element_by_id("bookmark_link").click()
+        self.driver_find_element_by_id("bookmark_link").click()
         self.driver.implicitly_wait(1)
         self.assertEqual(
             self.driver.current_url,
