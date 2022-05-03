@@ -81,12 +81,14 @@
 
             <div id="result_table" class="mt-3">
                 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_search_through_fields",
-                        lemma=lemma, morph=morph, POS=POS, form=form, get_params=["lemma", "morph", "POS", "form"]) }}
+                        lemma=lemma, morph=morph, POS=POS, form=form, orderBy=orderBy, desc=desc,
+                        get_params=["lemma", "morph", "POS", "form", "orderBy", "desc"]) }}
 
                 {{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=True, sortable=True, link_back=True, search_kwargs=search_kwargs, endpoint="main.tokens_search_through_fields") }}
 
                 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_search_through_fields",
-                        lemma=lemma, morph=morph, POS=POS, form=form, get_params=["lemma", "morph", "POS", "form"]) }}
+                        lemma=lemma, morph=morph, POS=POS, form=form,
+                        get_params=["lemma", "morph", "POS", "form", "orderBy", "desc"]) }}
             </div>
 
         {% endif %}
