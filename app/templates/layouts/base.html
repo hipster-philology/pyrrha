@@ -11,19 +11,18 @@
         {% block nav %}
             {{ nav.render_nav(current_user, corpora=favorites, control_lists=control_lists) }}
         {%  endblock %}
+        {% if corpus %}
+            <div class="corpus-menu">
+                {{ nav.quick_nav(corpus) }}
+                {{ nav.single_corpus_nav(corpus, current_user=current_user) }}
+            </div>
+        {% endif %}
+
         <div class="container-fluid" id="main-container">
             <div class="row">
-              {%  if corpus or control_list %}
-              <div class="col bg-light {% if resizedLeftMenu=="true" and corpus %}folded-left-col animated{% else %}col-lg-2{% endif %}" id="left-menu">
-                  {%- if corpus %}
-                  <div class="text-right">
-                      <a class="btn btn-outline-info btn-sm" id="resize-menu"><i class="fa fa-compress"></i></a>
-                  </div>
-                      <div class="corpus-menu">
-                          {{ nav.quick_nav(corpus) }}
-                          {{ nav.single_corpus_nav(corpus, current_user=current_user) }}
-                      </div>
-                  {% elif control_list %}
+              {%  if control_list %}
+              <div class="col bg-light col-lg-2" id="left-menu">
+                  {%- if control_list %}
                       {{ control_list_macros.nav_control_list(control_list) }}
                   {% endif %}
               </div>
