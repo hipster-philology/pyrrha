@@ -132,15 +132,19 @@ class Corpus(db.Model):
         return True
 
     def changes_per_day(self):
+        if db.engine.dialect.name == "postgresql":
+            created_on = db.func.to_char(ChangeRecord.created_on, "yyyy-mm-dd")
+        elif db.engine.dialect.name == "sqlite":
+            created_on = db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
         return list([
             tuple(elem)
             for elem in db.session.query(
                     db.func.count(ChangeRecord.id),
-                    db.func.to_char(ChangeRecord.created_on, "yyyy-mm-dd")
+                    created_on
                 ).filter(
                     ChangeRecord.corpus == self.id
                 ).group_by(
-                    db.func.to_char(ChangeRecord.created_on, "yyyy-mm-dd")
+                    created_on
                 ).all()
         ])
 
