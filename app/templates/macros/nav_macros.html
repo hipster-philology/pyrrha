@@ -246,7 +246,7 @@
                 </a>
             {% endif %}
             {% if "morph" in visible %}
-                <a class="btn btn-outline-dark" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='pos')}}">
+                <a class="btn btn-outline-dark" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">
                     morphology
                 </a>
             {% endif %}
