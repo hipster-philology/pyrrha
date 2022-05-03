@@ -319,14 +319,17 @@ def tokens_search_through_fields(corpus_id):
 
     # there is at least one OR clause
     # get sort arguments (sort per default by WordToken.order_id)
+    order_by_key = request.args.get("orderBy")
     order_by = {
         "order_id": WordToken.order_id,
         "lemma": func.lower(WordToken.lemma),
         "pos": func.lower(WordToken.POS),
         "form": func.lower(WordToken.form),
         "morph": func.lower(WordToken.morph),
-    }.get(request.args.get("orderBy"), WordToken.order_id)
-
+    }
+    if order_by_key not in order_by:
+        order_by_key = "order_id"
+    order_by = order_by.get(order_by_key)
     args = []
 
     if len(value_filters) > 1:
@@ -348,6 +351,8 @@ def tokens_search_through_fields(corpus_id):
     return render_template_with_nav_info('main/tokens_search_through_fields.html',
                                          search_kwargs={"corpus_id": corpus.id, **input_values},
                                          changed=corpus.changed(tokens.items),
+                                         desc=request.args.get("desc", "0"),
+                                         orderBy=order_by_key,
                                          corpus=corpus, tokens=tokens, **input_values)
 
 
