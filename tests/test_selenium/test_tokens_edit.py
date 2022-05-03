@@ -32,7 +32,7 @@ class TestTokenEdit(TestBase):
         ]
 
     def get_history(self):
-        self.driver_find_element_by_partial_link_text("Editions history").click()
+        self.driver_find_element_by_css_selector("a[title='Browse editions of the base text']").click()
         return [
             (
                 self.element_find_element_by_css_selector(el, ".type").text.strip(),

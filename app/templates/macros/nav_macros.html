@@ -181,9 +181,9 @@
             <a class="btn btn-outline-dark title px-2">
                 Corpus
             </a>
-            <a class="btn btn-outline-dark" id="stats_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Get corpus statistics and informations" id="stats_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
                 <i class="fa fa-tachometer"></i> Home</a>
-            <a class="btn btn-outline-dark" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Manage corpus' settings" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
                 <i class="fa fa-cog"></i> Preferences
             </a>
         </div>
@@ -191,62 +191,62 @@
             <a class="btn btn-outline-dark title">
                 Control List
             </a>
-            <a class="btn btn-outline-dark" href="{{url_for("control_lists_bp.get", control_list_id=corpus.control_lists_id)}}">
+            <a class="btn btn-outline-dark" title="Edit values in the control list" href="{{url_for("control_lists_bp.get", control_list_id=corpus.control_lists_id)}}">
                 <i class="fa fa-cogs"></i> Edit
             </a>
             {% if corpus.is_owned_by(current_user) or current_user.is_admin() %}
-                <a class="btn btn-outline-dark" href="{{url_for("main.control_list_switch", corpus_id=corpus.id)}}">
+                <a class="btn btn-outline-dark" title="Switch for another control list" href="{{url_for("main.control_list_switch", corpus_id=corpus.id)}}">
                         <i class="fa fa-exchange"></i> Change
                 </a>
             {% endif %}
-            <a class="btn btn-outline-dark" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Edit value in the corpus custom dictionary" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
                 <i class="fa fa-book"></i> Corpus' Custom Dictionary
             </a>
         </div>
-        <a class="btn btn-sm btn-outline-dark" href="{{url_for("main.tokens_edit_history", corpus_id=corpus.id)}}">
+        <a class="btn btn-sm btn-outline-dark" title="Browse editions of the base text" href="{{url_for("main.tokens_edit_history", corpus_id=corpus.id)}}">
             <i class="fa fa-calendar-times-o"></i> Text history
         </a>
         {% if corpus.is_owned_by(current_user) or current_user.is_admin() %}
-            <a class="btn btn-sm btn-outline-danger float-right" href="{{url_for("main.corpus_delete", corpus_id=corpus.id)}}">
+            <a class="btn btn-sm btn-outline-danger float-right" title="Delete the corpus" href="{{url_for("main.corpus_delete", corpus_id=corpus.id)}}">
                 <i class="fa fa-remove"></i> Delete the corpus (2 steps)
             </a>
         {% endif %}
     </div>
     <div class="menu-horizontal-group mx-1">
-        <a class="btn btn-outline-dark btn-sm" id="bookmark_link" href="{{ url_for("main.corpus_bookmark", corpus_id=corpus.id) }}">
+        <a class="btn btn-outline-dark btn-sm" title="Quickly return to a bookmarked token" id="bookmark_link" href="{{ url_for("main.corpus_bookmark", corpus_id=corpus.id) }}">
             <i class="fa fa-bookmark"></i> Go to bookmark
         </a>
         <div class="btn-group btn-group-sm" role="group">
             <a class="btn btn-outline-dark title">
                 Annotations
             </a>
-            <a class="btn btn btn-outline-dark" href="{{ url_for("main.tokens_correct", corpus_id=corpus.id) }}">
+            <a class="btn btn btn-outline-dark" title="Correct annotations" href="{{ url_for("main.tokens_correct", corpus_id=corpus.id) }}">
                 <i class="fa fa-pencil"></i> Correct
             </a>
-            <a class="btn btn-outline-dark" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Search through the corpus and its annotations" id="corpus_{{corpus.id}}_search_tokens" href="{{url_for("main.tokens_search_through_fields", corpus_id=corpus.id)}}">
                 <i class="fa fa-search"></i> Search
             </a>
-            <a class="btn btn-outline-dark" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Export annotations" href="{{url_for("main.tokens_export", corpus_id=corpus.id)}}">
                 <i class="fa fa-download"></i> Export
             </a>
-            <a class="btn btn-outline-dark" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Browse the annotations' history" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">
                 <i class="fa fa-list"></i> History
             </a>
         </div>
         <div class="btn-group btn-group-sm" role="group">
             <a class="btn btn-outline-dark title"><i class="fa fa-pencil"></i> Correct unallowed ...</a>
             {% if "lemma" in visible %}
-                <a class="btn btn-outline-dark" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">
+                <a class="btn btn-outline-dark" title="Correct annotations with unallowed lemma" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">
                      lemma
                 </a>
             {% endif %}
             {% if "POS" in visible %}
-                <a class="btn btn-outline-dark" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">
+                <a class="btn btn-outline-dark" title="Correct annotations with unallowed POS" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='POS')}}">
                     POS
                 </a>
             {% endif %}
             {% if "morph" in visible %}
-                <a class="btn btn-outline-dark" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">
+                <a class="btn btn-outline-dark" title="Correct annotations with unallowed morphology" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='morph')}}">
                     morphology
                 </a>
             {% endif %}
