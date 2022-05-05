@@ -4,7 +4,7 @@
 {% block content %}
     <div class="container">
         <div>
-            <h2 class="mt-3 mb-5">Log in</h2>
+            <h2 class="mt-3 mb-5">{{ _('Log in') }}</h2>
 
             {% set flashes = {
                 'error':   get_flashed_messages(category_filter=['form-error']),
@@ -19,7 +19,7 @@
                 <div>
                     {{ f.render_form_field(form.remember_me) }}
                     <div>
-                        <a href="{{ url_for('account.reset_password_request') }}">Forgot password?</a>
+                        <a href="{{ url_for('account.reset_password_request') }}">{{ _('Forgot password?') }}</a>
                     </div>
                 </div>
 

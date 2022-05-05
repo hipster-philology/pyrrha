@@ -72,6 +72,8 @@ class DevelopmentConfig(Config):
         ("Ancien Français", "http://localhost:5001/")
     ]
 
+    BABEL_TRANSLATION_DIRECTORIES = os.path.join(os.path.dirname(__file__), "translations")
+
 
 class TestConfig(Config):
     DEBUG = True

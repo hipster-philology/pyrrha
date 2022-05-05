@@ -3,7 +3,7 @@
 
 {% block content %}
 
-<h1>Corpus {{corpus.name}} - History of tokens edition</h1>
+<h1>{{ _('Corpus') }} {{corpus.name}} - History of tokens edition</h1>
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit_history") }}
 
