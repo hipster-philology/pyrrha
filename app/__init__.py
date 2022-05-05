@@ -22,20 +22,20 @@ login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'account.login'
 
-app = Flask(
+def create_app(config_name="dev"):
+    """ Create the application """
+        
+    if not isinstance(config_name, str):
+        app.config.from_object(config)
+    else:
+        app.config.from_object(config[config_name])
+
+    app = Flask(
         __name__,
         template_folder=config[config_name].template_folder,
         static_folder=config[config_name].static_folder,
         static_url_path="/statics"
     )
-
-def create_app(config_name="dev"):
-    """ Create the application """
-    
-    if not isinstance(config_name, str):
-        app.config.from_object(config)
-    else:
-        app.config.from_object(config[config_name])
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
