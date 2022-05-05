@@ -24,11 +24,6 @@ login_manager.login_view = 'account.login'
 
 def create_app(config_name="dev"):
     """ Create the application """
-        
-    if not isinstance(config_name, str):
-        app.config.from_object(config)
-    else:
-        app.config.from_object(config[config_name])
 
     app = Flask(
         __name__,
@@ -36,7 +31,12 @@ def create_app(config_name="dev"):
         static_folder=config[config_name].static_folder,
         static_url_path="/statics"
     )
-
+        
+    if not isinstance(config_name, str):
+        app.config.from_object(config)
+    else:
+        app.config.from_object(config[config_name])
+        
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     config[config_name].init_app(app)
