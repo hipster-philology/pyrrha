@@ -7,7 +7,7 @@
 
 {% set visible = corpus.displayed_columns_by_name %}
 
-<h1>Corpus {{corpus.name}} - List of tokens </h1>
+<h1>{{ _('Corpus') }} {{corpus.name}} - List of tokens </h1>
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_similar_to_record", record_id=record.id) }}
 

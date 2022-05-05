@@ -8,6 +8,7 @@ from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flaskext.markdown import Markdown
+from flask_babel import Babel
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -15,19 +16,22 @@ mail = Mail()
 db = SQLAlchemy()
 csrf = CSRFProtect()
 compress = Compress()
+babel = Babel()
 # Set up Flask-Login
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'account.login'
 
-def create_app(config_name="dev"):
-    """ Create the application """
-    app = Flask(
+app = Flask(
         __name__,
-        template_folder=config[config_name].template_folder,
-        static_folder=config[config_name].static_folder,
+        template_folder=config["dev"].template_folder,
+        static_folder=config["dev"].static_folder,
         static_url_path="/statics"
     )
+
+def create_app(config_name="dev"):
+    """ Create the application """
+    
     if not isinstance(config_name, str):
         app.config.from_object(config)
     else:
@@ -44,7 +48,7 @@ def create_app(config_name="dev"):
     #csrf.init_app(app)
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
-    #assets_env = Environment(app)
+    babel.init_app(app)
 
     # Register Jinja template functions
     from .main import main as main_blueprint
@@ -62,4 +66,8 @@ def create_app(config_name="dev"):
     from .control_lists import control_lists_bp
     app.register_blueprint(control_lists_bp)
 
+    from .ext_config import get_locale
+
     return app
+
+    

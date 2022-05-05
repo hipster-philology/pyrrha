@@ -1,0 +1,264 @@
+# Tibetan (China) translations for PROJECT.
+# Copyright (C) 2022 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2022-05-05 22:40+0530\n"
+"PO-Revision-Date: 2022-05-05 15:49+0530\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: bo_CN\n"
+"Language-Team: bo_CN <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.10.1\n"
+
+#: app/templates/account/login.html:7
+msgid "Log in"
+msgstr "ཐོ་འཇུག"
+
+#: app/templates/account/login.html:22
+msgid "Forgot password?"
+msgstr "གསང་ཨང་བརྗེད་པ།"
+
+#: app/templates/account/register.html:8
+msgid "Create an account"
+msgstr "རྩིས་ཚན་གསར་བཟོ།"
+
+#: app/templates/control_lists/macros.html:9
+msgid "Guidelines"
+msgstr "མཛུབ་སྟོན་ཁ་ཕྱོགས།"
+
+#: app/templates/control_lists/macros.html:13
+msgid "Lemma"
+msgstr "མ་ཚིག"
+
+#: app/templates/control_lists/macros.html:14
+#: app/templates/macros/nav_macros.html:245
+msgid "POS"
+msgstr "ཚིག་གཤིས།"
+
+#: app/templates/control_lists/macros.html:15
+msgid "Morphologies"
+msgstr "གཟུབས་དབྱིབས།"
+
+#: app/templates/control_lists/macros.html:19
+msgid "Propose changes"
+msgstr "འགྱུར་ལྡོག་གཏོང་བར་བསམ་འཆར་འདོན་པ།"
+
+#: app/templates/control_lists/macros.html:21
+msgid "Make public"
+msgstr "མངོན་གསལ།"
+
+#: app/templates/control_lists/macros.html:24
+msgid "Rename"
+msgstr "མིང་བརྗེ་བ།"
+
+#: app/templates/control_lists/macros.html:27
+msgid "Edit informations"
+msgstr "རྩོམ་སྒྲིག་ཆ་འཕྲིན།"
+
+#: app/templates/macros/dashboard_macros.html:118
+#: app/templates/macros/dashboard_macros.html:138
+msgid "View and manage corpora users"
+msgstr "སྐད་མཛོད་བཀོལ་བདག་ལ་དོ་དམ་དང་ལྟ་བཤེར་བྱེད་པ།"
+
+#: app/templates/macros/dashboard_macros.html:119
+#: app/templates/macros/dashboard_macros.html:139
+msgid "Add or remove corpus access to users"
+msgstr "བཀོལ་བདག་གིས་སྐད་མཛོད་ཀྱི་འདྲི་གཏུག་གསར་སྣོན་ཡང་ན་གསུབ་པ།"
+
+#: app/templates/macros/dashboard_macros.html:126
+msgid "Corpora"
+msgstr "སྐད་མཛོད།"
+
+#: app/templates/macros/dashboard_macros.html:142
+#: app/templates/macros/nav_macros.html:89
+msgid "Control Lists"
+msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
+
+#: app/templates/macros/header_macros.html:2
+#: app/templates/macros/nav_macros.html:182
+#: app/templates/main/tokens_add_row.html:7
+#: app/templates/main/tokens_correct.html:8
+#: app/templates/main/tokens_correct_unallowed.html:8
+#: app/templates/main/tokens_del_row.html:7
+#: app/templates/main/tokens_edit_form.html:7
+#: app/templates/main/tokens_edit_history.html:6
+#: app/templates/main/tokens_export.html:5
+#: app/templates/main/tokens_history.html:7
+#: app/templates/main/tokens_search_through_fields.html:10
+#: app/templates/main/tokens_similar_to_record.html:10
+#: app/templates/main/tokens_similar_to_token.html:10
+msgid "Corpus"
+msgstr "སྐད་མཛོད།"
+
+#: app/templates/macros/nav_macros.html:26
+msgid "Dashboard"
+msgstr "མདུན་ངོས།"
+
+#: app/templates/macros/nav_macros.html:38
+msgid "Log out"
+msgstr "ཕྱིར་འབུད།"
+
+#: app/templates/macros/nav_macros.html:64
+msgid "New Corpus"
+msgstr "སྐད་མཛོད་གསར་པ།"
+
+#: app/templates/macros/nav_macros.html:140
+msgid "Go to"
+msgstr "འཚོལ།"
+
+#: app/templates/macros/nav_macros.html:207
+msgid "Text history"
+msgstr "ལོ་རྒྱུས་པར་གཞི།"
+
+#: app/templates/macros/nav_macros.html:211
+msgid "Delete the corpus (2 steps)"
+msgstr "སྐད་མཛོད་གསུབ་པ།"
+
+#: app/templates/macros/nav_macros.html:217
+msgid "Go to bookmark"
+msgstr "མཚམས་འཛིན།"
+
+#: app/templates/macros/nav_macros.html:224
+msgid "Correct"
+msgstr "ཚིག་དུམ་བཅོས།"
+
+#: app/templates/macros/nav_macros.html:227
+msgid "Search"
+msgstr "ཚིག་དུམ་འཚོལ།"
+
+#: app/templates/macros/nav_macros.html:230
+msgid "Export"
+msgstr "ཚིག་དུམ་ཕྱིར་ལེན།"
+
+#: app/templates/macros/nav_macros.html:233
+msgid "History"
+msgstr "ལོ་རྒྱུས་ཟིན་ཐོ།"
+
+#: app/templates/macros/nav_macros.html:240
+msgid "lemma"
+msgstr "མ་ཚིག"
+
+#: app/templates/macros/nav_macros.html:250
+msgid "morphology"
+msgstr "གཟུབས་དབྱིབས།"
+
+#: app/templates/macros/nav_macros.html:264
+msgid "Your corpora"
+msgstr "སྐད་མཛོད།"
+
+#: app/templates/main/corpus_info.html:15
+msgid "Statistics"
+msgstr "སྡོམས་རྩིས།"
+
+#: app/templates/main/corpus_new.html:8
+msgid "Create a new corpus"
+msgstr "སྐད་མཛོད་གསར་པ་གསར་བཟོ་བྱེད་པ།"
+
+#: app/templates/main/corpus_new.html:12
+msgid "Corpus Name"
+msgstr "སྐད་མཛོད་ཀྱི་མིང་།"
+
+#: app/templates/main/corpus_new.html:14
+msgid "This should be a clear name"
+msgstr "འདིར་མིང་གསལ་པོ་དགོས།"
+
+#: app/templates/main/corpus_new.html:27
+msgid "Delimiter token"
+msgstr "བར་འབྱེད་རྟགས།"
+
+#: app/templates/main/corpus_new.html:29
+msgid "[Optional] A specific token that is used as a delimiter between passages."
+msgstr "[འདེམ་ཆོག]] ལེ་ཚན་བར་གྱི་བར་འབྱེད་རྟགས་ཀྱི་དམིགས་བསལ་གྱི་རྟགས་བྱེད་པ།"
+
+#: app/templates/main/corpus_new.html:52
+msgid "Data"
+msgstr "དན་གྲངས།"
+
+#: app/templates/main/corpus_new.html:55
+msgid "Tokens (as TSV content)"
+msgstr "ཚིག་དུམ། (TSV ནང་དོན་བྱེད་པ།)"
+
+#: app/templates/main/corpus_new.html:56
+msgid "The TSV should at least have the headers : form, lemma, POS, morph"
+msgstr "TSV ལ་མ་མཐའ་ཡང་ཁ་བྱང་ཡོད་དགོས། : ཐ་སྙད་རིགས།, མ་ཚིག, ཚིག་གཤིས།, འགྱུར་བ།"
+
+#: app/templates/main/corpus_new.html:57
+msgid "Example :"
+msgstr "དཔེར་མཚོན། :"
+
+#: app/templates/main/corpus_new.html:68 app/templates/main/corpus_new.html:80
+msgid "Lemmatize"
+msgstr "མ་ཚིག་སྒྲིག"
+
+#: app/templates/main/corpus_new.html:70
+msgid ""
+"If your text is not lemmatized, select the language and click on "
+"lemmatize."
+msgstr ""
+"གལ་ཏེ་ཁྱེད་ཀྱིས་ཡིག་ཆར་མ་ཚིག་བསྒྲིགས་མེད་ཚེ། "
+"ཡིག་ཆ་འདེམ་ནས་མ་ཚིག་སྒྲིག་ཅེས་པའི་ཐོག་ཏུ་ཆིག་རྡེབ་བྱོས།"
+
+#: app/templates/main/corpus_new.html:98
+msgid "Tokenize (beta)"
+msgstr "ཚིག་དུམ་སྒྲིག (beta)"
+
+#: app/templates/main/corpus_new.html:105
+msgid "Remove hyphens (Be careful with this function)"
+msgstr "ཡིག་སྦྲེལ་རྟགས་གསུབ་པ། (བྱེད་ནུས་འདི་ལ་དོགས་ཟོན་མཛོད་རོགས།)"
+
+#: app/templates/main/corpus_new.html:109
+msgid "Keep punctuation"
+msgstr "བརྡ་རྟགས་འཇོག་པ།"
+
+#: app/templates/main/corpus_new.html:113
+msgid "Tokenize"
+msgstr "ཚིག་དུམ་སྒྲིག "
+
+#: app/templates/main/corpus_new.html:148
+msgid "Write your own"
+msgstr "རང་ཉིད་ཀྱིས་འབྲི་བ།"
+
+#: app/templates/main/corpus_new.html:198
+msgid "Submit"
+msgstr "རྕིས་སྤྲོད།"
+
+#: app/templates/main/dashboard.html:9
+msgid "User Dashboard"
+msgstr "བཀོལ་བདག་ནག་པང་།"
+
+#: app/templates/main/dashboard.html:10
+msgid "Registered Users"
+msgstr "བཀོལ་བདག་དེབ་བཀོད།"
+
+#: app/templates/main/dashboard.html:11
+msgid "View and manage user accounts"
+msgstr "བཀོལ་བདག་གི་རྩིས་ཨང་ལ་ལྟ་བཤེར་དང་དོ་དམ་བྱེད་པ།"
+
+#: app/templates/main/dashboard.html:12
+msgid "Add New User"
+msgstr "བཀོལ་བདག་གསར་བ་སྣོན་པ།"
+
+#: app/templates/main/dashboard.html:13
+msgid "Create a new user account"
+msgstr "བཀོལ་བདག་གསར་བའི་རྩིས་ཨང་གསར་བཟོ་བྱེད་པ།"
+
+#: app/templates/main/dashboard.html:14
+msgid "Invite New User"
+msgstr "བཀོལ་བདག་གསར་བ་གདན་འདྲེན་པ།"
+
+#: app/templates/main/dashboard.html:15
+msgid "Invites a new user to create their own account"
+msgstr "བཀོལ་བདག་གསར་བ་གདན་འདྲེན་ཞུས་ནས་རང་ཉིད་ཀྱི་རྩིས་ཨང་གསར་བཟོ་བྱེད་པ།"
+
+#: app/templates/main/index.html:5 app/templates/main/index_loggedin.html:6
+msgid "Welcome to Pyrrha !"
+msgstr "བཀྲ་ཤིས་བདེ་ལེགས།"
+

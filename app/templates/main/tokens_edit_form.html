@@ -4,7 +4,7 @@
 {% block content %}
 
 <form method="POST" action="{{ url_for('.tokens_edit_form', token_id=token.id, corpus_id=corpus.id)}}" class="form col-md-9">
-    <h1>Corpus {{corpus.name}} - Token Edit</h1>
+    <h1>{{ _('Corpus') }} {{corpus.name}} - Token Edit</h1>
     <p>This page allows you to correct the form of the following token</p>
     <table class="table table-bordered">
         <thead>

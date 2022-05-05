@@ -10,6 +10,10 @@ class Permission:
     GENERAL = 0x01
     ADMINISTER = 0xff
 
+class Serializer:
+    def __init__(self, secret):
+        self._secret = secret
+
 
 class Role(db.Model):
     __tablename__ = 'roles'
