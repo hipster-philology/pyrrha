@@ -24,8 +24,8 @@ login_manager.login_view = 'account.login'
 
 app = Flask(
         __name__,
-        template_folder=config["dev"].template_folder,
-        static_folder=config["dev"].static_folder,
+        template_folder=config[config_name].template_folder,
+        static_folder=config[config_name].static_folder,
         static_url_path="/statics"
     )
 
