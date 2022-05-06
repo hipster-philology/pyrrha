@@ -40,8 +40,8 @@
       {{ render_menu_items(endpoints) }}
     {% else %}
       {% set endpoints = [
-        ('account.register', 'Register', 'fa fa-user-plus'),
-        ('account.login', 'Log In', 'fa fa-sign-in')
+        ('account.register', _('Register'), 'fa fa-user-plus'),
+        ('account.login', _('Log In'), 'fa fa-sign-in')
       ] %}
       {{ render_menu_items(endpoints) }}
     {% endif %}
@@ -100,8 +100,8 @@
               {% endif -%}
             </ul>
             <ul class="navbar-nav"> 
-                  <li class="nav-item"><a class="nav-link" href="https://github.com/hipster-philology/pyrrha/issues/new/choose" target="_blank"><i class="fa fa-bug"  aria-hidden="true"></i> Bug or request ?</a></li>
-                  <li class="nav-item"><a class="nav-link" href="https://pyrrha.readthedocs.io/en/latest/" target="_blank"><i class="fa fa-question-circle"  aria-hidden="true"></i> Help</a></li>
+                  <li class="nav-item"><a class="nav-link" href="https://github.com/hipster-philology/pyrrha/issues/new/choose" target="_blank"><i class="fa fa-bug"  aria-hidden="true"></i> {{ _('Bug or request ?') }}</a></li>
+                  <li class="nav-item"><a class="nav-link" href="https://pyrrha.readthedocs.io/en/latest/" target="_blank"><i class="fa fa-question-circle"  aria-hidden="true"></i> {{ _('Help') }}</a></li>
                 {{ account_items(current_user) }}
             </ul>
           </div>
@@ -173,7 +173,7 @@
     <hr />
     <div class="row align-items-center">
         <div class="col-md-1">
-            <div class="title text-right" ><b>Menu</b></div>
+            <div class="title text-right" ><b>{{ _('Menu') }}</b></div>
         </div>
         <div class="col">
     <div class="menu-horizontal-group mx-1">
@@ -182,25 +182,25 @@
                 {{ _('Corpus') }}
             </a>
             <a class="btn btn-outline-dark" title="Get corpus statistics and informations" id="stats_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
-                <i class="fa fa-tachometer"></i> Home</a>
+                <i class="fa fa-tachometer"></i> {{ _('Home') }}</a>
             <a class="btn btn-outline-dark" title="Manage corpus' settings" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
-                <i class="fa fa-cog"></i> Preferences
+                <i class="fa fa-cog"></i> {{ _('Preferences') }}
             </a>
         </div>
         <div class="btn-group btn-group-sm" role="group">
             <a class="btn btn-outline-dark title">
-                Control List
+                {{ _('Control List') }}
             </a>
             <a class="btn btn-outline-dark" title="Edit values in the control list" href="{{url_for("control_lists_bp.get", control_list_id=corpus.control_lists_id)}}">
-                <i class="fa fa-cogs"></i> Edit
+                <i class="fa fa-cogs"></i> {{ _('Edit') }}
             </a>
             {% if corpus.is_owned_by(current_user) or current_user.is_admin() %}
                 <a class="btn btn-outline-dark" title="Switch for another control list" href="{{url_for("main.control_list_switch", corpus_id=corpus.id)}}">
-                        <i class="fa fa-exchange"></i> Change
+                        <i class="fa fa-exchange"></i> {{ _('Change') }}
                 </a>
             {% endif %}
             <a class="btn btn-outline-dark" title="Edit value in the corpus custom dictionary" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
-                <i class="fa fa-book"></i> Corpus' Custom Dictionary
+                <i class="fa fa-book"></i> {{ _('Corpus Custom Dictionary') }}
             </a>
         </div>
         <a class="btn btn-sm btn-outline-dark" title="Browse editions of the base text" href="{{url_for("main.tokens_edit_history", corpus_id=corpus.id)}}">
@@ -218,7 +218,7 @@
         </a>
         <div class="btn-group btn-group-sm" role="group">
             <a class="btn btn-outline-dark title">
-                Annotations
+                {{ _('Annotations') }}
             </a>
             <a class="btn btn btn-outline-dark" title="Correct annotations" href="{{ url_for("main.tokens_correct", corpus_id=corpus.id) }}">
                 <i class="fa fa-pencil"></i> {{ _('Correct') }}
@@ -234,7 +234,7 @@
             </a>
         </div>
         <div class="btn-group btn-group-sm" role="group">
-            <a class="btn btn-outline-dark title"><i class="fa fa-pencil"></i> Correct unallowed ...</a>
+            <a class="btn btn-outline-dark title"><i class="fa fa-pencil"></i> {{ _('Correct unallowed ...') }}</a>
             {% if "lemma" in visible %}
                 <a class="btn btn-outline-dark" title="Correct annotations with unallowed lemma" href="{{url_for("main.tokens_correct_unallowed", corpus_id=corpus.id, allowed_type='lemma')}}">
                      {{ _('lemma') }}

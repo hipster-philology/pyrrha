@@ -6,11 +6,11 @@
     <div class="container">
         <div class="row">
             <h2>
-                <i class="fa fa-exchange"></i> Switch control list
+                <i class="fa fa-exchange"></i> {{ _('Switch control list') }}
             </h2>
         </div>
         <div class="row">
-            <small>Current control list: {{ current_control_lists.name }}</small>
+            <small>{{ _('Current control list: {{ current_control_lists.name }}') }}</small>
         </div>
         <div class="row">
             <div class="col-md-9" id="use_public">
@@ -26,7 +26,7 @@
                   {% endfor -%}
               </select>
             </div>
-            <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+            <button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
         </div>
     </div>
 </form>

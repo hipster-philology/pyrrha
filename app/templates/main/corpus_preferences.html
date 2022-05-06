@@ -2,12 +2,12 @@
 {% block content %}
 <form method="POST" action="{{ url_for("main.preferences", corpus_id=corpus.id) }}">
         <h1>
-            <i class="fa fa-cog"></i> Preferences
+            <i class="fa fa-cog"></i> {{ _('Preferences') }}
         </h1>
         <fieldset class="form-fieldset">
             <legend>Metadata</legend>
             <div class="form-group">
-                <label for="sep_token">Delimiter token</label>
+                <label for="sep_token">{{ _('Delimiter token') }}</label>
                 <input
                     name="sep_token"
                     type="text"
@@ -20,12 +20,12 @@
                     {% endif %}
                 />
                 <small id="sep_tokenHelp" class="form-text text-muted">
-                    [Optional] A specific token that is used as a delimiter
-                    between passages.
+                    {{ _('[Optional] A specific token that is used as a delimiter
+                    between passages.') }}
                 </small>
             </div>
             <div class="form-group">
-                <label for="context_left">Left Context</label>
+                <label for="context_left">{{ _('Left Context') }}</label>
                 <input
                     name="context_left"
                     type="number"
@@ -38,11 +38,11 @@
                     {% endif %}
                 />
                 <small id="context_leftHelp" class="form-text text-muted">
-                    Number of words to display on the left of the word to annotate
+                    {{ _('Number of words to display on the left of the word to annotate') }}
                 </small>
             </div>
             <div class="form-group">
-                <label for="context_right">Right Context</label>
+                <label for="context_right">{{ _('Right Context') }}</label>
                 <input
                     name="context_right"
                     type="number"
@@ -55,14 +55,14 @@
                     {% endif %}
                 />
                 <small id="context_rightHelp" class="form-text text-muted">
-                    Number of words to display on the right of the word to annotate
+                    {{ _('Number of words to display on the right of the word to annotate') }}
                 </small>
             </div>
         </fieldset>
         <fieldset class="form-fieldset">
-            <legend>Layout</legend>
+            <legend>{{ _('Layout') }}</legend>
             <div class="form-group">
-                <label for="hideColumns">Hide columns</label>
+                <label for="hideColumns">{{ _('Hide columns') }}</label>
                 <ul>
                     {% for column in corpus.columns %}
                     <li>
@@ -83,6 +83,6 @@
                 </ul>
             </div>
         </fieldset>
-    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
 </form>
 {% endblock %}

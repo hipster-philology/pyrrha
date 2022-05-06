@@ -7,34 +7,34 @@
 
 {% set visible = corpus.displayed_columns_by_name %}
 
-<h1>{{ _('Corpus') }} {{corpus.name}} - List of tokens </h1>
+<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('List of tokens') }} </h1>
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_similar_to_record", record_id=record.id) }}
 
-<h2>Change</h2>
+<h2>{{ _('Change') }}</h2>
 
 <dl>
-    <dt>User</dt>
+    <dt>{{ _('User') }}</dt>
     <dd>{{ record.user.first_name[0] }}.{{ record.user.last_name }}</dd>
-    <dt>Date</dt>
+    <dt>{{ _('Date') }}</dt>
     <dd class="datetime">{{record.created_on}}</dd>
 </dl>
 
 <table class="table table-bordered">
     <thead>
         <tr class="history">
-            <th class="line">Context</th>
+            <th class="line">{{ _('Context') }}</th>
             {% if "lemma" in visible %}
-            <th>Old Lemma</th>
-            <th class="line">Corr Lemma</th>
+            <th>{{ _('Old Lemma') }}</th>
+            <th class="line">{{ _('Corr Lemma') }}</th>
             {% endif %}
             {% if "POS" in visible %}
-            <th>Previous POS</th>
-            <th class="line">Actual POS</th>
+            <th>{{ _('Previous POS') }}</th>
+            <th class="line">{{ _('Actual POS') }}</th>
             {% endif %}
             {% if "morph" in visible %}
-            <th>Previous Morph</th>
-            <th class="line">Actual Morph</th>
+            <th>{{ _('Previous Morph') }}</th>
+            <th class="line">{{ _('Actual Morph') }}</th>
             {% endif %}
         </tr>
     </thead>
@@ -57,7 +57,7 @@
     </tbody>
 </table>
 
-<h2>Similar matching: {{record.similar_remaining}}</h2>
+<h2>{{ _('Similar matching:') }}' {{record.similar_remaining}}</h2>
 <div class="main">
 {{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, checkbox=True, record=record, link_back=True) }}
 </div>
