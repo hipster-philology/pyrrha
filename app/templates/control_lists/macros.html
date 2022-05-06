@@ -8,13 +8,13 @@
     <ul class="nav flex-column">
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.information_read", control_list_id=control_list.id)}}"><i class="fa fa-book"></i> {{ _('Guidelines') }}</a></li>
     </ul>
-    Manage Lists
+    {{ _('Manage Lists') }}
     <ul class="nav flex-column">
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='lemma')}}">{{ _('Lemma') }}</a></li>
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='POS')}}">{{ _('POS') }}</a></li>
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='morph')}}">{{ _('Morphologies') }}</a></li>
     </ul>
-    Others
+    {{ _('Others') }}
     <ul class="nav flex-column">
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.contact", control_list_id=control_list.id)}}"><i class="fa fa-envelope"></i> {{ _('Propose changes') }}</a></li>
       {%  if control_list.can_edit() and not current_user.is_admin() %}

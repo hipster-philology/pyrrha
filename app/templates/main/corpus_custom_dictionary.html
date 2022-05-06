@@ -3,13 +3,13 @@
 {% set visible = corpus.displayed_columns_by_name %}
 <form method="POST" action="{{ url_for("main.corpus_custom_dict", corpus_id=corpus.id) }}">
         <h1>
-            <i class="fa fa-book"></i> Custom dictionary
+            <i class="fa fa-book"></i> {{ _('Custom dictionary') }}
         </h1>
         <fieldset class="form-fieldset">
-            <legend>Dictionaries</legend>
+            <legend>{{ _('Dictionaries') }}</legend>
             {% if "lemma" in visible %}
             <div class="form-group">
-                <label for="lemma">Lemma</label>
+                <label for="lemma">{{ _('Lemma') }}</label>
                 <textarea
                     name="lemma"
                     type="text"
@@ -17,13 +17,13 @@
                     id="lemma"
                     aria-describedby="sep_tokenHelp">{{ lemma }}</textarea>
                 <small id="sep_tokenHelp" class="form-text text-muted">
-                    List of supplementaries lemma for this corpus. One per line
+                    {{ _('List of supplementaries lemma for this corpus. One per line') }}
                 </small>
             </div>
           {% endif %}
           {% if "morph" in visible %}
           <div class="form-group">
-                <label for="morph">Morph</label>
+                <label for="morph">{{ _('Morph') }}</label>
                 <textarea
                     name="morph"
                     type="text"
@@ -31,15 +31,15 @@
                     id="morph"
                     aria-describedby="sep_tokenHelp">{{ morph }}</textarea>
                 <small id="sep_tokenHelp" class="form-text text-muted">
-                    List of supplementaries morph for this corpus. One per line, a human readable version of the code
-                    can be given after a tabulation (4 spaces are automatically transformed into tabulation). eg.
-                    <pre>Morph=MyMorph    My human readable morph</pre>
+                    {{ _('List of supplementaries morph for this corpus. One per line, a human readable version of the code
+                    can be given after a tabulation (4 spaces are automatically transformed into tabulation). eg.') }}
+                    <pre>{{ _('Morph=MyMorph    My human readable morph') }}</pre>
                 </small>
             </div>
         {% endif %}
         {% if "POS" in visible %}
           <div class="form-group">
-                <label for="POS">POS</label>
+                <label for="POS">{{ _('POS') }}</label>
                 <textarea
                     name="POS"
                     type="text"
@@ -47,11 +47,11 @@
                     id="POS"
                     aria-describedby="sep_tokenHelp">{{ POS }}</textarea>
                 <small id="sep_tokenHelp" class="form-text text-muted">
-                    List of supplementaries POS for this corpus. Separated by coma: <pre>MyPos,MyPos2</pre>
+                    {{ _('List of supplementaries POS for this corpus. Separated by coma:') }}' <pre>{{ _('MyPos,MyPos2') }}</pre>
                 </small>
             </div>
         {% endif %}
         </fieldset>
-    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
 </form>
 {% endblock %}
