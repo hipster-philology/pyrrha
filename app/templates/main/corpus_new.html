@@ -81,13 +81,13 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
                   </div>
                 </div>
                 <div class="hidden-default font-italic" id="tokens-update">
-                    <img src="{{ url_for("static", filename="ajax-loader.gif") }}" alt="loading.." /> <span id="tokens-count">0</span> / <span id="tokens-approximate">0</span> tokens analyzed... Total is approximately computed and could differ depending on the language...
+                    <img src="{{ url_for("static", filename="ajax-loader.gif") }}" alt="loading.." /> <span id="tokens-count">0</span> / <span id="tokens-approximate">0</span> {{ _('tokens analyzed... Total is approximately computed and could differ depending on the language...') }}
                 </div>
                 <div class="hidden-default font-italic" id="tokens-success">
-                    <div class="alert alert-success">Operation finished with success ! <span id="tokens-count-success">0</span> tokens analyzed in total.</div>
+                    <div class="alert alert-success">{{ _('Operation finished with success !') }} <span id="tokens-count-success">0</span> {{ _('tokens analyzed in total.') }}</div>
                 </div>
                 <div class="hidden-default font-italic" id="tokens-fail">
-                    <div class="alert alert-danger">Operation failed! Contact the administrator with the corpus you tried to lemmatize to investigate the issue.</div>
+                    <div class="alert alert-danger">{{ _('Operation failed! Contact the administrator with the corpus you tried to lemmatize to investigate the issue.') }}</div>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
                 <label for="tokenize" id="tokenize-label" class="form-text text-muted">
                     {{ _('Tokenize (beta)') }}
                 </label>
-                <small class="form-text text-muted">If your text is not tokenized and you don't need to pre-lemmatize it, you can use this function</small>
+                <small class="form-text text-muted">{{ _('If your text is not tokenized and you don't need to pre-lemmatize it, you can use this function') }}</small>
             </div>
             <div class="col-md-6">
               <div class="form-check">
