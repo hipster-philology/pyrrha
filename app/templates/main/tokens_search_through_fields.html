@@ -61,10 +61,10 @@
         </table>
 
         <div class="mb-3">
-            <small class="form-text text-muted">* can be used to match partial words, eg. <b>ADV*</b></small>
-            <small class="form-text text-muted">! can be used to negate a match, eg. <b>!PRE</b></small>
-            <small class="form-text text-muted">| can be used to perform an OR operation, eg. <b>s*t | s*s</b></small>
-            <small class="form-text text-muted">To search forms which do not contain 'e': <b>! *e*</b></small>
+            <small class="form-text text-muted">{{ _('* can be used to match partial words, eg. <b>ADV*</b>') }}</small>
+            <small class="form-text text-muted">{{ _('! can be used to negate a match, eg. <b>!PRE</b>') }}</small>
+            <small class="form-text text-muted">{{ _('| can be used to perform an OR operation, eg. <b>s*t | s*s</b>') }}</small>
+            <small class="form-text text-muted">{{ _('To search forms which do not contain 'e': <b>! *e*</b>') }}</small>
         </div>
 
         <button type="submit" id="submit_search" class="btn btn-primary mb-2">{{ _('Search') }}</button>
