@@ -22,17 +22,17 @@
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-edit fa-3x"></i>
                     <em>{{stats.changes|thousands}}</em>
-                    {{ _('annotations <br />corrected') }}
+                    {{ _('annotations') }} <br />{{ _('corrected') }}
                 </div>
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-bug fa-3x"></i>
                     <em>{{stats.unallowed|thousands}}</em>
-                    {{ _('unallowed <br /> values') }}
+                    {{ _('unallowed') }} <br /> {{ _('values') }}
                 </div>
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-strikethrough fa-3x"></i>
                     <em>{{stats.forms_edited|thousands}}</em>
-                    {{ _('forms <br />edited') }}
+                    {{ _('forms') }} <br /> {{ _('edited') }}
                 </div>
             </div>
             <div class="row">
@@ -54,7 +54,7 @@
                             <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.lemma_acc)}}%</text>
                         </svg>
                         <p class="stats-info">
-                        {{ _('lemma were correct from lemmatization. It means you corrected {{stats.lemma_count}} lemma.') }}
+                        {{ _('lemma were correct from lemmatization. It means you corrected') }} {{stats.lemma_count}} {{ _('lemma.') }}
                         </p>
                     </div>
                     {% endif %}
@@ -75,7 +75,7 @@
                             <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.morph_acc)}}%</text>
                         </svg>
                         <p class="stats-info">
-                        {{ _('morphologies were correct from lemmatization. It means you corrected {{stats.morph_count}} morphologies.') }}
+                        {{ _('morphologies were correct from lemmatization. It means you corrected') }} {{stats.morph_count}} {{ _('morphologies.') }}
                         </p>
                     </div>
                     {% endif %}
@@ -98,7 +98,7 @@
                             <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.pos_acc)}}%</text>
                         </svg>
                         <p class="stats-info">
-                        {{ _('POS were correct from lemmatization. It means you corrected {{stats.pos_count}} POS.') }}
+                        {{ _('POS were correct from lemmatization. It means you corrected') }} {{stats.pos_count}} {{ _('POS.') }}
                         </p>
                     </div>
                     {% endif %}

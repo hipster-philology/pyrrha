@@ -162,12 +162,12 @@
           action="{{ url_for(post_endpoint, **post_kwargs) }}">
         <div class="mt-3">
             {% if can_edit %}
-                <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage {{ item_type_name }} users') }}</h2>
-                <p class="form-text">{{ _('Add or remove {{ item_type_name }} access to users') }}</p>
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage') }} {{ item_type_name }} {{ _('users') }}</h2>
+                <p class="form-text">{{ _('Add or remove') }} {{ item_type_name }} {{ _('access to users') }}</p>
             {% else %}
-                <h2><i class="fa fa-users mr-2"></i> {{ _('View {{ item_type_name }} users') }}</h2>
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View') }} {{ item_type_name }} {{ _('users') }}</h2>
                 <p class="form-text">
-                    {{ _('Only {{ item_type_name }} owners can manage user accesses') }}
+                    {{ _('Only') }} {{ item_type_name }} {{ _('owners can manage user accesses') }}
                 </p>
             {% endif %}
             <div class="container">
