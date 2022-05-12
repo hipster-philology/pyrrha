@@ -8,13 +8,13 @@
 
 {{header_macros.render_corpus(corpus)}}
 
-<h2>Edit allowed {{allowed_type}}</h2>
+<h2>{{ _('Edit allowed') }} {{allowed_type}}</h2>
 <form method="post" action="{{url_for('.corpus_edit_allowed_values_setting', corpus_id=corpus.id, allowed_type=allowed_type)}}">
     <div class="form-group">
-        <label for="allowed_values">Allowed {{allowed_type}}</label>
+        <label for="allowed_values">{{ _('Allowed') }} {{allowed_type}}</label>
         <small id="allowed_values_help" class="form-text text-muted">{{format_message}}</small>
         <textarea aria-describedby="allowed_values_help" class="form-control" id="allowed_values" name="allowed_values">{{values}}</textarea>
     </div>
-    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
 </form>
 {% endblock %}
