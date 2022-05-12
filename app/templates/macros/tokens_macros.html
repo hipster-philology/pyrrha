@@ -13,25 +13,25 @@
 {% if editable %}
     {%- if checkbox %}
         <div>
-            <h3>Save checked similar lemma</h3>
+            <h3>{{ _('Save checked similar lemma') }}</h3>
             <p>
-                <a class="btn btn-primary save-lemma" href="{{url_for("main.tokens_correct_from_record", corpus_id=corpus.id, record_id=record.id)}}">Save</a> -
-                <a class="btn btn-secondary select-lemma" href="#">Select All</a> -
-                <a class="btn btn-secondary deselect-lemma" href="#">Deselect All</a>
+                <a class="btn btn-primary save-lemma" href="{{url_for("main.tokens_correct_from_record", corpus_id=corpus.id, record_id=record.id)}}">{{ _('Save') }}</a> -
+                <a class="btn btn-secondary select-lemma" href="#">{{ _('Select All') }}</a> -
+                <a class="btn btn-secondary deselect-lemma" href="#">{{ _('Deselect All') }}</a>
             </p>
         </div>
     {% endif -%}
 
     <div class="alert alert-success" style="display:none;" id="tokens-success"></div>
-    <div class="alert alert-danger" style="display:none;" id="tokens-error">An error occured. Contact the administrator
-        with all the information you can so they can replicate your error.</div>
+    <div class="alert alert-danger" style="display:none;" id="tokens-error">{{ _('An error occured. Contact the administrator
+        with all the information you can so they can replicate your error.') }}</div>
 
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Id</th>
+                <th>{{ _('Id') }}</th>
                 <th>
-                    Form
+                    {{ _('Form') }}
                     {% if sortable %}
                         {{ table_macros.sortable_table_row(endpoint, search_kwargs=search_kwargs, orderBy="form") }}
                     {% endif %}
@@ -78,7 +78,7 @@
                     {%- else -%}
                         <td class="save">
                             <a class="save" href="{{url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=token.id)}}">
-                                Save
+                                {{ _('Save') }}
                             </a>
                         </td>
                         <td class="dd">
@@ -86,10 +86,10 @@
                             <i class="fa fa-plus-square"></i>
                           </a>
                           <div class="dropdown-menu" aria-labelledby="dd_t{{token.order_id}}">
-                            <a class="dropdown-item" href="{{ url_for('main.tokens_edit_form', corpus_id=corpus.id, token_id=token.id) }}">Edit the form</a>
-                            <a class="dropdown-item" href="{{ url_for('main.tokens_del_row', corpus_id=corpus.id, token_id=token.id) }}">Delete the row</a>
-                            <a class="dropdown-item" href="{{ url_for('main.tokens_add_row', corpus_id=corpus.id, token_id=token.id) }}">Add a token after this one</a>
-                            <a class="dropdown-item bookmark" href="{{ url_for('main.corpus_bookmark', corpus_id=corpus.id, token_id=token.id, page=tokens.page) }}">Set as bookmark</a>
+                            <a class="dropdown-item" href="{{ url_for('main.tokens_edit_form', corpus_id=corpus.id, token_id=token.id) }}">{{ _('Edit the form') }}</a>
+                            <a class="dropdown-item" href="{{ url_for('main.tokens_del_row', corpus_id=corpus.id, token_id=token.id) }}">{{ _('Delete the row') }}</a>
+                            <a class="dropdown-item" href="{{ url_for('main.tokens_add_row', corpus_id=corpus.id, token_id=token.id) }}">{{ _('Add a token after this one') }}</a>
+                            <a class="dropdown-item bookmark" href="{{ url_for('main.corpus_bookmark', corpus_id=corpus.id, token_id=token.id, page=tokens.page) }}">{{ _('Set as bookmark') }}</a>
                           </div>
                         </td>
                     {%- endif -%}
@@ -450,22 +450,22 @@
     <table class="table table-bordered table-xs">
         <thead>
             <tr class="history">
-                <th>User</th>
-                <th>Edit</th>
-                <th class="line">Context</th>
+                <th>{{ _('User') }}</th>
+                <th>{{ _('Edit') }}</th>
+                <th class="line">{{ _('Context') }}</th>
                 {% if "lemma" in visible %}
-                <th>Old Lemma</th>
-                <th class="line">Corr Lemma</th>
+                <th>{{ _('Old Lemma') }}</th>
+                <th class="line">{{ _('Corr Lemma') }}</th>
                 {% endif %}
                 {% if "POS" in visible %}
-                <th>Previous POS</th>
-                <th class="line">Actual POS</th>
+                <th>{{ _('Previous POS') }}</th>
+                <th class="line">{{ _('Actual POS') }}</th>
                 {% endif %}
                 {% if "morph" in visible %}
-                <th>Previous Morph</th>
-                <th class="line">Actual Morph</th>
+                <th>{{ _('Previous Morph') }}</th>
+                <th class="line">{{ _('Actual Morph') }}</th>
                 {% endif %}
-                <th>Similar</th>
+                <th>{{ _('Similar') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -508,17 +508,17 @@
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Form</th>
+                <th>{{ _('Form') }}</th>
                 {% if "lemma" in visible %}
-                <th>Lemma</th>
+                <th>{{ _('Lemma') }}</th>
                 {% endif %}
                 {% if "POS" in visible %}
-                <th>POS</th>
+                <th>{{ _('POS') }}</th>
                 {% endif %}
                 {% if "morph" in visible %}
-                <th>Morph</th>
+                <th>{{ _('Morph') }}</th>
                 {% endif %}
-                <th>Context</th>
+                <th>{{ _('Context') }}</th>
             </tr>
         </thead>
         <tbody>

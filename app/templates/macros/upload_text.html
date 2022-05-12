@@ -1,8 +1,8 @@
 {% macro upload_text(textArea) %}
 <div class="form-group row">
     <div class="col-md-3">
-        <label for="upload">Text file</label>
-        <small id="upload help", class="form-text form-group">Upload a text file (.txt) which will be read</small>
+        <label for="upload">{{ _('Text file') }}</label>
+        <small id="upload help", class="form-text form-group">{{ _('Upload a text file (.txt) which will be read') }}</small>
     </div>
     <div class="col-md-9">
         <input type="file" id="upload" placeholder="Text file" />

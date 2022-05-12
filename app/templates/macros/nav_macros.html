@@ -34,7 +34,7 @@
 {% macro account_items(current_user) %}
     {% if current_user.is_authenticated %}
       {% set endpoints = [
-        ('account.manage', 'Your Account', 'fa fa-user-circle'),
+        ('account.manage', _('Your Account'), 'fa fa-user-circle'),
         ('account.logout', _('Log out'), 'fa fa-sign-out')
       ] %}
       {{ render_menu_items(endpoints) }}
