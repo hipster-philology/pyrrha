@@ -20,7 +20,7 @@
                   class="form-control" id="cl_language" name="cl_language" value="{{control_list.language  or ""}}"/>
     </div>
     <div class="form-group">
-        <label for="cl_bibliography">Bibliography</label>
+        <label for="cl_bibliography">{{ _('Bibliography') }}</label>
         <small id="cl_bibliography_help" class="form-text text-muted">{{ _('Bibliography of the control list') }}</small>
         <textarea aria-describedby="cl_bibliography_help"
                   class="form-control" id="cl_bibliography" name="cl_bibliography">{{control_list.bibliography or ""}}</textarea>

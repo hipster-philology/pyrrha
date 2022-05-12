@@ -4,10 +4,10 @@
 
 {% block content %}
 <h1>{{control_list.name}}</h1>
-<h2>Allowed values for {{allowed_type}}</h2>
+<h2>{{ _('Allowed values for') }} {{allowed_type}}</h2>
 {% if allowed_values %}
 <table class="table table-sm small">
-    <thead><tr><th>Label</th>{% if readable %}<th>Readable</th>{% endif %}</tr></thead>
+    <thead><tr><th>Label</th>{% if readable %}<th>{{ _('Readable') }}</th>{% endif %}</tr></thead>
     <tbody>
         {%  if readable %}
             {%- for token in allowed_values %}
@@ -25,6 +25,6 @@
         {% endif %}
     </tbody>
 </table>
-{% else %}<p>No allowed value in this category</p>
+{% else %}<p>{{ _('No allowed value in this category') }}</p>
 {% endif %}
 {% endblock %}
