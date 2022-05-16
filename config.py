@@ -72,11 +72,10 @@ class DevelopmentConfig(Config):
     ]
 
 
-class TestConfig(Config):
+class BaseTestConfig(Config):
+    """Test configuration base class."""
     DEBUG = True
     ASSETS_DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Disable CSRF for login purpose
@@ -98,9 +97,18 @@ class TestConfig(Config):
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
 
+class SQLiteTestConfig(BaseTestConfig):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
+
+
+class PostgreSQLTestConfig(BaseTestConfig):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'postgresql:///data-test'
+
 
 config = {
     "dev": DevelopmentConfig,
     "prod": Config,
-    "test": TestConfig
+    "test": PostgreSQLTestConfig if os.environ.get("TEST_DBMS", "sqlite").lower() == "postgresql" else SQLiteTestConfig
 }
