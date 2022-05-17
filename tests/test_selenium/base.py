@@ -13,6 +13,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sqlalchemy_utils import database_exists, create_database
 
 from app import db, create_app
 from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists, Favorite, Column
@@ -198,6 +199,8 @@ class TestBase(LiveServerTestCase):
 
     def setUp(self):
         """Setup the test driver and create test users"""
+        if not database_exists(db.engine.url):
+            create_database(db.engine.url)
         db.session.commit()
         db.drop_all()
         db.create_all()
