@@ -1454,6 +1454,8 @@ class CorpusCustomDictionary(db.Model):
                     )
                 )
         if group_by is True:
+            if db.engine.dialect.name == "postgresql":
+                return query.group_by(*retrieve_fields)
             return query.group_by(retrieve_fields[0])
 
         return query
