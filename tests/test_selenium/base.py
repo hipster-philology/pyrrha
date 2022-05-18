@@ -302,6 +302,24 @@ elit
 
     def addCorpus(self, corpus, *args, **kwargs):
         corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
+        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
+        if self.db.engine.dialect.name == "postgresql":
+            self.db.session.execute(
+                """SELECT setval(
+                pg_get_serial_sequence('control_lists', 'id'),
+                coalesce(max(id)+1, 1),
+                false
+                ) FROM control_lists;
+                """
+            )
+            self.db.session.execute(
+                """SELECT setval(
+                pg_get_serial_sequence('corpus', 'id'),
+                coalesce(max(id)+1, 1),
+                false
+                ) FROM corpus;
+                """
+            )
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         self.driver.get(self.get_server_url())
@@ -318,6 +336,16 @@ elit
 
     def addControlLists(self, cl_name, *args, **kwargs):
         cl = add_control_lists(cl_name, db, *args, **kwargs)
+        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
+        if self.db.engine.dialect.name == "postgresql":
+            self.db.session.execute(
+                """SELECT setval(
+                pg_get_serial_sequence('control_lists', 'id'),
+                coalesce(max(id)+1, 1),
+                false
+                ) FROM control_lists;
+                """
+            )
         self.driver.get(self.get_server_url())
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addControlListsUser(cl.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
