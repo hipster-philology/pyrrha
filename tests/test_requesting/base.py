@@ -35,6 +35,10 @@ class TestBase(TestCase):
 
         db.session.remove()
         db.drop_all()
+        # https://stackoverflow.com/questions/66876181/how-do-i-close-a-flask-sqlalchemy-connection-that-i-used-in-a-thread/67077811#67077811
+        if self.db.engine.dialect.name == "postgresql":
+            db.session.close()
+            db.get_engine(self.app).dispose()
 
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":

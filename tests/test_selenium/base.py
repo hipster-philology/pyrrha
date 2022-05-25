@@ -260,6 +260,10 @@ elit
                     self._process.terminate()
 
     def tearDown(self):
+        # https://stackoverflow.com/questions/66876181/how-do-i-close-a-flask-sqlalchemy-connection-that-i-used-in-a-thread/67077811#67077811
+        if self.db.engine.dialect.name == "postgresql":
+            db.session.close()
+            db.get_engine(self.app).dispose()
         self.driver.quit()
 
     def add_n_corpora(self, n_corpus: int, **kwargs):
