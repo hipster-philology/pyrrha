@@ -4,6 +4,7 @@ from flask import url_for
 
 from app.models import User, Role
 from app import create_app, db
+from sqlalchemy_utils import database_exists, create_database
 
 
 class TestBase(TestCase):
@@ -19,6 +20,8 @@ class TestBase(TestCase):
         """
         Will be called before every test
         """
+        if not database_exists(db.engine.url):
+            create_database(db.engine.url)
         self.app = self.create_app()
         self.client = self.app.test_client()
         db.session.commit()
