@@ -4,4 +4,4 @@ from .models.user import User
 
 @babel.localeselector
 def get_locale():
-    return 'en'
+    return 'bo_CN'
