@@ -73,6 +73,28 @@ python manage.py run
 with the mail you used. If you are simply running it for yourself, we would definitely recommend to use the Administrator role though.
 5. Run the application, login and enjoy !
 
+## Update the translations
+
+From the root directory, run:
+
+`python manage.py translate compile`
+
+If you changed the template or variables
+
+```sh
+python manage.py translate update
+# Change the translation and then do
+python manage.py translate compile
+```
+
+If you want to add a language
+
+```sh
+python manage.py translate init fr
+python manage.py translate update
+python manage.py translate compile
+```
+
 ## How to contribute
 
 - See [Contribute.md](CONTRIBUTING.md)
@@ -84,14 +106,15 @@ with the mail you used. If you are simply running it for yourself, we would defi
 
 ## Contributors
 
--[Jean-Baptiste Camps](https://github.com/Jean-Baptiste-Camps)
--[ngawangtrinley](https://github.com/ngawangtrinley)
--[FrFerry](https://github.com/FrFerry)
--[Vincent Jolivet](https://github.com/architexte)
--[Ariane Pinche](https://github.com/ArianePinche)
--[saisiddhant12](https://github.com/saisiddhant12)
--[jhrdt](https://github.com/jhrdt)
--[AdityaJ7](https://github.com/AdityaJ7)
+- [Jean-Baptiste Camps](https://github.com/Jean-Baptiste-Camps)
+- [ngawangtrinley](https://github.com/ngawangtrinley)
+- [FrFerry](https://github.com/FrFerry)
+- [Vincent Jolivet](https://github.com/architexte)
+- [Ariane Pinche](https://github.com/ArianePinche)
+- [saisiddhant12](https://github.com/saisiddhant12)
+- [jhrdt](https://github.com/jhrdt)
+- [AdityaJ7](https://github.com/AdityaJ7)
+- [Lungsang-bod](https://github.com/Lungsang-bod)
 
 ## Source
 

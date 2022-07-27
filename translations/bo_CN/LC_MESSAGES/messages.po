@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-05-10 14:49+0530\n"
+"POT-Creation-Date: 2022-07-27 11:39+0200\n"
 "PO-Revision-Date: 2022-05-05 15:49+0530\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: bo_CN\n"
@@ -16,7 +16,12 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.10.1\n"
+"Generated-By: Babel 2.10.3\n"
+
+#: app/templates/account/join_invite.html:8
+#, fuzzy
+msgid "Create your password"
+msgstr "གསང་ཨང་བརྗེད་པ།"
 
 #: app/templates/account/login.html:7
 msgid "Log in"
@@ -26,13 +31,138 @@ msgstr "ཐོ་འཇུག"
 msgid "Forgot password?"
 msgstr "གསང་ཨང་བརྗེད་པ།"
 
+#: app/templates/account/manage.html:25 app/templates/admin/manage_user.html:29
+msgid "Full name"
+msgstr ""
+
+#: app/templates/account/manage.html:26 app/templates/admin/manage_user.html:33
+#: app/templates/macros/dashboard_macros.html:28
+msgid "Email address"
+msgstr ""
+
+#: app/templates/account/manage.html:27 app/templates/admin/manage_user.html:37
+#: app/templates/macros/dashboard_macros.html:7
+#: app/templates/macros/dashboard_macros.html:30
+msgid "Account type"
+msgstr ""
+
+#: app/templates/account/manage.html:35
+msgid "Account Settings"
+msgstr ""
+
+#: app/templates/account/manage.html:37
+msgid "Manage your account settings and change your login information."
+msgstr ""
+
 #: app/templates/account/register.html:8
 msgid "Create an account"
 msgstr "རྩིས་ཚན་གསར་བཟོ།"
 
-#: app/templates/account/email/change_email.html:11
-msgid "The {{ config.APP_NAME }} Team"
+#: app/templates/account/reset_password.html:7
+#, fuzzy
+msgid "Reset your password"
+msgstr "གསང་ཨང་བརྗེད་པ།"
+
+#: app/templates/account/email/confirm.html:1
+#: app/templates/account/email/invite.html:1
+#: app/templates/account/email/reset_password.html:1
+#, fuzzy
+msgid "Dear"
+msgstr "ཚིག་དུམ་འཚོལ།"
+
+#: app/templates/account/email/confirm.html:3
+#, fuzzy
+msgid "Welcome to"
+msgstr "བཀྲ་ཤིས་བདེ་ལེགས།"
+
+#: app/templates/account/email/confirm.html:5
+msgid "To confirm your account, please"
 msgstr ""
+
+#: app/templates/account/email/confirm.html:5
+#: app/templates/account/email/invite.html:5
+msgid "click here"
+msgstr ""
+
+#: app/templates/account/email/confirm.html:11
+#: app/templates/account/email/invite.html:13
+#: app/templates/account/email/reset_password.html:11
+msgid "Sincerely,"
+msgstr ""
+
+#: app/templates/account/email/confirm.html:15
+#: app/templates/account/email/invite.html:17
+#: app/templates/account/email/reset_password.html:15
+#: app/templates/control_lists/email/contact.html:10
+msgid "Note: replies to this email address are not monitored."
+msgstr ""
+
+#: app/templates/account/email/invite.html:3
+msgid "You are invited to join"
+msgstr ""
+
+#: app/templates/account/email/invite.html:5
+msgid "To set your password, please"
+msgstr ""
+
+#: app/templates/account/email/reset_password.html:9
+msgid "If you have not requested a password reset, simply ignore this message."
+msgstr ""
+
+#: app/templates/admin/manage_user.html:41
+msgid "Account status"
+msgstr ""
+
+#: app/templates/admin/manage_user.html:53
+msgid "Back to all users"
+msgstr ""
+
+#: app/templates/admin/manage_user.html:67
+msgid "This action is permanent"
+msgstr ""
+
+#: app/templates/admin/manage_user.html:69
+msgid ""
+"Deleting a user account is not a reversible change. Any information "
+"associated\n"
+"                                with this account will be removed, and "
+"cannot be recovered."
+msgstr ""
+
+#: app/templates/admin/manage_user.html:77
+msgid "I understand that this action cannot be undone."
+msgstr ""
+
+#: app/templates/admin/manage_user.html:79
+msgid ""
+"Delete\n"
+"                        this user"
+msgstr ""
+
+#: app/templates/admin/new_user.html:13
+#: app/templates/admin/registered_users.html:9
+#: app/templates/macros/dashboard_macros.html:158
+#, fuzzy
+msgid "Back to dashboard"
+msgstr "མདུན་ངོས།"
+
+#: app/templates/admin/new_user.html:16 app/templates/main/dashboard.html:12
+msgid "Add New User"
+msgstr "བཀོལ་བདག་གསར་བ་སྣོན་པ།"
+
+#: app/templates/admin/new_user.html:17 app/templates/main/dashboard.html:13
+msgid "Create a new user account"
+msgstr "བཀོལ་བདག་གསར་བའི་རྩིས་ཨང་གསར་བཟོ་བྱེད་པ།"
+
+#: app/templates/admin/registered_users.html:12
+#: app/templates/main/dashboard.html:10
+msgid "Registered Users"
+msgstr "བཀོལ་བདག་དེབ་བཀོད།"
+
+#: app/templates/admin/registered_users.html:14
+#, fuzzy
+msgid "View and manage currently registered users."
+msgstr "སྐད་མཛོད་བཀོལ་བདག་ལ་དོ་དམ་དང་ལྟ་བཤེར་བྱེད་པ།"
 
 #: app/templates/control_lists/contact.html:8
 msgid "Contact control lists administrators"
@@ -53,6 +183,7 @@ msgid "Description"
 msgstr ""
 
 #: app/templates/control_lists/control_list.html:13
+#: app/templates/control_lists/information_edit.html:23
 #: app/templates/control_lists/information_read.html:15
 msgid "Bibliography"
 msgstr ""
@@ -102,6 +233,16 @@ msgstr ""
 msgid "Make public"
 msgstr "མངོན་གསལ།"
 
+#: app/templates/control_lists/edit.html:18
+#: app/templates/control_lists/information_edit.html:35
+#: app/templates/main/control_list_switch.html:29
+#: app/templates/main/corpus_custom_dictionary.html:55
+#: app/templates/main/corpus_edit_allowed_values.html:18
+#: app/templates/main/corpus_new.html:198
+#: app/templates/main/corpus_preferences.html:86
+msgid "Submit"
+msgstr "རྕིས་སྤྲོད།"
+
 #: app/templates/control_lists/information_edit.html:11
 msgid "Description of the control list"
 msgstr ""
@@ -131,21 +272,14 @@ msgid ""
 "data and use"
 msgstr ""
 
-#: app/templates/control_lists/information_edit.html:35
-#: app/templates/main/control_list_switch.html:29
-#: app/templates/main/corpus_custom_dictionary.html:55
-#: app/templates/main/corpus_new.html:198
-#: app/templates/main/corpus_preferences.html:86
-msgid "Submit"
-msgstr "རྕིས་སྤྲོད།"
-
 #: app/templates/control_lists/macros.html:11
 msgid "Manage Lists"
 msgstr ""
 
 #: app/templates/control_lists/macros.html:13
+#: app/templates/macros/tokens_macros.html:514
 #: app/templates/main/corpus_custom_dictionary.html:12
-#: app/templates/main/corpus_info.html:127
+#: app/templates/main/corpus_info.html:129
 #: app/templates/main/tokens_similar_to_token.html:19
 #: app/templates/main/tokens_similar_to_token.html:29
 #: app/templates/main/tokens_similar_to_token.html:52
@@ -153,9 +287,10 @@ msgid "Lemma"
 msgstr "མ་ཚིག"
 
 #: app/templates/control_lists/macros.html:14
-#: app/templates/macros/nav_macros.html:245
+#: app/templates/macros/nav_macros.html:255
+#: app/templates/macros/tokens_macros.html:517
 #: app/templates/main/corpus_custom_dictionary.html:42
-#: app/templates/main/corpus_info.html:153
+#: app/templates/main/corpus_info.html:155
 #: app/templates/main/tokens_similar_to_token.html:22
 #: app/templates/main/tokens_similar_to_token.html:32
 #: app/templates/main/tokens_similar_to_token.html:55
@@ -182,51 +317,52 @@ msgstr "མིང་བརྗེ་བ།"
 msgid "Edit informations"
 msgstr "རྩོམ་སྒྲིག་ཆ་འཕྲིན།"
 
-#: app/templates/control_lists/read_lemma.html:8
-#, fuzzy
-msgid "Control List for Lemmas"
-msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
-
-#: app/templates/control_lists/read_lemma.html:15
-msgid "Add new lemma"
+#: app/templates/control_lists/propose_as_public.html:8
+msgid "Propose the list as public list"
 msgstr ""
 
-#: app/templates/control_lists/read_lemma.html:18
-msgid "Save the new lemmas"
+#: app/templates/control_lists/propose_as_public.html:10
+msgid ""
+"Through this form, you will contact the administrators to ask them for\n"
+"            making this control list public. A public control list can "
+"not be made private again."
 msgstr ""
 
-#: app/templates/control_lists/read_lemma.html:20
-msgid "Saving"
+#: app/templates/control_lists/propose_as_public.html:11
+msgid ""
+"By making this\n"
+"                list public, other users will be able to freely access "
+"this control list. They will be able\n"
+"            to contact the administrators of this list to propose new "
+"allowed values such as lemma."
 msgstr ""
 
-#: app/templates/control_lists/read_lemma.html:21
-msgid "Saved"
+#: app/templates/control_lists/read.html:7
+msgid "Allowed values for"
 msgstr ""
 
-#: app/templates/control_lists/read_lemma.html:22
-msgid "Error:"
+#: app/templates/control_lists/read.html:10
+msgid "Readable"
 msgstr ""
 
-#: app/templates/control_lists/read_lemma.html:32
-msgid "Results"
-msgstr ""
-
-#: app/templates/control_lists/read_lemma.html:37
-#, fuzzy
-msgid "Search for"
-msgstr "ཚིག་དུམ་འཚོལ།"
-
-#: app/templates/control_lists/read_lemma.html:41
-msgid "Show help"
+#: app/templates/control_lists/read.html:28
+msgid "No allowed value in this category"
 msgstr ""
 
 #: app/templates/control_lists/rename.html:8
 msgid "Rename the control list"
 msgstr ""
 
-#: app/templates/macros/dashboard_macros.html:7
-#: app/templates/macros/dashboard_macros.html:30
-msgid "Account type"
+#: app/templates/errors/403.html:5
+msgid "Forbidden: You do not have the right to access this page."
+msgstr ""
+
+#: app/templates/errors/404.html:5
+msgid "Page not found"
+msgstr ""
+
+#: app/templates/errors/500.html:5
+msgid "Internal Server Error"
 msgstr ""
 
 #: app/templates/macros/dashboard_macros.html:9
@@ -246,10 +382,6 @@ msgstr ""
 #: app/templates/macros/dashboard_macros.html:26
 #: app/templates/macros/dashboard_macros.html:184
 msgid "Last name"
-msgstr ""
-
-#: app/templates/macros/dashboard_macros.html:28
-msgid "Email address"
 msgstr ""
 
 #: app/templates/macros/dashboard_macros.html:32
@@ -288,31 +420,40 @@ msgstr "སྐད་མཛོད།"
 
 #: app/templates/macros/dashboard_macros.html:142
 #: app/templates/macros/nav_macros.html:89
+#: app/templates/main/corpus_new.html:118
 msgid "Control Lists"
 msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
 
-#: app/templates/macros/dashboard_macros.html:158
-#, fuzzy
-msgid "Back to dashboard"
-msgstr "མདུན་ངོས།"
-
 #: app/templates/macros/dashboard_macros.html:165
 #, fuzzy
-msgid "View and manage {{ item_type_name }} users"
-msgstr "སྐད་མཛོད་བཀོལ་བདག་ལ་དོ་དམ་དང་ལྟ་བཤེར་བྱེད་པ།"
+msgid "View and manage"
+msgstr "བཀོལ་བདག་གི་རྩིས་ཨང་ལ་ལྟ་བཤེར་དང་དོ་དམ་བྱེད་པ།"
+
+#: app/templates/macros/dashboard_macros.html:165
+#: app/templates/macros/dashboard_macros.html:168
+msgid "users"
+msgstr ""
 
 #: app/templates/macros/dashboard_macros.html:166
-#, fuzzy
-msgid "Add or remove {{ item_type_name }} access to users"
-msgstr "བཀོལ་བདག་གིས་སྐད་མཛོད་ཀྱི་འདྲི་གཏུག་གསར་སྣོན་ཡང་ན་གསུབ་པ།"
+msgid "Add or remove"
+msgstr ""
+
+#: app/templates/macros/dashboard_macros.html:166
+msgid "access to users"
+msgstr ""
 
 #: app/templates/macros/dashboard_macros.html:168
-msgid "View {{ item_type_name }} users"
+msgid "View"
 msgstr ""
 
 #: app/templates/macros/dashboard_macros.html:170
-msgid "Only {{ item_type_name }} owners can manage user accesses"
+msgid "Only"
 msgstr ""
+
+#: app/templates/macros/dashboard_macros.html:170
+#, fuzzy
+msgid "owners can manage user accesses"
+msgstr "བཀོལ་བདག་གི་རྩིས་ཨང་ལ་ལྟ་བཤེར་དང་དོ་དམ་བྱེད་པ།"
 
 #: app/templates/macros/dashboard_macros.html:185
 msgid "Owner"
@@ -330,13 +471,15 @@ msgid ""
 msgstr ""
 
 #: app/templates/macros/header_macros.html:2
-#: app/templates/macros/nav_macros.html:182
+#: app/templates/macros/nav_macros.html:192
 #: app/templates/main/tokens_add_row.html:7
 #: app/templates/main/tokens_correct.html:8
+#: app/templates/main/tokens_correct_unallowed.html:8
 #: app/templates/main/tokens_del_row.html:7
 #: app/templates/main/tokens_edit_form.html:7
 #: app/templates/main/tokens_edit_history.html:6
 #: app/templates/main/tokens_export.html:5
+#: app/templates/main/tokens_history.html:7
 #: app/templates/main/tokens_search_through_fields.html:10
 #: app/templates/main/tokens_similar_to_record.html:10
 #: app/templates/main/tokens_similar_to_token.html:10
@@ -346,6 +489,11 @@ msgstr "སྐད་མཛོད།"
 #: app/templates/macros/nav_macros.html:26
 msgid "Dashboard"
 msgstr "མདུན་ངོས།"
+
+#: app/templates/macros/nav_macros.html:37
+#, fuzzy
+msgid "Your Account"
+msgstr "རྩིས་ཚན་གསར་བཟོ།"
 
 #: app/templates/macros/nav_macros.html:38
 msgid "Log out"
@@ -364,98 +512,239 @@ msgstr "ཐོ་འཇུག"
 msgid "New Corpus"
 msgstr "སྐད་མཛོད་གསར་པ།"
 
-#: app/templates/macros/nav_macros.html:103
+#: app/templates/macros/nav_macros.html:113
 msgid "Bug or request ?"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:104
+#: app/templates/macros/nav_macros.html:114
 msgid "Help"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:140
+#: app/templates/macros/nav_macros.html:150
 msgid "Go to"
 msgstr "འཚོལ།"
 
-#: app/templates/macros/nav_macros.html:176
+#: app/templates/macros/nav_macros.html:186
 msgid "Menu"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:185
+#: app/templates/macros/nav_macros.html:195
 msgid "Home"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:187
+#: app/templates/macros/nav_macros.html:197
 #: app/templates/main/corpus_preferences.html:5
 msgid "Preferences"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:192
+#: app/templates/macros/nav_macros.html:202
 #, fuzzy
 msgid "Control List"
 msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
 
-#: app/templates/macros/nav_macros.html:195
+#: app/templates/macros/nav_macros.html:205
+#: app/templates/macros/tokens_macros.html:455
 msgid "Edit"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:199
+#: app/templates/macros/nav_macros.html:209
 #: app/templates/main/tokens_similar_to_record.html:14
 msgid "Change"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:203
+#: app/templates/macros/nav_macros.html:213
 msgid "Corpus Custom Dictionary"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:207
+#: app/templates/macros/nav_macros.html:217
 msgid "Text history"
 msgstr "ལོ་རྒྱུས་པར་གཞི།"
 
-#: app/templates/macros/nav_macros.html:211
+#: app/templates/macros/nav_macros.html:221
 msgid "Delete the corpus (2 steps)"
 msgstr "སྐད་མཛོད་གསུབ་པ།"
 
-#: app/templates/macros/nav_macros.html:217
+#: app/templates/macros/nav_macros.html:227
 msgid "Go to bookmark"
 msgstr "མཚམས་འཛིན།"
 
-#: app/templates/macros/nav_macros.html:221
+#: app/templates/macros/nav_macros.html:231
 msgid "Annotations"
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:224
+#: app/templates/macros/nav_macros.html:234
 #: app/templates/main/tokens_edit_form.html:34
 msgid "Correct"
 msgstr "ཚིག་དུམ་བཅོས།"
 
-#: app/templates/macros/nav_macros.html:227
+#: app/templates/macros/nav_macros.html:237
 #: app/templates/main/tokens_search_through_fields.html:70
 msgid "Search"
 msgstr "ཚིག་དུམ་འཚོལ།"
 
-#: app/templates/macros/nav_macros.html:230
+#: app/templates/macros/nav_macros.html:240
 msgid "Export"
 msgstr "ཚིག་དུམ་ཕྱིར་ལེན།"
 
-#: app/templates/macros/nav_macros.html:233
+#: app/templates/macros/nav_macros.html:243
 msgid "History"
 msgstr "ལོ་རྒྱུས་ཟིན་ཐོ།"
 
-#: app/templates/macros/nav_macros.html:237
+#: app/templates/macros/nav_macros.html:247
 msgid "Correct unallowed ..."
 msgstr ""
 
-#: app/templates/macros/nav_macros.html:240
+#: app/templates/macros/nav_macros.html:250
 msgid "lemma"
 msgstr "མ་ཚིག"
 
-#: app/templates/macros/nav_macros.html:250
+#: app/templates/macros/nav_macros.html:260
 msgid "morphology"
 msgstr "གཟུབས་དབྱིབས།"
 
-#: app/templates/macros/nav_macros.html:264
+#: app/templates/macros/nav_macros.html:274
 msgid "Your corpora"
 msgstr "སྐད་མཛོད།"
+
+#: app/templates/macros/tokens_macros.html:16
+msgid "Save checked similar lemma"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:18
+#: app/templates/macros/tokens_macros.html:81
+msgid "Save"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:19
+msgid "Select All"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:20
+msgid "Deselect All"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:26
+msgid ""
+"An error occured. Contact the administrator\n"
+"        with all the information you can so they can replicate your error."
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:32
+msgid "Id"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:34
+#: app/templates/macros/tokens_macros.html:512
+#: app/templates/main/tokens_add_row.html:13
+#: app/templates/main/tokens_del_row.html:13
+#: app/templates/main/tokens_edit_form.html:13
+#: app/templates/main/tokens_search_through_fields.html:19
+#: app/templates/main/tokens_similar_to_token.html:49
+msgid "Form"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:89
+msgid "Edit the form"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:90
+msgid "Delete the row"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:91
+msgid "Add a token after this one"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:92
+#, fuzzy
+msgid "Set as bookmark"
+msgstr "མཚམས་འཛིན།"
+
+#: app/templates/macros/tokens_macros.html:380
+msgid "Add <code>$val$</code> to custom dictionary of <em>$key$</em>"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:454
+#: app/templates/main/tokens_edit_history.html:11
+#: app/templates/main/tokens_similar_to_record.html:17
+msgid "User"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:456
+#: app/templates/macros/tokens_macros.html:522
+#: app/templates/main/tokens_add_row.html:14
+#: app/templates/main/tokens_del_row.html:14
+#: app/templates/main/tokens_edit_form.html:14
+#: app/templates/main/tokens_similar_to_record.html:26
+#: app/templates/main/tokens_similar_to_token.html:50
+msgid "Context"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:458
+#: app/templates/main/tokens_similar_to_record.html:28
+#, fuzzy
+msgid "Old Lemma"
+msgstr "མ་ཚིག"
+
+#: app/templates/macros/tokens_macros.html:459
+#: app/templates/main/tokens_similar_to_record.html:29
+#, fuzzy
+msgid "Corr Lemma"
+msgstr "མ་ཚིག"
+
+#: app/templates/macros/tokens_macros.html:462
+#: app/templates/main/tokens_similar_to_record.html:32
+msgid "Previous POS"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:463
+#: app/templates/main/tokens_similar_to_record.html:33
+msgid "Actual POS"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:466
+#: app/templates/main/tokens_similar_to_record.html:36
+msgid "Previous Morph"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:467
+#: app/templates/main/tokens_similar_to_record.html:37
+msgid "Actual Morph"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:469
+msgid "Similar"
+msgstr ""
+
+#: app/templates/macros/tokens_macros.html:520
+#: app/templates/main/corpus_custom_dictionary.html:26
+#: app/templates/main/tokens_similar_to_token.html:25
+#: app/templates/main/tokens_similar_to_token.html:35
+#: app/templates/main/tokens_similar_to_token.html:58
+#, fuzzy
+msgid "Morph"
+msgstr "གཟུབས་དབྱིབས།"
+
+#: app/templates/macros/upload_text.html:4
+msgid "Text file"
+msgstr ""
+
+#: app/templates/macros/upload_text.html:5
+msgid "Upload a text file (.txt) which will be read"
+msgstr ""
+
+#: app/templates/macros/utils.html:3
+msgid "Private"
+msgstr ""
+
+#: app/templates/macros/utils.html:4
+msgid "Sent for publicization"
+msgstr ""
+
+#: app/templates/macros/utils.html:5
+#, fuzzy
+msgid "Public"
+msgstr "མངོན་གསལ།"
 
 #: app/templates/main/control_list_switch.html:9
 #, fuzzy
@@ -463,8 +752,9 @@ msgid "Switch control list"
 msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
 
 #: app/templates/main/control_list_switch.html:13
-msgid "Current control list: {{ current_control_lists.name }}"
-msgstr ""
+#, fuzzy
+msgid "Current control list:"
+msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
 
 #: app/templates/main/corpus_custom_dictionary.html:6
 msgid "Custom dictionary"
@@ -477,14 +767,6 @@ msgstr ""
 #: app/templates/main/corpus_custom_dictionary.html:20
 msgid "List of supplementaries lemma for this corpus. One per line"
 msgstr ""
-
-#: app/templates/main/corpus_custom_dictionary.html:26
-#: app/templates/main/tokens_similar_to_token.html:25
-#: app/templates/main/tokens_similar_to_token.html:35
-#: app/templates/main/tokens_similar_to_token.html:58
-#, fuzzy
-msgid "Morph"
-msgstr "གཟུབས་དབྱིབས།"
 
 #: app/templates/main/corpus_custom_dictionary.html:34
 msgid ""
@@ -506,6 +788,29 @@ msgstr ""
 msgid "MyPos,MyPos2"
 msgstr ""
 
+#: app/templates/main/corpus_delete.html:8
+#, fuzzy
+msgid "Delete the corpus"
+msgstr "སྐད་མཛོད་གསུབ་པ།"
+
+#: app/templates/main/corpus_edit_allowed_values.html:11
+msgid "Edit allowed"
+msgstr ""
+
+#: app/templates/main/corpus_edit_allowed_values.html:14
+msgid "Allowed"
+msgstr ""
+
+#: app/templates/main/corpus_generate_fixtures.html:10
+#, fuzzy
+msgid "Allowed Lemma"
+msgstr "མ་ཚིག"
+
+#: app/templates/main/corpus_generate_fixtures.html:15
+#: app/templates/main/corpus_new.html:186
+msgid "Allowed POS"
+msgstr ""
+
 #: app/templates/main/corpus_info.html:15
 msgid "Statistics"
 msgstr "སྡོམས་རྩིས།"
@@ -515,63 +820,82 @@ msgid "words"
 msgstr ""
 
 #: app/templates/main/corpus_info.html:25
-msgid "annotations <br />corrected"
+#, fuzzy
+msgid "annotations"
+msgstr "རྩོམ་སྒྲིག་ཆ་འཕྲིན།"
+
+#: app/templates/main/corpus_info.html:25
+#, fuzzy
+msgid "corrected"
+msgstr "ཚིག་དུམ་བཅོས།"
+
+#: app/templates/main/corpus_info.html:30
+msgid "unallowed"
 msgstr ""
 
 #: app/templates/main/corpus_info.html:30
-msgid "unallowed <br /> values"
+msgid "values"
 msgstr ""
 
 #: app/templates/main/corpus_info.html:35
-msgid "forms <br />edited"
+msgid "forms"
+msgstr ""
+
+#: app/templates/main/corpus_info.html:35
+msgid "edited"
 msgstr ""
 
 #: app/templates/main/corpus_info.html:57
+#, python-format
 msgid ""
-"lemma were correct from lemmatization. It means you corrected "
-"{{stats.lemma_count}} lemma."
+"lemma were correct from lemmatization. It means you corrected %(count)s "
+"lemma."
 msgstr ""
 
-#: app/templates/main/corpus_info.html:78
+#: app/templates/main/corpus_info.html:79
+#, python-format
 msgid ""
 "morphologies were correct from lemmatization. It means you corrected "
-"{{stats.morph_count}} morphologies."
+"%(count)s morphologies."
 msgstr ""
 
-#: app/templates/main/corpus_info.html:101
-msgid ""
-"POS were correct from lemmatization. It means you corrected "
-"{{stats.pos_count}} POS."
+#: app/templates/main/corpus_info.html:102
+#, python-format
+msgid "POS were correct from lemmatization. It means you corrected %(count)s POS."
 msgstr ""
 
-#: app/templates/main/corpus_info.html:107
+#: app/templates/main/corpus_info.html:109
 msgid "Annotations over time"
 msgstr ""
 
-#: app/templates/main/corpus_info.html:113
+#: app/templates/main/corpus_info.html:115
 msgid "Most common corrections"
 msgstr ""
 
-#: app/templates/main/corpus_info.html:129
-#: app/templates/main/corpus_info.html:142
-#: app/templates/main/corpus_info.html:155
+#: app/templates/main/corpus_info.html:122
+msgid "See more"
+msgstr ""
+
+#: app/templates/main/corpus_info.html:131
+#: app/templates/main/corpus_info.html:144
+#: app/templates/main/corpus_info.html:157
 msgid "Count"
 msgstr ""
 
-#: app/templates/main/corpus_info.html:129
-#: app/templates/main/corpus_info.html:142
-#: app/templates/main/corpus_info.html:155
+#: app/templates/main/corpus_info.html:131
+#: app/templates/main/corpus_info.html:144
+#: app/templates/main/corpus_info.html:157
 #, fuzzy
 msgid "Corrected"
 msgstr "ཚིག་དུམ་བཅོས།"
 
-#: app/templates/main/corpus_info.html:129
-#: app/templates/main/corpus_info.html:142
-#: app/templates/main/corpus_info.html:155
+#: app/templates/main/corpus_info.html:131
+#: app/templates/main/corpus_info.html:144
+#: app/templates/main/corpus_info.html:157
 msgid "Original"
 msgstr ""
 
-#: app/templates/main/corpus_info.html:140
+#: app/templates/main/corpus_info.html:142
 #, fuzzy
 msgid "Morphology"
 msgstr "གཟུབས་དབྱིབས།"
@@ -581,6 +905,7 @@ msgid "Create a new corpus"
 msgstr "སྐད་མཛོད་གསར་པ་གསར་བཟོ་བྱེད་པ།"
 
 #: app/templates/main/corpus_new.html:10
+#: app/templates/main/corpus_preferences.html:8
 msgid "Metadata"
 msgstr ""
 
@@ -768,14 +1093,12 @@ msgstr ""
 msgid "This should be formatted as a list of lemma separated by new line"
 msgstr ""
 
-#: app/templates/main/corpus_new.html:186
-msgid "Allowed POS"
+#: app/templates/main/corpus_new.html:187
+msgid "This should be formatted as a list of POS separated by comma"
 msgstr ""
 
 #: app/templates/main/corpus_new.html:187
-msgid ""
-"This should be formatted as a list of POS separated by comma <b>and no "
-"space</b>"
+msgid "and no space"
 msgstr ""
 
 #: app/templates/main/corpus_new.html:191
@@ -800,21 +1123,9 @@ msgstr "[འདེམ་ཆོག]] ལེ་ཚན་བར་གྱི་བ�
 msgid "User Dashboard"
 msgstr "བཀོལ་བདག་ནག་པང་།"
 
-#: app/templates/main/dashboard.html:10
-msgid "Registered Users"
-msgstr "བཀོལ་བདག་དེབ་བཀོད།"
-
 #: app/templates/main/dashboard.html:11
 msgid "View and manage user accounts"
 msgstr "བཀོལ་བདག་གི་རྩིས་ཨང་ལ་ལྟ་བཤེར་དང་དོ་དམ་བྱེད་པ།"
-
-#: app/templates/main/dashboard.html:12
-msgid "Add New User"
-msgstr "བཀོལ་བདག་གསར་བ་སྣོན་པ།"
-
-#: app/templates/main/dashboard.html:13
-msgid "Create a new user account"
-msgstr "བཀོལ་བདག་གསར་བའི་རྩིས་ཨང་གསར་བཟོ་བྱེད་པ།"
 
 #: app/templates/main/dashboard.html:14
 msgid "Invite New User"
@@ -824,9 +1135,36 @@ msgstr "བཀོལ་བདག་གསར་བ་གདན་འདྲེན
 msgid "Invites a new user to create their own account"
 msgstr "བཀོལ་བདག་གསར་བ་གདན་འདྲེན་ཞུས་ནས་རང་ཉིད་ཀྱི་རྩིས་ཨང་གསར་བཟོ་བྱེད་པ།"
 
+#: app/templates/main/dashboard_corpus_table.html:5
+msgid "Management of corpora"
+msgstr ""
+
+#: app/templates/main/dashboard_corpus_table.html:10
+msgid "Links"
+msgstr ""
+
+#: app/templates/main/dashboard_corpus_table.html:12
+#, fuzzy
+msgid "Corpus name"
+msgstr "སྐད་མཛོད་ཀྱི་མིང་།"
+
+#: app/templates/main/dashboard_corpus_table.html:13
+msgid "Last modified"
+msgstr ""
+
+#: app/templates/main/dashboard_corpus_table.html:14
+msgid "Users"
+msgstr ""
+
 #: app/templates/main/index.html:5 app/templates/main/index_loggedin.html:6
 msgid "Welcome to Pyrrha !"
 msgstr "བཀྲ་ཤིས་བདེ་ལེགས།"
+
+#: app/templates/main/index.html:6
+msgid ""
+"Pyrrha is a simple Python Flask WebApp to fasten the post-correction of "
+"lemmatized and morpho-syntactic tagged corpora."
+msgstr ""
 
 #: app/templates/main/tokens_add_row.html:7
 msgid "Add a token"
@@ -843,22 +1181,6 @@ msgstr ""
 msgid "Token ID"
 msgstr "ཚིག་དུམ་སྒྲིག "
 
-#: app/templates/main/tokens_add_row.html:13
-#: app/templates/main/tokens_del_row.html:13
-#: app/templates/main/tokens_edit_form.html:13
-#: app/templates/main/tokens_search_through_fields.html:19
-#: app/templates/main/tokens_similar_to_token.html:49
-msgid "Form"
-msgstr ""
-
-#: app/templates/main/tokens_add_row.html:14
-#: app/templates/main/tokens_del_row.html:14
-#: app/templates/main/tokens_edit_form.html:14
-#: app/templates/main/tokens_similar_to_record.html:26
-#: app/templates/main/tokens_similar_to_token.html:50
-msgid "Context"
-msgstr ""
-
 #: app/templates/main/tokens_add_row.html:27
 msgid "Form of the new token to insert"
 msgstr ""
@@ -874,15 +1196,12 @@ msgid "Go back to correcting annotations"
 msgstr ""
 
 #: app/templates/main/tokens_correct.html:8
+#: app/templates/main/tokens_correct_unallowed.html:8
+#: app/templates/main/tokens_history.html:7
 #: app/templates/main/tokens_similar_to_record.html:10
 #, fuzzy
 msgid "List of tokens"
 msgstr "བར་འབྱེད་རྟགས།"
-
-#: app/templates/main/tokens_correct_unallowed.html:8
-#: app/templates/main/tokens_history.html:7
-msgid "Corpus {{corpus.name}} - List of tokens"
-msgstr "སྐད་མཛོད། {{corpus.name}} - ཡིག་འབྲུ་དབྱེ་བ།"
 
 #: app/templates/main/tokens_del_row.html:7
 #, fuzzy
@@ -915,11 +1234,6 @@ msgstr ""
 
 #: app/templates/main/tokens_edit_history.html:6
 msgid "History of tokens edition"
-msgstr ""
-
-#: app/templates/main/tokens_edit_history.html:11
-#: app/templates/main/tokens_similar_to_record.html:17
-msgid "User"
 msgstr ""
 
 #: app/templates/main/tokens_edit_history.html:11
@@ -963,32 +1277,6 @@ msgstr ""
 msgid "To search forms which do not contain"
 msgstr ""
 
-#: app/templates/main/tokens_similar_to_record.html:28
-#, fuzzy
-msgid "Old Lemma"
-msgstr "མ་ཚིག"
-
-#: app/templates/main/tokens_similar_to_record.html:29
-#, fuzzy
-msgid "Corr Lemma"
-msgstr "མ་ཚིག"
-
-#: app/templates/main/tokens_similar_to_record.html:32
-msgid "Previous POS"
-msgstr ""
-
-#: app/templates/main/tokens_similar_to_record.html:33
-msgid "Actual POS"
-msgstr ""
-
-#: app/templates/main/tokens_similar_to_record.html:36
-msgid "Previous Morph"
-msgstr ""
-
-#: app/templates/main/tokens_similar_to_record.html:37
-msgid "Actual Morph"
-msgstr ""
-
 #: app/templates/main/tokens_similar_to_record.html:60
 msgid "Similar matching:"
 msgstr ""
@@ -1021,4 +1309,91 @@ msgstr ""
 #: app/templates/main/tokens_similar_to_token.html:79
 msgid "Similar matching"
 msgstr ""
+
+#~ msgid "The {{ config.APP_NAME }} Team"
+#~ msgstr ""
+
+#~ msgid "Control List for Lemmas"
+#~ msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
+
+#~ msgid "Add new lemma"
+#~ msgstr ""
+
+#~ msgid "Save the new lemmas"
+#~ msgstr ""
+
+#~ msgid "Saving"
+#~ msgstr ""
+
+#~ msgid "Saved"
+#~ msgstr ""
+
+#~ msgid "Error:"
+#~ msgstr ""
+
+#~ msgid "Results"
+#~ msgstr ""
+
+#~ msgid "Search for"
+#~ msgstr "ཚིག་དུམ་འཚོལ།"
+
+#~ msgid "Show help"
+#~ msgstr ""
+
+#~ msgid "View and manage {{ item_type_name }} users"
+#~ msgstr "སྐད་མཛོད་བཀོལ་བདག་ལ་དོ་དམ་དང་ལྟ་བཤེར་བྱེད་པ།"
+
+#~ msgid "Add or remove {{ item_type_name }} access to users"
+#~ msgstr "བཀོལ་བདག་གིས་སྐད་མཛོད་ཀྱི་འདྲི་གཏུག་གསར་སྣོན་ཡང་ན་གསུབ་པ།"
+
+#~ msgid "View {{ item_type_name }} users"
+#~ msgstr ""
+
+#~ msgid "Only {{ item_type_name }} owners can manage user accesses"
+#~ msgstr ""
+
+#~ msgid "Current control list: {{ current_control_lists.name }}"
+#~ msgstr ""
+
+#~ msgid "annotations <br />corrected"
+#~ msgstr ""
+
+#~ msgid "unallowed <br /> values"
+#~ msgstr ""
+
+#~ msgid "forms <br />edited"
+#~ msgstr ""
+
+#~ msgid ""
+#~ "lemma were correct from lemmatization. "
+#~ "It means you corrected {{stats.lemma_count}}"
+#~ " lemma."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "morphologies were correct from lemmatization."
+#~ " It means you corrected "
+#~ "{{stats.morph_count}} morphologies."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "POS were correct from lemmatization. It"
+#~ " means you corrected {{stats.pos_count}} "
+#~ "POS."
+#~ msgstr ""
+
+#~ msgid ""
+#~ "This should be formatted as a list"
+#~ " of POS separated by comma <b>and "
+#~ "no space</b>"
+#~ msgstr ""
+
+#~ msgid "Corpus {{corpus.name}} - List of tokens"
+#~ msgstr "སྐད་མཛོད། {{corpus.name}} - ཡིག་འབྲུ་དབྱེ་བ།"
+
+#~ msgid ""
+#~ "lemma were correct from lemmatization. "
+#~ "It means you corrected %(lemma_count)s "
+#~ "lemma."
+#~ msgstr ""
 

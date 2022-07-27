@@ -377,6 +377,7 @@
                     )
                 );
                 /* Shows error for each column in red as well as proposes to save into custom dictionary*/
+                const _MessageAdd = "{{ _('Add <code>$val$</code> to custom dictionary of <em>$key$</em>') }}";
                 Object.entries(error.details).forEach(([key, status]) => {
                     let selector = ".token_"+key.toLowerCase();
                     if (tr.querySelector(selector) !== null) {
@@ -384,7 +385,7 @@
                             tr.querySelector(selector).classList.add("table-danger");
                             let element = createElement(
                                 `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
-                                    Add <code>${tr.querySelector(selector).innerText.trim()}</code> to custom dictionary of <em>${key}</em>
+                                    ${_MessageAdd.replace('$val$', tr.querySelector(selector).innerText.trim()).replace('$key$', key)}
                                 </a>`
                             );
                             element.addEventListener("click", function(child_event) {
