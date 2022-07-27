@@ -106,15 +106,15 @@ python manage.py translate compile
 
 ## Contributors
 
+- [Lungsang-bod](https://github.com/Lungsang-bod)
 - [Jean-Baptiste Camps](https://github.com/Jean-Baptiste-Camps)
+- [Ariane Pinche](https://github.com/ArianePinche)
+- [Vincent Jolivet](https://github.com/architexte)
 - [ngawangtrinley](https://github.com/ngawangtrinley)
 - [FrFerry](https://github.com/FrFerry)
-- [Vincent Jolivet](https://github.com/architexte)
-- [Ariane Pinche](https://github.com/ArianePinche)
 - [saisiddhant12](https://github.com/saisiddhant12)
 - [jhrdt](https://github.com/jhrdt)
 - [AdityaJ7](https://github.com/AdityaJ7)
-- [Lungsang-bod](https://github.com/Lungsang-bod)
 
 ## Source
 
