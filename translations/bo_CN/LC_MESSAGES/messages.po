@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-07-27 11:39+0200\n"
+"POT-Creation-Date: 2022-07-27 12:05+0200\n"
 "PO-Revision-Date: 2022-05-05 15:49+0530\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: bo_CN\n"
@@ -63,12 +63,60 @@ msgstr "རྩིས་ཚན་གསར་བཟོ།"
 msgid "Reset your password"
 msgstr "གསང་ཨང་བརྗེད་པ།"
 
+#: app/templates/account/unconfirmed.html:8
+msgid "You need to confirm your account before continuing."
+msgstr ""
+
+#: app/templates/account/unconfirmed.html:15
+msgid "I didn't receive an email!"
+msgstr ""
+
+#: app/templates/account/unconfirmed.html:17
+msgid "No problem! Just click the button below and we'll send you another one."
+msgstr ""
+
+#: app/templates/account/unconfirmed.html:18
+msgid "Resend confirmation email"
+msgstr ""
+
+#: app/templates/account/email/change_email.html:1
 #: app/templates/account/email/confirm.html:1
 #: app/templates/account/email/invite.html:1
 #: app/templates/account/email/reset_password.html:1
 #, fuzzy
 msgid "Dear"
 msgstr "ཚིག་དུམ་འཚོལ།"
+
+#: app/templates/account/email/change_email.html:3
+msgid "To confirm your new email address"
+msgstr ""
+
+#: app/templates/account/email/change_email.html:3
+#: app/templates/account/email/confirm.html:5
+#: app/templates/account/email/invite.html:5
+msgid "click here"
+msgstr ""
+
+#: app/templates/account/email/change_email.html:5
+msgid ""
+"Alternatively, you can paste the following link in your browser's address"
+" bar:"
+msgstr ""
+
+#: app/templates/account/email/change_email.html:9
+#: app/templates/account/email/confirm.html:11
+#: app/templates/account/email/invite.html:13
+#: app/templates/account/email/reset_password.html:11
+msgid "Sincerely,"
+msgstr ""
+
+#: app/templates/account/email/change_email.html:13
+#: app/templates/account/email/confirm.html:15
+#: app/templates/account/email/invite.html:17
+#: app/templates/account/email/reset_password.html:15
+#: app/templates/control_lists/email/contact.html:10
+msgid "Note: replies to this email address are not monitored."
+msgstr ""
 
 #: app/templates/account/email/confirm.html:3
 #, fuzzy
@@ -77,24 +125,6 @@ msgstr "བཀྲ་ཤིས་བདེ་ལེགས།"
 
 #: app/templates/account/email/confirm.html:5
 msgid "To confirm your account, please"
-msgstr ""
-
-#: app/templates/account/email/confirm.html:5
-#: app/templates/account/email/invite.html:5
-msgid "click here"
-msgstr ""
-
-#: app/templates/account/email/confirm.html:11
-#: app/templates/account/email/invite.html:13
-#: app/templates/account/email/reset_password.html:11
-msgid "Sincerely,"
-msgstr ""
-
-#: app/templates/account/email/confirm.html:15
-#: app/templates/account/email/invite.html:17
-#: app/templates/account/email/reset_password.html:15
-#: app/templates/control_lists/email/contact.html:10
-msgid "Note: replies to this email address are not monitored."
 msgstr ""
 
 #: app/templates/account/email/invite.html:3
@@ -347,6 +377,68 @@ msgstr ""
 
 #: app/templates/control_lists/read.html:28
 msgid "No allowed value in this category"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:8
+#, fuzzy
+msgid "Control List for Lemmas"
+msgstr "ཚད་ལྡན་ཚིག་ཐོ།"
+
+#: app/templates/control_lists/read_lemma.html:15
+msgid "Add new lemma"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:18
+msgid "Save the new lemmas"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:20
+msgid "Saving"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:21
+msgid "Saved"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:22
+msgid "Error:"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:32
+msgid "Results"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:37
+#, fuzzy
+msgid "Search for"
+msgstr "ཚིག་དུམ་འཚོལ།"
+
+#: app/templates/control_lists/read_lemma.html:41
+msgid "Show help"
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:45
+#, fuzzy
+msgid "Options :"
+msgstr "རྩོམ་སྒྲིག་ཆ་འཕྲིན།"
+
+#: app/templates/control_lists/read_lemma.html:47
+#: app/templates/main/tokens_search_through_fields.html:64
+msgid "* can be used to match partial words, eg."
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:48
+#: app/templates/main/tokens_search_through_fields.html:65
+msgid "! can be used to negate a match, eg."
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:49
+#: app/templates/main/tokens_search_through_fields.html:66
+msgid "| can be used to perform an OR operation, eg."
+msgstr ""
+
+#: app/templates/control_lists/read_lemma.html:50
+msgid "To search forms which do not contain 'e', eg."
 msgstr ""
 
 #: app/templates/control_lists/rename.html:8
@@ -1259,18 +1351,6 @@ msgstr ""
 
 #: app/templates/main/tokens_search_through_fields.html:10
 msgid "Search tokens within the corpus"
-msgstr ""
-
-#: app/templates/main/tokens_search_through_fields.html:64
-msgid "* can be used to match partial words, eg."
-msgstr ""
-
-#: app/templates/main/tokens_search_through_fields.html:65
-msgid "! can be used to negate a match, eg."
-msgstr ""
-
-#: app/templates/main/tokens_search_through_fields.html:66
-msgid "| can be used to perform an OR operation, eg."
 msgstr ""
 
 #: app/templates/main/tokens_search_through_fields.html:67
