@@ -12,27 +12,27 @@
     {{ header_macros.render_corpus(corpus) }}
     <div>
         <section id="statistics">
-            <h2>Statistics</h2>
+            <h2>{{ _('Statistics') }}</h2>
             <div class="row">
                 <div class="offset-md-2 col-md-2 stats-fact">
                     <i class="fa fa-book fa-3x"></i>
                     <em>{{stats.word_count|thousands}}</em>
-                    words
+                    {{ _('words') }}
                 </div>
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-edit fa-3x"></i>
                     <em>{{stats.changes|thousands}}</em>
-                    annotations <br />corrected
+                    {{ _('annotations') }} <br />{{ _('corrected') }}
                 </div>
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-bug fa-3x"></i>
                     <em>{{stats.unallowed|thousands}}</em>
-                    unallowed <br /> values
+                    {{ _('unallowed') }} <br /> {{ _('values') }}
                 </div>
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-strikethrough fa-3x"></i>
                     <em>{{stats.forms_edited|thousands}}</em>
-                    forms <br />edited
+                    {{ _('forms') }} <br /> {{ _('edited') }}
                 </div>
             </div>
             <div class="row">
@@ -54,7 +54,7 @@
                             <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.lemma_acc)}}%</text>
                         </svg>
                         <p class="stats-info">
-                        lemma were correct from lemmatization. It means you corrected {{stats.lemma_count}} lemma.
+                        {{_("lemma were correct from lemmatization. It means you corrected %(count)s lemma.", count=stats.lemma_count)}}
                         </p>
                     </div>
                     {% endif %}
@@ -75,7 +75,8 @@
                             <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.morph_acc)}}%</text>
                         </svg>
                         <p class="stats-info">
-                        morphologies were correct from lemmatization. It means you corrected {{stats.morph_count}} morphologies.
+
+                        {{_("morphologies were correct from lemmatization. It means you corrected %(count)s morphologies.", count=stats.morph_count)}}
                         </p>
                     </div>
                     {% endif %}
@@ -98,35 +99,36 @@
                             <text x="18" y="20.35" class="percentage">{{'%0.2f' % (100 - stats.pos_acc)}}%</text>
                         </svg>
                         <p class="stats-info">
-                        POS were correct from lemmatization. It means you corrected {{stats.pos_count}} POS.
+                        {{_("POS were correct from lemmatization. It means you corrected %(count)s POS.", count=stats.pos_count)}}
+
                         </p>
                     </div>
                     {% endif %}
                 </div>
             </div>
-            <h3>Annotations over time</h3>
+            <h3>{{ _('Annotations over time') }}</h3>
             <div class="row">
                 <div class="offset-md-3 col-md-6">
                     <div id="corrections-per-day" class="ct-chart"></div>
                 </div>
             </div>
-            <h3>Most common corrections</h3>
+            <h3>{{ _('Most common corrections') }}</h3>
             <form action="{{url_for('.corpus_get', corpus_id=corpus.id)}}" method="GET" class="col-md-2">
                 <div class="input-group mb-3 input-group-sm">
                   <input type="number" name="limit"
                          class="form-control" placeholder="" aria-label="Example text with button addon"
                          aria-describedby="button-addon1" value="10" />
                   <div class="input-group-append">
-                    <button class="btn btn-outline-secondary" type="submit" id="button-addon1">See more</button>
+                    <button class="btn btn-outline-secondary" type="submit" id="button-addon1">{{ _('See more') }}</button>
                   </div>
                 </div>
             </form>
             <div class="row">
                 <div class="col-lg-3">
                     {% if "lemma" in visible %}
-                    <h4>Lemma</h4>
+                    <h4>{{ _('Lemma') }}</h4>
                     <table class="table table-xs table-striped">
-                        <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
+                        <thead class="thead-dark"><tr><th>{{ _('Count') }}</th><th>{{ _('Corrected') }}</th><th>{{ _('Original') }}</th></tr></thead>
                         <tbody>
                             {% for count, lemma_new, lemma in lemma_cor %}
                             <tr><td>{{count}}</td><td>{{lemma_new}}</td><td>{{lemma}}</td></tr>
@@ -137,9 +139,9 @@
                 </div>
                 <div class="col-lg-6">
                     {% if "morph" in visible %}
-                    <h4>Morphology</h4>
+                    <h4>{{ _('Morphology') }}</h4>
                     <table class="table table-xs table-striped">
-                        <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
+                        <thead class="thead-dark"><tr><th>{{ _('Count') }}</th><th>{{ _('Corrected') }}</th><th>{{ _('Original') }}</th></tr></thead>
                         <tbody>
                             {% for count, lemma_new, lemma in morph_cor %}
                             <tr><td>{{count}}</td><td>{{lemma_new}}</td><td>{{lemma}}</td></tr>
@@ -150,9 +152,9 @@
                 </div>
                 <div class="col-lg-3">
                     {% if "POS" in visible %}
-                    <h4>POS</h4>
+                    <h4>{{ _('POS') }}</h4>
                     <table class="table table-xs table-striped">
-                        <thead class="thead-dark"><tr><th>Count</th><th>Corrected</th><th>Original</th></tr></thead>
+                        <thead class="thead-dark"><tr><th>{{ _('Count') }}</th><th>{{ _('Corrected') }}</th><th>{{ _('Original') }}</th></tr></thead>
                         <tbody>
                             {% for count, lemma_new, lemma in pos_cor %}
                             <tr><td>{{count}}</td><td>{{lemma_new}}</td><td>{{lemma}}</td></tr>

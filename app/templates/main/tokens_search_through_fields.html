@@ -7,7 +7,7 @@
 
 {% set visible = corpus.get_columns_headings() %}
 
-    <h1 class="mt-3"><i class="fa fa-search mr-2"></i>Corpus {{ corpus.name }} - Search tokens within the corpus </h1>
+    <h1 class="mt-3"><i class="fa fa-search mr-2"></i>{{ _('Corpus') }} {{ corpus.name }} - {{ _('Search tokens within the corpus') }} </h1>
 
     <form id="search_form" method="GET"
           action="{{ url_for('main.tokens_search_through_fields', corpus_id=corpus.id) }}">
@@ -16,7 +16,7 @@
             <thead>
             <tr>
                 <th>
-                    <label id="formHelp" for="form">Form</label>
+                    <label id="formHelp" for="form">{{ _('Form') }}</label>
                 </th>
                 {% for heading in visible %}
                     <th>
@@ -61,13 +61,13 @@
         </table>
 
         <div class="mb-3">
-            <small class="form-text text-muted">* can be used to match partial words, eg. <b>ADV*</b></small>
-            <small class="form-text text-muted">! can be used to negate a match, eg. <b>!PRE</b></small>
-            <small class="form-text text-muted">| can be used to perform an OR operation, eg. <b>s*t | s*s</b></small>
-            <small class="form-text text-muted">To search forms which do not contain 'e': <b>! *e*</b></small>
+            <small class="form-text text-muted">{{ _('* can be used to match partial words, eg.') }} <b>ADV*</b></small>
+            <small class="form-text text-muted">{{ _('! can be used to negate a match, eg.') }} <b>!PRE</b></small>
+            <small class="form-text text-muted">{{ _('| can be used to perform an OR operation, eg.') }} <b>s*t | s*s</b></small>
+            <small class="form-text text-muted">{{ _('To search forms which do not contain') }} 'e': <b>! *e*</b></small>
         </div>
 
-        <button type="submit" id="submit_search" class="btn btn-primary mb-2">Search</button>
+        <button type="submit" id="submit_search" class="btn btn-primary mb-2">{{ _('Search') }}</button>
     </form>
 
 
@@ -81,14 +81,14 @@
 
             <div id="result_table" class="mt-3">
                 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_search_through_fields",
-                        lemma=lemma, morph=morph, POS=POS, form=form, orderBy=orderBy, desc=desc,
-                        get_params=["lemma", "morph", "POS", "form", "orderBy", "desc"]) }}
+                lemma=lemma, morph=morph, POS=POS, form=form, orderBy=orderBy, desc=desc,
+                get_params=["lemma", "morph", "POS", "form", "orderBy", "desc"]) }}
 
                 {{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=True, sortable=True, link_back=True, search_kwargs=search_kwargs, endpoint="main.tokens_search_through_fields") }}
 
                 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_search_through_fields",
-                        lemma=lemma, morph=morph, POS=POS, form=form,
-                        get_params=["lemma", "morph", "POS", "form", "orderBy", "desc"]) }}
+                lemma=lemma, morph=morph, POS=POS, form=form,
+                get_params=["lemma", "morph", "POS", "form", "orderBy", "desc"]) }}
             </div>
 
         {% endif %}

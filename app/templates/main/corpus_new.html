@@ -5,34 +5,34 @@
 {% block content %}
     <form method="POST" action="{{url_for("main.corpus_new")}}" id="form">
     {{ validateLength.validateLength("tokens", {0: 64}) }}
-    <h1>Create a new corpus</h1>
+    <h1>{{ _('Create a new corpus') }}</h1>
     <fieldset class="form-fieldset">
-        <legend>Metadata</legend>
+        <legend>{{ _('Metadata') }}</legend>
         <div class="form-group">
-            <label for="corpusName">Corpus Name</label>
+            <label for="corpusName">{{ _('Corpus Name') }}</label>
             <input name="name" type="text" class="form-control" id="corpusName" aria-describedby="corpusNameHelp" placeholder="Enter name of the corpus" value="{% if name %}{{name}}{%endif%}" />
-            <small id="corpusNameHelp" class="form-text text-muted">This should be a clear name</small>
+            <small id="corpusNameHelp" class="form-text text-muted">{{ _('This should be a clear name') }}</small>
         </div>
         <div class="form-group">
-            <label for="context_left">Left Context</label>
+            <label for="context_left">{{ _('Left Context') }}</label>
             <input name="context_left" type="number" class="form-control" id="context_left" aria-describedby="context_leftHelp" value="{% if name %}{{context_left}}{%else%}3{%endif%}" />
-            <small id="context_leftHelp" class="form-text text-muted">Number of words to display on the left of the word to annotate</small>
+            <small id="context_leftHelp" class="form-text text-muted">{{ _('Number of words to display on the left of the word to annotate') }}</small>
         </div>
         <div class="form-group">
-            <label for="context_right">Right Context</label>
+            <label for="context_right">{{ _('Right Context') }}</label>
             <input name="context_right" type="number" class="form-control" id="context_right" aria-describedby="context_rightHelp" value="{% if name %}{{context_right}}{%else%}3{%endif%}" />
-            <small id="context_rightHelp" class="form-text text-muted">Number of words to display on the right of the word to annotate</small>
+            <small id="context_rightHelp" class="form-text text-muted">{{ _('Number of words to display on the right of the word to annotate') }}</small>
         </div>
         <div class="form-group">
-            <label for="sep_token">Delimiter token</label>
+            <label for="sep_token">{{ _('Delimiter token') }}</label>
             <input name="sep_token" type="text" class="form-control" id="sep_token" aria-describedby="sep_tokenHelp" value="{% if name %}{{sep_token}}{%endif%}" />
-            <small id="sep_tokenHelp" class="form-text text-muted">[Optional] A specific token that is used as a delimiter between passages.</small>
+            <small id="sep_tokenHelp" class="form-text text-muted">{{ _('[Optional] A specific token that is used as a delimiter between passages.') }}</small>
         </div>
     </fieldset>
     <fieldset class="form-fieldset">
-        <legend>Layout</legend>
+        <legend>{{ _('Layout') }}</legend>
         <div class="form-group">
-            <label for="hideColumns">Hide columns</label>
+            <label for="hideColumns">{{ _('Hide columns') }}</label>
             <ul>
                 {% for heading in ["Lemma", "POS", "Morph", "Similar"] %}
                 <li>
@@ -49,12 +49,12 @@
     </fieldset>
 
     <fieldset class="form-fieldset">
-        <legend>Data</legend>
+        <legend>{{ _('Data') }}</legend>
         {{ upload_text.upload_text("tokens") }}
         <div class="form-group">
-            <label for="tokens" id="tokensLabel">Tokens (as TSV content)</label>
-            <small id="tsvHelp" class="form-text text-muted">The TSV should at least have the headers : form, lemma, POS, morph</small>
-            <small>Example :</small>
+            <label for="tokens" id="tokensLabel">{{ _('Tokens (as TSV content)') }}</label>
+            <small id="tsvHelp" class="form-text text-muted">{{ _('The TSV should at least have the headers : form, lemma, POS, morph') }}</small>
+            <small>{{ _('Example :') }}</small>
             <pre>form	lemma	POS	morph
 SOIGNORS	seignor	NOMcom	NOMB.=p|GENRE=m|CAS=n
 or	or4	ADVgen	DEGRE=-
@@ -65,9 +65,9 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
         <div class="form-group row">
             <div class="col-md-3">
                 <label for="language-model" id="language-model-label" class="form-text text-muted">
-                    Lemmatize
+                    {{ _('Lemmatize') }}
                 </label>
-                <small class="form-text text-muted">If your text is not lemmatized, select the language and click on lemmatize.</small>
+                <small class="form-text text-muted">{{ _('If your text is not lemmatized, select the language and click on lemmatize.') }}</small>
             </div>
             <div class="col-md-9">
                 <div class="input-group">
@@ -77,17 +77,17 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
                       {% endfor -%}
                   </select>
                   <div class="input-group-append">
-                    <button id="submit-model" class="btn btn-outline-secondary" type="button">Lemmatize</button>
+                    <button id="submit-model" class="btn btn-outline-secondary" type="button">{{ _('Lemmatize') }}</button>
                   </div>
                 </div>
                 <div class="hidden-default font-italic" id="tokens-update">
-                    <img src="{{ url_for("static", filename="ajax-loader.gif") }}" alt="loading.." /> <span id="tokens-count">0</span> / <span id="tokens-approximate">0</span> tokens analyzed... Total is approximately computed and could differ depending on the language...
+                    <img src="{{ url_for("static", filename="ajax-loader.gif") }}" alt="loading.." /> <span id="tokens-count">0</span> / <span id="tokens-approximate">0</span> {{ _('tokens analyzed... Total is approximately computed and could differ depending on the language...') }}
                 </div>
                 <div class="hidden-default font-italic" id="tokens-success">
-                    <div class="alert alert-success">Operation finished with success ! <span id="tokens-count-success">0</span> tokens analyzed in total.</div>
+                    <div class="alert alert-success">{{ _('Operation finished with success !') }} <span id="tokens-count-success">0</span> {{ _('tokens analyzed in total.') }}</div>
                 </div>
                 <div class="hidden-default font-italic" id="tokens-fail">
-                    <div class="alert alert-danger">Operation failed! Contact the administrator with the corpus you tried to lemmatize to investigate the issue.</div>
+                    <div class="alert alert-danger">{{ _('Operation failed! Contact the administrator with the corpus you tried to lemmatize to investigate the issue.') }}</div>
                 </div>
             </div>
         </div>
@@ -95,36 +95,36 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
         <div class="form-group row">
             <div class="col-md-3">
                 <label for="tokenize" id="tokenize-label" class="form-text text-muted">
-                    Tokenize (beta)
+                    {{ _('Tokenize (beta)') }}
                 </label>
-                <small class="form-text text-muted">If your text is not tokenized and you don't need to pre-lemmatize it, you can use this function</small>
+                <small class="form-text text-muted">{{ _('If your text is not tokenized and you do not need to pre-lemmatize it, you can use this function') }}</small>
             </div>
             <div class="col-md-6">
               <div class="form-check">
                 <input type="checkbox" class="form-check-input" id="hyphens-remove">
-                <label class="form-check-label" for="hyphens-remove">Remove hyphens (Be careful with this function)</label>
+                <label class="form-check-label" for="hyphens-remove">{{ _('Remove hyphens (Be careful with this function)') }}</label>
               </div>
               <div class="form-check">
                 <input type="checkbox" class="form-check-input" id="punct-keep" checked="true">
-                <label class="form-check-label" for="punct-keep">Keep punctuation</label>
+                <label class="form-check-label" for="punct-keep">{{ _('Keep punctuation') }}</label>
               </div>
             </div>
             <div class="col-md-3 text-right">
-                    <button id="tokenize" class="btn btn-outline-secondary" type="button">Tokenize</button>
+                    <button id="tokenize" class="btn btn-outline-secondary" type="button">{{ _('Tokenize') }}</button>
             </div>
         </div>
     </fieldset>
     <fieldset class="form-fieldset">
-        <legend>Control Lists</legend>
+        <legend>{{ _('Control Lists') }}</legend>
         <div class="row">
             <div class="col-md-3">
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" id="checkbox_reuse" type="radio" name="control_list" value="reuse" checked/>
-                    <label class="form-check-label hide-toggle" data-toggle="#use_public" for="checkbox_reuse" id="label_checkbox_reuse">Use an existing control list</label>
+                    <label class="form-check-label hide-toggle" data-toggle="#use_public" for="checkbox_reuse" id="label_checkbox_reuse">{{ _('Use an existing control list') }}</label>
                 </div>
 
-                <p class="small text-muted">By using shared control lists, you ensure that you stick to accepted values in
-                    the academic community. You will be able to propose new values to the administrators of control lists.
+                <p class="small text-muted">{{ _('By using shared control lists, you ensure that you stick to accepted values in
+                    the academic community. You will be able to propose new values to the administrators of control lists.') }}
                 </p>
             </div>
             <div class="col-md-9" id="use_public">
@@ -145,57 +145,57 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
             <div class="col-md-3">
                 <div class="form-check form-check-inline">
                     <input class="form-check-input" id="checkbox_create" type="radio" name="control_list" value="create"/>
-                    <label class="form-check-label hide-toggle" data-toggle="#write_your_own" for="checkbox_create" id="label_checkbox_create">Write your own</label>
+                    <label class="form-check-label hide-toggle" data-toggle="#write_your_own" for="checkbox_create" id="label_checkbox_create">{{ _('Write your own') }}</label>
                 </div>
-                <p class="small text-muted">In case the configurations provided do not fit your need, you can create your own configuration.
+                <p class="small text-muted">{{ _('In case the configurations provided do not fit your need, you can create your own configuration.
                     You will be able to share it with collaborators, propose it as a canon setting for the whole base of users.
-                    You can also later add bibliographic information about your settings.
+                    You can also later add bibliographic information about your settings.') }}
                 </p>
             </div>
             <div class="col-md-9" id="write_your_own" style="display: none;">
                 <div class="form-group row">
-                    <div  class="col-md-3"><label for="config" class="form-text text-muted">Load a configuration</label>
-                        <small id="config_loader_help" class="form-text text-muted">This helps kickstarting configuration</small>
+                    <div  class="col-md-3"><label for="config" class="form-text text-muted">{{ _('Load a configuration') }}</label>
+                        <small id="config_loader_help" class="form-text text-muted">{{ _('This helps kickstarting configuration') }}</small>
                    </div>
 
                     <div class="col-md-9">
                         <div class="input-group">
                           <select class="form-control" id="config">
-                            <option value="old_french">Ancien Français</option>
-                            <option value="lasla_la">Latin (LASLA)</option>
+                            <option value="old_french">{{ _('Ancien Français') }}</option>
+                            <option value="lasla_la">{{ _('Latin (LASLA)') }}</option>
                           </select>
                           <div class="input-group-append">
-                            <button id="get-config" class="btn btn-outline-secondary" type="button">Load</button>
+                            <button id="get-config" class="btn btn-outline-secondary" type="button">{{ _('Load') }}</button>
                           </div>
                         </div>
                         <div>
                             <ul>
-                                <li style="display: none;" id="config_loader_lemma">Lemma loaded</li>
-                                <li style="display: none;" id="config_loader_POS">POS loaded</li>
-                                <li style="display: none;" id="config_loader_morph">Morphology loaded</li>
+                                <li style="display: none;" id="config_loader_lemma">{{ _('Lemma loaded') }}</li>
+                                <li style="display: none;" id="config_loader_POS">{{ _('POS loaded') }}</li>
+                                <li style="display: none;" id="config_loader_morph">{{ _('Morphology loaded') }}</li>
                             </ul>
                         </div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="allowed_lemma">Allowed lemma</label>
-                    <small id="allowed_lemma_help" class="form-text text-muted">This should be formatted as a list of lemma separated by new line</small>
+                    <label for="allowed_lemma">{{ _('Allowed lemma') }}</label>
+                    <small id="allowed_lemma_help" class="form-text text-muted">{{ _('This should be formatted as a list of lemma separated by new line') }}</small>
                     <textarea aria-describedby="allowed_lemma_help" class="form-control" id="allowed_lemma" name="allowed_lemma">{% if allowed_lemma %}{{allowed_lemma}}{%endif%}</textarea>
                 </div>
                 <div class="form-group">
-                    <label for="allowed_POS">Allowed POS</label>
-                    <small id="allowed_POS_help" class="form-text text-muted">This should be formatted as a list of POS separated by comma <b>and no space</b></small>
+                    <label for="allowed_POS">{{ _('Allowed POS') }}</label>
+                    <small id="allowed_POS_help" class="form-text text-muted">{{ _('This should be formatted as a list of POS separated by comma') }} <b> {{ _('and no space') }}</b></small>
                     <textarea aria-describedby="allowed_POS_help" class="form-control" id="allowed_POS" name="allowed_POS">{% if allowed_POS %}{{allowed_POS}}{%endif%}</textarea>
                 </div>
                 <div class="form-group">
-                    <label for="allowed_morph">Allowed Morph (as TSV content)</label>
-                    <small id="allowed_morph_help" class="form-text text-muted">The TSV should at least have the header : label and could have a <code>readable</code> column for human</small>
+                    <label for="allowed_morph">{{ _('Allowed Morph (as TSV content)') }}</label>
+                    <small id="allowed_morph_help" class="form-text text-muted">{{ _('The TSV should at least have the header : label and could have a <code>readable</code> column for human') }}</small>
                     <textarea aria-describedby="allowed_morph_help" class="form-control" id="allowed_morph" name="allowed_morph">{% if allowed_morph %}{{allowed_morph}}{%endif%}</textarea>
                 </div>
             </div>
         </div>
     </fieldset>
-    <button type="submit" id="submit" class="btn btn-primary">Submit</button>
+    <button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
 </form>
 <script type="text/javascript">
 

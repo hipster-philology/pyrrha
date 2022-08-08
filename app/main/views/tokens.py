@@ -326,10 +326,11 @@ def tokens_search_through_fields(corpus_id):
         "pos": func.lower(WordToken.POS),
         "form": func.lower(WordToken.form),
         "morph": func.lower(WordToken.morph),
-    }
+     }
     if order_by_key not in order_by:
         order_by_key = "order_id"
     order_by = order_by.get(order_by_key)
+
     args = []
 
     if len(value_filters) > 1:

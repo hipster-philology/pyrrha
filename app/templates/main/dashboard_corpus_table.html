@@ -2,16 +2,16 @@
 {% import 'macros/dashboard_macros.html' as dashboard %}
 
 {% block content %}
-    <h1>Management of corpora</h1>
+    <h1>{{ _('Management of corpora') }}</h1>
     <div class="container">
         <table class="table table-hover sortable">
             <thead>
                 <tr>
-                    <th scope="col">Links</th>
+                    <th scope="col">{{ _('Links') }}</th>
                     <th scope="col">#</th>
-                    <th scope="col">Corpus name</th>
-                    <th scope="col">Last modified</th>
-                    <th scope="col">Users</th>
+                    <th scope="col">{{ _('Corpus name') }}</th>
+                    <th scope="col">{{ _('Last modified') }}</th>
+                    <th scope="col">{{ _('Users') }}</th>
                 </tr>
             </thead>
             <tbody>
