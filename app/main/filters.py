@@ -34,5 +34,5 @@ def get_token_uri(token: WordToken):
         "main.tokens_correct",
         corpus_id=token.corpus,
         page=page,
-        per_page=per_page
+        limit=per_page
     ) + f"#tok{token.order_id}"
