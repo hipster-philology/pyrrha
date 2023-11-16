@@ -291,11 +291,14 @@ def make_cli():
 
     @cli.command("db-upgrade", help="Do small migrations")
     @click.argument("migration_name",
-              type=click.Choice(['controllist-markdown', 'add-columns'], case_sensitive=False))
+              type=click.Choice(['controllist-markdown', 'add-columns', "user-language"], case_sensitive=False))
     def db_add_table(migration_name):
         columns = {
             "controllist-markdown": [
                 ("control_lists", (db.Column("notes", db.Text),))
+            ],
+            "user-language": [
+                ("users", (db.Column("locale", db.String(10), default="en", nullable=True),))
             ]
         }
 
@@ -363,5 +366,36 @@ def make_cli():
     cli.add_command(corpus_import)
     cli.add_command(corpus_dump)
     cli.add_command(corpus_list)
+
+    @cli.group()
+    def translate():
+        """Translation and localization commands."""
+        pass
+
+    @translate.command()
+    def update():
+        """Update all languages."""
+        if os.system('pybabel extract -F babel.cfg -k _l -o messages.pot .'):
+            raise RuntimeError('extract command failed')
+        if os.system('pybabel update -i messages.pot -d translations'):
+            raise RuntimeError('update command failed')
+        os.remove('messages.pot')
+
+    @translate.command()
+    def compile():
+        """Compile all languages."""
+        if os.system('pybabel compile -d translations'):
+            raise RuntimeError('compile command failed')
+
+    @translate.command()
+    @click.argument('lang')
+    def init(lang):
+        """Initialize a new language."""
+        if os.system('pybabel extract -F babel.cfg -k _l -o messages.pot .'):
+            raise RuntimeError('extract command failed')
+        if os.system(
+                'pybabel init -i messages.pot -d translations -l ' + lang):
+            raise RuntimeError('init command failed')
+        os.remove('messages.pot')
 
     return cli

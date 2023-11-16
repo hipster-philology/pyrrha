@@ -4,14 +4,14 @@
 {% block content %}
 
 <form method="POST" action="{{ url_for('.tokens_add_row', token_id=token.id, corpus_id=corpus.id)}}" class="form col-md-9">
-    <h1>Corpus {{corpus.name}} - Add a token</h1>
-    <p>This page allows you to add a token after the following one</p>
+    <h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('Add a token') }}</h1>
+    <p>{{ _('This page allows you to add a token after the following one') }}</p>
     <table class="table table-bordered">
         <thead>
             <tr>
-                <th>Token ID</th>
-                <th>Form</th>
-                <th>Context</th>
+                <th>{{ _('Token ID') }}</th>
+                <th>{{ _('Form') }}</th>
+                <th>{{ _('Context') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -24,16 +24,16 @@
     </table>
     <div class="input-group mb-3">
       <div class="input-group-prepend">
-        <span class="input-group-text" id="basic-addon1">Form of the new token to insert</span>
+        <span class="input-group-text" id="basic-addon1">{{ _('Form of the new token to insert') }}</span>
       </div>
       <input type="text" name="form"  value="" class="form-control" placeholder="Token form value" required
              aria-label="New form value" aria-describedby="basic-addon1">
     </div>
 
     <p>
-        <button class="btn btn-danger" type="submit"><i class="fa fa-save"></i> Record</button>
+        <button class="btn btn-danger" type="submit"><i class="fa fa-save"></i> {{ _('Record') }}</button>
         &nbsp;
-        <a class="btn btn-secondary" href="{{go_back}}" id="go_back"><i class="fa fa-undo"></i> Go back to correcting annotations</a>
+        <a class="btn btn-secondary" href="{{go_back}}" id="go_back"><i class="fa fa-undo"></i> {{ _('Go back to correcting annotations') }}</a>
     </p>
 </form>
 {% endblock %}
