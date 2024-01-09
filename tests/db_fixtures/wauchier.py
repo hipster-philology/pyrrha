@@ -1,10 +1,12 @@
 from app.models import Corpus, WordToken, AllowedLemma, AllowedPOS, AllowedMorph, Column
 from app.models import ControlLists, ControlListsUser
 
+
+WCL = ControlLists(id=1, name="Wauchier")
 Wauchier = Corpus(
     name="Wauchier",
     id=1,
-    control_lists_id=1
+    control_lists_id=WCL.id
 )
 WauchierColumns = [
     Column(heading="Lemma", corpus_id=1),
@@ -12,7 +14,6 @@ WauchierColumns = [
     Column(heading="Morph", corpus_id=1),
     Column(heading="Similar", corpus_id=1),
 ]
-WCL = ControlLists(id=1, name="Wauchier")
 WauchierTokens = [
     WordToken(corpus=Wauchier.id, form="De", lemma="de", POS="PRE", left_context="", right_context="seint Martin mout", label_uniform="de", morph="None"),
     WordToken(corpus=Wauchier.id, form="seint", lemma="saint", POS="ADJqua", left_context="De", right_context="Martin mout doit", label_uniform="saint", morph="None"),

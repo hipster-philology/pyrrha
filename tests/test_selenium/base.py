@@ -13,6 +13,7 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sqlalchemy_utils import database_exists, create_database
 
 from app import db, create_app
 from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists, Favorite, Column
@@ -198,6 +199,8 @@ class TestBase(LiveServerTestCase):
 
     def setUp(self):
         """Setup the test driver and create test users"""
+        if not database_exists(db.engine.url):
+            create_database(db.engine.url)
         db.session.commit()
         db.drop_all()
         db.create_all()
@@ -257,6 +260,10 @@ elit
                     self._process.terminate()
 
     def tearDown(self):
+        # https://stackoverflow.com/questions/66876181/how-do-i-close-a-flask-sqlalchemy-connection-that-i-used-in-a-thread/67077811#67077811
+        if self.db.engine.dialect.name == "postgresql":
+            db.session.close()
+            db.get_engine(self.app).dispose()
         self.driver.quit()
 
     def add_n_corpora(self, n_corpus: int, **kwargs):
@@ -299,6 +306,24 @@ elit
 
     def addCorpus(self, corpus, *args, **kwargs):
         corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
+        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
+        if self.db.engine.dialect.name == "postgresql":
+            self.db.session.execute(
+                """SELECT setval(
+                pg_get_serial_sequence('control_lists', 'id'),
+                coalesce(max(id)+1, 1),
+                false
+                ) FROM control_lists;
+                """
+            )
+            self.db.session.execute(
+                """SELECT setval(
+                pg_get_serial_sequence('corpus', 'id'),
+                coalesce(max(id)+1, 1),
+                false
+                ) FROM corpus;
+                """
+            )
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         self.driver.get(self.get_server_url())
@@ -315,6 +340,16 @@ elit
 
     def addControlLists(self, cl_name, *args, **kwargs):
         cl = add_control_lists(cl_name, db, *args, **kwargs)
+        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
+        if self.db.engine.dialect.name == "postgresql":
+            self.db.session.execute(
+                """SELECT setval(
+                pg_get_serial_sequence('control_lists', 'id'),
+                coalesce(max(id)+1, 1),
+                false
+                ) FROM control_lists;
+                """
+            )
         self.driver.get(self.get_server_url())
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addControlListsUser(cl.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))

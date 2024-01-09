@@ -74,7 +74,7 @@ class Corpus(db.Model):
     :type name: str
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(64), unique=True)
+    name = db.Column(db.String(256), unique=True)
     context_left = db.Column(db.SmallInteger, default=3)
     context_right = db.Column(db.SmallInteger, default=3)
     control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
@@ -132,14 +132,19 @@ class Corpus(db.Model):
         return True
 
     def changes_per_day(self):
+        if db.engine.dialect.name == "postgresql":
+            created_on = db.func.to_char(ChangeRecord.created_on, "yyyy-mm-dd")
+        elif db.engine.dialect.name == "sqlite":
+            created_on = db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
         return list([
             tuple(elem)
             for elem in db.session.query(
-                    db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                    db.func.count(ChangeRecord.id),
+                    created_on
                 ).filter(
                     ChangeRecord.corpus == self.id
                 ).group_by(
-                    db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                    created_on
                 ).all()
         ])
 
@@ -620,11 +625,11 @@ class WordToken(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete='CASCADE'))
     order_id = db.Column(db.Integer)  # Id in the corpus
-    form = db.Column(db.String(64))
-    lemma = db.Column(db.String(64))
-    label_uniform = db.Column(db.String(64))
-    POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64))
+    form = db.Column(db.String(128))
+    lemma = db.Column(db.String(128))
+    label_uniform = db.Column(db.String(128))
+    POS = db.Column(db.String(128))
+    morph = db.Column(db.String(128))
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
@@ -956,7 +961,7 @@ class WordToken(db.Model):
                 )
             )
         if group_by is True:
-            return query.group_by(retrieve_fields[0])
+            return query.group_by(*retrieve_fields)
         return query
 
     @staticmethod
@@ -1085,7 +1090,7 @@ class WordToken(db.Model):
                 order_id=i+1  # Asked by JB Camps...
             )
             for k in ("form",):
-                validate_length(k, wt[k], {"form": 64})
+                validate_length(k, wt[k], {"form": 128})
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
@@ -1357,8 +1362,8 @@ class CorpusCustomDictionary(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'), nullable=False)
-    label = db.Column(db.String(64), nullable=False)
-    secondary_label = db.Column(db.String(64))
+    label = db.Column(db.String(128), nullable=False)
+    secondary_label = db.Column(db.String(128))
     category = db.Column(db.String(10), nullable=False)
 
     search_index = db.Index("ccd-search", "corpus", "label", "secondary_label", "category")
@@ -1449,6 +1454,8 @@ class CorpusCustomDictionary(db.Model):
                     )
                 )
         if group_by is True:
+            if db.engine.dialect.name == "postgresql":
+                return query.group_by(*retrieve_fields)
             return query.group_by(retrieve_fields[0])
 
         return query
@@ -1460,13 +1467,13 @@ class ChangeRecord(db.Model):
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
     word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    form = db.Column(db.String(64))
-    lemma = db.Column(db.String(64))
-    POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64), nullable=True)
-    lemma_new = db.Column(db.String(64))
-    POS_new = db.Column(db.String(64))
-    morph_new = db.Column(db.String(64))
+    form = db.Column(db.String(128))
+    lemma = db.Column(db.String(128))
+    POS = db.Column(db.String(128))
+    morph = db.Column(db.String(128), nullable=True)
+    lemma_new = db.Column(db.String(128))
+    POS_new = db.Column(db.String(128))
+    morph_new = db.Column(db.String(128))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     word_token = db.relationship('WordToken', lazy='select', viewonly=True)
     user = db.relationship(User, lazy='select', viewonly=True)

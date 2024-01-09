@@ -195,7 +195,6 @@ class User(UserMixin, db.Model):
         :return:
         """
         default_user = User(
-            id=1,
             first_name="admin",
             last_name="admin",
             email="ppa-admin@ppa.fr",

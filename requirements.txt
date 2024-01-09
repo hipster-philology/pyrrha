@@ -2,10 +2,12 @@
 Flask==2.1.2
 Jinja2==3.1.2
 Werkzeug==2.1.2
+psycopg2-binary==2.9.3
 
 # DB
 Flask-SQLAlchemy==2.5.1
 SQLAlchemy==1.4.36
+sqlalchemy-utils==0.38.2
 
 # Forms
 Flask-WTF==1.0.1

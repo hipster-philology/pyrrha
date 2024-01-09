@@ -6,9 +6,24 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: [3.8]
-
+        test_dbms: [postgresql, sqlite]
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: pyrrha
+          POSTGRES_PASSWORD: pyrrha
+          POSTGRES_DB: data-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -28,6 +43,10 @@ jobs:
 #        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
 #        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
 #        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    - name: Set up TEST_DATABASE_URL
+      run: |
+        echo "TEST_DATABASE_URL=postgresql://pyrrha:pyrrha@localhost:5432/data-test" >> $GITHUB_ENV
+      if: matrix.test_dbms == 'postgresql'
     - name: Test with nose
       run: |
         nosetests ./tests --with-coverage --cover-package=app --cover-xml --verbose

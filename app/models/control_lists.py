@@ -294,8 +294,8 @@ class AllowedLemma(db.Model):
     :param corpus: ID of the corpus this AllowedLemma is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64), nullable=False)
-    label_uniform = db.Column(db.String(64))
+    label = db.Column(db.String(128), nullable=False)
+    label_uniform = db.Column(db.String(128))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
     __table_args__ = (
@@ -354,7 +354,7 @@ class AllowedPOS(db.Model):
     :param corpus: ID of the corpus this AllowedPOS is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(128))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
     @staticmethod
@@ -402,7 +402,7 @@ class AllowedMorph(db.Model):
     :param control_list: ID of the ControlLists this AllowedMorph is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(128))
     readable = db.Column(db.String(256))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
