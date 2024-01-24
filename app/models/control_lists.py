@@ -51,7 +51,7 @@ class ControlLists(db.Model):
 
     users = association_proxy('control_lists_user', 'user')
 
-    sort_logic = case(_PublicationStatusOrder, value=public).label("priority")
+    _sort_logic = case(_PublicationStatusOrder, value=public).label("priority")
 
     @property
     def str_public(self):
@@ -132,7 +132,7 @@ class ControlLists(db.Model):
                 ControlLists.public == PublicationStatus.public,
                 ControlListsUser.user_id == user.id
             )
-        ).order_by(ControlLists.sort_logic, ControlLists.name).all()
+        ).order_by(ControlLists._sort_logic, ControlLists.name).all()
 
     def get_allowed_values(self, allowed_type="lemma", order_by="label", kw=None):
         """ List values that are allowed (without label) or checks that given label is part
