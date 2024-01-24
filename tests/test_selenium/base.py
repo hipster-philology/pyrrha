@@ -57,7 +57,7 @@ class _AuthenticatedUser(flask_login.UserMixin):
 
     def __getattr__(self, item):
         if not self._user:
-            self._user = User.query.get(1)
+            self._user = db.session.get(User, 1)
         return getattr(self._user, item)
 
 

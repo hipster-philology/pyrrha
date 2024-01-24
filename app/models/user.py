@@ -221,5 +221,5 @@ login_manager.anonymous_user = AnonymousUser
 @login_manager.user_loader
 def load_user(user_id):
     db.session.rollback()
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 

@@ -261,7 +261,7 @@ def make_cli():
         with app.app_context():
             if not os.path.exists(path):
                 os.makedirs(path)
-            corpus = Corpus.query.get(corpus)
+            corpus = db.session.get(Corpus, corpus)
 
             # Check that the corpus exists
             if not corpus:

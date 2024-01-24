@@ -320,7 +320,7 @@ class TestCorpusScript(TestCase):
 
                 if context:
                     self.assertEqual(
-                        WordToken.query.get(context[0]).context, context[1],
+                        db.session.get(WordToken, context[0]).context, context[1],
                         "Context should be right"
                     )
 

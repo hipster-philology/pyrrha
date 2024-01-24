@@ -256,7 +256,7 @@ def join_from_invite(user_id, token):
         flash('You are already logged in.', 'error')
         return redirect(url_for('main.index'))
 
-    new_user = User.query.get(user_id)
+    new_user = db.session.get(User, user_id)
     if new_user is None:
         return redirect(404)
 
