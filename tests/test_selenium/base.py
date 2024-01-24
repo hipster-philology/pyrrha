@@ -19,6 +19,7 @@ from app import db, create_app
 from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists, Favorite, Column
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
+from sqlalchemy.sql import text
 
 LIVESERVER_TIMEOUT = 1
 
@@ -261,7 +262,7 @@ elit
         # https://stackoverflow.com/questions/66876181/how-do-i-close-a-flask-sqlalchemy-connection-that-i-used-in-a-thread/67077811#67077811
         if self.db.engine.dialect.name == "postgresql":
             db.session.close()
-            db.get_engine(self.app).dispose()
+            db.engine.dispose()
         self.driver.quit()
 
     def add_n_corpora(self, n_corpus: int, **kwargs):
@@ -307,20 +308,12 @@ elit
         # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
         if self.db.engine.dialect.name == "postgresql":
             self.db.session.execute(
-                """SELECT setval(
-                pg_get_serial_sequence('control_lists', 'id'),
-                coalesce(max(id)+1, 1),
-                false
-                ) FROM control_lists;
-                """
-            )
-            self.db.session.execute(
-                """SELECT setval(
+                text("""SELECT setval(
                 pg_get_serial_sequence('corpus', 'id'),
                 coalesce(max(id)+1, 1),
                 false
                 ) FROM corpus;
-                """
+                """)
             )
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
@@ -341,12 +334,12 @@ elit
         # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
         if self.db.engine.dialect.name == "postgresql":
             self.db.session.execute(
-                """SELECT setval(
+                text("""SELECT setval(
                 pg_get_serial_sequence('control_lists', 'id'),
                 coalesce(max(id)+1, 1),
                 false
                 ) FROM control_lists;
-                """
+                """)
             )
         self.driver.get(self.get_server_url())
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
