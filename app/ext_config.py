@@ -1,9 +1,7 @@
-from . import babel
 from flask import request, session
 from flask_login import current_user
 
 
-@babel.localeselector
 def get_locale():
     # if a user is logged in, use the locale from the user settings
     fb_lg = session.get("locale")

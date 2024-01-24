@@ -2,7 +2,8 @@ from flask import request, jsonify, url_for, abort, render_template, current_app
     stream_with_context
 from flask_login import current_user, login_required
 from slugify import slugify
-from sqlalchemy.sql.elements import or_, and_, not_
+from sqlalchemy.sql.elements import or_, and_
+from sqlalchemy.sql.expression import not_
 from sqlalchemy import func
 import math
 from csv import DictWriter

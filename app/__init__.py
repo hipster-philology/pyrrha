@@ -9,6 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flaskext.markdown import Markdown
 from flask_babel import Babel
+from .ext_config import get_locale
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -49,7 +50,7 @@ def create_app(config_name="dev"):
     #csrf.init_app(app)
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
-    babel.init_app(app)
+    babel.init_app(app, locale_selector=get_locale)
 
     # Register Jinja template functions
     from .main import main as main_blueprint
@@ -66,8 +67,6 @@ def create_app(config_name="dev"):
 
     from .control_lists import control_lists_bp
     app.register_blueprint(control_lists_bp)
-
-    from .ext_config import get_locale
 
     return app
 

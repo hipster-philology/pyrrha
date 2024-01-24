@@ -51,7 +51,7 @@ class ControlLists(db.Model):
 
     users = association_proxy('control_lists_user', 'user')
 
-    sort_logic = case(value=public, whens=_PublicationStatusOrder).label("priority")
+    sort_logic = case(_PublicationStatusOrder, value=public).label("priority")
 
     @property
     def str_public(self):

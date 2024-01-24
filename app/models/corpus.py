@@ -132,9 +132,9 @@ class Corpus(db.Model):
         return True
 
     def changes_per_day(self):
-        if db.engine.dialect.name == "postgresql":
+        if db.session.get_bind().dialect.name == "postgresql":
             created_on = db.func.to_char(ChangeRecord.created_on, "yyyy-mm-dd")
-        elif db.engine.dialect.name == "sqlite":
+        elif db.session.get_bind().dialect.name == "sqlite":
             created_on = db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
         return list([
             tuple(elem)
@@ -367,7 +367,7 @@ class Corpus(db.Model):
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
 
     def changed(self, tokens):
-        if db.session.bind.dialect.name != "postgresql":
+        if db.session.get_bind().dialect.name != "postgresql":
             data = db.session.query(ChangeRecord.word_token_id).group_by(ChangeRecord.word_token_id).filter(
                 ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
             ).all()
@@ -1454,7 +1454,7 @@ class CorpusCustomDictionary(db.Model):
                     )
                 )
         if group_by is True:
-            if db.engine.dialect.name == "postgresql":
+            if db.session.get_bind().dialect.name == "postgresql":
                 return query.group_by(*retrieve_fields)
             return query.group_by(retrieve_fields[0])
 
