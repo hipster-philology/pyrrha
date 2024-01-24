@@ -431,6 +431,8 @@ class TestCorpusRegistration(TestBase):
 
         self.driver_find_element_by_id("submit").click()
 
+        self.driver.implicitly_wait(5)
+
         self.assertEqual(
             sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
             sorted([

@@ -111,7 +111,7 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
 
     def test_search_with_like_operator(self):
         # search with wildcard escaped
-        rows = self.search(form="Testword\*")
+        rows = self.search(form="Testword\\*")
         self.assertEqual(rows, [{'form': 'Testword*', 'lemma': 'testword*', 'morph': 'test*morph', 'pos': 'TEST*pos'}])
 
         # search with wildcard as a suffix
@@ -133,7 +133,7 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
 
     def test_search_with_negation_operator(self):
         # search with negation operator escaped
-        rows = self.search(form="\!TestwordFake")
+        rows = self.search(form="\\!TestwordFake")
         self.assertEqual(rows, [{
             'form': '!TestwordFake', 'lemma': '!testwordFake', 'morph': '!testmorphFake', 'pos': '!TESTposFake'
         }])
