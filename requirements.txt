@@ -1,7 +1,7 @@
 # Main components
 Flask==2.1.2
 Jinja2==3.1.2
-Werkzeug==2.2.3
+Werkzeug==2.3.8
 
 # DB
 Flask-SQLAlchemy==2.5.1
