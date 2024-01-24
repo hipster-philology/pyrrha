@@ -1,5 +1,5 @@
 # Main components
-Flask==2.1.2
+Flask==2.2.5
 Jinja2==3.1.2
 Werkzeug==2.2.3
 
