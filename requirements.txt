@@ -1,19 +1,19 @@
 # Main components
-Flask==2.1.2
-Jinja2==3.1.2
-Werkzeug==2.2.3
+Flask<3.0.0
+Jinja2
+Werkzeug
 
 # DB
 Flask-SQLAlchemy==2.5.1
 SQLAlchemy==1.4.36
 
 # Forms
-Flask-WTF==1.0.1
+Flask-WTF==1.2.1
 WTForms==3.0.1
 WTForms-SQLAlchemy~=0.3
 
 # Extensions
-Flask-Login==0.6.0
+Flask-Login==0.6.3
 Flask-Mail==0.9.1
 email_validator<2.0.0
 Flask-Compress==1.12
