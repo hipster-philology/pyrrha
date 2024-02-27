@@ -184,6 +184,8 @@ class TestBase(LiveServerTestCase):
     def create_driver(self, options=None):
         if not options:
             options = Options()
+        # Ajout option remote suite à erreur DevToolsactive port file doesn't exist
+        options.add_argument("--remote-debugging-port=9222")
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
 
