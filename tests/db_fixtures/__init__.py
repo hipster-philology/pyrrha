@@ -117,8 +117,6 @@ def add_corpus(
             with_allowed_morph=with_allowed_morph,
             partial_allowed_morph=partial_allowed_morph
         )
-    else:
-        print("Pas de CL")
     corpus_object = copy.deepcopy(DB_CORPORA[corpus]["corpus"])
     DELIMITER = "____"
 
