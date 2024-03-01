@@ -412,8 +412,8 @@ class TestCorpusRegistration(TestBase):
 
     def test_registration_with_an_existing_name(self):
         """ [Corpus Creation] Check that a corpus using this name does not already exist"""
-        self.addCorpus("wauchier")
         self.add_control_lists()
+        self.addCorpus('wauchier', cl=False)
         # Click register menu link
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
@@ -434,9 +434,7 @@ class TestCorpusRegistration(TestBase):
         self.driver.implicitly_wait(5)
         self.assertEqual(
             sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
-            sorted([
-                'The corpus cannot be registered. Check your data'
-            ]),
+            sorted(['The corpus cannot be registered. Check your data']),
             "Creating a corpus when one already exists for the current user with the same name fails."
         )
 

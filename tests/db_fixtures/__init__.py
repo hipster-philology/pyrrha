@@ -87,7 +87,7 @@ def add_control_lists(
 
 
 def add_corpus(
-        corpus, db, with_token=True, tokens_up_to=None,
+        corpus, db, cl=True, with_token=True, tokens_up_to=None,
         with_allowed_lemma=False, partial_allowed_lemma=False,
         with_allowed_pos=False, partial_allowed_pos=False,
         with_allowed_morph=False, partial_allowed_morph=False,
@@ -107,15 +107,18 @@ def add_corpus(
     :param partial_allowed_morph: Restrict to first few Morphs
     :param with_delimiter: Add delimiters to the corpus
     """
-    add_control_lists(
-        corpus, db,
-        with_allowed_lemma=with_allowed_lemma,
-        partial_allowed_lemma=partial_allowed_lemma,
-        with_allowed_pos=with_allowed_pos,
-        partial_allowed_pos=partial_allowed_pos,
-        with_allowed_morph=with_allowed_morph,
-        partial_allowed_morph=partial_allowed_morph
-    )
+    if cl:
+        add_control_lists(
+            corpus, db,
+            with_allowed_lemma=with_allowed_lemma,
+            partial_allowed_lemma=partial_allowed_lemma,
+            with_allowed_pos=with_allowed_pos,
+            partial_allowed_pos=partial_allowed_pos,
+            with_allowed_morph=with_allowed_morph,
+            partial_allowed_morph=partial_allowed_morph
+        )
+    else:
+        print("Pas de CL")
     corpus_object = copy.deepcopy(DB_CORPORA[corpus]["corpus"])
     DELIMITER = "____"
 

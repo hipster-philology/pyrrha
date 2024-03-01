@@ -21,6 +21,8 @@ from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 from sqlalchemy.sql import text
 
+from tests.fixtures.wauchier import FULL_CORPUS_LEMMA_ALLOWED
+
 LIVESERVER_TIMEOUT = 1
 
 
@@ -295,19 +297,18 @@ elit
         :returns: temporary example file
         :rtype: NamedTemporaryFile
         """
-        fp = tempfile.NamedTemporaryFile("w", delete=False)
-        csv.writer(fp, delimiter="\t").writerows(
-            (
-                ("form", "lemma", "POS", "morph"),
-                ("SOIGNORS", "seignor", "NOMcom", "NOMB.=p|GENRE=m|CAS=n")
-            )
-        )
-        fp.close()
+        # le fichier temp n'était pas lu, il est déplacé dans le dossier de travail
+        with open('/home/jjanes/Documents/pyrrha/test.csv', "wt") as fp:
+            fp_writer = csv.writer(fp, delimiter=",")
+            fp_writer.writerow(['form', 'lemma', 'POS', 'morph'])
+            fp_writer.writerow(['SOIGNORS', 'seignor', 'NOMcom', 'NOMB.=p|GENRE=m|CAS=n'])
         return fp
 
-    def addCorpus(self, corpus, *args, **kwargs):
-        corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
-        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
+
+
+
+    def addCorpus(self, corpus, cl=True, *args, **kwargs):
+        corpus = add_corpus(corpus.lower(), db, cl, *args, **kwargs)
         if self.db.engine.dialect.name == "postgresql":
             self.db.session.execute(
                 text("""SELECT setval(
@@ -317,6 +318,9 @@ elit
                 ) FROM corpus;
                 """)
             )
+
+        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
+
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         self.driver.get(self.get_server_url())
@@ -510,7 +514,7 @@ class TokenCorrectBase(TestBase):
         )
 
         return (
-            self.db.session.query(WordToken).get(int(id_row)),
+            self.db.session.get(WordToken, int(id_row)),
             self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
@@ -584,7 +588,7 @@ class TokenCorrectBase(TestBase):
         )
 
         return (
-            self.db.session.query(WordToken).get(int(id_row)),
+            self.db.session.get(WordToken, int(id_row)),
             self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
