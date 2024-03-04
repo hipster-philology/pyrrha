@@ -432,9 +432,11 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("submit").click()
 
         self.driver.implicitly_wait(5)
+        # fonctionne que avec The corpus cannot be registered. Check your data....
         self.assertEqual(
             sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
-            sorted(['The corpus cannot be registered. Check your data']),
+            sorted(['The corpus cannot be registered. Check your data',
+                "You have already a corpus going by the name Wauchier"]),
             "Creating a corpus when one already exists for the current user with the same name fails."
         )
 

@@ -216,17 +216,17 @@ class TestBase(LiveServerTestCase):
         self.create_driver()
         self.driver.get(self.get_server_url())
 
-    LOREM_IPSUM = """form	lemma	POS	morph
-Lorem			
-ipsum			
-dolor			
-sit			
-amet			
-,			
-consectetur			
-adipiscing			
-elit			
-.			"""
+    LOREM_IPSUM = """tokens	lemmas	pos
+Lorem
+ipsum           
+dolor           
+sit         
+amet            
+,           
+consectetur         
+adipiscing          
+elit            
+.           """
 
     def wait_until_shown(self, selector):
         WebDriverWait(self.driver, 5).until(
@@ -298,7 +298,7 @@ elit
         :rtype: NamedTemporaryFile
         """
         # le fichier temp n'était pas lu, il est déplacé dans le dossier de travail
-        with open('/home/jjanes/Documents/pyrrha/test.csv', "wt") as fp:
+        with open(os.getcwd()+'/test.csv', "wt") as fp:
             fp_writer = csv.writer(fp, delimiter=",")
             fp_writer.writerow(['form', 'lemma', 'POS', 'morph'])
             fp_writer.writerow(['SOIGNORS', 'seignor', 'NOMcom', 'NOMB.=p|GENRE=m|CAS=n'])
