@@ -4,6 +4,7 @@ from . import priapees
 import copy
 import unidecode
 from app.models.corpus import WordToken
+from sqlalchemy.sql import text
 
 
 DB_CORPORA = {
@@ -55,9 +56,19 @@ def add_control_lists(
     :param with_allowed_morph: Add allowed Morph to db
     :param partial_allowed_morph: Restrict to first few Morphs
     """
+
     cl = copy.deepcopy(DB_CORPORA[corpus]["control_list"])
     db.session.add(cl)
     db.session.commit()
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(
+            text("""SELECT setval(
+            pg_get_serial_sequence('control_lists', 'id'),
+            coalesce(max(id)+1, 1),
+            false
+            ) FROM control_lists;
+            """)
+        )
     add = []
 
     if with_allowed_lemma is True:
