@@ -59,9 +59,9 @@ def create_app(config_name="dev"):
             psql_locale = lc_messages_query.fetchone()[0]
             if psql_locale != "en_US.UTF-8":
                 # ToDo: add an option in config.py to check something such as app.config["FORCE_PSQL_EN_LOCALE"] (with default on True)
-                warnings.warn("Your postgresql instance language is not english. Switching to English.")
-                db.session.execute(text("SET lc_messages TO 'en_US.UTF-8';"))
-                db.session.commit()
+                raise Exception(f"Your postgresql instance language is {psql_locale}. Switching it to 'en_US.UTF-8'.")
+                # db.session.execute(text("SET lc_messages TO 'en_US.UTF-8';"))
+                # db.session.commit()
     # Register Jinja template functions
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
