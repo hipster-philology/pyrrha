@@ -216,17 +216,17 @@ class TestBase(LiveServerTestCase):
         self.create_driver()
         self.driver.get(self.get_server_url())
 
-    LOREM_IPSUM = """tokens	lemmas	pos morph
-Lorem
-ipsum           
-dolor           
-sit         
-amet            
-,           
-consectetur         
-adipiscing          
-elit            
-.           """
+    LOREM_IPSUM = """tokens	lemmas	pos	morph
+Lorem			
+ipsum			
+dolor			
+sit			
+amet			
+,			
+consectetur			
+adipiscing			
+elit			
+.			"""
 
     def wait_until_shown(self, selector):
         WebDriverWait(self.driver, 5).until(
