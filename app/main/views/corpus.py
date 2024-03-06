@@ -121,12 +121,8 @@ def corpus_new():
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 flash(str(e.orig).lower())
-                print(e)
                 if db.session.get_bind().dialect.name == "postgresql":
-                    # L'erreur est en français
                     unique_constraint = 'duplicate key value violates unique constraint "corpus_name_key"'
-                    # unique_constraint = "la valeur d'une clé dupliquée rompt la contrainte unique « corpus_name_key »"
-
                 else:
                     unique_constraint = "UNIQUE constraint failed: corpus.name"
 
