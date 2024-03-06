@@ -60,6 +60,7 @@ def add_control_lists(
     cl = copy.deepcopy(DB_CORPORA[corpus]["control_list"])
     db.session.add(cl)
     db.session.commit()
+    # lorsque l'on force un exemple avec id l'autoincrémentation des id dans postgresql ne fonctionne pas par la suite.
     if db.engine.dialect.name == "postgresql":
         db.session.execute(
             text("""SELECT setval(
@@ -136,6 +137,16 @@ def add_corpus(
 
     db.session.add(corpus_object)
     db.session.flush()
+    # lorsque l'on force un exemple avec id l'autoincrémentation des id dans postgresql ne fonctionne pas par la suite.
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(
+            text("""SELECT setval(
+            pg_get_serial_sequence('corpus', 'id'),
+            coalesce(max(id)+1, 1),
+            false
+            ) FROM corpus;
+            """)
+        )
     if with_columns is True:
         for col in copy.deepcopy(DB_CORPORA[corpus]["columns"]):
             db.session.add(col)
@@ -161,4 +172,6 @@ def add_corpus(
             index += 1
 
     db.session.commit()
+
+
     return corpus_object
