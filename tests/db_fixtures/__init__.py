@@ -60,7 +60,8 @@ def add_control_lists(
     cl = copy.deepcopy(DB_CORPORA[corpus]["control_list"])
     db.session.add(cl)
     db.session.commit()
-    # lorsque l'on force un exemple avec id l'autoincrémentation des id dans postgresql ne fonctionne pas par la suite.
+    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
+    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
     if db.engine.dialect.name == "postgresql":
         db.session.execute(
             text("""SELECT setval(
@@ -137,7 +138,8 @@ def add_corpus(
 
     db.session.add(corpus_object)
     db.session.flush()
-    # lorsque l'on force un exemple avec id l'autoincrémentation des id dans postgresql ne fonctionne pas par la suite.
+    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
+    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
     if db.engine.dialect.name == "postgresql":
         db.session.execute(
             text("""SELECT setval(
