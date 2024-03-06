@@ -297,8 +297,9 @@ elit
         :returns: temporary example file
         :rtype: NamedTemporaryFile
         """
-        # le fichier temp n'était pas lu, il est déplacé dans le dossier de travail
-        with open(os.getcwd()+'/test.csv', "wt") as fp:
+        path = os.path.dirname(os.path.abspath(__file__))
+        file_test = os.path.join(path, "test.csv")
+        with open(file_test, "wt") as fp:
             fp_writer = csv.writer(fp, delimiter=",")
             fp_writer.writerow(['form', 'lemma', 'POS', 'morph'])
             fp_writer.writerow(['SOIGNORS', 'seignor', 'NOMcom', 'NOMB.=p|GENRE=m|CAS=n'])
