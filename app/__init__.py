@@ -53,13 +53,13 @@ def create_app(config_name="dev"):
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
     babel.init_app(app, locale_selector=get_locale)
-    if db.session.get_bind().dialect.name == "postgresql":
+    """if db.session.get_bind().dialect.name == "postgresql":
         lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
         psql_locale = lc_messages_query.fetchone()[0]
         if psql_locale != "en_US.UTF-8":
             warnings.warn("Your postgresql instance language is not english. Switching to English.")
             db.session.execute(text("SET lc_messages TO 'en_US.UTF-8';"))
-            db.session.commit()
+            db.session.commit()"""
     # Register Jinja template functions
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
