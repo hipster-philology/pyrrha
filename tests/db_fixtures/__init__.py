@@ -60,17 +60,6 @@ def add_control_lists(
     cl = copy.deepcopy(DB_CORPORA[corpus]["control_list"])
     db.session.add(cl)
     db.session.commit()
-    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
-    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
-    if db.engine.dialect.name == "postgresql":
-        db.session.execute(
-            text("""SELECT setval(
-            pg_get_serial_sequence('control_lists', 'id'),
-            coalesce(max(id)+1, 1),
-            false
-            ) FROM control_lists;
-            """)
-        )
     add = []
 
     if with_allowed_lemma is True:
@@ -96,6 +85,20 @@ def add_control_lists(
             z.label_uniform = unidecode.unidecode(z.label_uniform)
         db.session.add(z)
     db.session.commit()
+    
+    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
+    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(
+            text("""SELECT setval(
+            pg_get_serial_sequence('control_lists', 'id'),
+            coalesce(max(id)+1, 1),
+            false
+            ) FROM control_lists;
+            """)
+        )
+        db.session.commit()
+        
     return cl
 
 
@@ -138,17 +141,6 @@ def add_corpus(
 
     db.session.add(corpus_object)
     db.session.flush()
-    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
-    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
-    if db.engine.dialect.name == "postgresql":
-        db.session.execute(
-            text("""SELECT setval(
-            pg_get_serial_sequence('corpus', 'id'),
-            coalesce(max(id)+1, 1),
-            false
-            ) FROM corpus;
-            """)
-        )
     if with_columns is True:
         for col in copy.deepcopy(DB_CORPORA[corpus]["columns"]):
             db.session.add(col)
@@ -174,6 +166,18 @@ def add_corpus(
             index += 1
 
     db.session.commit()
-
+    
+    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
+    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(
+            text("""SELECT setval(
+            pg_get_serial_sequence('corpus', 'id'),
+            coalesce(max(id)+1, 1),
+            false
+            ) FROM corpus;
+            """)
+        )
+        db.session.commit()
 
     return corpus_object
