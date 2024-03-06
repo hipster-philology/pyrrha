@@ -216,7 +216,7 @@ class TestBase(LiveServerTestCase):
         self.create_driver()
         self.driver.get(self.get_server_url())
 
-    LOREM_IPSUM = """tokens	lemma	pos	morph
+    LOREM_IPSUM = """form	lemma	POS	morph
 Lorem			
 ipsum			
 dolor			
