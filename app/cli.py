@@ -13,6 +13,7 @@ from .models import (
 )
 from app.utils.forms import create_input_format_convertion
 from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy import text
 
 app = None
 
@@ -87,6 +88,15 @@ def make_cli():
 
             db.session.commit()
             click.echo("Created the database")
+            if db.session.get_bind().dialect.name == "postgresql":
+                lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
+                psql_locale = lc_messages_query.fetchone()[0]
+                if not psql_locale.startswith("en"):
+                    # ToDo: add an option in config.py to check something such as app.config["FORCE_PSQL_EN_LOCALE"] (with default on True)
+                    raise Exception(
+                        f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
+                    # db.session.execute(text("SET lc_messages TO 'en_US';"))
+                    # db.session.commit()
 
     @click.command("db-recreate")
     def db_recreate():

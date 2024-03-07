@@ -78,28 +78,28 @@ class TestCorpusRegistration(TestBase):
             "Result page is the corpus new page"
         )
 
-        with self.app.app_context():
-            self.assertEqual(
-                db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
-                "There should be one well named corpus"
-            )
-            corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
-            tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
-            self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
-        
-            saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "saint"))
-            self.assertEqual(saint.count(), 1, "There should be the saint lemma")
-            saint = saint.first()
-            self.assertEqual(saint.form, "seint", "It should be correctly saved")
-            self.assertEqual(saint.label_uniform, "saint", "It should be correctly saved and unidecoded")
-            self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
-            self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
-        
-            allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
-            self.assertEqual(allowed.count(), 21, "There should be 21 allowed token")
-        
-            # Checking the model
-            self.assertEqual(corpus.get_unallowed("lemma").count(), 0, "There should be no unallowed value")
+
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
+
+        saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "saint"))
+        self.assertEqual(saint.count(), 1, "There should be the saint lemma")
+        saint = saint.first()
+        self.assertEqual(saint.form, "seint", "It should be correctly saved")
+        self.assertEqual(saint.label_uniform, "saint", "It should be correctly saved and unidecoded")
+        self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
+        self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
+
+        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
+        self.assertEqual(allowed.count(), 21, "There should be 21 allowed token")
+
+        # Checking the model
+        self.assertEqual(corpus.get_unallowed("lemma").count(), 0, "There should be no unallowed value")
 
     def test_registration_with_partial_allowed_lemma(self):
         """
@@ -124,32 +124,31 @@ class TestCorpusRegistration(TestBase):
             "Result page is the corpus new page"
         )
 
-        with self.app.app_context():
-            self.assertEqual(
-                db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
-                "There should be one well named corpus"
-            )
-            corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
-            tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
-            self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
-    
-            saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "saint"))
-            self.assertEqual(saint.count(), 1, "There should be the saint lemma")
-            saint = saint.first()
-            self.assertEqual(saint.form, "seint", "It should be correctly saved")
-            self.assertEqual(saint.label_uniform, "saint", "It should be correctly saved and unidecoded")
-            self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
-            self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
-            self.assertEqual(saint.context, "De seint Martin mout doit")
-    
-            allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
-            self.assertEqual(allowed.count(), 3, "There should be 21 allowed token")
-    
-            # Checking the model
-            self.assertEqual(
-                corpus.get_unallowed("lemma").count(), 22,
-                "There should be 22 unallowed value as only de saint martin are allowed"
-            )
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
+
+        saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "saint"))
+        self.assertEqual(saint.count(), 1, "There should be the saint lemma")
+        saint = saint.first()
+        self.assertEqual(saint.form, "seint", "It should be correctly saved")
+        self.assertEqual(saint.label_uniform, "saint", "It should be correctly saved and unidecoded")
+        self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
+        self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
+        self.assertEqual(saint.context, "De seint Martin mout doit")
+
+        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
+        self.assertEqual(allowed.count(), 3, "There should be 21 allowed token")
+
+        # Checking the model
+        self.assertEqual(
+            corpus.get_unallowed("lemma").count(), 22,
+            "There should be 22 unallowed value as only de saint martin are allowed"
+        )
 
     def test_registration_with_allowed_morph(self):
 
@@ -169,34 +168,33 @@ class TestCorpusRegistration(TestBase):
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
             "Result page is the corpus new page"
         )
-        with self.app.app_context():
-            self.assertEqual(
-                db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
-                "There should be one well named corpus"
-            )
-            corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
-            tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
-            self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
-    
-            saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "saint"))
-            self.assertEqual(saint.count(), 1, "There should be the saint lemma")
-            saint = saint.first()
-            self.assertEqual(saint.form, "seint", "It should be correctly saved")
-            self.assertEqual(saint.label_uniform, "saint", "It should be correctly saved and unidecoded")
-            self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
-            self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
-    
-            allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
-            self.assertEqual(allowed.count(), 3, "There should be 3 allowed lemma")
-    
-            allowed = db.session.query(AllowedMorph).filter(AllowedMorph.control_list == corpus.control_lists_id)
-            self.assertEqual(allowed.count(), 145, "There should be 145 different possible Morphs")
-    
-            # Checking the model
-            self.assertEqual(
-                corpus.get_unallowed("lemma").count(), 22,
-                "There should be 22 unallowed value as only de saint martin are allowed"
-            )
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
+
+        saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "saint"))
+        self.assertEqual(saint.count(), 1, "There should be the saint lemma")
+        saint = saint.first()
+        self.assertEqual(saint.form, "seint", "It should be correctly saved")
+        self.assertEqual(saint.label_uniform, "saint", "It should be correctly saved and unidecoded")
+        self.assertEqual(saint.POS, "ADJqua", "It should be correctly saved with POS")
+        self.assertEqual(saint.morph, None, "It should be correctly saved with morph")
+
+        allowed = db.session.query(AllowedLemma).filter(AllowedLemma.control_list == corpus.control_lists_id)
+        self.assertEqual(allowed.count(), 3, "There should be 3 allowed lemma")
+
+        allowed = db.session.query(AllowedMorph).filter(AllowedMorph.control_list == corpus.control_lists_id)
+        self.assertEqual(allowed.count(), 145, "There should be 145 different possible Morphs")
+
+        # Checking the model
+        self.assertEqual(
+            corpus.get_unallowed("lemma").count(), 22,
+            "There should be 22 unallowed value as only de saint martin are allowed"
+        )
 
     def test_registration_with_context(self):
         """
@@ -220,22 +218,21 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
-        with self.app.app_context():
-            self.assertEqual(
-                db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
-                "There should be one well named corpus"
-            )
-            corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
-            tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
-            self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
-    
-            # De seint Martin mout doit on doucement et volentiers le bien oïr et entendre , car par le bien
-            # savoir et retenir puet l
-            saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "volentiers"))
-            self.assertEqual(saint.count(), 1, "There should be the saint lemma")
-            saint = saint.first()
-            self.assertEqual(saint.form, "volentiers", "It should be correctly saved")
-            self.assertEqual(saint.context, "mout doit on doucement et volentiers le bien")
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
+
+        # De seint Martin mout doit on doucement et volentiers le bien oïr et entendre , car par le bien
+        # savoir et retenir puet l
+        saint = db.session.query(WordToken).filter(db.and_(WordToken.corpus == 1, WordToken.lemma == "volentiers"))
+        self.assertEqual(saint.count(), 1, "There should be the saint lemma")
+        saint = saint.first()
+        self.assertEqual(saint.form, "volentiers", "It should be correctly saved")
+        self.assertEqual(saint.context, "mout doit on doucement et volentiers le bien")
 
     def test_tokenization(self):
         """ Ensure that tokenisation is working as expected """
@@ -319,29 +316,28 @@ class TestCorpusRegistration(TestBase):
             "Result page is the corpus new page"
         )
 
-        with self.app.app_context():
-            self.assertEqual(
-                db.session.query(Corpus).filter(Corpus.name == name).count(), 1,
-                "There should be one well named corpus"
-            )
-            corpus = db.session.query(Corpus).filter(Corpus.name == name).first()
-            tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
-            self.assertEqual(tokens.count(), 11, "There should be 11 tokens")
-            self.assertEqual(
-                WordToken.to_input_format(tokens).replace("\r", ""),
-                "token_id\tform\tlemma\tPOS\tmorph\n"
-                "1\t\\\"\t\\\"\tPONC\tMORPH=EMPTY\n"  # Testing with " Quote Char
-                "2\t\'\t\'\tPONC\tMORPH=EMPTY\n"  # Testing with ' Quote Char
-                "3\t“\t“\tPONC\tMORPH=EMPTY\n"  # Testing with “ Quote Char
-                "4\t”\t”\tPONC\tMORPH=EMPTY\n"  # Testing with ” Quote Char
-                "5\t«\t«\tPONC\tMORPH=EMPTY\n"  # Testing with « Quote Char
-                "6\t»\t»\tPONC\tMORPH=EMPTY\n"  # Testing with » Quote Char
-                "7\t‘\t‘\tPONC\tMORPH=EMPTY\n"  # Testing with ‘ Quote Char
-                "8\t’\t’\tPONC\tMORPH=EMPTY\n"  # Testing with ’ Quote Char
-                "9\t„\t„\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
-                "10\t《\t《\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
-                "11\t》\t》\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
-            )
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == name).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == name).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 11, "There should be 11 tokens")
+        self.assertEqual(
+            WordToken.to_input_format(tokens).replace("\r", ""),
+            "token_id\tform\tlemma\tPOS\tmorph\n"
+            "1\t\\\"\t\\\"\tPONC\tMORPH=EMPTY\n"  # Testing with " Quote Char
+            "2\t\'\t\'\tPONC\tMORPH=EMPTY\n"  # Testing with ' Quote Char
+            "3\t“\t“\tPONC\tMORPH=EMPTY\n"  # Testing with “ Quote Char
+            "4\t”\t”\tPONC\tMORPH=EMPTY\n"  # Testing with ” Quote Char
+            "5\t«\t«\tPONC\tMORPH=EMPTY\n"  # Testing with « Quote Char
+            "6\t»\t»\tPONC\tMORPH=EMPTY\n"  # Testing with » Quote Char
+            "7\t‘\t‘\tPONC\tMORPH=EMPTY\n"  # Testing with ‘ Quote Char
+            "8\t’\t’\tPONC\tMORPH=EMPTY\n"  # Testing with ’ Quote Char
+            "9\t„\t„\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
+            "10\t《\t《\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
+            "11\t》\t》\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
+        )
 
     def test_registration_with_existing_control_list(self):
         self.add_control_lists()
@@ -349,10 +345,9 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
-        with self.app.app_context():
-            # Target control list
-            target_cl = db.session.query(ControlLists).\
-                filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+        # Target control list
+        target_cl = db.session.query(ControlLists).\
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
         self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
@@ -366,20 +361,18 @@ class TestCorpusRegistration(TestBase):
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
             "Result page is the corpus new page"
         )
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
+        self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
 
-        with self.app.app_context():
-            self.assertEqual(
-                db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
-                "There should be one well named corpus"
-            )
-            corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
-            tokens = db.session.query(WordToken).filter(WordToken.corpus == corpus.id)
-            self.assertEqual(tokens.count(), 25, "There should be 25 tokens")
-
-            control_list = db.session.query(ControlLists).filter(ControlLists.id == corpus.control_lists_id).first()
-            self.assertEqual(
-                "Ancien Français - École des Chartes", control_list.name,
-                "The control list has been reused"
+        control_list = db.session.query(ControlLists).filter(ControlLists.id == corpus.control_lists_id).first()
+        self.assertEqual(
+            "Ancien Français - École des Chartes", control_list.name,
+            "The control list has been reused"
         )
         self.driver_find_element_by_id("toggle_controllists").click()
         self.assertEqual(
@@ -395,10 +388,9 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
-        with self.app.app_context():
-            # Target control list
-            target_cl = db.session.query(ControlLists).\
-                filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+        # Target control list
+        target_cl = db.session.query(ControlLists).\
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
         self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
@@ -426,10 +418,9 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
-        with self.app.app_context():
-            # Target control list
-            target_cl = db.session.query(ControlLists).\
-                filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+        # Target control list
+        target_cl = db.session.query(ControlLists).\
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
         self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
@@ -456,21 +447,20 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
-        with self.app.app_context():
-            # Target control list
-            target_cl = db.session.query(ControlLists).\
-                filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+        # Target control list
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
         self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver_find_element_by_id("tokens"), """lala    lemma    POS    morph
-SOIGNORS    seignor    NOMcom    NOMB.=p|GENRE=m|CAS=n
-or    or4    ADVgen    DEGRE=-
-escoutez    escouter    VERcjg    MODE=imp|PERS.=2|NOMB.=p
-que    que4    CONsub    _
-    dieu    NOMpro    NOMB.=s|GENRE=m|CAS=n
-vos    vos1    PROper    PERS.=2|NOMB.=p|GENRE=m|CAS=r
-soit    estre1    VERcjg    MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), """lala	lemma	POS	morph
+SOIGNORS	seignor	NOMcom	NOMB.=p|GENRE=m|CAS=n
+or	or4	ADVgen	DEGRE=-
+escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p
+que	que4	CONsub	_
+	dieu	NOMpro	NOMB.=s|GENRE=m|CAS=n
+vos	vos1	PROper	PERS.=2|NOMB.=p|GENRE=m|CAS=r
+soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("label_checkbox_reuse").click()
         self.driver_find_element_by_id("control_list_select").click()
         self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
@@ -493,10 +483,8 @@ soit    estre1    VERcjg    MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver.implicitly_wait(15)
 
         # Target control list
-        with self.app.app_context():
-            # Target control list
-            target_cl = db.session.query(ControlLists).\
-                filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
         self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
@@ -535,13 +523,12 @@ soit    estre1    VERcjg    MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             "Result page is the corpus new page"
         )
 
-        with self.app.app_context():
-            self.assertEqual(
-                db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
-                "There should be one well named corpus"
-            )
-            corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
-            self.assertEqual(corpus.delimiter_token, "____", "There should be a delimiter token")
+        self.assertEqual(
+            db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).count(), 1,
+            "There should be one well named corpus"
+        )
+        corpus = db.session.query(Corpus).filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        self.assertEqual(corpus.delimiter_token, "____", "There should be a delimiter token")
 
     def test_registration_upload_file(self):
         """Test that an user can upload a file to fill in 'tokens' textarea."""
@@ -597,10 +584,8 @@ soit    estre1    VERcjg    MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         Expecting: no alert is displayed
         """
         self.add_control_lists()
-        
-        with self.app.app_context():
-            target_cl = db.session.query(ControlLists). \
-                filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # prepare form
         self.driver_find_element_by_id("new_corpus_link").click()
