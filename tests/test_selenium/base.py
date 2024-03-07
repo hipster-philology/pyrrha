@@ -35,6 +35,21 @@ __all__ = [
 ]
 
 
+def get_chrome():
+     # This ensures compatibility with nektos/act
+    if os.path.isfile('/usr/bin/chromium-browser'):
+        return '/usr/bin/chromium-browser'
+    elif os.path.isfile('/usr/bin/chromium'):
+        return '/usr/bin/chromium'
+    elif os.path.isfile('/usr/bin/chrome'):
+        return '/usr/bin/chrome'
+    elif os.path.isfile('/usr/bin/google-chrome'):
+        return '/usr/bin/google-chrome'
+    else:
+        return None
+
+
+
 class _element_has_count(object):
     """ An expectation for checking that an element has a particular css class.
 
@@ -190,6 +205,8 @@ class TestBase(LiveServerTestCase):
         options.add_argument("--remote-debugging-port=9222")
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
+        options.add_argument('--no-sandbox')   # This ensures compatibility with nektos/act
+        options.binary_location = get_chrome()
 
         options.set_capability("goog:loggingPrefs", {'browser': 'ALL'})
         self.driver = webdriver.Chrome(options=options)
@@ -208,6 +225,18 @@ class TestBase(LiveServerTestCase):
         db.drop_all()
         db.create_all()
         db.session.commit()
+
+        if db.session.get_bind().dialect.name == "postgresql":
+            lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
+            psql_locale = lc_messages_query.fetchone()[0]
+            if not psql_locale.startswith("en"):
+                # ToDo: add an option in config.py to check something such as app.config["FORCE_PSQL_EN_LOCALE"] (with default on True)
+                logging.warn(f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
+                try:
+                    db.session.execute(text("SET lc_messages TO 'en_US';"))
+                    db.session.commit()
+                except Exception as E:
+                    logging.warn(str(E))
 
         # add default roles & admin user
         Role.add_default_roles()
@@ -304,8 +333,6 @@ elit
             fp_writer.writerow(['form', 'lemma', 'POS', 'morph'])
             fp_writer.writerow(['SOIGNORS', 'seignor', 'NOMcom', 'NOMB.=p|GENRE=m|CAS=n'])
         return fp
-
-
 
 
     def addCorpus(self, corpus, cl=True, *args, **kwargs):
