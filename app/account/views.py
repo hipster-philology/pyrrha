@@ -33,7 +33,7 @@ def login():
     """Log in an existing user."""
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is not None and user.password_hash is not None and \
                 user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
@@ -52,7 +52,7 @@ def register():
         user = User(
             first_name=form.first_name.data,
             last_name=form.last_name.data,
-            email=form.email.data,
+            email=form.email.data.lower(),
             password=form.password.data)
         db.session.add(user)
         db.session.commit()

@@ -7,9 +7,9 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from flaskext.markdown import Markdown
 from flask_babel import Babel
 from .ext_config import get_locale
+from .markdown_ext import Markdown
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 

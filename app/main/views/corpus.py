@@ -124,7 +124,7 @@ def corpus_new():
                 if db.session.get_bind().dialect.name == "postgresql":
                     unique_constraint = 'duplicate key value violates unique constraint "corpus_name_key"'
                 else:
-                    unique_constraint = "UNIQUE constraint failed: corpus.name"
+                    unique_constraint = "unique constraint failed: corpus.name"
                 if unique_constraint in str(e.orig).lower():
                     flash("You have already a corpus going by the name {}".format(request.form.get("name")),
                           category="error")

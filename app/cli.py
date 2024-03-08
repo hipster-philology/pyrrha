@@ -1,6 +1,7 @@
 import click
 import os
 
+from config import Config
 from app.models import Role, User, ControlLists
 from . import create_app, db
 from .models import (
@@ -13,6 +14,8 @@ from .models import (
 )
 from app.utils.forms import create_input_format_convertion
 from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy import text
+import logging
 
 app = None
 
@@ -87,6 +90,20 @@ def make_cli():
 
             db.session.commit()
             click.echo("Created the database")
+            if db.session.get_bind().dialect.name == "postgresql":
+                lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
+                psql_locale = lc_messages_query.fetchone()[0]
+                if not psql_locale.startswith("en"):
+                    logging.warn(
+                        f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
+                    if Config.FORCE_PSQL_EN_LOCALE:
+                        try:
+                            db.session.execute(text("SET lc_messages TO 'en_US.UTF-8';"))
+                            db.session.commit()
+                        except Exception as E:
+                            logging.warn(str(E))
+
+
 
     @click.command("db-recreate")
     def db_recreate():

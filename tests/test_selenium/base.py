@@ -21,6 +21,8 @@ from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
 from sqlalchemy.sql import text
 
+from tests.fixtures.wauchier import FULL_CORPUS_LEMMA_ALLOWED
+
 LIVESERVER_TIMEOUT = 1
 
 
@@ -31,6 +33,21 @@ __all__ = [
     "TokenCorrectBase",
     "TokensSearchThroughFieldsBase"
 ]
+
+
+def get_chrome():
+     # This ensures compatibility with nektos/act
+    if os.path.isfile('/usr/bin/chromium-browser'):
+        return '/usr/bin/chromium-browser'
+    elif os.path.isfile('/usr/bin/chromium'):
+        return '/usr/bin/chromium'
+    elif os.path.isfile('/usr/bin/chrome'):
+        return '/usr/bin/chrome'
+    elif os.path.isfile('/usr/bin/google-chrome'):
+        return '/usr/bin/google-chrome'
+    else:
+        return None
+
 
 
 class _element_has_count(object):
@@ -184,8 +201,12 @@ class TestBase(LiveServerTestCase):
     def create_driver(self, options=None):
         if not options:
             options = Options()
+        # Ajout option remote suite à erreur DevToolsactive port file doesn't exist
+        options.add_argument("--remote-debugging-port=9222")
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
+        options.add_argument('--no-sandbox')   # This ensures compatibility with nektos/act
+        options.binary_location = get_chrome()
 
         options.set_capability("goog:loggingPrefs", {'browser': 'ALL'})
         self.driver = webdriver.Chrome(options=options)
@@ -204,6 +225,18 @@ class TestBase(LiveServerTestCase):
         db.drop_all()
         db.create_all()
         db.session.commit()
+
+        """if db.session.get_bind().dialect.name == "postgresql":
+                    lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
+                    psql_locale = lc_messages_query.fetchone()[0]
+                    if not psql_locale.startswith("en"):
+                        # ToDo: add an option in config.py to check something such as app.config["FORCE_PSQL_EN_LOCALE"] (with default on True)
+                        logging.warn(f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
+                        try:
+                            db.session.execute(text("SET lc_messages TO 'en_US';"))
+                            db.session.commit()
+                        except Exception as E:
+                            logging.warn(str(E))"""
 
         # add default roles & admin user
         Role.add_default_roles()
@@ -293,28 +326,17 @@ elit
         :returns: temporary example file
         :rtype: NamedTemporaryFile
         """
-        fp = tempfile.NamedTemporaryFile("w", delete=False)
-        csv.writer(fp, delimiter="\t").writerows(
-            (
-                ("form", "lemma", "POS", "morph"),
-                ("SOIGNORS", "seignor", "NOMcom", "NOMB.=p|GENRE=m|CAS=n")
-            )
-        )
-        fp.close()
+        path = os.path.dirname(os.path.abspath(__file__))
+        file_test = os.path.join(path, "test.csv")
+        with open(file_test, "wt") as fp:
+            fp_writer = csv.writer(fp, delimiter=",")
+            fp_writer.writerow(['form', 'lemma', 'POS', 'morph'])
+            fp_writer.writerow(['SOIGNORS', 'seignor', 'NOMcom', 'NOMB.=p|GENRE=m|CAS=n'])
         return fp
 
-    def addCorpus(self, corpus, *args, **kwargs):
-        corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
-        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
-        if self.db.engine.dialect.name == "postgresql":
-            self.db.session.execute(
-                text("""SELECT setval(
-                pg_get_serial_sequence('corpus', 'id'),
-                coalesce(max(id)+1, 1),
-                false
-                ) FROM corpus;
-                """)
-            )
+
+    def addCorpus(self, corpus, cl=True, *args, **kwargs):
+        corpus = add_corpus(corpus.lower(), db, cl, *args, **kwargs)
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         self.driver.get(self.get_server_url())
@@ -331,16 +353,6 @@ elit
 
     def addControlLists(self, cl_name, *args, **kwargs):
         cl = add_control_lists(cl_name, db, *args, **kwargs)
-        # https://stackoverflow.com/questions/37970743/postgresql-unique-violation-7-error-duplicate-key-value-violates-unique-const/37972960#37972960
-        if self.db.engine.dialect.name == "postgresql":
-            self.db.session.execute(
-                text("""SELECT setval(
-                pg_get_serial_sequence('control_lists', 'id'),
-                coalesce(max(id)+1, 1),
-                false
-                ) FROM control_lists;
-                """)
-            )
         self.driver.get(self.get_server_url())
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addControlListsUser(cl.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
@@ -508,7 +520,7 @@ class TokenCorrectBase(TestBase):
         )
 
         return (
-            self.db.session.query(WordToken).get(int(id_row)),
+            self.db.session.get(WordToken, int(id_row)),
             self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
@@ -582,7 +594,7 @@ class TokenCorrectBase(TestBase):
         )
 
         return (
-            self.db.session.query(WordToken).get(int(id_row)),
+            self.db.session.get(WordToken, int(id_row)),
             self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )

@@ -40,6 +40,9 @@ class Config:
     # Lemmatizer (until Deucalion client)
     LEMMATIZERS = []
 
+    # Change automatically the Postgresql instance language if not english
+    FORCE_PSQL_EN_LOCALE = True
+
     @staticmethod
     def init_app(app):
         pass
