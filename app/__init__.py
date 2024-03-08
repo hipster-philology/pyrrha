@@ -7,11 +7,9 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from flaskext.markdown import Markdown
+#from flaskext.markdown import Markdown
 from flask_babel import Babel
 from .ext_config import get_locale
-from sqlalchemy import text
-import warnings
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -51,7 +49,7 @@ def create_app(config_name="dev"):
     login_manager.init_app(app)
     #csrf.init_app(app)
     compress.init_app(app)
-    md = Markdown(app, safe_mode=True)
+    #md = Markdown(app, safe_mode=True)
     babel.init_app(app, locale_selector=get_locale)
 
     # Register Jinja template functions
