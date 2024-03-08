@@ -1,6 +1,7 @@
 import click
 import os
 
+from config import Config
 from app.models import Role, User, ControlLists
 from . import create_app, db
 from .models import (
@@ -93,14 +94,14 @@ def make_cli():
                 lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
                 psql_locale = lc_messages_query.fetchone()[0]
                 if not psql_locale.startswith("en"):
-                    # ToDo: add an option in config.py to check something such as app.config["FORCE_PSQL_EN_LOCALE"] (with default on True)
                     logging.warn(
                         f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
-                    try:
-                        db.session.execute(text("SET lc_messages TO 'en_US.UTF-8';"))
-                        db.session.commit()
-                    except Exception as E:
-                        logging.warn(str(E))
+                    if Config.FORCE_PSQL_EN_LOCALE:
+                        try:
+                            db.session.execute(text("SET lc_messages TO 'en_US.UTF-8';"))
+                            db.session.commit()
+                        except Exception as E:
+                            logging.warn(str(E))
 
 
 
