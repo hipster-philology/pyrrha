@@ -276,6 +276,46 @@ class TestUserAccount(TestBase):
         ).first()
         self.assertIsNotNone(user)
 
+    def test_register_same_adress(self):
+        self.driver_find_element_by_link_text('Register').click()
+        self.driver_find_element_by_id("first_name").send_keys("john")
+        self.driver_find_element_by_id("last_name").send_keys("doe")
+        self.driver_find_element_by_id("email").send_keys("john.doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("submit").click()
+
+        self.driver.implicitly_wait(5)
+
+        self.driver_find_element_by_link_text('Register').click()
+        self.driver_find_element_by_id("first_name").send_keys("john")
+        self.driver_find_element_by_id("last_name").send_keys("doe")
+        self.driver_find_element_by_id("email").send_keys("john.doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("submit").click()
+
+        self.driver.implicitly_wait(5)
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted(['Email already registered. (Did you mean to log in instead?)']),
+            "Creating a new account using an already used mail adress fails."
+        )
+
+        self.driver_find_element_by_link_text('Register').click()
+        self.driver_find_element_by_id("first_name").send_keys("john")
+        self.driver_find_element_by_id("last_name").send_keys("doe")
+        self.driver_find_element_by_id("email").send_keys("John.Doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("submit").click()
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted(['Email already registered. (Did you mean to log in instead?)']),
+            "Creating a new account using an already used mail adress but with differents cases fails."
+        )
 
 class TestUserWithMail(TestBase):
     AUTO_LOG_IN = False
