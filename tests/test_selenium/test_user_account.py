@@ -276,7 +276,73 @@ class TestUserAccount(TestBase):
         ).first()
         self.assertIsNotNone(user)
 
+    def test_register_same_adress(self):
+        self.driver_find_element_by_link_text('Register').click()
+        self.driver_find_element_by_id("first_name").send_keys("john")
+        self.driver_find_element_by_id("last_name").send_keys("doe")
+        self.driver_find_element_by_id("email").send_keys("john.doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("submit").click()
 
+        self.driver.implicitly_wait(5)
+
+        self.driver_find_element_by_link_text('Register').click()
+        self.driver_find_element_by_id("first_name").send_keys("john")
+        self.driver_find_element_by_id("last_name").send_keys("doe")
+        self.driver_find_element_by_id("email").send_keys("john.doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("submit").click()
+
+        self.driver.implicitly_wait(5)
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted(['Unable to register a user with the provided information. Link to password reset']),
+            "Creating a new account using an already used mail adress fails."
+        )
+
+        self.driver_find_element_by_link_text('Register').click()
+        self.driver_find_element_by_id("first_name").send_keys("john")
+        self.driver_find_element_by_id("last_name").send_keys("doe")
+        self.driver_find_element_by_id("email").send_keys("John.Doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("submit").click()
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted(['Unable to register a user with the provided information. Link to password reset']),
+            "Creating a new account using an already used mail adress but with different cases fails."
+        )
+
+        user = User.query.filter(
+            User.first_name == "john",
+            User.last_name == "doe",
+            User.confirmed.is_(False)).all()
+        self.assertEqual(len(user), 1, "Only one account has been created")
+
+    def test_connexion_with_different_cases(self):
+        self.driver_find_element_by_link_text('Register').click()
+        self.driver_find_element_by_id("first_name").send_keys("john")
+        self.driver_find_element_by_id("last_name").send_keys("doe")
+        self.driver_find_element_by_id("email").send_keys("john.doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("password2").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id("submit").click()
+        self.logout()
+
+        self.driver_find_element_by_link_text('Log In').click()
+        self.driver_find_element_by_id("email").send_keys("John.Doe@ppa.fr")
+        self.driver_find_element_by_id("password").send_keys(self.app.config['ADMIN_PASSWORD'] + "testcase01!")
+        self.driver_find_element_by_id('submit').click()
+
+        self.assertEqual(
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-success")]),
+            sorted(['You are now logged in. Welcome back!']),
+            "Logging using different cases for the mail adress works."
+        )
 class TestUserWithMail(TestBase):
     AUTO_LOG_IN = False
 
