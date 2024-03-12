@@ -299,7 +299,7 @@ class TestUserAccount(TestBase):
 
         self.assertEqual(
             sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
-            sorted(['Email already registered. (Did you mean to log in instead?)']),
+            sorted(['Unable to register a user with the provided information. Link to password reset']),
             "Creating a new account using an already used mail adress fails."
         )
 
