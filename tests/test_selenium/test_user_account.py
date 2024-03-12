@@ -313,17 +313,15 @@ class TestUserAccount(TestBase):
 
         self.assertEqual(
             sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
-            sorted(['Email already registered. (Did you mean to log in instead?)']),
+            sorted(['Unable to register a user with the provided information. Link to password reset']),
             "Creating a new account using an already used mail adress but with different cases fails."
         )
 
         user = User.query.filter(
             User.first_name == "john",
             User.last_name == "doe",
-            User.email == "john.doe@ppa.fr",
-            User.confirmed.is_(False)
-        ).first()
-        self.assertIsNotNone(user)
+            User.confirmed.is_(False)).all()
+        self.assertEqual(len(user), 1, "Only one account has been created")
 
     def test_connexion_with_different_cases(self):
         self.driver_find_element_by_link_text('Register').click()

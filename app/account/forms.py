@@ -45,8 +45,7 @@ class RegistrationForm(FlaskForm):
 
     def validate_email(self, field):
         if User.query.filter_by(email=field.data.lower()).first():
-            raise ValidationError('Email already registered. (Did you mean to '
-                                  '<a href="{}">log in</a> instead?)'.format(
+            raise ValidationError('Unable to register a user with the provided information. Link to <a href="/account/reset-password">password reset</a>'.format(
                 url_for('account.login')))
 
 
