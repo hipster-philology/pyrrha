@@ -158,7 +158,8 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
     def test_search_with_or_operator(self):
         # search with OR operator
         rows = self.search(form="seint|seinz|Seinz|seinte")
-        rows_wildcard = self.search(form="sein*")
+        rows_wildcard = self.search(form="sein*", case=True)
+
         rows_lemma = self.search(lemma="saint")
         self.assertTrue(rows_lemma == rows and rows == rows_wildcard)
 
