@@ -1,4 +1,5 @@
 from csv import DictReader
+from sqlalchemy import func
 
 from app.utils import StringDictReader
 from app.utils.tsv import TSV_CONFIG
@@ -32,7 +33,7 @@ def prepare_search_string(string: str) -> list:
     return value
 
 
-def column_search_filter(field, value: str) -> list:
+def column_search_filter(field, value: str, case=True) -> list:
     """ Based on a field name and a string value, computes the list of search WHERE that needs to be \
     applied to a query
 
@@ -40,6 +41,7 @@ def column_search_filter(field, value: str) -> list:
     :param value: Search String
     :return: List of WHERE clauses
     """
+    # modifier ici case.
     branch_filters = []
     if len(value) > 0:
         value = value.replace(" ", "")
@@ -58,21 +60,33 @@ def column_search_filter(field, value: str) -> list:
             if value.startswith("!") and len(value) > 1:
                 value = value[1:]
                 branch_filters.append(field.notlike(value, escape='\\'))
-            else:
+            elif case:
                 # unescape '\!'
                 value = value.replace('¤$$¤', '!')
                 branch_filters.append(field.like(value, escape='\\'))
-        else:
-            # unescape '\*'
-            value = value.replace('¤$¤', '*')
-
-            if value is not None and value.startswith("!") and len(value) > 1:
-                value = value[1:]
-                branch_filters.append(field != value)
             else:
                 # unescape '\!'
                 value = value.replace('¤$$¤', '!')
-                branch_filters.append(field == value)
+                branch_filters.append(field.ilike(value, escape='\\'))
+
+        else:
+            # unescape '\*'
+            value = value.replace('¤$¤', '*')
+            if case:
+                if value is not None and value.startswith("!") and len(value) > 1:
+                    value = value[1:]
+                    branch_filters.append(field != value)
+                else:
+                    # unescape '\!'
+                    value = value.replace('¤$$¤', '!')
+                    branch_filters.append(field == value)
+            else:
+                if value is not None and value.startswith("!") and len(value) > 1:
+                    value = value[1:]
+                    branch_filters.append(func.lower(field) != func.lower(value))
+                else:
+                    value = value.replace('¤$$¤', '!')
+                    branch_filters.append(func.lower(field) == func.lower(value))
     return branch_filters
 
 
