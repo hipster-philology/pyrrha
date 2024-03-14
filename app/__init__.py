@@ -49,6 +49,7 @@ def create_app(config_name="dev"):
             """ This ensures that SQLite is not case-insensitive when using LIKEs"""
             if isinstance(dbapi_con, SQLite3Connection):
                 dbapi_con.execute("PRAGMA case_sensitive_like=ON;")
+                dbapi_con.execute("PRAGMA foreign_keys=ON;")
 
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 

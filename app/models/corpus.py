@@ -633,7 +633,7 @@ class WordToken(db.Model):
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
-    _changes = db.relationship("ChangeRecord", cascade="all,delete")
+    _changes = db.relationship("ChangeRecord")
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
@@ -742,7 +742,8 @@ class WordToken(db.Model):
             old=self.form,
             action_type=TokenHistory.TYPES.Edition,
             user_id=user.id,
-            word_token_id=self.id
+            word_token_id=self.id,
+            order_id = self.order_id
         ))
         self.form = form
         db.session.add(self)
@@ -782,7 +783,8 @@ class WordToken(db.Model):
             new=form,
             action_type=TokenHistory.TYPES.Addition,
             user_id=user.id,
-            word_token_id=new_token.id
+            word_token_id=new_token.id,
+            order_id = new_token.order_id
         ))
 
         # Update the contexts
@@ -809,6 +811,7 @@ class WordToken(db.Model):
             WordToken.order_id > self.order_id
         )).update({WordToken.order_id: WordToken.order_id - 1})
 
+        # Update
         # Record the change
         db.session.add(TokenHistory(
             corpus=corpus.id,
@@ -816,8 +819,10 @@ class WordToken(db.Model):
             old=self.form,
             action_type=TokenHistory.TYPES.Deletion,
             user_id=user.id,
-            word_token_id=self.id
+            #word_token_id=self.id,
+            order_id = self.order_id
         ))
+
 
         # Update the contexts
         self.update_context_around(corpus, delete=self.id)
@@ -1348,11 +1353,12 @@ class TokenHistory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete='SET NULL'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     action_type = db.Column(db.Enum(TYPES), nullable=False)
     new = db.Column(db.String(100), nullable=True)
     old = db.Column(db.String(100), nullable=True)
+    order_id = db.Column(db.Integer, nullable=True)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship(User, lazy='select')
@@ -1464,8 +1470,9 @@ class CorpusCustomDictionary(db.Model):
 class ChangeRecord(db.Model):
     """ A change record keep track of lemma, POS or morph that have been changed for a particular form"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete="SET NULL"), nullable=True,
+                              default=None)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     form = db.Column(db.String(128))
     lemma = db.Column(db.String(128))
