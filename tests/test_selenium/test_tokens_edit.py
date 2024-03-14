@@ -143,8 +143,8 @@ class TestTokenEdit(TestBase):
             "History should be saved"
         )
 
-    def test_delete(self):
-        """ [TokenEdit] Check that we are able to edit the form of a token """
+    def test_edit_delete(self):
+        """ [TokenEdit] Check that we are able to edit then delete the form of a token """
         self.addCorpus("wauchier")
 
         # Get the original value
@@ -181,7 +181,6 @@ class TestTokenEdit(TestBase):
         self.change_form_value("oulala")
         self.driver_find_element_by_css_selector("button[type='submit']").click()
         self.driver.implicitly_wait(5)
-
         self.assertEqual(
             self.select_context_around(5),
             original_set,
