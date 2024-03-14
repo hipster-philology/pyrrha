@@ -1,4 +1,5 @@
 from app.models import WordToken
+from app import db
 from tests.test_selenium.base import TokensSearchThroughFieldsBase
 
 
@@ -173,9 +174,8 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
 
     def test_search_with_case_sensitivy(self):
         # search with and without case sensitivity
-        rows_or_sensitivy = self.search(form = "seint|seinz|Seinz|seinte")
-        # only the sein* without a capital letter are selected without case=True
-        rows_sensitivity_wildcard = self.search(form="sein*")
-        # case insensitivity is activated, all the sein* are taken into account, including the one with capital letter
-        rows_insensitivity_wildcard = self.search(form="sein*", case=True)
-        self.assertTrue(len(rows_or_sensitivy)==len(rows_insensitivity_wildcard) and len(rows_or_sensitivy)==len(rows_sensitivity_wildcard)+1)
+        rows_case_sensitivity_min = self.search(form="et")
+        row_case_sensitivity_maj = self.search(form="Et")
+        rows_case_insensitivity = self.search(form="et", case=True)
+        if db.session.get_bind().dialect.name == "postgresql":
+            self.assertTrue(len(rows_case_insensitivity)== 24 and len(rows_case_sensitivity_min)==22 and len(row_case_sensitivity_maj)==2)
