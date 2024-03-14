@@ -162,13 +162,14 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
         rows_wildcard = self.search(form="sein*", case_insensitivity=True)
 
         rows_lemma = self.search(lemma="saint")
-        self.assertTrue(rows_lemma == rows and rows == rows_wildcard)
+        self.assertEqual(rows_lemma, rows)
+        self.assertEqual(rows_wildcard, rows)
 
-        # test combination with an other field
+        # test combination with another field
         rows = self.search(lemma="m*", pos="NOMcom|NOMpro")
         self.assertTrue(len(rows) == 9)
 
-        # test combination with an other field
+        # test combination with another field
         rows = self.search(form="Martins|mere", lemma="martin|mere")
         self.assertTrue(len(rows) == 3)
 
@@ -188,3 +189,12 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
             form_only(row_case_sensitivity_maj), {"De"}, "Maj search should retrieve `De` only")
         self.assertEqual(
             form_only(rows_case_insensitivity), {"De", "de"}, "Insentivity should retrieve both forms")
+
+        seinz_sens = self.search(form="sein*", case_insensitivity=False)
+        seinz_insens = self.search(form="sein*", case_insensitivity=True)
+        self.assertEqual(
+            form_only(seinz_sens), {'seinz', 'seinte', 'seint'},
+            "Sensitivity should retrieve only form in minuscules")
+        self.assertEqual(
+            form_only(seinz_insens), {'seinz', 'seinte', 'seint', 'Seinz'},
+            "Insensitivity should retrieve all forms")

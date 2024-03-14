@@ -21,7 +21,6 @@ from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
 
 
-
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
 @login_required
 @requires_corpus_access("corpus_id")
@@ -287,7 +286,6 @@ def tokens_search_through_fields(corpus_id):
     fields: Dict[str, List[str]] = {}
     source_dict: Dict[str, str] = request.form if request.method == "POST" else request.args
 
-
     for name in columns:
         value: Optional[str] = strip_or_none(source_dict.get(name))
         input_values[name] = value
@@ -314,7 +312,7 @@ def tokens_search_through_fields(corpus_id):
     search_branches: List[Dict[str, str]] = [dict(prod) for prod in product(*flat_fields)]
 
     value_filters = []
-    case_insensitive=True
+    case_insensitive = True
     if 'caseBox' in source_dict:
         case_insensitive = False
     # for each branch filter (= OR clauses if any)
