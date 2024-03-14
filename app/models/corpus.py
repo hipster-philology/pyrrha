@@ -819,7 +819,7 @@ class WordToken(db.Model):
             old=self.form,
             action_type=TokenHistory.TYPES.Deletion,
             user_id=user.id,
-            #word_token_id=self.id
+            #word_token_id=self.id,
             order_id = self.order_id
         ))
 
@@ -1471,7 +1471,7 @@ class ChangeRecord(db.Model):
     """ A change record keep track of lemma, POS or morph that have been changed for a particular form"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete="SET NULL"), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     form = db.Column(db.String(128))
     lemma = db.Column(db.String(128))
