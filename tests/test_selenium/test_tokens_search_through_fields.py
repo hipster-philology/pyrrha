@@ -1,7 +1,7 @@
 from app.models import WordToken
 from app import db
 from tests.test_selenium.base import TokensSearchThroughFieldsBase
-
+from typing import List, Dict, Set
 
 class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
     """ Test searching tokens through fields (Form, Lemma, POS, Morph) within a corpus """
@@ -159,7 +159,7 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
     def test_search_with_or_operator(self):
         # search with OR operator
         rows = self.search(form="seint|seinz|Seinz|seinte")
-        rows_wildcard = self.search(form="sein*", case=True)
+        rows_wildcard = self.search(form="sein*", case_insensitivity=True)
 
         rows_lemma = self.search(lemma="saint")
         self.assertTrue(rows_lemma == rows and rows == rows_wildcard)
@@ -173,9 +173,18 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
         self.assertTrue(len(rows) == 3)
 
     def test_search_with_case_sensitivy(self):
+        """Test a simple enable case sensitivity"""
         # search with and without case sensitivity
-        rows_case_sensitivity_min = self.search(form="et")
-        row_case_sensitivity_maj = self.search(form="Et")
-        rows_case_insensitivity = self.search(form="et", case=True)
-        if db.session.get_bind().dialect.name == "postgresql":
-            self.assertTrue(len(rows_case_insensitivity)== 24 and len(rows_case_sensitivity_min)==22 and len(row_case_sensitivity_maj)==2)
+        rows_case_sensitivity_min = self.search(form="de")
+        row_case_sensitivity_maj = self.search(form="De")
+        rows_case_insensitivity = self.search(form="de", case_insensitivity=True)
+
+        def form_only(results: List[Dict[str, str]]) -> Set[str]:
+            return set([line["form"] for line in results])
+
+        self.assertEqual(
+            form_only(rows_case_sensitivity_min), {"de"}, "Min. search should retrieve `de` only")
+        self.assertEqual(
+            form_only(row_case_sensitivity_maj), {"De"}, "Maj search should retrieve `De` only")
+        self.assertEqual(
+            form_only(rows_case_insensitivity), {"De", "de"}, "Insentivity should retrieve both forms")

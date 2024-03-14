@@ -706,10 +706,10 @@ class TokensSearchThroughFieldsBase(TestBase):
         db.session.add(new_token)
         db.session.commit()
 
-    def search(self, form="", lemma="", pos="", morph="", case=False):
+    def search(self, form="", lemma="", pos="", morph="", case_insensitivity=False):
         self.go_to_search_tokens_page(TokensSearchThroughFieldsBase.CORPUS_ID, as_callback=False)
         self.fill_filter_row(form, lemma, pos, morph)
-        if case:
+        if case_insensitivity:
             self.driver_find_element_by_id('caseBox').click()
         self.driver_find_element_by_id("submit_search").click()
 
