@@ -33,7 +33,7 @@ def prepare_search_string(string: str) -> list:
     return value
 
 
-def column_search_filter(field, value: str, case=True) -> list:
+def column_search_filter(field, value: str, case_sensitive=True) -> list:
     """ Based on a field name and a string value, computes the list of search WHERE that needs to be \
     applied to a query
 
@@ -41,7 +41,6 @@ def column_search_filter(field, value: str, case=True) -> list:
     :param value: Search String
     :return: List of WHERE clauses
     """
-    # modifier ici case.
     branch_filters = []
     if len(value) > 0:
         value = value.replace(" ", "")
@@ -56,23 +55,27 @@ def column_search_filter(field, value: str, case=True) -> list:
             value = value.replace("*", "%")
             # unescape '\*'
             value = value.replace('¤$¤', '*')
-
-            if value.startswith("!") and len(value) > 1:
-                value = value[1:]
-                branch_filters.append(field.notlike(value, escape='\\'))
-            elif case:
-                # unescape '\!'
-                value = value.replace('¤$$¤', '!')
-                branch_filters.append(field.like(value, escape='\\'))
+            if case_sensitive:
+                    if value.startswith("!") and len(value) > 1:
+                        value = value[1:]
+                        branch_filters.append(field.notlike(value, escape='\\'))
+                    else:
+                        # unescape '\!'
+                        value = value.replace('¤$$¤', '!')
+                        branch_filters.append(field.like(value, escape='\\'))
             else:
-                # unescape '\!'
-                value = value.replace('¤$$¤', '!')
-                branch_filters.append(field.ilike(value, escape='\\'))
+                if value.startswith("!") and len(value) > 1:
+                    value = value[1:]
+                    branch_filters.append(func.lower(field).notlike(func.lower(value), escape='\\'))
+                else:
+                    # unescape '\!'
+                    value = value.replace('¤$$¤', '!')
+                    branch_filters.append(field.ilike(value, escape='\\'))
 
         else:
             # unescape '\*'
             value = value.replace('¤$¤', '*')
-            if case:
+            if case_sensitive:
                 if value is not None and value.startswith("!") and len(value) > 1:
                     value = value[1:]
                     branch_filters.append(field != value)

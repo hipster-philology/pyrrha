@@ -314,9 +314,9 @@ def tokens_search_through_fields(corpus_id):
     search_branches: List[Dict[str, str]] = [dict(prod) for prod in product(*flat_fields)]
 
     value_filters = []
-    caseIssensitive=True
+    caseIsensitive=True
     if 'caseBox' in source_dict:
-        caseIssensitive = False
+        caseIsensitive = False
     # for each branch filter (= OR clauses if any)
     for search_branch in search_branches:
         # filtre minimal = bon corpus (id)
@@ -325,7 +325,7 @@ def tokens_search_through_fields(corpus_id):
         # for each field (lemma, pos, form, morph)
         for name, value in search_branch.items():
             # transformation couple clé valeur en filtre SQLalchemy
-            branch_filters.extend(column_search_filter(getattr(WordToken, name), value, case=caseIssensitive))
+            branch_filters.extend(column_search_filter(getattr(WordToken, name), value, case_sensitive=caseIsensitive))
 
         value_filters.append(branch_filters)
 
