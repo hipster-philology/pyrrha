@@ -1,11 +1,15 @@
+from typing import List, Optional
 from csv import DictReader
 from sqlalchemy import func
 
 from app.utils import StringDictReader
 from app.utils.tsv import TSV_CONFIG
+from sqlalchemy.sql import ColumnExpressionArgument, ColumnElement
 
 
-def string_to_none(string):
+def string_to_none(string: Optional[str]) -> Optional[str]:
+    """ Converts a string to None, including a string marked as None
+    """
     if string is None:
         return
     elif string.strip() == "None":
@@ -14,13 +18,14 @@ def string_to_none(string):
         return string
 
 
-def strip_or_none(string):
+def strip_or_none(string: Optional[str]) -> Optional[str]:
+    """Strip a string if it is not none"""
     if string is not None:
         return string.strip()
     return string
 
 
-def prepare_search_string(string: str) -> list:
+def prepare_search_string(string: str) -> List[str]:
     """ Transform a search string into a list of strings if "|" was used inside the string
 
     Agrees with escaped pipes.
@@ -33,65 +38,86 @@ def prepare_search_string(string: str) -> list:
     return value
 
 
-def column_search_filter(field, value: str, case=True) -> list:
+def column_search_filter(
+        field: ColumnElement,
+        value: str,
+        case_sensitive: bool = True) -> List[ColumnExpressionArgument]:
     """ Based on a field name and a string value, computes the list of search WHERE that needs to be \
     applied to a query
 
     :param field: ORM Field Property
     :param value: Search String
+    :param case_sensitive: Enable case sensitivity
     :return: List of WHERE clauses
     """
     # modifier ici case.
     branch_filters = []
-    if len(value) > 0:
-        value = value.replace(" ", "")
-        # escape search operators
-        value = value.replace('%', '\\%')
-        value = value.replace('\\*', '¤$¤')
-        value = value.replace('\\!', '¤$$¤')
+    if not value:
+        return []
 
-        value = string_to_none(value)
-        # distinguish LIKE from EQ
-        if value is not None and "*" in value:
-            value = value.replace("*", "%")
-            # unescape '\*'
-            value = value.replace('¤$¤', '*')
+    # Clean-up the string
+    value = value.replace(" ", "")
+    # Escape search operators from LIKE
+    value = value.replace('%', '\\%')
+    # Replace * and ! which are escaped, so that they are not treated as wildcard or NOTs.
+    value = value.replace('\\*', '¤$¤')
+    value = value.replace('\\!', '¤$$¤')
+    value = string_to_none(value)
 
-            if value.startswith("!") and len(value) > 1:
-                value = value[1:]
-                branch_filters.append(field.notlike(value, escape='\\'))
-            elif case:
-                # unescape '\!'
-                value = value.replace('¤$$¤', '!')
-                branch_filters.append(field.like(value, escape='\\'))
-            else:
-                # unescape '\!'
-                value = value.replace('¤$$¤', '!')
-                branch_filters.append(field.ilike(value, escape='\\'))
+    # If all operation produced an empty string, return an empty list
+    if not value or value == "!":
+        return []
 
+    # If we are case-sensitive, we keep using like and or not like
+    if case_sensitive:
+        notlike = lambda x: field.notlike(x, escape="\\")
+        like = lambda x: field.like(x, escape="\\")
+        eq_field = field
+        eq_value = lambda x: x
+    else:
+        notlike = lambda x: field.notilike(x, escape="\\")
+        like = lambda x: field.ilike(x, escape="\\")
+        eq_field = func.lower(field)
+        eq_value = lambda x: x.lower()
+
+    # distinguish LIKE from EQ when wild cards are used
+    if value is not None and "*" in value:
+        # Replace unescaped * as LIKE operator wildcards
+        value = value.replace("*", "%")
+        # Re-introduce previously escaped * (as ¤$¤) as the search character *
+        value = value.replace('¤$¤', '*')
+
+        # Then we check if we are in a not or not request
+        if value.startswith("!") and len(value) > 1:
+            value = value[1:]
+            operator = notlike
         else:
-            # unescape '\*'
-            value = value.replace('¤$¤', '*')
-            if case:
-                if value is not None and value.startswith("!") and len(value) > 1:
-                    value = value[1:]
-                    branch_filters.append(field != value)
-                else:
-                    # unescape '\!'
-                    value = value.replace('¤$$¤', '!')
-                    branch_filters.append(field == value)
-            else:
-                if value is not None and value.startswith("!") and len(value) > 1:
-                    value = value[1:]
-                    branch_filters.append(func.lower(field) != func.lower(value))
-                else:
-                    value = value.replace('¤$$¤', '!')
-                    branch_filters.append(func.lower(field) == func.lower(value))
+            operator = like
+    else:
+        # Re-introduce previously escaped * (as ¤$¤) as the search character *
+        value = value.replace('¤$¤', '*')
+
+        # Then we check if we are in a not or not request
+        if value.startswith("!") and len(value) > 1:
+            value = value[1:]
+            operator = eq_field.__ne__
+        else:
+            operator = eq_field.__eq__
+
+        value = eq_value(value)
+
+    # Re-introduce previously escaped ! (as ¤$$¤) as the search character !
+    value = value.replace('¤$$¤', '!')
+    branch_filters.append(operator(value))
     return branch_filters
 
 
-def read_input_lemma(values):
-    return [x.replace('\r', '') for x in values.split("\n") if len(x.replace('\r', '').strip()) > 0]
+def read_input_lemma(values: str) -> List[str]:
+    return [
+        x.replace('\r', '')
+        for x in values.split("\n")
+        if len(x.replace('\r', '').strip()) > 0
+    ]
 
 
 def read_input_morph(values):
