@@ -1,5 +1,5 @@
 from .base import TestModels
-from app.models import WordToken
+from app.models import WordToken, Corpus
 from app.utils import ValidationError
 import random
 import string
@@ -25,11 +25,13 @@ class TestWordToken(TestModels):
         Trying: one token violates length constraint
         Expecting: ValidationError
         """
+        self.addCorpus("floovant", tokens_up_to=3)
+        corpus_id = Corpus.query.one().id
         form = "".join(
-            string.ascii_letters[random.randint(0, len(string.ascii_letters)-1)] for i in range(100)
+            string.ascii_letters[random.randint(0, len(string.ascii_letters)-1)] for i in range(200)
         )
         with self.assertRaises(ValidationError):
-            WordToken.add_batch(0, [{"form": form}])
+            WordToken.add_batch(corpus_id, [{"form": form}])
 
     def test_add_batch_valid(self):
         """Test adding a batch of tokens.
@@ -37,17 +39,21 @@ class TestWordToken(TestModels):
         Trying: one token respecting length constraint
         Expecting: number of tokens is returned
         """
+        self.addCorpus("floovant", tokens_up_to=3)
+        corpus_id = Corpus.query.one().id
         form = "".join(
             string.ascii_letters[random.randint(0, len(string.ascii_letters)-1)]
             for i in range(64)
         )
-        self.assertEqual(WordToken.add_batch(0, [{"form": form}]), 1)
+        self.assertEqual(WordToken.add_batch(corpus_id, [{"form": form}]), 1)
 
     def test_update_batch_context(self):
         """Test updating left and right context.
 
         Trying: set right and left context to 4.
         """
+        self.addCorpus("floovant", tokens_up_to=0)
+        corpus_id = Corpus.query.one().id
         form_list = [
             {
                 "form": "".join(
@@ -56,9 +62,9 @@ class TestWordToken(TestModels):
                 )
             } for j in range(200)
         ]
-        WordToken.add_batch(0, form_list)
-        self.assertEqual(WordToken.update_batch_context(0, 4, 4), 200)
-        token = WordToken.query.filter_by(corpus=0, order_id=15).first()
+        WordToken.add_batch(corpus_id, form_list)
+        self.assertEqual(WordToken.update_batch_context(corpus_id, 4, 4), len(form_list))
+        token = WordToken.query.filter_by(corpus=corpus_id, order_id=15).first()
         left_context = token.left_context.split(" ")
         right_context = token.right_context.split(" ")
         self.assertEqual(len(left_context), 4)

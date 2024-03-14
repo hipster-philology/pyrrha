@@ -6,31 +6,44 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         python-version: ["3.10"]
-
+        test_dbms: [postgresql, sqlite]
+    services:
+      postgres:
+        image: postgres:14-alpine
+        env:
+          POSTGRES_USER: pyrrha
+          POSTGRES_PASSWORD: pyrrha
+          POSTGRES_DB: data-test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
+    - uses: browser-actions/setup-chrome@v1 # This ensures compatibility with nektos/act
+    - uses: nanasess/setup-chromedriver@v2 # This ensures compatibility with nektos/act
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov
-        pip install coveralls
-        pip install flake8
-#    - name: Lint with flake8
-#      run: |
-#        # stop the build if there are Python syntax errors or undefined names
-#        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-#        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-#        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        pip install pytest pytest-cov coveralls flake8
+    - name: Set up TEST_DATABASE_URL
+      run: |
+        echo "TEST_DATABASE_URL=postgresql://pyrrha:pyrrha@localhost:5432/data-test" >> $GITHUB_ENV
+      if: matrix.test_dbms == 'postgresql'
     - name: Test with nose
       run: |
         pytest --doctest-modules --cov=app --verbose
     - name: Coveralls Python
       uses: AndreMiras/coveralls-python-action@v20201129
-
+      if: matrix.test_dbms == 'postgresql'

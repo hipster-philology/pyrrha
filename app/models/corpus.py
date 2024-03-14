@@ -74,7 +74,7 @@ class Corpus(db.Model):
     :type name: str
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(64), unique=True)
+    name = db.Column(db.String(256), unique=True)
     context_left = db.Column(db.SmallInteger, default=3)
     context_right = db.Column(db.SmallInteger, default=3)
     control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
@@ -132,14 +132,19 @@ class Corpus(db.Model):
         return True
 
     def changes_per_day(self):
+        if db.session.get_bind().dialect.name == "postgresql":
+            created_on = db.func.to_char(ChangeRecord.created_on, "yyyy-mm-dd")
+        elif db.session.get_bind().dialect.name == "sqlite":
+            created_on = db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
         return list([
             tuple(elem)
             for elem in db.session.query(
-                    db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                    db.func.count(ChangeRecord.id),
+                    created_on
                 ).filter(
                     ChangeRecord.corpus == self.id
                 ).group_by(
-                    db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                    created_on
                 ).all()
         ])
 
@@ -362,7 +367,7 @@ class Corpus(db.Model):
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
 
     def changed(self, tokens):
-        if db.session.bind.dialect.name != "postgresql":
+        if db.session.get_bind().dialect.name != "postgresql":
             data = db.session.query(ChangeRecord.word_token_id).group_by(ChangeRecord.word_token_id).filter(
                 ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
             ).all()
@@ -620,15 +625,15 @@ class WordToken(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete='CASCADE'))
     order_id = db.Column(db.Integer)  # Id in the corpus
-    form = db.Column(db.String(64))
-    lemma = db.Column(db.String(64))
-    label_uniform = db.Column(db.String(64))
-    POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64))
+    form = db.Column(db.String(128))
+    lemma = db.Column(db.String(128))
+    label_uniform = db.Column(db.String(128))
+    POS = db.Column(db.String(128))
+    morph = db.Column(db.String(128))
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
-    _changes = db.relationship("ChangeRecord", cascade="all,delete")
+    _changes = db.relationship("ChangeRecord")
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
@@ -737,7 +742,8 @@ class WordToken(db.Model):
             old=self.form,
             action_type=TokenHistory.TYPES.Edition,
             user_id=user.id,
-            word_token_id=self.id
+            word_token_id=self.id,
+            order_id = self.order_id
         ))
         self.form = form
         db.session.add(self)
@@ -777,7 +783,8 @@ class WordToken(db.Model):
             new=form,
             action_type=TokenHistory.TYPES.Addition,
             user_id=user.id,
-            word_token_id=new_token.id
+            word_token_id=new_token.id,
+            order_id = new_token.order_id
         ))
 
         # Update the contexts
@@ -804,6 +811,7 @@ class WordToken(db.Model):
             WordToken.order_id > self.order_id
         )).update({WordToken.order_id: WordToken.order_id - 1})
 
+        # Update
         # Record the change
         db.session.add(TokenHistory(
             corpus=corpus.id,
@@ -811,8 +819,10 @@ class WordToken(db.Model):
             old=self.form,
             action_type=TokenHistory.TYPES.Deletion,
             user_id=user.id,
-            word_token_id=self.id
+            #word_token_id=self.id,
+            order_id = self.order_id
         ))
+
 
         # Update the contexts
         self.update_context_around(corpus, delete=self.id)
@@ -956,7 +966,7 @@ class WordToken(db.Model):
                 )
             )
         if group_by is True:
-            return query.group_by(retrieve_fields[0])
+            return query.group_by(*retrieve_fields)
         return query
 
     @staticmethod
@@ -1085,7 +1095,7 @@ class WordToken(db.Model):
                 order_id=i+1  # Asked by JB Camps...
             )
             for k in ("form",):
-                validate_length(k, wt[k], {"form": 64})
+                validate_length(k, wt[k], {"form": 128})
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
@@ -1343,11 +1353,12 @@ class TokenHistory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete='SET NULL'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     action_type = db.Column(db.Enum(TYPES), nullable=False)
     new = db.Column(db.String(100), nullable=True)
     old = db.Column(db.String(100), nullable=True)
+    order_id = db.Column(db.Integer, nullable=True)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship(User, lazy='select')
@@ -1357,8 +1368,8 @@ class CorpusCustomDictionary(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'), nullable=False)
-    label = db.Column(db.String(64), nullable=False)
-    secondary_label = db.Column(db.String(64))
+    label = db.Column(db.String(128), nullable=False)
+    secondary_label = db.Column(db.String(128))
     category = db.Column(db.String(10), nullable=False)
 
     search_index = db.Index("ccd-search", "corpus", "label", "secondary_label", "category")
@@ -1449,6 +1460,8 @@ class CorpusCustomDictionary(db.Model):
                     )
                 )
         if group_by is True:
+            if db.session.get_bind().dialect.name == "postgresql":
+                return query.group_by(*retrieve_fields)
             return query.group_by(retrieve_fields[0])
 
         return query
@@ -1457,16 +1470,17 @@ class CorpusCustomDictionary(db.Model):
 class ChangeRecord(db.Model):
     """ A change record keep track of lemma, POS or morph that have been changed for a particular form"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete="SET NULL"), nullable=True,
+                              default=None)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    form = db.Column(db.String(64))
-    lemma = db.Column(db.String(64))
-    POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64), nullable=True)
-    lemma_new = db.Column(db.String(64))
-    POS_new = db.Column(db.String(64))
-    morph_new = db.Column(db.String(64))
+    form = db.Column(db.String(128))
+    lemma = db.Column(db.String(128))
+    POS = db.Column(db.String(128))
+    morph = db.Column(db.String(128), nullable=True)
+    lemma_new = db.Column(db.String(128))
+    POS_new = db.Column(db.String(128))
+    morph_new = db.Column(db.String(128))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     word_token = db.relationship('WordToken', lazy='select', viewonly=True)
     user = db.relationship(User, lazy='select', viewonly=True)

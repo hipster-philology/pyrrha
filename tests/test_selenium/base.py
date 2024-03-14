@@ -13,11 +13,15 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from sqlalchemy_utils import database_exists, create_database
 
 from app import db, create_app
 from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists, Favorite, Column
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
+from sqlalchemy.sql import text
+
+from tests.fixtures.wauchier import FULL_CORPUS_LEMMA_ALLOWED
 
 LIVESERVER_TIMEOUT = 1
 
@@ -29,6 +33,20 @@ __all__ = [
     "TokenCorrectBase",
     "TokensSearchThroughFieldsBase"
 ]
+
+
+def get_chrome():
+     # This ensures compatibility with nektos/act
+    if os.path.isfile('/usr/bin/chrome'):
+        return '/usr/bin/chrome'
+    elif os.path.isfile('/usr/bin/google-chrome'):
+        return '/usr/bin/google-chrome'
+    elif os.path.isfile('/usr/bin/chromium-browser'):
+        return '/usr/bin/chromium-browser'
+    elif os.path.isfile('/usr/bin/chromium'):
+        return '/usr/bin/chromium'
+    else:
+        return None
 
 
 class _element_has_count(object):
@@ -55,7 +73,7 @@ class _AuthenticatedUser(flask_login.UserMixin):
 
     def __getattr__(self, item):
         if not self._user:
-            self._user = User.query.get(1)
+            self._user = db.session.get(User, 1)
         return getattr(self._user, item)
 
 
@@ -182,8 +200,12 @@ class TestBase(LiveServerTestCase):
     def create_driver(self, options=None):
         if not options:
             options = Options()
+        # Ajout option remote suite à erreur DevToolsactive port file doesn't exist
+        options.add_argument("--remote-debugging-port=9222")
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
+        options.add_argument('--no-sandbox')   # This ensures compatibility with nektos/act
+        options.binary_location = get_chrome()
 
         options.set_capability("goog:loggingPrefs", {'browser': 'ALL'})
         self.driver = webdriver.Chrome(options=options)
@@ -196,10 +218,24 @@ class TestBase(LiveServerTestCase):
 
     def setUp(self):
         """Setup the test driver and create test users"""
+        if not database_exists(db.engine.url):
+            create_database(db.engine.url)
         db.session.commit()
         db.drop_all()
         db.create_all()
         db.session.commit()
+
+        """if db.session.get_bind().dialect.name == "postgresql":
+                    lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
+                    psql_locale = lc_messages_query.fetchone()[0]
+                    if not psql_locale.startswith("en"):
+                        # ToDo: add an option in config.py to check something such as app.config["FORCE_PSQL_EN_LOCALE"] (with default on True)
+                        logging.warn(f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
+                        try:
+                            db.session.execute(text("SET lc_messages TO 'en_US';"))
+                            db.session.commit()
+                        except Exception as E:
+                            logging.warn(str(E))"""
 
         # add default roles & admin user
         Role.add_default_roles()
@@ -255,6 +291,10 @@ elit
                     self._process.terminate()
 
     def tearDown(self):
+        # https://stackoverflow.com/questions/66876181/how-do-i-close-a-flask-sqlalchemy-connection-that-i-used-in-a-thread/67077811#67077811
+        if self.db.engine.dialect.name == "postgresql":
+            db.session.close()
+            db.engine.dispose()
         self.driver.quit()
 
     def add_n_corpora(self, n_corpus: int, **kwargs):
@@ -285,18 +325,17 @@ elit
         :returns: temporary example file
         :rtype: NamedTemporaryFile
         """
-        fp = tempfile.NamedTemporaryFile("w", delete=False)
-        csv.writer(fp, delimiter="\t").writerows(
-            (
-                ("form", "lemma", "POS", "morph"),
-                ("SOIGNORS", "seignor", "NOMcom", "NOMB.=p|GENRE=m|CAS=n")
-            )
-        )
-        fp.close()
+        path = os.path.dirname(os.path.abspath(__file__))
+        file_test = os.path.join(path, "test.csv")
+        with open(file_test, "wt") as fp:
+            fp_writer = csv.writer(fp, delimiter=",")
+            fp_writer.writerow(['form', 'lemma', 'POS', 'morph'])
+            fp_writer.writerow(['SOIGNORS', 'seignor', 'NOMcom', 'NOMB.=p|GENRE=m|CAS=n'])
         return fp
 
-    def addCorpus(self, corpus, *args, **kwargs):
-        corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
+
+    def addCorpus(self, corpus, cl=True, *args, **kwargs):
+        corpus = add_corpus(corpus.lower(), db, cl, *args, **kwargs)
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         self.driver.get(self.get_server_url())
@@ -373,6 +412,14 @@ elit
             url = url_for(*args, **kwargs)  # Get the URL
             url = url.replace('://localhost/', '://localhost:%d/' % (self.app.config["LIVESERVER_PORT"]))
             return url
+
+    def token_dropdown_link(self, tok_id, link):
+        self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))
+        self.driver_find_element_by_id("dd_t" + str(tok_id)).click()
+        self.driver.implicitly_wait(2)
+        dd = self.driver_find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
+        self.element_find_element_by_partial_link_text(dd, link).click()
+        self.driver.implicitly_wait(2)
 
 
 class TokenCorrectBase(TestBase):
@@ -480,7 +527,7 @@ class TokenCorrectBase(TestBase):
         )
 
         return (
-            self.db.session.query(WordToken).get(int(id_row)),
+            self.db.session.get(WordToken, int(id_row)),
             self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
@@ -554,7 +601,7 @@ class TokenCorrectBase(TestBase):
         )
 
         return (
-            self.db.session.query(WordToken).get(int(id_row)),
+            self.db.session.get(WordToken, int(id_row)),
             self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
@@ -666,12 +713,11 @@ class TokensSearchThroughFieldsBase(TestBase):
         db.session.add(new_token)
         db.session.commit()
 
-    def search(self, form="", lemma="", pos="", morph=""):
-
+    def search(self, form="", lemma="", pos="", morph="", case_insensitivity=False):
         self.go_to_search_tokens_page(TokensSearchThroughFieldsBase.CORPUS_ID, as_callback=False)
-
         self.fill_filter_row(form, lemma, pos, morph)
-
+        if case_insensitivity:
+            self.driver_find_element_by_id('caseBox').click()
         self.driver_find_element_by_id("submit_search").click()
 
         result = []

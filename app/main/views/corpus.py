@@ -120,7 +120,12 @@ def corpus_new():
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
-                if str(e.orig) == "UNIQUE constraint failed: corpus.name":
+                flash(str(e.orig).lower())
+                if db.session.get_bind().dialect.name == "postgresql":
+                    unique_constraint = 'duplicate key value violates unique constraint "corpus_name_key"'
+                else:
+                    unique_constraint = "unique constraint failed: corpus.name"
+                if unique_constraint in str(e.orig).lower():
                     flash("You have already a corpus going by the name {}".format(request.form.get("name")),
                           category="error")
                 return error()

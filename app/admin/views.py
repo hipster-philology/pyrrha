@@ -127,7 +127,7 @@ def change_account_type(user_id):
               'another administrator to do this.', 'danger')
         return redirect(url_for('admin.user_info', user_id=user_id))
 
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if user is None:
         abort(404)
     form = ChangeAccountTypeForm()
@@ -146,7 +146,7 @@ def change_account_type(user_id):
 @admin_required
 def change_account_status(user_id):
     """Change a user's account status (active/inactive)."""
-    user = User.query.get(user_id)
+    user = db.session.get(User, user_id)
     if user is None:
         abort(404)
 

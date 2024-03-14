@@ -7,8 +7,12 @@ from flask_login import LoginManager
 from flask_mail import Mail
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from flaskext.markdown import Markdown
 from flask_babel import Babel
+from sqlalchemy.engine import Engine
+from .ext_config import get_locale
+from .markdown_ext import Markdown
+from sqlite3 import Connection as SQLite3Connection
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -37,7 +41,16 @@ def create_app(config_name="dev"):
         app.config.from_object(config)
     else:
         app.config.from_object(config[config_name])
-        
+
+    # SQLite does not perform CASE SENSITIVE LIKEs by default.
+    if app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:"):
+        @db.event.listens_for(Engine, "connect")
+        def _set_sqlite_case_insensitive_pragma(dbapi_con, connection_record):
+            """ This ensures that SQLite is not case-insensitive when using LIKEs"""
+            if isinstance(dbapi_con, SQLite3Connection):
+                dbapi_con.execute("PRAGMA case_sensitive_like=ON;")
+                dbapi_con.execute("PRAGMA foreign_keys=ON;")
+
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
     config[config_name].init_app(app)
@@ -49,7 +62,7 @@ def create_app(config_name="dev"):
     #csrf.init_app(app)
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
-    babel.init_app(app)
+    babel.init_app(app, locale_selector=get_locale)
 
     # Register Jinja template functions
     from .main import main as main_blueprint
@@ -66,8 +79,6 @@ def create_app(config_name="dev"):
 
     from .control_lists import control_lists_bp
     app.register_blueprint(control_lists_bp)
-
-    from .ext_config import get_locale
 
     return app
 

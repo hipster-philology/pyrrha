@@ -55,7 +55,7 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(64), index=True)
     last_name = db.Column(db.String(64), index=True)
     email = db.Column(db.String(64), unique=True, index=True)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(162))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     locale = db.Column(db.String(10), default="en", nullable=True)
 
@@ -195,7 +195,6 @@ class User(UserMixin, db.Model):
         :return:
         """
         default_user = User(
-            id=1,
             first_name="admin",
             last_name="admin",
             email="ppa-admin@ppa.fr",
@@ -222,5 +221,5 @@ login_manager.anonymous_user = AnonymousUser
 @login_manager.user_loader
 def load_user(user_id):
     db.session.rollback()
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 

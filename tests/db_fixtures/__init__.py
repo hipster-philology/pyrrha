@@ -4,6 +4,7 @@ from . import priapees
 import copy
 import unidecode
 from app.models.corpus import WordToken
+from sqlalchemy.sql import text
 
 
 DB_CORPORA = {
@@ -55,6 +56,7 @@ def add_control_lists(
     :param with_allowed_morph: Add allowed Morph to db
     :param partial_allowed_morph: Restrict to first few Morphs
     """
+
     cl = copy.deepcopy(DB_CORPORA[corpus]["control_list"])
     db.session.add(cl)
     db.session.commit()
@@ -83,11 +85,25 @@ def add_control_lists(
             z.label_uniform = unidecode.unidecode(z.label_uniform)
         db.session.add(z)
     db.session.commit()
+    
+    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
+    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(
+            text("""SELECT setval(
+            pg_get_serial_sequence('control_lists', 'id'),
+            coalesce(max(id)+1, 1),
+            false
+            ) FROM control_lists;
+            """)
+        )
+        db.session.commit()
+        
     return cl
 
 
 def add_corpus(
-        corpus, db, with_token=True, tokens_up_to=None,
+        corpus, db, cl=True, with_token=True, tokens_up_to=None,
         with_allowed_lemma=False, partial_allowed_lemma=False,
         with_allowed_pos=False, partial_allowed_pos=False,
         with_allowed_morph=False, partial_allowed_morph=False,
@@ -107,15 +123,16 @@ def add_corpus(
     :param partial_allowed_morph: Restrict to first few Morphs
     :param with_delimiter: Add delimiters to the corpus
     """
-    add_control_lists(
-        corpus, db,
-        with_allowed_lemma=with_allowed_lemma,
-        partial_allowed_lemma=partial_allowed_lemma,
-        with_allowed_pos=with_allowed_pos,
-        partial_allowed_pos=partial_allowed_pos,
-        with_allowed_morph=with_allowed_morph,
-        partial_allowed_morph=partial_allowed_morph
-    )
+    if cl:
+        add_control_lists(
+            corpus, db,
+            with_allowed_lemma=with_allowed_lemma,
+            partial_allowed_lemma=partial_allowed_lemma,
+            with_allowed_pos=with_allowed_pos,
+            partial_allowed_pos=partial_allowed_pos,
+            with_allowed_morph=with_allowed_morph,
+            partial_allowed_morph=partial_allowed_morph
+        )
     corpus_object = copy.deepcopy(DB_CORPORA[corpus]["corpus"])
     DELIMITER = "____"
 
@@ -149,4 +166,18 @@ def add_corpus(
             index += 1
 
     db.session.commit()
+    
+    # When we use prefilled ID values, PSQL engines do not update their autoincrement "registry"
+    #   (for the lack of a better word). This results in future insertion to raise errors, because ID 1 or ID 2 are already used.
+    if db.engine.dialect.name == "postgresql":
+        db.session.execute(
+            text("""SELECT setval(
+            pg_get_serial_sequence('corpus', 'id'),
+            coalesce(max(id)+1, 1),
+            false
+            ) FROM corpus;
+            """)
+        )
+        db.session.commit()
+
     return corpus_object

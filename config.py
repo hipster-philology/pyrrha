@@ -40,6 +40,9 @@ class Config:
     # Lemmatizer (until Deucalion client)
     LEMMATIZERS = []
 
+    # Change automatically the Postgresql instance language if not english
+    FORCE_PSQL_EN_LOCALE = True
+
     @staticmethod
     def init_app(app):
         pass
@@ -49,8 +52,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     ASSETS_DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
-    #SQLALCHEMY_DATABASE_URI = "postgres://postgres:mysecretpassword@172.17.0.2:5432/postgres"
+        "postgresql://user:pwd@localhost:5432/data-dev"
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Email
@@ -75,11 +77,10 @@ class DevelopmentConfig(Config):
     BABEL_TRANSLATION_DIRECTORIES = os.path.join(os.path.dirname(__file__), "translations")
 
 
-class TestConfig(Config):
+class BaseTestConfig(Config):
+    """Test configuration base class."""
     DEBUG = True
     ASSETS_DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Disable CSRF for login purpose
@@ -101,9 +102,18 @@ class TestConfig(Config):
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
 
+class SQLiteTestConfig(BaseTestConfig):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
+
+
+class PostgreSQLTestConfig(BaseTestConfig):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'postgresql:///data-test'
+
 
 config = {
     "dev": DevelopmentConfig,
     "prod": Config,
-    "test": TestConfig
+    "test": PostgreSQLTestConfig if os.environ.get("TEST_DBMS", "sqlite").lower() == "postgresql" else SQLiteTestConfig
 }

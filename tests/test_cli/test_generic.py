@@ -63,7 +63,7 @@ class TestGenericScript(TestCase):
         with self.app.app_context():
             role_user = Role.query.filter(Role.name == 'User').first()
             self.assertIsNotNone(role_user)
-            user = User.query.get(TEST_USER_ID)
+            user = db.session.get(User, TEST_USER_ID)
             self.assertEqual(user.role_id, role_user.id)
         
         response = self.invoke(["edit-user", f"{TEST_USER_EMAIL}", "--role", "Administrator"])
@@ -71,7 +71,7 @@ class TestGenericScript(TestCase):
         with self.app.app_context():
             role_administrator = Role.query.filter(Role.name == 'Administrator').first()
             self.assertIsNotNone(role_administrator)
-            user = User.query.get(TEST_USER_ID)
+            user = db.session.get(User, TEST_USER_ID)
             self.assertEqual(user.role_id, role_administrator.id)
 
     def test_edit_user_should_set_role_to_administrator(self):
@@ -101,7 +101,7 @@ class TestGenericScript(TestCase):
         with self.app.app_context():
             role_user = Role.query.filter(Role.name == 'User').first()
             self.assertIsNotNone(role_user)
-            user = User.query.get(TEST_USER_ID)
+            user = db.session.get(User, TEST_USER_ID)
             self.assertEqual(user.role_id, role_user.id)
         
         response = self.invoke(["edit-user", f"{TEST_USER_ID}", "--role", "Administrator"])
@@ -109,7 +109,7 @@ class TestGenericScript(TestCase):
         with self.app.app_context():
             role_administrator = Role.query.filter(Role.name == 'Administrator').first()
             self.assertIsNotNone(role_administrator)
-            user = User.query.get(TEST_USER_ID)
+            user = db.session.get(User, TEST_USER_ID)
             self.assertEqual(user.role_id, role_administrator.id)
 
 
@@ -138,13 +138,13 @@ class TestGenericScript(TestCase):
             db.session.commit()
 
         with self.app.app_context():
-            user = User.query.get(TEST_USER_ID)
+            user = db.session.get(User, TEST_USER_ID)
             self.assertFalse(user.confirmed)
 
         response = self.invoke(["edit-user", f"{TEST_USER_ID}", "--confirm-mail"])
 
         with self.app.app_context():
-            user = User.query.get(TEST_USER_ID)
+            user = db.session.get(User, TEST_USER_ID)
             self.assertTrue(user.confirmed)
 
     def test_db_create(self):

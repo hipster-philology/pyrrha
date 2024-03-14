@@ -2,10 +2,14 @@ from flask import request, jsonify, url_for, abort, render_template, current_app
     stream_with_context
 from flask_login import current_user, login_required
 from slugify import slugify
-from sqlalchemy.sql.elements import or_, and_, not_
+from sqlalchemy.sql.elements import or_, and_
+from sqlalchemy.sql.expression import not_
 from sqlalchemy import func
 import math
 from csv import DictWriter
+from io import StringIO
+from itertools import product
+from typing import Dict, Optional, List, Tuple
 
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
@@ -14,10 +18,7 @@ from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark, C
 from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
 from ...utils.pagination import int_or
 from ...utils.tsv import TSV_CONFIG, stream_tsv
-from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
-from io import StringIO
-from itertools import product
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
@@ -270,47 +271,59 @@ def tokens_search_through_fields(corpus_id):
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
+    # test suppression:
     if not corpus.has_access(current_user):
         abort(403)
-
+    # nom des colonnes disponibles pour le corpus (POS, form, etc)
     columns = tuple(["form"] + [
         col if col == "POS" else col.lower()
         for col in corpus.get_columns_headings()
     ])
 
-    input_values = {}
+    input_values: Dict[str, Optional[str]] = {}
 
-    # make a dict with values splitted for each OR operator
-    fields = {}
-    source_dict = request.form if request.method == "POST" else request.args
+    # make a dict with values split for each OR operator
+    fields: Dict[str, List[str]] = {}
+    source_dict: Dict[str, str] = request.form if request.method == "POST" else request.args
 
     for name in columns:
-        value = strip_or_none(source_dict.get(name))
+        value: Optional[str] = strip_or_none(source_dict.get(name))
         input_values[name] = value
 
         # split values with the '|' OR operator but keep escaped '\|' ones
-        fields[name] = prepare_search_string(value) if value is not None else ""
+        if value:
+            fields[name] = prepare_search_string(value)
 
     # all search combinations
-    search_branches = [
-        dict(prod)
-        for prod in product(*[
+    flat_fields: List[List[Tuple[str, str]]] = [
             [
                 (field, value)
                 for value in fields[field]
             ]
             for field in fields
-        ])
-    ]
+        ]
+    # Création combinaison de recherches possibles pipe product
+    # If source_dict = {"POS": "NOM|VER", "lemma": "mang*"}
+    # Then flat_fields = [[("POS", "NOM"), ("POS", "VER")], [("lemma", "mang*")]]
+    # And search_branches :
+    #    [{"POS": "NOM", "lemma": "mang*"}, {"POS": "VER", "lemma": "mang*"}]
+    # * => flat_fields = [["a", "b"], ["c"]]
+    # product(*flat_fields) == product(flat_fields[0], flat_fields[1])
+    search_branches: List[Dict[str, str]] = [dict(prod) for prod in product(*flat_fields)]
 
     value_filters = []
+    case_insensitive = True
+    if 'caseBox' in source_dict:
+        case_insensitive = False
     # for each branch filter (= OR clauses if any)
     for search_branch in search_branches:
+        # filtre minimal = bon corpus (id)
         branch_filters = [WordToken.corpus == corpus_id]
 
         # for each field (lemma, pos, form, morph)
         for name, value in search_branch.items():
-            branch_filters.extend(column_search_filter(getattr(WordToken, name), value))
+            # transformation couple clé valeur en filtre SQLalchemy
+            branch_filters.extend(column_search_filter(getattr(WordToken, name), value, case_sensitive=case_insensitive))
 
         value_filters.append(branch_filters)
 
