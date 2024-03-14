@@ -170,3 +170,12 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
         # test combination with an other field
         rows = self.search(form="Martins|mere", lemma="martin|mere")
         self.assertTrue(len(rows) == 3)
+
+    def test_search_with_case_sensitivy(self):
+        # search with and without case sensitivity
+        rows_or_sensitivy = self.search(form = "seint|seinz|Seinz|seinte")
+        # only the sein* without a capital letter are selected without case=True
+        rows_sensitivity_wildcard = self.search(form="sein*")
+        # case insensitivity is activated, all the sein* are taken into account, including the one with capital letter
+        rows_insensitivity_wildcard = self.search(form="sein*", case=True)
+        self.assertTrue(len(rows_or_sensitivy)==len(rows_insensitivity_wildcard) and len(rows_or_sensitivy)==len(rows_sensitivity_wildcard)+1)
