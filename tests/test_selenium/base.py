@@ -37,17 +37,16 @@ __all__ = [
 
 def get_chrome():
      # This ensures compatibility with nektos/act
-    if os.path.isfile('/usr/bin/chromium-browser'):
-        return '/usr/bin/chromium-browser'
-    elif os.path.isfile('/usr/bin/chromium'):
-        return '/usr/bin/chromium'
-    elif os.path.isfile('/usr/bin/chrome'):
+    if os.path.isfile('/usr/bin/chrome'):
         return '/usr/bin/chrome'
     elif os.path.isfile('/usr/bin/google-chrome'):
         return '/usr/bin/google-chrome'
+    elif os.path.isfile('/usr/bin/chromium-browser'):
+        return '/usr/bin/chromium-browser'
+    elif os.path.isfile('/usr/bin/chromium'):
+        return '/usr/bin/chromium'
     else:
         return None
-
 
 
 class _element_has_count(object):
@@ -413,6 +412,14 @@ elit
             url = url_for(*args, **kwargs)  # Get the URL
             url = url.replace('://localhost/', '://localhost:%d/' % (self.app.config["LIVESERVER_PORT"]))
             return url
+
+    def token_dropdown_link(self, tok_id, link):
+        self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))
+        self.driver_find_element_by_id("dd_t" + str(tok_id)).click()
+        self.driver.implicitly_wait(2)
+        dd = self.driver_find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
+        self.element_find_element_by_partial_link_text(dd, link).click()
+        self.driver.implicitly_wait(2)
 
 
 class TokenCorrectBase(TestBase):

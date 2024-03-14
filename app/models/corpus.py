@@ -633,7 +633,7 @@ class WordToken(db.Model):
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
-    _changes = db.relationship("ChangeRecord", cascade="all,delete")
+    _changes = db.relationship("ChangeRecord")
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
@@ -1470,8 +1470,9 @@ class CorpusCustomDictionary(db.Model):
 class ChangeRecord(db.Model):
     """ A change record keep track of lemma, POS or morph that have been changed for a particular form"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete="SET NULL"), nullable=True)
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete="SET NULL"), nullable=True,
+                              default=None)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     form = db.Column(db.String(128))
     lemma = db.Column(db.String(128))

@@ -1,8 +1,10 @@
-from flask import request, url_for
-from json import dumps
 import math
-
 import locale
+from typing import Optional
+from json import dumps
+
+from flask import request, url_for
+
 from . import main
 from ..models import WordToken
 
@@ -27,7 +29,9 @@ def json(obj):
 
 
 @main.app_template_filter("get_token_uri")
-def get_token_uri(token: WordToken):
+def get_token_uri(token: Optional[WordToken]):
+    if token is None:
+        return "#"
     per_page = request.args.get("per_page", 100, int)
     page = int(math.ceil(token.order_id / 100))
     return url_for(

@@ -6,14 +6,6 @@ class TestTokenEdit(TestBase):
     """ Check token form edition, token update, token delete
     """
 
-    def dropdown_link(self, tok_id, link):
-        self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))
-        self.driver_find_element_by_id("dd_t"+str(tok_id)).click()
-        self.driver.implicitly_wait(2)
-        dd = self.driver_find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
-        self.element_find_element_by_partial_link_text(dd, link).click()
-        self.driver.implicitly_wait(2)
-
     def change_form_value(self, value):
         inp = self.driver_find_element_by_css_selector("input[name='form']")
         inp.clear()
@@ -46,7 +38,7 @@ class TestTokenEdit(TestBase):
         """ [TokenEdit] Check that we are able to edit the form of a token """
         self.addCorpus("wauchier")
         # First edition
-        self.dropdown_link(5, "Edit")
+        self.token_dropdown_link(5, "Edit")
         self.change_form_value("oulala")
         self.driver_find_element_by_css_selector("button[type='submit']").click()
         self.driver.implicitly_wait(5)
@@ -69,7 +61,7 @@ class TestTokenEdit(TestBase):
             "History should be saved"
         )
         # Second edition
-        self.dropdown_link(8, "Edit")
+        self.token_dropdown_link(8, "Edit")
         self.change_form_value("Oulipo")
         self.driver_find_element_by_css_selector("button[type='submit']").click()
         self.driver.implicitly_wait(5)
@@ -96,7 +88,7 @@ class TestTokenEdit(TestBase):
         """ [TokenEdit] Check that we are able to add tokens"""
         self.addCorpus("wauchier")
         # First edition
-        self.dropdown_link(5, "Add")
+        self.token_dropdown_link(5, "Add")
         self.change_form_value("oulala")
         self.driver_find_element_by_css_selector("button[type='submit']").click()
         self.driver.implicitly_wait(5)
@@ -120,7 +112,7 @@ class TestTokenEdit(TestBase):
             "History should be saved"
         )
         # Second edition
-        self.dropdown_link(8, "Add")
+        self.token_dropdown_link(8, "Add")
         self.change_form_value("Oulipo")
         self.driver_find_element_by_css_selector("button[type='submit']").click()
         self.driver.implicitly_wait(5)
@@ -152,7 +144,7 @@ class TestTokenEdit(TestBase):
         original_set = self.select_context_around(5)
 
         # First we add a token
-        self.dropdown_link(5, "Add")
+        self.token_dropdown_link(5, "Add")
         self.change_form_value("oulala")
         self.driver_find_element_by_css_selector("button[type='submit']").click()
         self.driver.implicitly_wait(5)
@@ -177,7 +169,7 @@ class TestTokenEdit(TestBase):
         )
 
         # Then we remove it
-        self.dropdown_link(6, "Delete")
+        self.token_dropdown_link(6, "Delete")
         self.change_form_value("oulala")
         self.driver_find_element_by_css_selector("button[type='submit']").click()
         self.driver.implicitly_wait(5)
