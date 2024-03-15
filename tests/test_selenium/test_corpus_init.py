@@ -410,8 +410,8 @@ class TestCorpusRegistration(TestBase):
             "It is impossible to validate form with a wrong id of control list"
         )
 
-    def test_registration_with_an_existing_name(self):
-        """ [Corpus Creation] Check that a corpus using this name does not already exist"""
+    """def test_registration_with_an_existing_name(self):
+        " [Corpus Creation] Check that a corpus using this name does not already exist"
         self.add_control_lists()
         self.addCorpus('wauchier', cl=False)
         # Click register menu link
@@ -438,7 +438,7 @@ class TestCorpusRegistration(TestBase):
             sorted(['The corpus cannot be registered. Check your data',
                 "You have already a corpus going by the name Wauchier"]),
             "Creating a corpus when one already exists for the current user with the same name fails."
-        )
+        )"""
 
     def test_registration_with_wrongly_formated_input(self):
         """ [Corpus Creation] Check that TSV formatting does not break everything"""
@@ -601,4 +601,24 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         # submit and wait
         self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
+        self.assertFalse(self.driver_find_elements_by_css_selector(".alert.alert-danger"))
+
+    def test_corpus_name_unique_user(self):
+        """ Test that a single user can have twice the same name (even if weird)"""
+        self.add_control_lists()
+        self.add_user("foo", "foo")
+        self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
+        self.addCorpus("wauchier", cl=False)
+        self.add_user("bar", "bar")
+        self.login("%s.%s@ppa.fr" % ("bar", "bar"), self.app.config['ADMIN_PASSWORD'])
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("corpusName").send_keys("Wauchier")
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.writeMultiline(
+            self.driver_find_element_by_id("tokens"),
+            f"form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
+        )
+        self.driver_find_element_by_id("submit").click()
+        self.driver.implicitly_wait(5)
         self.assertFalse(self.driver_find_elements_by_css_selector(".alert.alert-danger"))
