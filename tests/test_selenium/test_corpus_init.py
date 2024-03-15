@@ -604,6 +604,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.assertFalse(self.driver_find_elements_by_css_selector(".alert.alert-danger"))
 
     def test_corpus_name_unique_user(self):
+        """ Test that a single user can have twice the same name (even if weird)"""
         self.add_control_lists()
         self.add_user("foo", "foo")
         self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
@@ -614,7 +615,6 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("corpusName").send_keys("Wauchier")
         self.driver_find_element_by_id("label_checkbox_reuse").click()
         self.driver_find_element_by_id("control_list_select").click()
-        self.driver.get_screenshot_as_file("/home/jjanes/Documents/pyrrha/img1.png")
         self.writeMultiline(
             self.driver_find_element_by_id("tokens"),
             f"form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
