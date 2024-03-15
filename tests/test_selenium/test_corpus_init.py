@@ -620,6 +620,5 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             f"form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
         )
         self.driver_find_element_by_id("submit").click()
-        self.driver.get_screenshot_as_file('/home/jjanes/Documents/pyrrha/img.png')
         self.driver.implicitly_wait(5)
         self.assertFalse(self.driver_find_elements_by_css_selector(".alert.alert-danger"))
