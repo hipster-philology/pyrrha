@@ -1,7 +1,7 @@
 Pyrrha
 ======
 
-[![Coverage Status](https://coveralls.io/repos/github/hipster-philology/ppyrrha/badge.svg?branch=master)](https://coveralls.io/github/hipster-philology/pyrrha?branch=dev)
+[![Coverage Status](https://coveralls.io/repos/github/hipster-philology/pyrrha/badge.svg?branch=dev)](https://coveralls.io/github/hipster-philology/pyrrha?branch=dev)
 [![Test library](https://github.com/hipster-philology/pyrrha/actions/workflows/test.yml/badge.svg?branch=dev)](https://github.com/hipster-philology/pyrrha/actions/workflows/test.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2325427.svg)](https://doi.org/10.5281/zenodo.2325427)
 
