@@ -4,9 +4,19 @@ authors:
   - family-names: Clérice
     given-names: Thibault
     orcid: https://orcid.org/0000-0003-1852-9204
+  - family-names: Janès
+    given-names: Juliette
   - family-names: Pilla
     given-names: Julien
+  - family-names: Camps
+    given-names: Jean-Baptiste
+  - family-names: Pinche
+    given-names: Ariane
+  - family-names: Gille-Levenson
+    given-names: Matthias
+  - family-names: Jolivet
+    given-names: Vincent
 title: "Pyrrha, a language-independent post-correction app for POS-tagging and lemmatization"
-version: 3.0.0
+version: 4.0.0
 doi: 10.5281/zenodo.2325427
-date-released: 2021-07-29
+date-released: 2024-03-19

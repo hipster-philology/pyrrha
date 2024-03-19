@@ -16,21 +16,20 @@ please cite the software if you use it using the following informations:
 
 ```latex
 @software{thibault_clerice_2019_3524771,
-  author       = {Clérice, Thibault and Pilla, Julien and Camps, Jean-Baptiste and Jolivet, Vincent and Pinche, Ariane},
+  author       = {Clérice, Thibault and Janès, Juliette and Pilla, Julien and Camps, Jean-Baptiste and Pinche, Ariane and Gille-Levenson, Matthias and Jolivet, Vincent},
   title        = {Pyrrha, A language independant post correction app for POS and lemmatization},
   month        = nov,
-  year         = 2019,
+  year         = 2024,
   publisher    = {Zenodo},
-  version      = {Any Version},
+  version      = {4.0.0},
   doi          = {10.5281/zenodo.2325427},
   url          = {https://doi.org/10.5281/zenodo.2325427}
 }
 ```
 
-# Credits
+# They used Pyrrha
 
-This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
-It can connect to lemmatization service like [Deucalion](https://github.com/chartes/deucalion-chartes).
+You can find a set of projects and papers that used us in [the `examples.bib` file](examples.bib).
 
 ## Update the translations
 
