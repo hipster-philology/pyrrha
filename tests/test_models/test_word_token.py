@@ -74,3 +74,23 @@ class TestWordToken(TestModels):
         self.assertEqual(left_context[3], form_list[13]["form"])
         self.assertEqual(right_context[0], form_list[15]["form"])
         self.assertEqual(right_context[3], form_list[18]["form"])
+
+    def test_remove_corpus(self):
+        self.addCorpus("wauchier")
+        self.assertEqual(Corpus.query.get(1).name, "Wauchier", "The corpus exists")
+        self.db.session.delete(Corpus.query.get(1))
+        self.db.session.commit()
+        self.assertEqual(Corpus.query.get(1), None, "The corpus does not exist")
+
+    def test_remove_corpus_with_custom_dict(self):
+        self.addCorpus("wauchier")
+        corpus: Corpus = Corpus.query.get(1)
+        self.assertEqual(corpus.name, "Wauchier", "The corpus exists")
+        # Add connections
+        corpus.custom_dictionaries_update("lemma", "test")
+        self.assertEqual(corpus.get_custom_dictionary("lemma", formatted=True), "test")
+        # Delete the corpus
+        self.db.session.delete(Corpus.query.get(1))
+        self.db.session.commit()
+        self.assertEqual(Corpus.query.get(1), None, "The corpus does not exist")
+
