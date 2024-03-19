@@ -244,7 +244,6 @@ $(document).ready(function() {
         var formData = new FormData();
         formData.append("data", text_data.value);
 
-
         // Set up our HTTP request
         var xhr = new XMLHttpRequest();
         var update = function(xhr) {
@@ -255,14 +254,16 @@ $(document).ready(function() {
         };
         // Setup our listener to process compeleted requests
         xhr.onreadystatechange = function () {
-
             // Only run if the request is complete
-            if (xhr.readyState < 3 || xhr.readyState > 4) return null;
+            if (typeof xhr.status !== "number") return null;
+
+            if (xhr.readyState < 3) return null;
 
             if (xhr.readyState === 3) {
                 update(xhr);
                 return null;
             }
+            if (xhr.status === 0) return null;
 
             // Process our return data
             if (xhr.status >= 200 && xhr.status < 300) {

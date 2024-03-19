@@ -105,7 +105,7 @@ class BaseTestConfig(Config):
     LEMMATIZERS = [
         LemmatizerService(
             "Dummy lemmatizer",
-            "http://dummy-uri",
+            "http://localhost:4567/lemma",
             provider="ProviderInstitution",
             ui="someui.com",
             apa="Clérice et al. 2019",
