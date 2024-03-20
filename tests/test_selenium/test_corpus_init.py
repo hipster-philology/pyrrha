@@ -3,8 +3,13 @@ from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
+from selenium.webdriver.support.select import Select
 import csv
 import os
+
+from flask import Flask, request, Response
+from multiprocessing import Process
+from selenium.webdriver.support.wait import WebDriverWait
 
 
 class TestCorpusRegistration(TestBase):
@@ -627,7 +632,6 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         """
         Test that a user can create a corpus and that this corpus has its data well recorded
         """
-
         # Click register menu link
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
@@ -641,7 +645,6 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.assertEqual(details[0].is_displayed(), False, "Nothing should be displayed by default")
 
         # Select a lemmatizer
-        from selenium.webdriver.support.select import Select
         s = Select(self.driver_find_elements_by_css_selector("#language-model")[0])
         s.select_by_visible_text("Dummy lemmatizer")
         self.assertEqual(details[0].is_displayed(), True, "Something should be displayed")
@@ -652,9 +655,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.assertEqual(details[0].is_displayed(), False, "Nothing should be now")
 
     def test_lemmatization_service_runs(self):
-        from flask import Flask, request, Response
-        from threading import Thread
-
+        # Create a second fixture app
         app = Flask("fixture")
 
         @app.route("/lemma", methods=["POST"])
@@ -670,9 +671,9 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
                     'Access-Control-Allow-Origin': "*"
                 }
             )
-
-        thread = Thread(target=app.run, daemon=True, kwargs=dict(host="localhost", port="4567"))
-        thread.start()
+        # Start it
+        second_app = Process(target=app.run, daemon=True, kwargs=dict(host="localhost", port="4567"))
+        second_app.start()
 
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
@@ -681,18 +682,19 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("corpusName").send_keys("Test")
         self.writeMultiline(self.driver_find_element_by_id("tokens"), "Je suis")
 
-        from selenium.webdriver.support.select import Select
+        # Select the lemmatizer
         s = Select(self.driver_find_elements_by_css_selector("#language-model")[0])
         s.select_by_index(1)
         self.driver.implicitly_wait(5)
 
+        # Lemmatize
         self.driver_find_element_by_id("submit-model").click()
 
-        from selenium.webdriver.support.wait import WebDriverWait
-
+        # Wait
         wait = WebDriverWait(self.driver, timeout=5)
         wait.until(lambda x: self.driver_find_element_by_id("tokens-success").is_displayed())
 
+        # Check results
         self.assertEqual(
             self.driver_find_element_by_id("tokens").get_property("value").split("\n"),
             ["token\tlemma", "Je\t0", "suis\t1"]
@@ -704,4 +706,5 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             "Lemmatization happened"
         )
 
-        thread.join(1)
+        # Kill second app
+        second_app.terminate()
