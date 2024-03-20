@@ -72,10 +72,28 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
             <div class="col-md-9">
                 <div class="input-group">
                   <select class="form-control" id="language-model">
-                      {%- for lang, address in lemmatizers %}
-                    <option value="{{ address }}">{{ lang }}</option>
+                      <option selected value="disabled" class="text-muted disabled">{{_('Select a service')}}</option>
+                      {%- for service in lemmatizers %}
+                    <option value="{{ service.uri }}">{{ service.title }}</option>
                       {% endfor -%}
                   </select>
+                  {%- for service in lemmatizers %}
+                    <div class="alert alert-info lemmatizer-details" data-uri="{{service.uri}}" style="display: none;">
+                        {% trans name=service.title, provider=service.provider %}
+                            <em>{{ name }}</em> is a lemmatization service provided by <i>{{ provider }}</i>.<br />
+                        {% endtrans %}
+                        {% if service.ui %}
+                            <em>{{_("If you only want to lemmatize (and not correct data), you can use their user interface here:")}}</em>
+                            <a href="{{service.ui}}">{{service.ui}}</a><br/>
+                        {% endif %}
+                        {{ _("Please cite tools accordingly. You can use the following APA or Bibtex: ")}}
+                        <ul>
+                            <li><em>APA:</em> <code>{{service.apa }}</code></li>
+                            <li><em>BIB:</em> <code style="padding-left: 1em; display: block;">{{service.bibtex}}</code></li>
+                        </ul>
+                    </div>
+                  {% endfor %}
+
                   <div class="input-group-append">
                     <button id="submit-model" class="btn btn-outline-secondary" type="button">{{ _('Lemmatize') }}</button>
                   </div>
@@ -200,7 +218,14 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
 <script type="text/javascript">
 
 $(document).ready(function() {
-
+    $("#language-model").on("change", function (event) {
+        let uri = $("#language-model").val();
+        document.querySelectorAll(".lemmatizer-details").forEach(el => el.style.display = "none");
+        if (uri === "disabled") {
+            return;
+        }
+        document.querySelectorAll(`.lemmatizer-details[data-uri='${uri}']`).forEach(el => el.style.display = "block");
+    });
     $("#submit-model").on("click", function(event) {
         event.preventDefault();
         // Get the parameters
@@ -213,10 +238,11 @@ $(document).ready(function() {
             tokens_fail = document.getElementById("tokens-fail"),
             approximate_count = document.getElementById("tokens-approximate");
 
+        if (uri === "disabled") { return; }
+
         // Create the form
         var formData = new FormData();
         formData.append("data", text_data.value);
-
 
         // Set up our HTTP request
         var xhr = new XMLHttpRequest();
@@ -228,14 +254,16 @@ $(document).ready(function() {
         };
         // Setup our listener to process compeleted requests
         xhr.onreadystatechange = function () {
-
             // Only run if the request is complete
-            if (xhr.readyState < 3 || xhr.readyState > 4) return null;
+            if (typeof xhr.status !== "number") return null;
+
+            if (xhr.readyState < 3) return null;
 
             if (xhr.readyState === 3) {
                 update(xhr);
                 return null;
             }
+            if (xhr.status === 0) return null;
 
             // Process our return data
             if (xhr.status >= 200 && xhr.status < 300) {
