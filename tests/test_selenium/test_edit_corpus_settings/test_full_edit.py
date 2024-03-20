@@ -15,11 +15,11 @@ class TestCorpusSettingsUpdate(TestBase):
                              partial_allowed_pos=False, partial_allowed_morph=False,
                              with_allowed_pos=True, with_allowed_morph=morph)
         self.driver.refresh()
-        self.driver.find_element_by_id("toggle_controllists").click()
-        self.driver.find_element_by_id("dropdown_link_cl_2").click()
-        self.driver.find_element_by_css_selector("header > a").click()
-        self.driver.find_element_by_css_selector(".settings-"+mode).click()
-        return self.driver.find_element_by_id("allowed_values").get_attribute('value')
+        self.driver_find_element_by_id("toggle_controllists").click()
+        self.driver_find_element_by_id("dropdown_link_cl_2").click()
+        self.driver_find_element_by_css_selector("header > a").click()
+        self.driver_find_element_by_css_selector(".settings-"+mode).click()
+        return self.driver_find_element_by_id("allowed_values").get_attribute('value')
 
     def test_edit_allowed_lemma(self):
         """ Ensure editing allowed lemma works """
@@ -60,10 +60,10 @@ vos1"""
         self.assertEqual(allowed_values, original_lemma, "Original allowed lemma should be correctly listed")
         for i in range(20):
             new_allowed_values = list(random.sample(allowed_values.split(), i))
-            self.writeMultiline(self.driver.find_element_by_id("allowed_values"), "\n".join(new_allowed_values))
-            self.driver.find_element_by_id("submit").click()
+            self.writeMultiline(self.driver_find_element_by_id("allowed_values"), "\n".join(new_allowed_values))
+            self.driver_find_element_by_id("submit").click()
             self.assertEqual(
-                self.driver.find_element_by_id("allowed_values").get_attribute('value'),
+                self.driver_find_element_by_id("allowed_values").get_attribute('value'),
                 "\n".join(new_allowed_values),
                 "New values were saved : "+",".join(new_allowed_values)
             )
@@ -77,10 +77,10 @@ vos1"""
         self.assertEqual(allowed_values, original_lemma, "Original allowed lemma should be correctly listed")
         for i in range(20):
             new_allowed_values = list(random.sample(allowed_values.split(","), original_lemma.count(",")))
-            self.writeMultiline(self.driver.find_element_by_id("allowed_values"), ",".join(new_allowed_values))
-            self.driver.find_element_by_id("submit").click()
+            self.writeMultiline(self.driver_find_element_by_id("allowed_values"), ",".join(new_allowed_values))
+            self.driver_find_element_by_id("submit").click()
             self.assertEqual(
-                self.driver.find_element_by_id("allowed_values").get_attribute('value'),
+                self.driver_find_element_by_id("allowed_values").get_attribute('value'),
                 ",".join(new_allowed_values),
                 "New values were saved : "+",".join(new_allowed_values)
             )
@@ -97,11 +97,11 @@ vos1"""
         added = "\nFOO\tBAR"
 
         self.writeMultiline(
-            self.driver.find_element_by_id("allowed_values"),
+            self.driver_find_element_by_id("allowed_values"),
             allowed_values+added
         )
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("submit").click()
 
-        allowed_values = self.driver.find_element_by_id("allowed_values").get_attribute('value')
+        allowed_values = self.driver_find_element_by_id("allowed_values").get_attribute('value')
         self.assertEqual(allowed_values[:len(expected)], expected)
         self.assertEqual(allowed_values[-len(expected_end+added):], expected_end+added)

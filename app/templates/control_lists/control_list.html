@@ -7,36 +7,36 @@
 {% block content %}
     <div>
         <h1>{{control_list.name}}</h1>
-        <h2>Description</h2>
+        <h2>{{ _('Description') }}</h2>
         <p>{{control_list.description or ""}}</p>
 
-        <h2>Bibliography</h2>
+        <h2>{{ _('Bibliography') }}</h2>
         <p>{{(control_list.bibliography or "")| markdown}}</p>
 
 
         {%- if is_owner %}
-            <h2>Information</h2>
-            <p class="text-info">You are an owner of this control list</p>
+            <h2>{{ _('Information') }}</h2>
+            <p class="text-info">{{ _('You are an owner of this control list') }}</p>
             <p>{{ utils.status_badge(control_list.str_public) }}</p>
             <dl>
-                <dt>Owners</dt>
+                <dt>{{ _('Owners') }}</dt>
                 {% for owner_first_name, owner_last_name, owner_id, owner_mail in control_list.owners %}
                     <dd>{{ owner_last_name }}, {{ owner_first_name }} [{{ owner_mail }}]</dd>
                 {% endfor %}
             </dl>
         {% endif -%}
         {%- if can_edit %}
-            <h2>Rewrite</h2>
-            <p class="text-muted">The following pages are made to completely rewrite control lists. Use with caution !</p>
+            <h2>{{ _('Rewrite') }}</h2>
+            <p class="text-muted">{{ _('The following pages are made to completely rewrite control lists. Use with caution !') }}</p>
             <p>
-                <a class="btn btn-warning settings-lemma" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='lemma')}}">Rewrite Lemma List</a>
-                <a class="btn btn-warning settings-POS" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='POS')}}">Rewrite POS List</a>
-                <a class="btn btn-warning settings-morph" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='morph')}}">Rewrite Morphology List</a>
+                <a class="btn btn-warning settings-lemma" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='lemma')}}">{{ _('Rewrite Lemma List') }}</a>
+                <a class="btn btn-warning settings-POS" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='POS')}}">{{ _('Rewrite POS List') }}</a>
+                <a class="btn btn-warning settings-morph" href="{{url_for('.edit', cl_id=control_list.id, allowed_type='morph')}}">{{ _('Rewrite Morphology List') }}</a>
             </p>
         {% endif -%}
         {% if current_user.is_admin() and control_list.str_public != 'public' %}
-            <h2>DANGER ZONE</h2>
-            <p><a class="btn btn-danger" href="{{url_for('.go_public', control_list_id=control_list.id)}}">Make public</a></p>
+            <h2>{{ _('DANGER ZONE') }}</h2>
+            <p><a class="btn btn-danger" href="{{url_for('.go_public', control_list_id=control_list.id)}}">{{ _('Make public') }}</a></p>
         {%  endif %}
     </div>
 {% endblock %}

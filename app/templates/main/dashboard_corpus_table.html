@@ -1,0 +1,37 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/dashboard_macros.html' as dashboard %}
+
+{% block content %}
+    <h1>{{ _('Management of corpora') }}</h1>
+    <div class="container">
+        <table class="table table-hover sortable">
+            <thead>
+                <tr>
+                    <th scope="col">{{ _('Links') }}</th>
+                    <th scope="col">#</th>
+                    <th scope="col">{{ _('Corpus name') }}</th>
+                    <th scope="col">{{ _('Last modified') }}</th>
+                    <th scope="col">{{ _('Users') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for corpus in corpora %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('main.manage_corpus_users', corpus_id=corpus.id) }}"><span class="fa fa-cog" aria-label="Manage"></span></a>
+                        <a href="{{ url_for('main.corpus_get', corpus_id=corpus.id) }}"><span class="fa fa-link" aria-label="Go"></span></a>
+                    </td>
+                    <td>{{ loop.index }}</td>
+                    <td class="name">{{ corpus.name }}</td>
+                    <td>{% if corpus.last_change %}{{ corpus.last_change.created_on.strftime('%Y-%m-%d') }}{% endif %}</td>
+                    <td>{% for user in corpus.users %}{{ user.full_name() }}{% if corpus.users|length > loop.index %}, {% endif %}{% endfor %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block custom_head_tags  %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sortable.min.js') }}"></script>
+{% endblock %}

@@ -1,4 +1,5 @@
 cover/
+flask_app.py
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -8,6 +9,7 @@ here*.png
 # SQLITE
 *.sqlite
 tests/**/*.png
+/*.png
 
 # C extensions
 *.so

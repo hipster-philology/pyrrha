@@ -1,4 +1,6 @@
-
+body {
+    padding-bottom: 2em;
+}
 .table-changed,
 .table-changed > th,
 .table-changed > td {
@@ -204,3 +206,53 @@ https://codepen.io/sergiopedercini/pen/jmKdbj/?source=post_page-----------------
             #statistics > div {
                 margin-bottom: 1em !important;
             }
+/** Folding panel */
+.folded-left-col {
+    width: 50px;
+    flex-grow: initial !important;
+}
+.animated {
+    transition:all 1s;
+}
+.folded-left-col .corpus-menu {
+    display:none;
+}
+.px1 {
+    font-size:0px;
+}
+.menu-horizontal-group > * {
+    margin:5px 1rem;
+}
+.menu-horizontal em {
+    font-weight: bold;
+}
+.menu-horizontal .btn-outline-dark {
+    background-color: #dee2e6;
+}
+.menu-horizontal .btn-outline-dark:hover {
+    background-color: #1b1e21;
+}
+.menu-horizontal .btn-outline-dark.title {
+    font-weight: bold;
+    color: #6d7072;
+}
+.menu-horizontal .title{
+    font-weight: bold;
+    color: #6d7072;
+}
+.menu-horizontal .btn-outline-dark.title:hover {
+    background-color: #dee2e6;
+    cursor: default;
+    color: #6d7072;
+}
+
+.btn-circle {
+    text-align: center;
+    width: 1.5em;
+    height: 1.5em;
+    line-height: 1.5em;
+    font-size: 2em;
+    padding:0;
+    border-radius: .75em;
+    opacity: 80%;
+}

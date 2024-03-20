@@ -11,18 +11,22 @@
         {% block nav %}
             {{ nav.render_nav(current_user, corpora=favorites, control_lists=control_lists) }}
         {%  endblock %}
+        {% if corpus %}
+            <div class="corpus-menu">
+                {{ nav.quick_nav(corpus) }}
+                {{ nav.single_corpus_nav(corpus, current_user=current_user) }}
+            </div>
+        {% endif %}
+
         <div class="container-fluid" id="main-container">
             <div class="row">
-              {%  if corpus or control_list %}
-              <div class="col-lg-2 bg-light" id="left-menu">
-                  {%- if corpus %}
-                      {{ nav.quick_nav(corpus) }}
-                      {{ nav.single_corpus_nav(corpus, current_user=current_user) }}
-                  {% elif control_list %}
+              {%  if control_list %}
+              <div class="col bg-light col-lg-2" id="left-menu">
+                  {%- if control_list %}
                       {{ control_list_macros.nav_control_list(control_list) }}
                   {% endif %}
               </div>
-              <div class="col-lg-10" id="right-column">
+              <div class="col" id="right-column">
               {% else %}
               <div class="col-lg-12">
               {%  endif %}

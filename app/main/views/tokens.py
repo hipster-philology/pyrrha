@@ -1,21 +1,19 @@
-from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response
+from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response, \
+    stream_with_context
 from flask_login import current_user, login_required
 from slugify import slugify
-from sqlalchemy.sql.elements import or_, and_, not_
-from sqlalchemy import func
 import math
 from csv import DictWriter
+from io import StringIO
+from typing import Dict
 
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
-from ... import db
-from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark, CorpusCustomDictionary
-from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
+from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
+from ...utils.forms import string_to_none
 from ...utils.pagination import int_or
 from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
-from io import StringIO
-from itertools import product
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
@@ -201,7 +199,7 @@ def tokens_export(corpus_id):
                 writer.writerow(row)
             output.seek(0)
             return Response(
-                response=stream_tsv(output),
+                response=stream_with_context(stream_tsv(output)),
                 status=200,
                 content_type="text/tab-separated-values",
                 headers={
@@ -212,9 +210,14 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         return Response(
-            stream_template("tei/geste.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
-                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                            delimiter=corpus.delimiter_token),
+            stream_with_context(stream_template(
+                "tei/geste.xml",
+                base=base,
+                tokens=tokens,
+                allowed_columns=allowed_columns,
+                history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                delimiter=corpus.delimiter_token
+            )),
             status=200,
             headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
             mimetype="text/xml"
@@ -223,9 +226,14 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
         return Response(
-            stream_template("tei/TEI.xml", base=base, tokens=tokens, allowed_columns=allowed_columns,
-                            history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
-                            delimiter=corpus.delimiter_token),
+            stream_with_context(stream_template(
+                "tei/TEI.xml",
+                base=base,
+                tokens=tokens,
+                allowed_columns=allowed_columns,
+                history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                delimiter=corpus.delimiter_token
+            )),
             status=200,
             headers={"Content-Disposition": 'attachment; filename="{}.xml"'.format(filename)},
             mimetype="text/xml"
@@ -258,75 +266,20 @@ def tokens_search_through_fields(corpus_id):
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.query.get_or_404(corpus_id)
+    # test suppression:
     if not corpus.has_access(current_user):
         abort(403)
 
-    columns = tuple(["form"] + [
-        col if col == "POS" else col.lower()
-        for col in corpus.get_columns_headings()
-    ])
-
-    input_values = {}
-
-    # make a dict with values splitted for each OR operator
-    fields = {}
-    source_dict = request.form if request.method == "POST" else request.args
-
-    for name in columns:
-        value = strip_or_none(source_dict.get(name))
-        input_values[name] = value
-
-        # split values with the '|' OR operator but keep escaped '\|' ones
-        fields[name] = prepare_search_string(value) if value is not None else ""
-
-    # all search combinations
-    search_branches = [
-        dict(prod)
-        for prod in product(*[
-            [
-                (field, value)
-                for value in fields[field]
-            ]
-            for field in fields
-        ])
-    ]
-
-    value_filters = []
-    # for each branch filter (= OR clauses if any)
-    for search_branch in search_branches:
-        branch_filters = [WordToken.corpus == corpus_id]
-
-        # for each field (lemma, pos, form, morph)
-        for name, value in search_branch.items():
-            branch_filters.extend(column_search_filter(getattr(WordToken, name), value))
-
-        value_filters.append(branch_filters)
-
-    if not value_filters:  # If the search is empty, we only search for the corpus_id
-        value_filters.append([WordToken.corpus == corpus_id])
-
-    # there is at least one OR clause
-    # get sort arguments (sort per default by WordToken.order_id)
-    order_by = {
-        "order_id": WordToken.order_id,
-        "lemma": func.lower(WordToken.lemma),
-        "pos": func.lower(WordToken.POS),
-        "form": func.lower(WordToken.form),
-        "morph": func.lower(WordToken.morph),
-    }.get(request.args.get("orderBy"), WordToken.order_id)
-
-    args = []
-
-    if len(value_filters) > 1:
-        and_filters = [and_(*branch_filters) for branch_filters in value_filters]
-        args = [or_(*and_filters)]
-    elif len(value_filters) == 1:
-        args = value_filters[0]
-
-    tokens = WordToken.query.filter(*args).order_by(
-        order_by.desc()
-        if bool(int(request.args.get("desc", "0")))  # default sort order is ascending
-        else order_by
+    form: Dict[str, str] = request.form if request.method == "POST" else request.args
+    token_dict: Dict[str, str] = {
+        key: value
+        for key, value in form.items()
+        if key not in {"caseBox", "page", "limit"}
+    }
+    tokens, order_by_key, input_values = corpus.token_search(
+        token_dict=token_dict,
+        case_sensitive='caseBox' not in form,
+        desc=int(request.args.get("desc", "0"))
     )
 
     page = int_or(request.args.get("page"), 1)
@@ -336,6 +289,8 @@ def tokens_search_through_fields(corpus_id):
     return render_template_with_nav_info('main/tokens_search_through_fields.html',
                                          search_kwargs={"corpus_id": corpus.id, **input_values},
                                          changed=corpus.changed(tokens.items),
+                                         desc=request.args.get("desc", "0"),
+                                         orderBy=order_by_key,
                                          corpus=corpus, tokens=tokens, **input_values)
 
 

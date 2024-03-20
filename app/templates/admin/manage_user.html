@@ -26,19 +26,19 @@
     <form>
         <table class="table">
             <tr>
-                <td>Full name</td>
+                <td>{{ _('Full name') }}</td>
                 <td>{{ '%s %s' % (user.first_name, user.last_name) }}</td>
             </tr>
             <tr>
-                <td>Email address</td>
+                <td>{{ _('Email address') }}</td>
                 <td>{{ user.email }}</td>
             </tr>
             <tr>
-                <td>Account type</td>
+                <td>{{ _('Account type') }}</td>
                 <td>{{ user.role.name }}</td>
             </tr>
             <tr>
-              <td>Account status</td>
+              <td>{{ _('Account status') }}</td>
                <td>{{'Confirmed' if user.confirmed else 'Unconfirmed'}} </td>
             </tr>
         </table>
@@ -50,7 +50,7 @@
         <div>
             <a class="ui basic compact button" href="{{ url_for('admin.registered_users') }}">
                 <i class="caret left icon"></i>
-                Back to all users
+                {{ _('Back to all users') }}
             </a>
             <h2 class="mt-3 mb-5">
                 {{ user.full_name() }}
@@ -64,20 +64,20 @@
                     <h3 class="alert alert-danger">
                         <i class="warning circle icon"></i>
                         <div>
-                            This action is permanent
+                            {{ _('This action is permanent') }}
                             <small class="form-text">
-                                Deleting a user account is not a reversible change. Any information associated
-                                with this account will be removed, and cannot be recovered.
+                                {{ _('Deleting a user account is not a reversible change. Any information associated
+                                with this account will be removed, and cannot be recovered.') }}
                             </small>
                         </div>
                     </h3>
 
                     <div>
                         <input type="checkbox" tabindex="0" class="hidden">
-                        <label>I understand that this action cannot be undone.</label>
+                        <label>{{ _('I understand that this action cannot be undone.') }}</label>
                     </div>
-                    <a class="deletion btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">Delete
-                        this user</a>
+                    <a class="deletion btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">{{ _('Delete
+                        this user') }}</a>
                     </div>
                     </div>
                     </div>

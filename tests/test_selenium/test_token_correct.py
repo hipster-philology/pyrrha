@@ -1,5 +1,6 @@
 from tests.test_selenium.base import TokenCorrectBase, TokenCorrect2CorporaBase
 import selenium
+from sqlalchemy import text
 
 
 class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
@@ -199,7 +200,7 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
         self.assert_saved(row)
         self.assert_token_has_values(token, lemma="saint")
         self.assertEqual(
-            row.find_elements_by_tag_name("b")[0].text,
+            self.element_find_elements_by_tag_name(row, "b")[0].text,
             token.form,
             "Bold should be used to highlight in-context word"
         )
@@ -223,3 +224,37 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
                 "s", id_row=str(self.first_token_id(2)+1), corpus_id="2",
                 autocomplete_selector=".autocomplete-suggestion[data-val='saint']"
             )
+
+    def test_correct_delete(self):
+        """ [TokenCorrectDelete] Check that we are able to edit then delete the form of a token """
+        self.addCorpus(with_token=True, with_allowed_lemma=True, tokens_up_to=24)
+        # We edit the lemma of the first token
+        token, status_text, row = self.edith_nth_row_value("saint", id_row="1")
+        # We checked it was saved
+        self.assert_saved(row)
+        self.assertEqual(
+            len(self.db.session.execute(text("SELECT * FROM change_record")).all()), 1,
+            "There should be one record in the history"
+        )
+        # We delete the token
+        self.token_dropdown_link(1, "Delete")
+        # Confirm the token's form on delete form
+        inp = self.driver_find_element_by_css_selector("input[name='form']")
+        inp.clear()
+        inp.send_keys("De")
+        # Delete
+        self.driver_find_element_by_css_selector("button[type='submit']").click()
+        # Check that it was removed
+        row = self.driver_find_elements_by_css_selector("tr.token-anchor[data-token-order='1']")[0]
+        self.assertEqual(
+            self.element_find_elements_by_tag_name(row, "td")[1].text, "seint",
+            "The token has been removed"
+        )
+        self.driver_find_element_by_link_text("History").click()
+        self.assertEqual(
+            len(self.db.session.execute(text("SELECT * FROM change_record")).all()), 1,
+            "There should be one record in the history"
+        )
+        history_row = self.driver_find_elements_by_css_selector("tbody tr.history")
+        self.assertEqual(len(history_row), 1, "There should be one record in the history")
+

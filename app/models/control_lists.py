@@ -51,7 +51,7 @@ class ControlLists(db.Model):
 
     users = association_proxy('control_lists_user', 'user')
 
-    sort_logic = case(value=public, whens=_PublicationStatusOrder).label("priority")
+    _sort_logic = case(_PublicationStatusOrder, value=public).label("priority")
 
     @property
     def str_public(self):
@@ -66,14 +66,16 @@ class ControlLists(db.Model):
         ).all()
 
     @staticmethod
-    def link(corpus, user, is_owner=False):
-        if db.session.query(ControlLists.id).filter(
-                                                ControlListsUser.user_id == user.id,
-                                                ControlListsUser.control_lists_id == corpus.control_lists_id
-                                            ).count() == 0:
+    def link(control_list_id: int, user_id: int, is_owner=False):
+        if db.session.query(ControlListsUser.user_id).filter(
+            db.and_(
+                ControlListsUser.user_id == user_id,
+                ControlListsUser.control_lists_id == control_list_id
+            )
+        ).count() == 0:
             db.session.add(ControlListsUser(
-                user_id=user.id,
-                control_lists_id=corpus.control_lists_id,
+                user_id=user_id,
+                control_lists_id=control_list_id,
                 is_owner=is_owner
             ))
 
@@ -130,7 +132,7 @@ class ControlLists(db.Model):
                 ControlLists.public == PublicationStatus.public,
                 ControlListsUser.user_id == user.id
             )
-        ).order_by(ControlLists.sort_logic, ControlLists.name).all()
+        ).order_by(ControlLists._sort_logic, ControlLists.name).all()
 
     def get_allowed_values(self, allowed_type="lemma", order_by="label", kw=None):
         """ List values that are allowed (without label) or checks that given label is part
@@ -292,8 +294,8 @@ class AllowedLemma(db.Model):
     :param corpus: ID of the corpus this AllowedLemma is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64), nullable=False)
-    label_uniform = db.Column(db.String(64))
+    label = db.Column(db.String(128), nullable=False)
+    label_uniform = db.Column(db.String(128))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
     __table_args__ = (
@@ -352,7 +354,7 @@ class AllowedPOS(db.Model):
     :param corpus: ID of the corpus this AllowedPOS is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(128))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
     @staticmethod
@@ -400,7 +402,7 @@ class AllowedMorph(db.Model):
     :param control_list: ID of the ControlLists this AllowedMorph is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(64))
+    label = db.Column(db.String(128))
     readable = db.Column(db.String(256))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 

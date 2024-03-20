@@ -2,21 +2,25 @@
 import csv
 import io
 import enum
-from typing import Iterable, Optional, Dict, List
+from typing import Iterable, Optional, Dict, List, Tuple
+from itertools import product
 # PIP Packages
 import unidecode
+import sqlalchemy.exc
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-from sqlalchemy import func, literal, not_
+from sqlalchemy import func, literal, not_, or_, and_
 from werkzeug.exceptions import BadRequest
 from flask import url_for
+
 # Application imports
-from .. import db
-from ..utils import validate_length
-from ..utils.forms import strip_or_none
-from ..utils.tsv import TSV_CONFIG
-from ..errors import MissingTokenColumnValue, NoTokensInput
+from app import db
+from app.utils import validate_length
+from app.utils.tsv import TSV_CONFIG
+from app.errors import MissingTokenColumnValue, NoTokensInput
 from app.utils import PreferencesUpdateError
+from app.utils.forms import strip_or_none, column_search_filter, prepare_search_string
+
 # Models
 from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
@@ -53,7 +57,7 @@ class CorpusUser(db.Model):
 class Column(db.Model):
     """Column."""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"))
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete="CASCADE"))
     heading = db.Column(db.String(32))
     hidden = db.Column(db.Boolean, default=False)
 
@@ -73,7 +77,7 @@ class Corpus(db.Model):
     :type name: str
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(64), unique=True)
+    name = db.Column(db.String(256))
     context_left = db.Column(db.SmallInteger, default=3)
     context_right = db.Column(db.SmallInteger, default=3)
     control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
@@ -85,6 +89,12 @@ class Corpus(db.Model):
     word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
     changes = db.relationship("ChangeRecord", cascade="all,delete")
     columns = db.relationship("Column", cascade="all,delete")
+
+    @property
+    def last_change(self):
+        return ChangeRecord.query.filter(
+            ChangeRecord.corpus == self.id
+        ).order_by(ChangeRecord.id.desc()).first()
 
     def allowed_search_route(self, allowed_type):
         """ Returns the API search routes and parameters
@@ -125,14 +135,19 @@ class Corpus(db.Model):
         return True
 
     def changes_per_day(self):
+        if db.session.get_bind().dialect.name == "postgresql":
+            created_on = db.func.to_char(ChangeRecord.created_on, "yyyy-mm-dd")
+        elif db.session.get_bind().dialect.name == "sqlite":
+            created_on = db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
         return list([
             tuple(elem)
             for elem in db.session.query(
-                    db.func.count(ChangeRecord.id), db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                    db.func.count(ChangeRecord.id),
+                    created_on
                 ).filter(
                     ChangeRecord.corpus == self.id
                 ).group_by(
-                    db.func.strftime("%Y-%m-%d", ChangeRecord.created_on)
+                    created_on
                 ).all()
         ])
 
@@ -232,7 +247,7 @@ class Corpus(db.Model):
 
     @staticmethod
     def for_user(current_user, _all=True):
-        corpora = db.session.query(Corpus).filter(
+        corpora = Corpus.query.filter(
             db.and_(
                 CorpusUser.corpus_id == Corpus.id,
                 CorpusUser.user_id == current_user.id
@@ -325,7 +340,8 @@ class Corpus(db.Model):
 
         :rtype: int
         """
-        return WordToken.query.filter_by(corpus=self.id).count()
+        # ToDo: This is so slow that it is impossible to use it on the Dashboard page
+        return db.session.query(db.func.count()).filter(WordToken.corpus==self.id).scalar()
 
     @property
     def displayed_columns_by_name(self):
@@ -354,9 +370,14 @@ class Corpus(db.Model):
         return WordToken.query.filter_by(corpus=self.id).order_by(WordToken.order_id)
 
     def changed(self, tokens):
-        data = db.session.query(ChangeRecord.word_token_id).distinct(ChangeRecord.word_token_id).filter(
-            ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
-        ).all()
+        if db.session.get_bind().dialect.name != "postgresql":
+            data = db.session.query(ChangeRecord.word_token_id).group_by(ChangeRecord.word_token_id).filter(
+                ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
+            ).all()
+        else:
+            data = db.session.query(ChangeRecord.word_token_id).distinct(ChangeRecord.word_token_id).filter(
+                ChangeRecord.word_token_id.in_([tok.id for tok in tokens])
+            ).all()
         return set([token for token, *_ in data])
 
     def get_history(self, page=1, limit=100):
@@ -374,7 +395,7 @@ class Corpus(db.Model):
     def create(
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
-            context_left=None, context_right=None, control_list=None,
+            context_left=None, context_right=None, control_list: ControlLists = None,
             delimiter_token=None, columns=None
     ):
         """ Create a corpus
@@ -391,30 +412,34 @@ class Corpus(db.Model):
         :return: Created Corpus
         :rtype: Corpus
         """
-        if not control_list:
-            control_list = ControlLists(name="Control List {}".format(name), public=PublicationStatus.private)
-            db.session.add(control_list)
-            db.session.flush()
+        try:
+            if not control_list:
+                control_list = ControlLists(name="Control List {}".format(name), public=PublicationStatus.private)
+                db.session.add(control_list)
+                db.session.flush()
 
-            if allowed_lemma is not None and len(allowed_lemma) > 0:
-                AllowedLemma.add_batch(allowed_lemma, control_list.id)
+                if allowed_lemma is not None and len(allowed_lemma) > 0:
+                    AllowedLemma.add_batch(allowed_lemma, control_list.id)
 
-            if allowed_POS is not None and len(allowed_POS) > 0:
-                AllowedPOS.add_batch(allowed_POS, control_list.id)
+                if allowed_POS is not None and len(allowed_POS) > 0:
+                    AllowedPOS.add_batch(allowed_POS, control_list.id)
 
-            if allowed_morph is not None and len(allowed_morph) > 0:
-                AllowedMorph.add_batch(allowed_morph, control_list.id)
+                if allowed_morph is not None and len(allowed_morph) > 0:
+                    AllowedMorph.add_batch(allowed_morph, control_list.id)
 
-        c = Corpus(
-            name=name,
-            control_lists_id=control_list.id,
-            delimiter_token=delimiter_token,
-            context_left=context_left,
-            context_right=context_right,
-            columns=columns
-        )
-        db.session.add(c)
-        db.session.flush()
+            c = Corpus(
+                name=name,
+                control_lists_id=control_list.id,
+                delimiter_token=delimiter_token,
+                context_left=context_left,
+                context_right=context_right,
+                columns=columns
+            )
+            db.session.add(c)
+            db.session.commit()
+        except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
+            db.session.rollback()
+            raise e
 
         token_count = WordToken.add_batch(
             corpus_id=c.id, word_tokens_dict=word_tokens_dict,
@@ -573,6 +598,105 @@ class Corpus(db.Model):
         ))
         db.session.commit()
 
+    def token_search(
+            self,
+            token_dict: Dict[str, str],
+            order_by_key: str = "order_id",
+            desc: bool = False,
+            case_sensitive: bool = False
+    ):
+        """ Perform a complex search on tokens, returns a query
+
+        ToDo: Add a proximity filter that allows contextual search
+        ToDo: Add test outside of the interface
+
+        :param token_dict:
+        :param order_by_key:
+        :param desc:
+        :param case_sensitive:
+        :return: tokens, order_by_key, input_values
+
+        Corpus.token_search({"form": "d*"})
+        """
+        # nom des colonnes disponibles pour le corpus (POS, form, etc)
+        columns = tuple(["form"] + [
+            col if col == "POS" else col.lower()
+            for col in self.get_columns_headings()
+        ])
+
+        # Cleaned up values from the input form
+        input_values: Dict[str, Optional[str]] = {}
+
+        # make a dict with values split for each OR operator
+        fields: Dict[str, List[str]] = {}
+
+        for name in columns:
+            value: Optional[str] = strip_or_none(token_dict.get(name))
+            input_values[name] = value
+
+            # split values with the '|' OR operator but keep escaped '\|' ones
+            if value:
+                fields[name] = prepare_search_string(value)
+
+        # all search combinations
+        fields: List[List[Tuple[str, str]]] = [
+            [
+                (field, value)
+                for value in fields[field]
+            ]
+            for field in fields
+        ]
+        # Création combinaison de recherches possibles pipe product
+        # If source_dict = {"POS": "NOM|VER", "lemma": "mang*"}
+        # Then fields = [[("POS", "NOM"), ("POS", "VER")], [("lemma", "mang*")]]
+        # And search_branches :
+        #    [{"POS": "NOM", "lemma": "mang*"}, {"POS": "VER", "lemma": "mang*"}]
+        # * => fields = [["a", "b"], ["c"]]
+        # product(*fields) == product(fields[0], fields[1])
+        search_branches: List[Dict[str, str]] = [dict(prod) for prod in product(*fields)]
+
+        value_filters = []
+        # for each branch filter (= OR clauses if any)
+        for search_branch in search_branches:
+            # filtre minimal = bon corpus (id)
+            branch_filters = [WordToken.corpus == self.id]
+
+            # for each field (lemma, pos, form, morph)
+            for name, value in search_branch.items():
+                # transformation couple clé valeur en filtre SQLalchemy
+                branch_filters.extend(
+                    column_search_filter(getattr(WordToken, name), value, case_sensitive=case_sensitive))
+
+            value_filters.append(branch_filters)
+
+        if not value_filters:  # If the search is empty, we only search for the corpus_id
+            value_filters.append([WordToken.corpus == self.id])
+
+        # there is at least one OR clause
+        # get sort arguments (sort per default by WordToken.order_id)
+        order_by = {
+            "order_id": WordToken.order_id,
+            "lemma": func.lower(WordToken.lemma),
+            "pos": func.lower(WordToken.POS),
+            "form": func.lower(WordToken.form),
+            "morph": func.lower(WordToken.morph),
+        }
+        if order_by_key not in order_by:
+            order_by_key = "order_id"
+        order_by = order_by.get(order_by_key)
+
+        args = []
+
+        if len(value_filters) > 1:
+            and_filters = [and_(*branch_filters) for branch_filters in value_filters]
+            args = [or_(*and_filters)]
+        elif len(value_filters) == 1:
+            args = value_filters[0]
+
+        tokens = WordToken.query.filter(*args).order_by(order_by.desc() if desc else order_by)
+
+        return tokens, order_by_key, input_values
+
 
 class WordToken(db.Model):
     """ A word token is a word from a corpus with primary annotation
@@ -603,15 +727,15 @@ class WordToken(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete='CASCADE'))
     order_id = db.Column(db.Integer)  # Id in the corpus
-    form = db.Column(db.String(64))
-    lemma = db.Column(db.String(64))
-    label_uniform = db.Column(db.String(64))
-    POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64))
+    form = db.Column(db.String(128))
+    lemma = db.Column(db.String(128))
+    label_uniform = db.Column(db.String(128))
+    POS = db.Column(db.String(128))
+    morph = db.Column(db.String(128))
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
-    _changes = db.relationship("ChangeRecord", cascade="all,delete")
+    _changes = db.relationship("ChangeRecord")
 
     CONTEXT_LEFT = 3
     CONTEXT_RIGHT = 3
@@ -720,7 +844,8 @@ class WordToken(db.Model):
             old=self.form,
             action_type=TokenHistory.TYPES.Edition,
             user_id=user.id,
-            word_token_id=self.id
+            word_token_id=self.id,
+            order_id = self.order_id
         ))
         self.form = form
         db.session.add(self)
@@ -760,7 +885,8 @@ class WordToken(db.Model):
             new=form,
             action_type=TokenHistory.TYPES.Addition,
             user_id=user.id,
-            word_token_id=new_token.id
+            word_token_id=new_token.id,
+            order_id = new_token.order_id
         ))
 
         # Update the contexts
@@ -787,6 +913,7 @@ class WordToken(db.Model):
             WordToken.order_id > self.order_id
         )).update({WordToken.order_id: WordToken.order_id - 1})
 
+        # Update
         # Record the change
         db.session.add(TokenHistory(
             corpus=corpus.id,
@@ -794,8 +921,10 @@ class WordToken(db.Model):
             old=self.form,
             action_type=TokenHistory.TYPES.Deletion,
             user_id=user.id,
-            word_token_id=self.id
+            #word_token_id=self.id,
+            order_id = self.order_id
         ))
+
 
         # Update the contexts
         self.update_context_around(corpus, delete=self.id)
@@ -939,7 +1068,7 @@ class WordToken(db.Model):
                 )
             )
         if group_by is True:
-            return query.group_by(retrieve_fields[0])
+            return query.group_by(*retrieve_fields)
         return query
 
     @staticmethod
@@ -1068,7 +1197,7 @@ class WordToken(db.Model):
                 order_id=i+1  # Asked by JB Camps...
             )
             for k in ("form",):
-                validate_length(k, wt[k], {"form": 64})
+                validate_length(k, wt[k], {"form": 128})
             tokens.append(wt)
 
         db.session.bulk_insert_mappings(WordToken, tokens)
@@ -1326,11 +1455,12 @@ class TokenHistory(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete='SET NULL'), nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
     action_type = db.Column(db.Enum(TYPES), nullable=False)
     new = db.Column(db.String(100), nullable=True)
     old = db.Column(db.String(100), nullable=True)
+    order_id = db.Column(db.Integer, nullable=True)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
 
     user = db.relationship(User, lazy='select')
@@ -1339,9 +1469,9 @@ class TokenHistory(db.Model):
 class CorpusCustomDictionary(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'), nullable=False)
-    label = db.Column(db.String(64), nullable=False)
-    secondary_label = db.Column(db.String(64))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"), nullable=False)
+    label = db.Column(db.String(128), nullable=False)
+    secondary_label = db.Column(db.String(128))
     category = db.Column(db.String(10), nullable=False)
 
     search_index = db.Index("ccd-search", "corpus", "label", "secondary_label", "category")
@@ -1432,6 +1562,8 @@ class CorpusCustomDictionary(db.Model):
                     )
                 )
         if group_by is True:
+            if db.session.get_bind().dialect.name == "postgresql":
+                return query.group_by(*retrieve_fields)
             return query.group_by(retrieve_fields[0])
 
         return query
@@ -1440,19 +1572,20 @@ class CorpusCustomDictionary(db.Model):
 class ChangeRecord(db.Model):
     """ A change record keep track of lemma, POS or morph that have been changed for a particular form"""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'))
-    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id'))
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"))
+    word_token_id = db.Column(db.Integer, db.ForeignKey('word_token.id', ondelete="SET NULL"), nullable=True,
+                              default=None)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id))
-    form = db.Column(db.String(64))
-    lemma = db.Column(db.String(64))
-    POS = db.Column(db.String(64))
-    morph = db.Column(db.String(64), nullable=True)
-    lemma_new = db.Column(db.String(64))
-    POS_new = db.Column(db.String(64))
-    morph_new = db.Column(db.String(64))
+    form = db.Column(db.String(128))
+    lemma = db.Column(db.String(128))
+    POS = db.Column(db.String(128))
+    morph = db.Column(db.String(128), nullable=True)
+    lemma_new = db.Column(db.String(128))
+    POS_new = db.Column(db.String(128))
+    morph_new = db.Column(db.String(128))
     created_on = db.Column(db.DateTime, server_default=db.func.now())
-    word_token = db.relationship('WordToken', lazy='select')
-    user = db.relationship(User, lazy='select')
+    word_token = db.relationship('WordToken', lazy='select', viewonly=True)
+    user = db.relationship(User, lazy='select', viewonly=True)
 
     @property
     def similar_remaining(self):

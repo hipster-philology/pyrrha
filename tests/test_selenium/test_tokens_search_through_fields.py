@@ -1,6 +1,7 @@
 from app.models import WordToken
+from app import db
 from tests.test_selenium.base import TokensSearchThroughFieldsBase
-
+from typing import List, Dict, Set
 
 class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
     """ Test searching tokens through fields (Form, Lemma, POS, Morph) within a corpus """
@@ -17,14 +18,17 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
         result = []
 
         def get_field(row, f):
-            return row.find_element_by_class_name(f).text.strip()
+            return self.element_find_element_by_class_name(row, f).text.strip()
         
-        res_table = self.driver.find_element_by_id("result_table").find_element_by_tag_name("tbody")
-        rows = res_table.find_elements_by_tag_name("tr")
+        res_table = self.element_find_element_by_tag_name(
+            self.driver_find_element_by_id("result_table"),
+            "tbody"
+        )
+        rows = self.element_find_elements_by_tag_name(res_table, "tr")
 
         for row in rows:
             result.append({
-                "form": row.find_elements_by_tag_name("td")[1].text.strip(),
+                "form": self.element_find_elements_by_tag_name(row, "td")[1].text.strip(),
                 "lemma": get_field(row, "token_lemma"),
                 "morph": get_field(row, "token_morph"),
                 "pos": get_field(row, "token_pos")
@@ -108,7 +112,7 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
 
     def test_search_with_like_operator(self):
         # search with wildcard escaped
-        rows = self.search(form="Testword\*")
+        rows = self.search(form="Testword\\*")
         self.assertEqual(rows, [{'form': 'Testword*', 'lemma': 'testword*', 'morph': 'test*morph', 'pos': 'TEST*pos'}])
 
         # search with wildcard as a suffix
@@ -130,7 +134,7 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
 
     def test_search_with_negation_operator(self):
         # search with negation operator escaped
-        rows = self.search(form="\!TestwordFake")
+        rows = self.search(form="\\!TestwordFake")
         self.assertEqual(rows, [{
             'form': '!TestwordFake', 'lemma': '!testwordFake', 'morph': '!testmorphFake', 'pos': '!TESTposFake'
         }])
@@ -155,14 +159,42 @@ class TestTokensSearchThroughFields(TokensSearchThroughFieldsBase):
     def test_search_with_or_operator(self):
         # search with OR operator
         rows = self.search(form="seint|seinz|Seinz|seinte")
-        rows_wildcard = self.search(form="sein*")
-        rows_lemma = self.search(lemma="saint")
-        self.assertTrue(rows_lemma == rows and rows == rows_wildcard)
+        rows_wildcard = self.search(form="sein*", case_insensitivity=True)
 
-        # test combination with an other field
+        rows_lemma = self.search(lemma="saint")
+        self.assertEqual(rows_lemma, rows)
+        self.assertEqual(rows_wildcard, rows)
+
+        # test combination with another field
         rows = self.search(lemma="m*", pos="NOMcom|NOMpro")
         self.assertTrue(len(rows) == 9)
 
-        # test combination with an other field
+        # test combination with another field
         rows = self.search(form="Martins|mere", lemma="martin|mere")
         self.assertTrue(len(rows) == 3)
+
+    def test_search_with_case_sensitivy(self):
+        """Test a simple enable case sensitivity"""
+        # search with and without case sensitivity
+        rows_case_sensitivity_min = self.search(form="de")
+        row_case_sensitivity_maj = self.search(form="De")
+        rows_case_insensitivity = self.search(form="de", case_insensitivity=True)
+
+        def form_only(results: List[Dict[str, str]]) -> Set[str]:
+            return set([line["form"] for line in results])
+
+        self.assertEqual(
+            form_only(rows_case_sensitivity_min), {"de"}, "Min. search should retrieve `de` only")
+        self.assertEqual(
+            form_only(row_case_sensitivity_maj), {"De"}, "Maj search should retrieve `De` only")
+        self.assertEqual(
+            form_only(rows_case_insensitivity), {"De", "de"}, "Insentivity should retrieve both forms")
+
+        seinz_sens = self.search(form="sein*", case_insensitivity=False)
+        seinz_insens = self.search(form="sein*", case_insensitivity=True)
+        self.assertEqual(
+            form_only(seinz_sens), {'seinz', 'seinte', 'seint'},
+            "Sensitivity should retrieve only form in minuscules")
+        self.assertEqual(
+            form_only(seinz_insens), {'seinz', 'seinte', 'seint', 'Seinz'},
+            "Insensitivity should retrieve all forms")

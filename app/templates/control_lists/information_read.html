@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<h3>Guidelines</h3>
+<h3>{{ _('Guidelines') }}</h3>
 {% if control_list.notes %}
   {{ control_list.notes | markdown }}
 {% else %}
@@ -12,7 +12,7 @@
 {% endif %}
 
 {% if control_list.bibliography %}
-<h3>Bibliography</h3>
+<h3>{{ _('Bibliography') }}</h3>
 <p>{{control_list.bibliography | markdown}}</p>
 {% endif %}
 

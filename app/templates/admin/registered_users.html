@@ -6,12 +6,12 @@
         <div class="sixteen wide tablet twelve wide computer centered column">
             <a class="ui basic compact button" href="{{ url_for('main.dashboard') }}">
                 <i class="caret left icon"></i>
-                Back to dashboard
+                {{ _('Back to dashboard') }}
             </a>
             <h2 class="mt-3 mb-5">
-                Registered Users
+                {{ _('Registered Users') }}
                 <small class="form-text">
-                    View and manage currently registered users.
+                    {{ _('View and manage currently registered users.') }}
                 </small>
             </h2>
 
@@ -21,4 +21,8 @@
     </div>
 
     {{ dashboard.insert_search_script() }}
+{% endblock %}
+
+{% block custom_head_tags  %}
+    <script type="text/javascript" src="{{ url_for('static', filename='js/sortable.min.js') }}"></script>
 {% endblock %}

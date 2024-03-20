@@ -56,6 +56,7 @@ def render_template_with_nav_info(template, **kwargs):
             control_list for control_list in ControlLists.for_user(current_user)
         ]
     ))
+    kwargs["resizedLeftMenu"] = request.cookies.get('resized-menu')
     return render_template(template, **kwargs)
 
 

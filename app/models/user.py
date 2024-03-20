@@ -1,15 +1,18 @@
 from flask import current_app
 from flask_login import AnonymousUserMixin, UserMixin
-from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
-from itsdangerous import BadSignature, SignatureExpired
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .. import db, login_manager
+from ..utils.token import get_reset_token_salt, get_reset_token, get_reset_token_key, verify_reset_token
 
 
 class Permission:
     GENERAL = 0x01
     ADMINISTER = 0xff
+
+class Serializer:
+    def __init__(self, secret):
+        self._secret = secret
 
 
 class Role(db.Model):
@@ -52,8 +55,9 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(64), index=True)
     last_name = db.Column(db.String(64), index=True)
     email = db.Column(db.String(64), unique=True, index=True)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(162))
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
+    locale = db.Column(db.String(10), default="en", nullable=True)
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -89,32 +93,28 @@ class User(UserMixin, db.Model):
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def generate_confirmation_token(self, expiration=604800):
+    def generate_confirmation_token(self, expiration=604800) -> str:
         """Generate a confirmation token to email a new user."""
+        return get_reset_token(self, expires_sec=expiration, additional_fields={'confirm': str(self.id)})
 
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'confirm': self.id})
-
-    def generate_email_change_token(self, new_email, expiration=3600):
+    def generate_email_change_token(self, new_email, expiration=3600) -> str:
         """Generate an email change token to email an existing user."""
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'change_email': self.id, 'new_email': new_email})
+        return get_reset_token(self, expires_sec=expiration, additional_fields={
+            'change_email': str(self.id),
+            'new_email': new_email
+        })
 
     def generate_password_reset_token(self, expiration=3600):
         """
         Generate a password reset change token to email to an existing user.
         """
-        s = Serializer(current_app.config['SECRET_KEY'], expiration)
-        return s.dumps({'reset': self.id})
+        return get_reset_token(self, expires_sec=expiration, additional_fields={
+            'reset': str(self.id)
+        })
 
     def confirm_account(self, token):
         """Verify that the provided token is for this user's id."""
-        s = Serializer(current_app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token)
-        except (BadSignature, SignatureExpired):
-            return False
-        if data.get('confirm') != self.id:
+        if not verify_reset_token(self, token, payload_cb=lambda payload: payload.get('confirm') == str(self.id)):
             return False
         self.confirmed = True
         db.session.add(self)
@@ -123,14 +123,15 @@ class User(UserMixin, db.Model):
 
     def change_email(self, token):
         """Verify the new email for this user."""
-        s = Serializer(current_app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token)
-        except (BadSignature, SignatureExpired):
+        payload = verify_reset_token(
+            self,
+            token,
+            payload_cb=lambda loc_payload: loc_payload.get('change_email') == str(self.id),
+            get_payload=True
+        )
+        if payload is False:
             return False
-        if data.get('change_email') != self.id:
-            return False
-        new_email = data.get('new_email')
+        new_email = payload.get('new_email')
         if new_email is None:
             return False
         if self.query.filter_by(email=new_email).first() is not None:
@@ -142,12 +143,13 @@ class User(UserMixin, db.Model):
 
     def reset_password(self, token, new_password):
         """Verify the new password for this user."""
-        s = Serializer(current_app.config['SECRET_KEY'])
-        try:
-            data = s.loads(token)
-        except (BadSignature, SignatureExpired):
-            return False
-        if data.get('reset') != self.id:
+
+        if not verify_reset_token(
+            self,
+            token,
+            payload_cb=lambda loc_payload: loc_payload.get('reset') == str(self.id),
+            get_payload=True
+        ):
             return False
         self.password = new_password
         db.session.add(self)
@@ -193,7 +195,6 @@ class User(UserMixin, db.Model):
         :return:
         """
         default_user = User(
-            id=1,
             first_name="admin",
             last_name="admin",
             email="ppa-admin@ppa.fr",
@@ -220,5 +221,5 @@ login_manager.anonymous_user = AnonymousUser
 @login_manager.user_loader
 def load_user(user_id):
     db.session.rollback()
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 

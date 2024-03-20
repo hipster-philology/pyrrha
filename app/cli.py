@@ -1,6 +1,7 @@
 import click
 import os
 
+from config import Config
 from app.models import Role, User, ControlLists
 from . import create_app, db
 from .models import (
@@ -12,6 +13,9 @@ from .models import (
     WordToken
 )
 from app.utils.forms import create_input_format_convertion
+from sqlalchemy_utils import database_exists, create_database
+from sqlalchemy import text
+import logging
 
 app = None
 
@@ -76,6 +80,8 @@ def make_cli():
         """ Creates a local database
         """
         with app.app_context():
+            if not database_exists(db.engine.url):
+                create_database(db.engine.url)
             db.create_all()
 
             Role.add_default_roles()
@@ -84,6 +90,20 @@ def make_cli():
 
             db.session.commit()
             click.echo("Created the database")
+            if db.session.get_bind().dialect.name == "postgresql":
+                lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
+                psql_locale = lc_messages_query.fetchone()[0]
+                if not psql_locale.startswith("en"):
+                    logging.warn(
+                        f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
+                    if Config.FORCE_PSQL_EN_LOCALE:
+                        try:
+                            db.session.execute(text("SET lc_messages TO 'en_US.UTF-8';"))
+                            db.session.commit()
+                        except Exception as E:
+                            logging.warn(str(E))
+
+
 
     @click.command("db-recreate")
     def db_recreate():
@@ -258,7 +278,7 @@ def make_cli():
         with app.app_context():
             if not os.path.exists(path):
                 os.makedirs(path)
-            corpus = Corpus.query.get(corpus)
+            corpus = db.session.get(Corpus, corpus)
 
             # Check that the corpus exists
             if not corpus:
@@ -288,11 +308,14 @@ def make_cli():
 
     @cli.command("db-upgrade", help="Do small migrations")
     @click.argument("migration_name",
-              type=click.Choice(['controllist-markdown', 'add-columns'], case_sensitive=False))
+              type=click.Choice(['controllist-markdown', 'add-columns', "user-language"], case_sensitive=False))
     def db_add_table(migration_name):
         columns = {
             "controllist-markdown": [
                 ("control_lists", (db.Column("notes", db.Text),))
+            ],
+            "user-language": [
+                ("users", (db.Column("locale", db.String(10), default="en", nullable=True),))
             ]
         }
 
@@ -360,5 +383,36 @@ def make_cli():
     cli.add_command(corpus_import)
     cli.add_command(corpus_dump)
     cli.add_command(corpus_list)
+
+    @cli.group()
+    def translate():
+        """Translation and localization commands."""
+        pass
+
+    @translate.command()
+    def update():
+        """Update all languages."""
+        if os.system('pybabel extract -F babel.cfg -k _l -o messages.pot .'):
+            raise RuntimeError('extract command failed')
+        if os.system('pybabel update -i messages.pot -d translations'):
+            raise RuntimeError('update command failed')
+        os.remove('messages.pot')
+
+    @translate.command()
+    def compile():
+        """Compile all languages."""
+        if os.system('pybabel compile -d translations'):
+            raise RuntimeError('compile command failed')
+
+    @translate.command()
+    @click.argument('lang')
+    def init(lang):
+        """Initialize a new language."""
+        if os.system('pybabel extract -F babel.cfg -k _l -o messages.pot .'):
+            raise RuntimeError('extract command failed')
+        if os.system(
+                'pybabel init -i messages.pot -d translations -l ' + lang):
+            raise RuntimeError('init command failed')
+        os.remove('messages.pot')
 
     return cli

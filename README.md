@@ -1,8 +1,8 @@
 Pyrrha
 ======
 
-[![Coverage Status](https://coveralls.io/repos/github/hipster-philology/ppyrrha/badge.svg?branch=master)](https://coveralls.io/github/hipster-philology/pyrrha?branch=master)
-[![Build Status](https://travis-ci.org/hipster-philology/pyrrha.svg?branch=master)](https://travis-ci.org/hipster-philology/pyrrha)
+[![Coverage Status](https://coveralls.io/repos/github/hipster-philology/pyrrha/badge.svg?branch=dev)](https://coveralls.io/github/hipster-philology/pyrrha?branch=dev)
+[![Test library](https://github.com/hipster-philology/pyrrha/actions/workflows/test.yml/badge.svg?branch=dev)](https://github.com/hipster-philology/pyrrha/actions/workflows/test.yml)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.2325427.svg)](https://doi.org/10.5281/zenodo.2325427)
 
 
@@ -16,21 +16,26 @@ please cite the software if you use it using the following informations:
 
 ```latex
 @software{thibault_clerice_2019_3524771,
-  author       = {Clérice, Thibault and Pilla, Julien and Camps, Jean-Baptiste and Jolivet, Vincent and Pinche, Ariane},
+  author       = {Clérice, Thibault and Janès, Juliette and Pilla, Julien and Camps, Jean-Baptiste and Pinche, Ariane and Gille-Levenson, Matthias and Jolivet, Vincent},
   title        = {Pyrrha, A language independant post correction app for POS and lemmatization},
   month        = nov,
-  year         = 2019,
+  year         = 2024,
   publisher    = {Zenodo},
-  version      = {Any Version},
+  version      = {4.0.0},
   doi          = {10.5281/zenodo.2325427},
   url          = {https://doi.org/10.5281/zenodo.2325427}
 }
 ```
 
-# Credits
+# They used Pyrrha
 
-This software is built as an addition to the tagger Pie by Enrique Manjavacas (@emanjavacas) and Mike Kestemont (@mikekestemont) [![DOI](https://zenodo.org/badge/131014015.svg)](https://zenodo.org/badge/latestdoi/131014015)
-It can connect to lemmatization service like [Deucalion](https://github.com/chartes/deucalion-chartes).
+You can find a set of projects and papers that used us in [the `examples.bib` file](examples.bib).
+
+## Update the translations
+
+From the root directory, run:
+
+`pybabel compile -d translations`
 
 ## Demo
 ![Pandora Post-Correction Editor](./demo.gif)
@@ -67,25 +72,52 @@ python manage.py run
 with the mail you used. If you are simply running it for yourself, we would definitely recommend to use the Administrator role though.
 5. Run the application, login and enjoy !
 
+## Update the translations
+
+From the root directory, run:
+
+`python manage.py translate compile`
+
+If you changed the template or variables
+
+```sh
+python manage.py translate update
+# Change the translation and then do
+python manage.py translate compile
+```
+
+If you want to add a language
+
+```sh
+python manage.py translate init fr
+python manage.py translate update
+python manage.py translate compile
+```
+
 ## How to contribute
 
 - See [Contribute.md](CONTRIBUTING.md)
 
 ## Maintainers
 
-- [Julien Pilla](https://github.com/MrGecko)
 - [Thibault Clérice](https://github.com/ponteineptique)
+- Juliette Janès
+
+## Past maintainers
+
+- [Julien Pilla](https://github.com/MrGecko)
 
 ## Contributors
 
--[Jean-Baptiste Camps](https://github.com/Jean-Baptiste-Camps)
--[ngawangtrinley](https://github.com/ngawangtrinley)
--[FrFerry](https://github.com/FrFerry)
--[Vincent Jolivet](https://github.com/architexte)
--[Ariane Pinche](https://github.com/ArianePinche)
--[saisiddhant12](https://github.com/saisiddhant12)
--[jhrdt](https://github.com/jhrdt)
--[AdityaJ7](https://github.com/AdityaJ7)
+- [Lungsang-bod](https://github.com/Lungsang-bod)
+- [Jean-Baptiste Camps](https://github.com/Jean-Baptiste-Camps)
+- [Ariane Pinche](https://github.com/ArianePinche)
+- [Vincent Jolivet](https://github.com/architexte)
+- [ngawangtrinley](https://github.com/ngawangtrinley)
+- [FrFerry](https://github.com/FrFerry)
+- [saisiddhant12](https://github.com/saisiddhant12)
+- [jhrdt](https://github.com/jhrdt)
+- [AdityaJ7](https://github.com/AdityaJ7)
 
 ## Source
 

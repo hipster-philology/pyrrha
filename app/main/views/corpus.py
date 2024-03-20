@@ -111,23 +111,28 @@ def corpus_new():
                                     "allowed_POS": allowed_POS, "allowed_morph": allowed_morph})
 
             try:
-                corpus = Corpus.create(**form_kwargs)
+                corpus: Corpus = Corpus.create(**form_kwargs)
                 db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
                 # Add a link to the control list
-                ControlLists.link(corpus=corpus, user=current_user, is_owner=cl_owner)
+                ControlLists.link(corpus.control_lists_id, current_user.id, is_owner=cl_owner)
                 db.session.commit()
                 flash("New corpus registered", category="success")
-                return redirect(url_for(".corpus_get", corpus_id=corpus.id))
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
-                if str(e.orig) == "UNIQUE constraint failed: corpus.name":
+                flash(str(e.orig).lower())
+                if db.session.get_bind().dialect.name == "postgresql":
+                    unique_constraint = 'duplicate key value violates unique constraint "corpus_name_key"'
+                else:
+                    unique_constraint = "unique constraint failed: corpus.name"
+                if unique_constraint in str(e.orig).lower():
                     flash("You have already a corpus going by the name {}".format(request.form.get("name")),
                           category="error")
                 return error()
             except MissingTokenColumnValue as exc:
                 db.session.rollback()
-                flash("At least one line of your corpus is missing a token/form. Check line %s " % exc.line, category="error")
+                flash("At least one line of your corpus is missing a token/form. Check line %s " % exc.line,
+                      category="error")
                 return error()
             except NoTokensInput:
                 db.session.rollback()
@@ -141,6 +146,7 @@ def corpus_new():
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 return error()
+            return redirect(url_for(".corpus_get", corpus_id=corpus.id))
 
     return normal_view()
 
@@ -291,7 +297,7 @@ def switch_control_lists_access(
             if control_lists_user and not control_lists_user.is_owner:
                 db.session.delete(control_lists_user)
         # add access to new control list
-        ControlLists.link(corpus, user)
+        ControlLists.link(corpus.control_lists_id, user.id)
     db.session.commit()
 
 

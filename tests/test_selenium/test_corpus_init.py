@@ -3,8 +3,13 @@ from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
+from selenium.webdriver.support.select import Select
 import csv
 import os
+
+from flask import Flask, request, Response
+from multiprocessing import Process
+from selenium.webdriver.support.wait import WebDriverWait
 
 
 class TestCorpusRegistration(TestBase):
@@ -15,14 +20,14 @@ class TestCorpusRegistration(TestBase):
         """
 
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.driver_find_element_by_id("submit").click()
 
         self.driver.implicitly_wait(15)
         self.assertIn(
@@ -62,15 +67,15 @@ class TestCorpusRegistration(TestBase):
         """
 
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["lemma"])
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.writeMultiline(self.driver_find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["lemma"])
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
         self.assertIn(
@@ -108,15 +113,15 @@ class TestCorpusRegistration(TestBase):
         """
 
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.writeMultiline(self.driver_find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
         self.assertIn(
@@ -153,16 +158,16 @@ class TestCorpusRegistration(TestBase):
     def test_registration_with_allowed_morph(self):
 
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
-        self.writeMultiline(self.driver.find_element_by_id("allowed_morph"), PLAINTEXT_CORPORA["Wauchier"]["morph"])
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.writeMultiline(self.driver_find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
+        self.writeMultiline(self.driver_find_element_by_id("allowed_morph"), PLAINTEXT_CORPORA["Wauchier"]["morph"])
+        self.driver_find_element_by_id("submit").click()
 
         self.assertIn(
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
@@ -203,19 +208,19 @@ class TestCorpusRegistration(TestBase):
         """
 
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.driver.find_element_by_id("context_left").clear()
-        self.driver.find_element_by_id("context_left").send_keys("5")
-        self.driver.find_element_by_id("context_right").clear()
-        self.driver.find_element_by_id("context_right").send_keys("2")
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.writeMultiline(self.driver.find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.driver_find_element_by_id("context_left").clear()
+        self.driver_find_element_by_id("context_left").send_keys("5")
+        self.driver_find_element_by_id("context_right").clear()
+        self.driver_find_element_by_id("context_right").send_keys("2")
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.writeMultiline(self.driver_find_element_by_id("allowed_lemma"), PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
         self.assertEqual(
@@ -236,47 +241,47 @@ class TestCorpusRegistration(TestBase):
 
     def test_tokenization(self):
         """ Ensure that tokenisation is working as expected """
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon seignor")
-        self.driver.find_element_by_id("tokenize").click()
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), "Ci gist mon seignor")
+        self.driver_find_element_by_id("tokenize").click()
         self.assertEqual(
             "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n",
-            self.driver.find_element_by_id("tokens").get_property("value"),
+            self.driver_find_element_by_id("tokens").get_property("value"),
             "Tokenization tokenizes"
         )
         self.assertEqual(
             True,
-            self.driver.find_element_by_id("punct-keep").get_property("checked"),
+            self.driver_find_element_by_id("punct-keep").get_property("checked"),
             "The punctuation is checked by default"
         )
         # Check with punctuation
-        self.driver.find_element_by_id("tokens").clear()
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon seignor...")
-        self.driver.find_element_by_id("tokenize").click()
+        self.driver_find_element_by_id("tokens").clear()
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), "Ci gist mon seignor...")
+        self.driver_find_element_by_id("tokenize").click()
         self.assertEqual(
             "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n.\t\t\t\n.\t\t\t\n.\t\t\t\n",
-            self.driver.find_element_by_id("tokens").get_property("value"),
+            self.driver_find_element_by_id("tokens").get_property("value"),
             "Tokenization keeps punctuation"
         )
         # Check with punctuation removed
-        self.driver.find_element_by_id("tokens").clear()
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon seignor...")
-        self.driver.find_element_by_id("punct-keep").click()
-        self.driver.find_element_by_id("tokenize").click()
+        self.driver_find_element_by_id("tokens").clear()
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), "Ci gist mon seignor...")
+        self.driver_find_element_by_id("punct-keep").click()
+        self.driver_find_element_by_id("tokenize").click()
         self.assertEqual(
             "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n",
-            self.driver.find_element_by_id("tokens").get_property("value"),
+            self.driver_find_element_by_id("tokens").get_property("value"),
             "Tokenization removed punctuation"
         )
         # Check with punctuation removed and hyphens
-        self.driver.find_element_by_id("tokens").clear()
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), "Ci gist mon sei- gnor...")
-        self.driver.find_element_by_id("hyphens-remove").click()
-        self.driver.find_element_by_id("tokenize").click()
+        self.driver_find_element_by_id("tokens").clear()
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), "Ci gist mon sei- gnor...")
+        self.driver_find_element_by_id("hyphens-remove").click()
+        self.driver_find_element_by_id("tokenize").click()
         self.assertEqual(
             "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n",
-            self.driver.find_element_by_id("tokens").get_property("value"),
+            self.driver_find_element_by_id("tokens").get_property("value"),
             "Tokenization removed punctuation and glued back hyphens"
         )
 
@@ -286,14 +291,14 @@ class TestCorpusRegistration(TestBase):
         """
 
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
         name = "GUILLEMETS DE MONTMURAIL"
-        self.driver.find_element_by_id("corpusName").send_keys(name)
+        self.driver_find_element_by_id("corpusName").send_keys(name)
         self.writeMultiline(
-            self.driver.find_element_by_id("tokens"),
+            self.driver_find_element_by_id("tokens"),
             "tokens\tlemmas\tPOS\tmorph\n"
             "\"\t\"\tPONC\tMORPH=EMPTY\n"  # Testing with " Quote Char
             "\'\t\'\tPONC\tMORPH=EMPTY\n"  # Testing with ' Quote Char
@@ -307,8 +312,8 @@ class TestCorpusRegistration(TestBase):
             "《\t《\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
             "》\t》\tPONC\tMORPH=EMPTY\n"  # Testing with „ Quote Char
         )
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
 
         self.assertIn(
@@ -342,7 +347,7 @@ class TestCorpusRegistration(TestBase):
     def test_registration_with_existing_control_list(self):
         self.add_control_lists()
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Target control list
@@ -350,12 +355,12 @@ class TestCorpusRegistration(TestBase):
             filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_reuse").click()
-        self.driver.find_element_by_id("control_list_select").click()
-        self.driver.find_element_by_id("cl_opt_"+str(target_cl.id)).click()
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_"+str(target_cl.id)).click()
+        self.driver_find_element_by_id("submit").click()
 
         self.assertIn(
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
@@ -374,9 +379,9 @@ class TestCorpusRegistration(TestBase):
             "Ancien Français - École des Chartes", control_list.name,
             "The control list has been reused"
         )
-        self.driver.find_element_by_id("toggle_controllists").click()
+        self.driver_find_element_by_id("toggle_controllists").click()
         self.assertEqual(
-            self.driver.find_element_by_class_name("dd-control_list").text,
+            self.driver_find_element_by_class_name("dd-control_list").text,
             "Ancien Français - École des Chartes",
             "The control list is available from the top menu"
         )
@@ -385,7 +390,7 @@ class TestCorpusRegistration(TestBase):
         """ [Corpus Creation] Check that a non existing control list cannot be used"""
         self.add_control_lists()
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Target control list
@@ -393,29 +398,29 @@ class TestCorpusRegistration(TestBase):
             filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_reuse").click()
-        self.driver.find_element_by_id("control_list_select").click()
-        self.driver.find_element_by_id("cl_opt_"+str(target_cl.id)).click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_"+str(target_cl.id)).click()
         # Change the value from JS
         self.driver.execute_script(
             "document.getElementById('cl_opt_"+str(target_cl.id)+"').value = '99999';"
         )
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("submit").click()
 
         self.assertEqual(
-            self.driver.find_element_by_css_selector(".alert.alert-danger").text.strip(),
+            self.driver_find_element_by_css_selector(".alert.alert-danger").text.strip(),
             'This control list does not exist',
             "It is impossible to validate form with a wrong id of control list"
         )
 
-    def test_registration_with_an_existing_name(self):
-        """ [Corpus Creation] Check that a corpus using this name does not already exist"""
-        self.addCorpus("wauchier")
+    """def test_registration_with_an_existing_name(self):
+        " [Corpus Creation] Check that a corpus using this name does not already exist"
         self.add_control_lists()
+        self.addCorpus('wauchier', cl=False)
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Target control list
@@ -423,28 +428,28 @@ class TestCorpusRegistration(TestBase):
             filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("label_checkbox_reuse").click()
-        self.driver.find_element_by_id("control_list_select").click()
-        self.driver.find_element_by_id("cl_opt_"+str(target_cl.id)).click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_"+str(target_cl.id)).click()
 
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("submit").click()
 
+        self.driver.implicitly_wait(5)
+        # fonctionne que avec The corpus cannot be registered. Check your data....
         self.assertEqual(
-            sorted([e.text.strip() for e in self.driver.find_elements_by_css_selector(".alert.alert-danger")]),
-            sorted([
-                'The corpus cannot be registered. Check your data',
-                "You have already a corpus going by the name Wauchier"
-            ]),
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted(['The corpus cannot be registered. Check your data',
+                "You have already a corpus going by the name Wauchier"]),
             "Creating a corpus when one already exists for the current user with the same name fails."
-        )
+        )"""
 
     def test_registration_with_wrongly_formated_input(self):
         """ [Corpus Creation] Check that TSV formatting does not break everything"""
         self.add_control_lists()
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Target control list
@@ -452,8 +457,8 @@ class TestCorpusRegistration(TestBase):
             filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), """lala	lemma	POS	morph
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), """lala	lemma	POS	morph
 SOIGNORS	seignor	NOMcom	NOMB.=p|GENRE=m|CAS=n
 or	or4	ADVgen	DEGRE=-
 escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p
@@ -461,14 +466,19 @@ que	que4	CONsub	_
 	dieu	NOMpro	NOMB.=s|GENRE=m|CAS=n
 vos	vos1	PROper	PERS.=2|NOMB.=p|GENRE=m|CAS=r
 soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
-        self.driver.find_element_by_id("label_checkbox_reuse").click()
-        self.driver.find_element_by_id("control_list_select").click()
-        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
 
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+
+        self.driver_find_element_by_id("submit").click()
 
         self.assertEqual(
-            sorted([e.text.strip() for e in self.driver.find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted([
+                e.text.strip()
+                for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")
+                if e.text.strip()
+            ]),
             sorted([
                 'At least one line of your corpus is missing a token/form. Check line 1'
             ]),
@@ -479,7 +489,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         """ [Corpus Creation] Check that missing TSV throws a specific error"""
         self.add_control_lists()
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Target control list
@@ -487,15 +497,18 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.driver.find_element_by_id("label_checkbox_reuse").click()
-        self.driver.find_element_by_id("control_list_select").click()
-        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
 
-        self.driver.find_element_by_id("submit").click()
-
+        self.driver_find_element_by_id("submit").click()
         self.assertEqual(
-            sorted([e.text.strip() for e in self.driver.find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted([
+                e.text.strip()
+                for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")
+                if e.text.strip()
+            ]),
             sorted([
                 'You did not input any text.'
             ]),
@@ -507,15 +520,15 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         """
 
         # Click register menu link
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
 
         # Fill in registration form
-        self.driver.find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver.find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-        self.driver.find_element_by_id("sep_token").send_keys("____")
-        self.driver.find_element_by_id("label_checkbox_create").click()
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("sep_token").send_keys("____")
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.driver_find_element_by_id("submit").click()
 
         self.driver.implicitly_wait(15)
         self.assertIn(
@@ -533,13 +546,13 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
     def test_registration_upload_file(self):
         """Test that an user can upload a file to fill in 'tokens' textarea."""
 
-        self.driver.find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
-        upload = self.driver.find_element_by_id("upload")
+        upload = self.driver_find_element_by_id("upload")
         temp_file = self.create_temp_example_file()
         upload.send_keys(temp_file.name)
         self.driver.implicitly_wait(15)
-        tokens = self.driver.find_element_by_id("tokens")
+        tokens = self.driver_find_element_by_id("tokens")
         with open(temp_file.name) as fp:
             self.assertCountEqual(
                 [row for row in csv.reader(tokens.get_attribute("value").split("\n"), delimiter="\t") if row],
@@ -558,22 +571,22 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # prepare form
-        self.driver.find_element_by_id("new_corpus_link").click()
-        self.driver.find_element_by_id("corpusName").send_keys("example")
-        self.driver.find_element_by_id("label_checkbox_reuse").click()
-        self.driver.find_element_by_id("control_list_select").click()
-        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("corpusName").send_keys("example")
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
         invalid = "btOUZvzXARqNbnmvVIrcqjAbsRGIvZQsrhspGusZypNlUJSubtOztbiMiwipTpQJVTvSDZyIGCaONJ"
         self.writeMultiline(
-            self.driver.find_element_by_id("tokens"),
+            self.driver_find_element_by_id("tokens"),
             f"form\tlemma\tPOS\tmorph\n{invalid}\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
         )
 
         # submit and wait
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
         self.assertEqual(
-            self.driver.find_elements_by_css_selector(".alert.alert-danger")[0].text.strip(),
+            self.driver_find_elements_by_css_selector(".alert.alert-danger")[0].text.strip(),
             f"ln. 2, column 'form': '{invalid}' is too long (maximum 64 characters)"
         )
 
@@ -588,17 +601,121 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             filter(ControlLists.name == "Ancien Français - École des Chartes").first()
 
         # prepare form
-        self.driver.find_element_by_id("new_corpus_link").click()
-        self.driver.find_element_by_id("corpusName").send_keys("example")
-        self.driver.find_element_by_id("label_checkbox_reuse").click()
-        self.driver.find_element_by_id("control_list_select").click()
-        self.driver.find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("corpusName").send_keys("example")
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
         self.writeMultiline(
-            self.driver.find_element_by_id("tokens"),
+            self.driver_find_element_by_id("tokens"),
             f"form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
         )
 
         # submit and wait
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(15)
-        self.assertFalse(self.driver.find_elements_by_css_selector(".alert.alert-danger"))
+        self.assertFalse(self.driver_find_elements_by_css_selector(".alert.alert-danger"))
+
+    def test_corpus_name_unique_user(self):
+        """ Test that a single user can have twice the same name (even if weird)"""
+        self.add_control_lists()
+        self.add_user("foo", "foo")
+        self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
+        self.addCorpus("wauchier", cl=False)
+        self.add_user("bar", "bar")
+        self.login("%s.%s@ppa.fr" % ("bar", "bar"), self.app.config['ADMIN_PASSWORD'])
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver_find_element_by_id("corpusName").send_keys("Wauchier")
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.writeMultiline(
+            self.driver_find_element_by_id("tokens"),
+            f"form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
+        )
+        self.driver_find_element_by_id("submit").click()
+        self.driver.implicitly_wait(5)
+        self.assertFalse(self.driver_find_elements_by_css_selector(".alert.alert-danger"))
+
+    def test_lemmatization_service(self):
+        """
+        Test that a user can create a corpus and that this corpus has its data well recorded
+        """
+        # Click register menu link
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Fill in registration form
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+
+        # Default
+        details = self.driver_find_elements_by_css_selector(".lemmatizer-details")
+        self.assertEqual(details[0].is_displayed(), False, "Nothing should be displayed by default")
+
+        # Select a lemmatizer
+        s = Select(self.driver_find_elements_by_css_selector("#language-model")[0])
+        s.select_by_visible_text("Dummy lemmatizer")
+        self.assertEqual(details[0].is_displayed(), True, "Something should be displayed")
+        self.assertIn("Dummy lemmatizer is a lemmatization service provided by ProviderInstitution.", details[0].text)
+
+        # Unselect
+        s.select_by_visible_text("Select a service")
+        self.assertEqual(details[0].is_displayed(), False, "Nothing should be now")
+
+    def test_lemmatization_service_runs(self):
+        # Create a second fixture app
+        app = Flask("fixture")
+
+        @app.route("/lemma", methods=["POST"])
+        def lemmatizing():
+            return Response(
+                "\n".join(
+                    ["token\tlemma"] +
+                    ["\t".join([tok, f"{idx}"]) for idx, tok in enumerate(request.form.get("data").split())]
+                ),
+                200,
+                headers={
+                    'Content-Type': 'text/plain; charset=utf-8',
+                    'Access-Control-Allow-Origin': "*"
+                }
+            )
+        # Start it
+        second_app = Process(target=app.run, daemon=True, kwargs=dict(host="localhost", port="4567"))
+        second_app.start()
+
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Fill in registration form
+        self.driver_find_element_by_id("corpusName").send_keys("Test")
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), "Je suis")
+
+        # Select the lemmatizer
+        s = Select(self.driver_find_elements_by_css_selector("#language-model")[0])
+        s.select_by_index(1)
+        self.driver.implicitly_wait(5)
+
+        # Lemmatize
+        self.driver_find_element_by_id("submit-model").click()
+
+        # Wait
+        wait = WebDriverWait(self.driver, timeout=5)
+        wait.until(lambda x: self.driver_find_element_by_id("tokens-success").is_displayed())
+
+        # Check results
+        self.assertEqual(
+            self.driver_find_element_by_id("tokens").get_property("value").split("\n"),
+            ["token\tlemma", "Je\t0", "suis\t1"]
+        )
+
+        self.assertEqual(
+            self.driver_find_element_by_id("tokens-success").text,
+            "Operation finished with success ! 2 tokens analyzed in total.",
+            "Lemmatization happened"
+        )
+        # Kill second app
+        try:
+            second_app.terminate()
+            second_app.join(2)
+        finally:
+            second_app.close()

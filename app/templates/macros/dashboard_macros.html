@@ -4,9 +4,9 @@
     <div class="input-group mb-3">
         <div class="input-group-prepend">
             <select class="custom-select" id="select-role">
-                Account type
+                {{ _('Account type') }}
 
-                <option class="dropdown-item" value="all">All account types</option>
+                <option class="dropdown-item" value="all">{{ _('All account types') }}</option>
                 {% for r in roles %}
                     <option value="{{ r.name }}">{{ r.name }}s</option>
                 {% endfor %}
@@ -18,21 +18,24 @@
 {% endmacro %}
 
 {% macro users_table(current_user, users, redirect=False) %}
-    <table class="table table-hover" id="users-table">
+    <table class="table table-hover sortable" id="users-table">
         <thead>
         <tr>
-            <th scope="col">ID</th>
-            <th scope="col">First name</th>
-            <th scope="col">Last name</th>
+            <th scope="col">{{ _('ID') }}</th>
+            <th scope="col">{{ _('First name') }}</th>
+            <th scope="col">{{ _('Last name') }}</th>
             {% if current_user.is_admin() %}
-                <th scope="col">Email address</th>
+                <th scope="col">{{ _('Email address') }}</th>
             {% endif %}
-            <th scope="col">Account type</th>
+            <th scope="col">{{ _('Account type') }}</th>
+            {% if current_user.is_admin() %}
+                <th scope="col">{{ _('Status') }}</th>
+            {% endif %}
         </tr>
         </thead>
         <tbody>
         {% for u in users | sort(attribute='last_name') %}
-            <tr style="cursor: pointer" class="u-{{ u.id }}"
+            <tr style="cursor: pointer" class="u-{{ u.id }} "
                     {% if current_user.is_admin() and redirect %}
                 onclick="window.location.href = '{{ url_for('admin.user_info', user_id=u.id) }}';"
                     {% endif %} >
@@ -43,6 +46,9 @@
                     <td>{{ u.email }}</td>
                 {% endif %}
                 <td class="user role">{{ u.role.name }}</td>
+                {% if current_user.is_admin() %}
+                <td>{% if u.confirmed %}<span class="px1">{{ _('Confirmed') }}</span><span class="fa fa-check-circle" aria-label="Confirmed"></span>{% else %}<span class="px1">{{ _('Not Confirmed') }}</span><span class="fa fa-circle"  aria-label="Not Confirmed"></span>{% endif %}</td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
@@ -109,11 +115,15 @@
 
 {% macro corpora_users(current_user, corpora) %}
     <div class="mt-5">
-        <h2>View and manage corpora users</h2>
-        <p class="form-text">Add or remove corpus access to users</p>
-
+        <h2>{{ _('View and manage corpora users') }}</h2>
+        <p class="form-text">{{ _('Add or remove corpus access to users') }}</p>
+        {% if current_user.is_admin() %}
+            <a href="{{ url_for("main.list_corpora") }}">{{ _('See all as administrator') }}</a>
+        {% elif corpora|length > 10 %}
+            <a href="{{ url_for("main.list_corpora") }}">{{ _('More detailed view...') }}</a>
+        {% endif %}
         <div id="corpora-dashboard" class="list-group">
-            <h3 class="list-group-item bg-dark text-white">Corpora</h3>
+            <h3 class="list-group-item bg-dark text-white">{{ _('Corpora') }}</h3>
             {% for corpus in corpora %}
                 {{ dashboard_option(corpus.name,
                                     'main.manage_corpus_users', args={"corpus_id": corpus.id},
@@ -122,13 +132,14 @@
         </div>
     </div>
 {% endmacro %}
+
 {% macro control_lists_users(current_user, control_lists) %}
     <div class="mt-5">
-        <h2>View and manage corpora users</h2>
-        <p class="form-text">Add or remove corpus access to users</p>
+        <h2>{{ _('View and manage corpora users') }}</h2>
+        <p class="form-text">{{ _('Add or remove corpus access to users') }}</p>
 
         <div id="control_lists-dashboard" class="list-group">
-            <h3 class="list-group-item bg-dark text-white">Control Lists</h3>
+            <h3 class="list-group-item bg-dark text-white">{{ _('Control Lists') }}</h3>
             {% for cl in control_lists %}
                 {{ dashboard_option(cl.name,
                                     'main.manage_control_lists_user', args={"cl_id": cl.id},
@@ -144,19 +155,19 @@
 
     </div>
     <div class="mt-2">
-        <a href="{{ url_for("main.dashboard") }}">Back to dashboard</a>
+        <a href="{{ url_for("main.dashboard") }}">{{ _('Back to dashboard') }}</a>
     </div>
 
     <form method="POST" id="accesses-form"
           action="{{ url_for(post_endpoint, **post_kwargs) }}">
         <div class="mt-3">
             {% if can_edit %}
-                <h2><i class="fa fa-users mr-2"></i> View and manage {{ item_type_name }} users</h2>
-                <p class="form-text">Add or remove {{ item_type_name }} access to users</p>
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage') }} {{ item_type_name }} {{ _('users') }}</h2>
+                <p class="form-text">{{ _('Add or remove') }} {{ item_type_name }} {{ _('access to users') }}</p>
             {% else %}
-                <h2><i class="fa fa-users mr-2"></i> View {{ item_type_name }} users</h2>
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View') }} {{ item_type_name }} {{ _('users') }}</h2>
                 <p class="form-text">
-                    Only {{ item_type_name }} owners can manage user accesses
+                    {{ _('Only') }} {{ item_type_name }} {{ _('owners can manage user accesses') }}
                 </p>
             {% endif %}
             <div class="container">
@@ -168,10 +179,10 @@
                 <table class="table" id="accesses-table">
                     <thead>
                     <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">First name</th>
-                        <th scope="col">Last name</th>
-                        <th scope="col"><label for="ownership" class="mb-0">Owner</label></th>
+                        <th scope="col">{{ _('ID') }}</th>
+                        <th scope="col">{{ _('First name') }}</th>
+                        <th scope="col">{{ _('Last name') }}</th>
+                        <th scope="col"><label for="ownership" class="mb-0">{{ _('Owner') }}</label></th>
                         <th scope="col"></th>
                     </tr>
                     </thead>
@@ -211,9 +222,9 @@
                         <div class="row">
 
                             <div class="col-md-9" style="padding: 0;">
-                                <h3 class="mt-3"><i class="fa fa-user-plus mr-2"></i>Grant access to a user</h3>
-                                <p>The user will be able to use the post-correction tools but also grant and remove
-                                    accesses to this {{ item_type_name }}</p>
+                                <h3 class="mt-3"><i class="fa fa-user-plus mr-2"></i>{{ _('Grant access to a user') }}</h3>
+                                <p>{{ _('The user will be able to use the post-correction tools but also grant and remove
+                                    accesses to this') }} {{ item_type_name }}</p>
 
                                 {{ search_user(roles) }}
                                 {{ users_table(current_user, users, redirect=False) }}

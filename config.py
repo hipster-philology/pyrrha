@@ -1,5 +1,6 @@
 import os
-
+from app.lemmatizers import LemmatizerService
+from typing import List
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -11,7 +12,9 @@ class Config:
     else:
         SECRET_KEY = 'SECRET_KEY_ENV_VAR_NOT_SET'
         print('SECRET KEY ENV VAR NOT SET! SHOULD NOT SEE IN PRODUCTION')
-    SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    # SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+    # Deprecated
+    SQLALCHEMY_COMMIT_ON_TEARDOWN = False
     template_folder = os.path.join(basedir, "app", "templates")
     static_folder = os.path.join(basedir, "app", "statics")
     # SQLALCHEMY_ECHO = True
@@ -36,7 +39,10 @@ class Config:
     PAGINATION_DEFAULT_TOKENS = 100
 
     # Lemmatizer (until Deucalion client)
-    LEMMATIZERS = []
+    LEMMATIZERS: List[LemmatizerService] = []
+
+    # Change automatically the Postgresql instance language if not english
+    FORCE_PSQL_EN_LOCALE = True
 
     @staticmethod
     def init_app(app):
@@ -47,8 +53,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     ASSETS_DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'data-dev.sqlite')
-    #SQLALCHEMY_DATABASE_URI = "postgres://postgres:mysecretpassword@172.17.0.2:5432/postgres"
+        "postgresql://user:pwd@localhost:5432/data-dev"
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Email
@@ -70,12 +75,13 @@ class DevelopmentConfig(Config):
         ("Ancien Français", "http://localhost:5001/")
     ]
 
+    BABEL_TRANSLATION_DIRECTORIES = os.path.join(os.path.dirname(__file__), "translations")
 
-class TestConfig(Config):
+
+class BaseTestConfig(Config):
+    """Test configuration base class."""
     DEBUG = True
     ASSETS_DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Disable CSRF for login purpose
@@ -96,10 +102,36 @@ class TestConfig(Config):
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
+    LEMMATIZERS = [
+        LemmatizerService(
+            "Dummy lemmatizer",
+            "http://localhost:4567/lemma",
+            provider="ProviderInstitution",
+            ui="someui.com",
+            apa="Clérice et al. 2019",
+            bibtex="""@article{camps2021corpus,
+	title        = {Corpus and Models for Lemmatisation and POS-tagging of Old French},
+	author       = {Camps, Jean-Baptiste and Cl{\'e}rice, Thibault and Duval, Fr{\'e}d{\'e}ric and Kanaoka, Naomi and Pinche, Ariane and others},
+	year         = 2021,
+	journal      = {arXiv preprint arXiv:2109.11442},
+	keywords     = {Old French}
+}"""
+        )
+    ]
+
+
+class SQLiteTestConfig(BaseTestConfig):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'sqlite:///' + os.path.join(basedir, 'data-test.sqlite')
+
+
+class PostgreSQLTestConfig(BaseTestConfig):
+    SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
+        'postgresql:///data-test'
 
 
 config = {
     "dev": DevelopmentConfig,
     "prod": Config,
-    "test": TestConfig
+    "test": PostgreSQLTestConfig if os.environ.get("TEST_DBMS", "sqlite").lower() == "postgresql" else SQLiteTestConfig
 }

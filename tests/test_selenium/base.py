@@ -8,16 +8,20 @@ import logging
 import tempfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from sqlalchemy_utils import database_exists, create_database
 
 from app import db, create_app
-from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists , Favorite, Column
+from app.models import CorpusUser, Corpus, ControlListsUser, ControlLists, Favorite, Column
 from tests.db_fixtures import add_corpus, add_control_lists
 from app.models import WordToken, Role, User
+from sqlalchemy.sql import text
+
+from tests.fixtures.wauchier import FULL_CORPUS_LEMMA_ALLOWED
 
 LIVESERVER_TIMEOUT = 1
 
@@ -31,6 +35,20 @@ __all__ = [
 ]
 
 
+def get_chrome():
+     # This ensures compatibility with nektos/act
+    if os.path.isfile('/usr/bin/chrome'):
+        return '/usr/bin/chrome'
+    elif os.path.isfile('/usr/bin/google-chrome'):
+        return '/usr/bin/google-chrome'
+    elif os.path.isfile('/usr/bin/chromium-browser'):
+        return '/usr/bin/chromium-browser'
+    elif os.path.isfile('/usr/bin/chromium'):
+        return '/usr/bin/chromium'
+    else:
+        return None
+
+
 class _element_has_count(object):
     """ An expectation for checking that an element has a particular css class.
 
@@ -42,7 +60,7 @@ class _element_has_count(object):
         self.cnt = cnt
 
     def __call__(self, driver):
-        if self.cnt == len(driver.find_elements_by_css_selector(self.element)):
+        if self.cnt == len(driver.find_elements(By.CSS_SELECTOR, self.element)):
             return self.element
         else:
             return False
@@ -55,7 +73,7 @@ class _AuthenticatedUser(flask_login.UserMixin):
 
     def __getattr__(self, item):
         if not self._user:
-            self._user = User.query.get(1)
+            self._user = db.session.get(User, 1)
         return getattr(self._user, item)
 
 
@@ -77,6 +95,84 @@ class TestBase(LiveServerTestCase):
         """
         ControlLists.add_default_lists()
         db.session.commit()
+
+    @staticmethod
+    def element_find_element_by_id(element, *args, **kwargs):
+        return element.find_element(By.ID, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_css_selector(element, *args, **kwargs):
+        return element.find_element(By.CSS_SELECTOR, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_class_name(element, *args, **kwargs):
+        return element.find_element(By.CLASS_NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_link_text(element, *args, **kwargs):
+        return element.find_element(By.LINK_TEXT, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_tag_name(element, *args, **kwargs):
+        return element.find_element(By.TAG_NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_name(element, *args, **kwargs):
+        return element.find_element(By.NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_name(element, *args, **kwargs):
+        return element.find_elements(By.NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_element_by_partial_link_text(element, *args, **kwargs):
+        return element.find_element(By.PARTIAL_LINK_TEXT, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_css_selector(element, *args, **kwargs):
+        return element.find_elements(By.CSS_SELECTOR, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_class_name(element, *args, **kwargs):
+        return element.find_elements(By.CLASS_NAME, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_link_text(element, *args, **kwargs):
+        return element.find_elements(By.LINK_TEXT, *args, **kwargs)
+
+    @staticmethod
+    def element_find_elements_by_tag_name(element, *args, **kwargs):
+        return element.find_elements(By.TAG_NAME, *args, **kwargs)
+
+    def driver_find_element_by_id(self, *args, **kwargs):
+        return self.driver.find_element(By.ID, *args, **kwargs)
+
+    def driver_find_element_by_css_selector(self, *args, **kwargs):
+        return self.driver.find_element(By.CSS_SELECTOR, *args, **kwargs)
+
+    def driver_find_element_by_class_name(self, *args, **kwargs):
+        return self.driver.find_element(By.CLASS_NAME, *args, **kwargs)
+
+    def driver_find_element_by_link_text(self, *args, **kwargs):
+        return self.driver.find_element(By.LINK_TEXT, *args, **kwargs)
+
+    def driver_find_element_by_tag_name(self, *args, **kwargs):
+        return self.driver.find_element(By.TAG_NAME, *args, **kwargs)
+
+    def driver_find_element_by_partial_link_text(self, *args, **kwargs):
+        return self.driver.find_element(By.PARTIAL_LINK_TEXT, *args, **kwargs)
+
+    def driver_find_elements_by_css_selector(self, *args, **kwargs):
+        return self.driver.find_elements(By.CSS_SELECTOR, *args, **kwargs)
+
+    def driver_find_elements_by_class_name(self, *args, **kwargs):
+        return self.driver.find_elements(By.CLASS_NAME, *args, **kwargs)
+
+    def driver_find_elements_by_link_text(self, *args, **kwargs):
+        return self.driver.find_elements(By.LINK_TEXT, *args, **kwargs)
+
+    def driver_find_elements_by_tag_name(self, *args, **kwargs):
+        return self.driver.find_elements(By.TAG_NAME, *args, **kwargs)
 
     def create_app(self, config_overwrite=None):
         config_name = 'test'
@@ -104,14 +200,15 @@ class TestBase(LiveServerTestCase):
     def create_driver(self, options=None):
         if not options:
             options = Options()
+        # Ajout option remote suite à erreur DevToolsactive port file doesn't exist
+        options.add_argument("--remote-debugging-port=9222")
         options.add_argument("--headless")
         options.add_argument("--disable-gpu")
-        options.add_experimental_option('w3c', False)
+        options.add_argument('--no-sandbox')   # This ensures compatibility with nektos/act
+        options.binary_location = get_chrome()
 
-        desired = DesiredCapabilities.CHROME
-        desired['loggingPrefs'] = {'browser': 'ALL'}
-        desired["goog:loggingPrefs"] = {'browser': 'ALL'}
-        self.driver = webdriver.Chrome(options=options, desired_capabilities=desired)
+        options.set_capability("goog:loggingPrefs", {'browser': 'ALL'})
+        self.driver = webdriver.Chrome(options=options)
         self.driver.set_window_size(1920, 1080)
         return self.driver
 
@@ -121,10 +218,24 @@ class TestBase(LiveServerTestCase):
 
     def setUp(self):
         """Setup the test driver and create test users"""
+        if not database_exists(db.engine.url):
+            create_database(db.engine.url)
         db.session.commit()
         db.drop_all()
         db.create_all()
         db.session.commit()
+
+        """if db.session.get_bind().dialect.name == "postgresql":
+                    lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
+                    psql_locale = lc_messages_query.fetchone()[0]
+                    if not psql_locale.startswith("en"):
+                        # ToDo: add an option in config.py to check something such as app.config["FORCE_PSQL_EN_LOCALE"] (with default on True)
+                        logging.warn(f"Your postgresql instance language is {psql_locale}. Please switch it to 'en_US.UTF-8'..")
+                        try:
+                            db.session.execute(text("SET lc_messages TO 'en_US';"))
+                            db.session.commit()
+                        except Exception as E:
+                            logging.warn(str(E))"""
 
         # add default roles & admin user
         Role.add_default_roles()
@@ -152,7 +263,7 @@ elit
 
     def write_lorem_impsum_tokens(self):
         self.writeMultiline(
-            self.driver.find_element_by_id("tokens"),
+            self.driver_find_element_by_id("tokens"),
             self.LOREM_IPSUM
         )
 
@@ -180,6 +291,10 @@ elit
                     self._process.terminate()
 
     def tearDown(self):
+        # https://stackoverflow.com/questions/66876181/how-do-i-close-a-flask-sqlalchemy-connection-that-i-used-in-a-thread/67077811#67077811
+        if self.db.engine.dialect.name == "postgresql":
+            db.session.close()
+            db.engine.dispose()
         self.driver.quit()
 
     def add_n_corpora(self, n_corpus: int, **kwargs):
@@ -210,18 +325,17 @@ elit
         :returns: temporary example file
         :rtype: NamedTemporaryFile
         """
-        fp = tempfile.NamedTemporaryFile("w", delete=False)
-        csv.writer(fp, delimiter="\t").writerows(
-            (
-                ("form", "lemma", "POS", "morph"),
-                ("SOIGNORS", "seignor", "NOMcom", "NOMB.=p|GENRE=m|CAS=n")
-            )
-        )
-        fp.close()
+        path = os.path.dirname(os.path.abspath(__file__))
+        file_test = os.path.join(path, "test.csv")
+        with open(file_test, "wt") as fp:
+            fp_writer = csv.writer(fp, delimiter=",")
+            fp_writer.writerow(['form', 'lemma', 'POS', 'morph'])
+            fp_writer.writerow(['SOIGNORS', 'seignor', 'NOMcom', 'NOMB.=p|GENRE=m|CAS=n'])
         return fp
 
-    def addCorpus(self, corpus, *args, **kwargs):
-        corpus = add_corpus(corpus.lower(), db, *args, **kwargs)
+
+    def addCorpus(self, corpus, cl=True, *args, **kwargs):
+        corpus = add_corpus(corpus.lower(), db, cl, *args, **kwargs)
         if self.AUTO_LOG_IN and not kwargs.get("no_corpus_user", False):
             self.addCorpusUser(corpus.name, self.app.config['ADMIN_EMAIL'], is_owner=kwargs.get("is_owner", True))
         self.driver.get(self.get_server_url())
@@ -267,9 +381,9 @@ elit
 
     def login(self, email, password):
         self.driver.get(self.url_for_with_port("account.login"))
-        self.driver.find_element_by_id("email").send_keys(email)
-        self.driver.find_element_by_id("password").send_keys(password)
-        self.driver.find_element_by_id("submit").click()
+        self.driver_find_element_by_id("email").send_keys(email)
+        self.driver_find_element_by_id("password").send_keys(password)
+        self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(5)
 
     def logout(self):
@@ -299,6 +413,14 @@ elit
             url = url.replace('://localhost/', '://localhost:%d/' % (self.app.config["LIVESERVER_PORT"]))
             return url
 
+    def token_dropdown_link(self, tok_id, link):
+        self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1"))
+        self.driver_find_element_by_id("dd_t" + str(tok_id)).click()
+        self.driver.implicitly_wait(2)
+        dd = self.driver_find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
+        self.element_find_element_by_partial_link_text(dd, link).click()
+        self.driver.implicitly_wait(2)
+
 
 class TokenCorrectBase(TestBase):
     """ Base class with helpers to test token edition page """
@@ -316,10 +438,10 @@ class TokenCorrectBase(TestBase):
             self.assertEqual(token.morph, morph, f"[Morph] {token.morph} should have been updated to {morph}")
 
     def get_badge_text_for_token(self, row, badge_class: str):
-        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] {badge_class}").text.strip()
+        return self.driver_find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] {badge_class}").text.strip()
 
     def get_similar_badge(self, row):
-        return self.driver.find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] .similar-link")
+        return self.driver_find_element_by_css_selector(f"[rel='{row.get_attribute('id')}'] .similar-link")
 
     def assert_saved(self, row):
         self.assertEqual(self.get_badge_text_for_token(row, ".badge-status.badge-success"), "Saved")
@@ -337,15 +459,78 @@ class TokenCorrectBase(TestBase):
 
         #def callback():
         #    # Show the dropdown
-        #    self.driver.find_element_by_id("toggle_corpus_corpora").click()
+        #    self.driver_find_element_by_id("toggle_corpus_corpora").click()
         #    # Click on the edit link
-        #    self.driver.find_element_by_id("dropdown_link_" + corpus_id).click()
+        #    self.driver_find_element_by_id("dropdown_link_" + corpus_id).click()
         def callback():
             self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id=corpus_id))
 
         if as_callback:
             return callback
         return callback()
+
+    def _edit_nth_row_value_autocomplete(
+            self, value,
+            value_type="lemma",
+            id_row="1", corpus_id=None,
+            autocomplete_selector=None,
+            additional_action_before=None,
+            go_to_edit_token_page=None
+    ):
+        """ Helper to go to the right page and edit the first row
+
+        :param value: Value to write
+        :type value: str
+        :param value_type: Type of value to edit (lemma, form, context)
+        :type value_type: str
+        :param id_row: ID of the row to edit
+        :type corpus_id: str
+        :param corpus_id: ID of the corpus to edit
+        :type corpus_id: str
+        :param autocomplete_selector: Selector that match an autocomplete suggestion that will be clicked
+        :type autocomplete_selector: str
+        :param additional_action_before: Action to perform between page reaching and token editing
+        :type additional_action_before: Callable
+        :param go_to_edit_token_page: Action to perform to go to the edit token page
+
+        :returns: Token that has been edited, Content of the save link td
+        :rtype: WordToken, str
+        """
+        # Take the first row
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
+        # Take the td to edit
+        if value_type == "POS":
+            td = self.element_find_element_by_class_name(row, "token_pos")
+        elif value_type == "morph":
+            td = self.element_find_element_by_class_name(row, "token_morph")
+        else:
+            td = self.element_find_element_by_class_name(row, "token_lemma")
+
+        td.clear()
+
+        action = ActionChains(self.driver)
+        action.move_to_element(td).click(td).send_keys(value).pause(1).perform()
+
+        action = ActionChains(self.driver)
+        autocomplete_element = self.driver_find_element_by_css_selector(autocomplete_selector)
+        save_btn = self.element_find_element_by_css_selector(row, "a.save")
+        action.move_to_element(autocomplete_element).click(autocomplete_element)\
+            .move_to_element(save_btn).click(save_btn).perform()
+
+        # It's safer to wait for the AJAX call to be completed
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
+
+        WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, "[rel='token_{}_row'] .badge-status".format(id_row))
+            )
+        )
+
+        return (
+            self.db.session.get(WordToken, int(id_row)),
+            self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
+            row
+        )
 
     def edith_nth_row_value(
             self, value,
@@ -383,33 +568,31 @@ class TokenCorrectBase(TestBase):
         if additional_action_before is not None:
             additional_action_before()
 
+        if autocomplete_selector:
+            return self._edit_nth_row_value_autocomplete(
+                value=value, id_row=id_row,
+                value_type=value_type, autocomplete_selector=autocomplete_selector
+            )
+
         # Take the first row
-        row = self.driver.find_element_by_id("token_" + id_row + "_row")
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
         # Take the td to edit
         if value_type == "POS":
-            td = row.find_element_by_class_name("token_pos")
+            td = self.element_find_element_by_class_name(row, "token_pos")
         elif value_type == "morph":
-            td = row.find_element_by_class_name("token_morph")
+            td = self.element_find_element_by_class_name(row, "token_morph")
         else:
-            td = row.find_element_by_class_name("token_lemma")
+            td = self.element_find_element_by_class_name(row, "token_lemma")
 
         # Click, clear the td and send a new value
         td.click()
         td.clear()
         td.send_keys(value)
-        if autocomplete_selector is not None:
-            # For some reason, screenshot was working as well, screenshot makes
-            #   autocomplete appear...
-            self.driver.save_screenshot("debug-autocomplete.png")
-            WebDriverWait(self.driver, 10).until(
-                EC.visibility_of_element_located((By.CSS_SELECTOR, autocomplete_selector))
-            )
-            self.driver.find_element_by_css_selector(autocomplete_selector).click()
 
         # Save
-        row.find_element_by_css_selector("a.save").click()
+        self.element_find_element_by_css_selector(row, "a.save").click()
         # It's safer to wait for the AJAX call to be completed
-        row = self.driver.find_element_by_id("token_" + id_row + "_row")
+        row = self.driver_find_element_by_id("token_" + id_row + "_row")
 
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located(
@@ -418,8 +601,8 @@ class TokenCorrectBase(TestBase):
         )
 
         return (
-            self.db.session.query(WordToken).get(int(id_row)),
-            row.find_element_by_css_selector("#token_"+id_row+"_row > td a.save").text.strip(),
+            self.db.session.get(WordToken, int(id_row)),
+            self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
 
@@ -454,7 +637,7 @@ class TokenCorrectBase(TestBase):
 
         self.assertIn("table-changed", row.get_attribute("class"))
         self.driver.refresh()
-        row = self.driver.find_element_by_id("token_1_row")
+        row = self.driver_find_element_by_id("token_1_row")
         self.assertIn("table-changed", row.get_attribute("class"))
 
 
@@ -481,11 +664,11 @@ class TokensSearchThroughFieldsBase(TestBase):
 
     def fill_filter_row(self, form, lemma, pos, morph):
         # Take the first row
-        row = self.driver.find_element_by_id("filter_row")
+        row = self.driver_find_element_by_id("filter_row")
 
         for field_name, field_value in (("lemma", lemma), ("form", form), ("POS", pos), ("morph", morph)):
             # Take the td to edit
-            td = row.find_element_by_name(field_name)
+            td = self.element_find_element_by_name(row, field_name)
             # Click, clear the td and send a new value
             if field_value is None:
                 field_value = 'None'
@@ -530,33 +713,42 @@ class TokensSearchThroughFieldsBase(TestBase):
         db.session.add(new_token)
         db.session.commit()
 
-    def search(self, form="", lemma="", pos="", morph=""):
-
+    def search(self, form="", lemma="", pos="", morph="", case_insensitivity=False):
         self.go_to_search_tokens_page(TokensSearchThroughFieldsBase.CORPUS_ID, as_callback=False)
-
         self.fill_filter_row(form, lemma, pos, morph)
-
-        self.driver.find_element_by_id("submit_search").click()
+        if case_insensitivity:
+            self.driver_find_element_by_id('caseBox').click()
+        self.driver_find_element_by_id("submit_search").click()
 
         result = []
 
         def get_field(row, f):
-            return row.find_element_by_class_name(f).text.strip()
+            return self.element_find_element_by_class_name(row, f).text.strip()
 
         # load each page to get the (partials) result tables
-        pagination = self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")
-        self.driver.save_screenshot("first.results.png")
+        # pagination = self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")
+        pagination = self.element_find_elements_by_tag_name(
+            self.driver_find_element_by_class_name("pagination"),
+            "a"
+        )
         for page_index in range(0, len(pagination)):
-            self.driver.find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
+            # self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
+            self.element_find_elements_by_tag_name(
+                self.driver_find_element_by_class_name("pagination"),
+                "a"
+            )[page_index].click()
 
             # find the result in the result table
-            res_table = self.driver.find_element_by_id("result_table").find_element_by_tag_name("tbody")
+            res_table = self.element_find_element_by_tag_name(
+                self.driver_find_element_by_id("result_table"),
+                "tbody"
+            )
             try:
-                rows = res_table.find_elements_by_tag_name("tr")
+                rows = self.element_find_elements_by_tag_name(res_table, "tr")
 
                 for row in rows:
                     result.append({
-                        "form": row.find_elements_by_tag_name("td")[1].text.strip(),
+                        "form": self.element_find_elements_by_tag_name(row, "td")[1].text.strip(),
                         "lemma": get_field(row, "token_lemma"),
                         "morph": get_field(row, "token_morph"),
                         "pos": get_field(row, "token_pos"),
