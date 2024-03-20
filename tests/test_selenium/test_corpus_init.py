@@ -707,3 +707,5 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         )
         # Kill second app
         second_app.terminate()
+        second_app.close()
+        second_app.kill()
