@@ -2,20 +2,15 @@ from flask import request, jsonify, url_for, abort, render_template, current_app
     stream_with_context
 from flask_login import current_user, login_required
 from slugify import slugify
-from sqlalchemy.sql.elements import or_, and_
-from sqlalchemy.sql.expression import not_
-from sqlalchemy import func
 import math
 from csv import DictWriter
 from io import StringIO
-from itertools import product
-from typing import Dict, Optional, List, Tuple
+from typing import Dict
 
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
-from ... import db
-from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark, CorpusCustomDictionary
-from ...utils.forms import string_to_none, strip_or_none, column_search_filter, prepare_search_string
+from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
+from ...utils.forms import string_to_none
 from ...utils.pagination import int_or
 from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
@@ -274,88 +269,17 @@ def tokens_search_through_fields(corpus_id):
     # test suppression:
     if not corpus.has_access(current_user):
         abort(403)
-    # nom des colonnes disponibles pour le corpus (POS, form, etc)
-    columns = tuple(["form"] + [
-        col if col == "POS" else col.lower()
-        for col in corpus.get_columns_headings()
-    ])
 
-    input_values: Dict[str, Optional[str]] = {}
-
-    # make a dict with values split for each OR operator
-    fields: Dict[str, List[str]] = {}
-    source_dict: Dict[str, str] = request.form if request.method == "POST" else request.args
-
-    for name in columns:
-        value: Optional[str] = strip_or_none(source_dict.get(name))
-        input_values[name] = value
-
-        # split values with the '|' OR operator but keep escaped '\|' ones
-        if value:
-            fields[name] = prepare_search_string(value)
-
-    # all search combinations
-    flat_fields: List[List[Tuple[str, str]]] = [
-            [
-                (field, value)
-                for value in fields[field]
-            ]
-            for field in fields
-        ]
-    # Création combinaison de recherches possibles pipe product
-    # If source_dict = {"POS": "NOM|VER", "lemma": "mang*"}
-    # Then flat_fields = [[("POS", "NOM"), ("POS", "VER")], [("lemma", "mang*")]]
-    # And search_branches :
-    #    [{"POS": "NOM", "lemma": "mang*"}, {"POS": "VER", "lemma": "mang*"}]
-    # * => flat_fields = [["a", "b"], ["c"]]
-    # product(*flat_fields) == product(flat_fields[0], flat_fields[1])
-    search_branches: List[Dict[str, str]] = [dict(prod) for prod in product(*flat_fields)]
-
-    value_filters = []
-    case_insensitive = True
-    if 'caseBox' in source_dict:
-        case_insensitive = False
-    # for each branch filter (= OR clauses if any)
-    for search_branch in search_branches:
-        # filtre minimal = bon corpus (id)
-        branch_filters = [WordToken.corpus == corpus_id]
-
-        # for each field (lemma, pos, form, morph)
-        for name, value in search_branch.items():
-            # transformation couple clé valeur en filtre SQLalchemy
-            branch_filters.extend(column_search_filter(getattr(WordToken, name), value, case_sensitive=case_insensitive))
-
-        value_filters.append(branch_filters)
-
-    if not value_filters:  # If the search is empty, we only search for the corpus_id
-        value_filters.append([WordToken.corpus == corpus_id])
-
-    # there is at least one OR clause
-    # get sort arguments (sort per default by WordToken.order_id)
-    order_by_key = request.args.get("orderBy")
-    order_by = {
-        "order_id": WordToken.order_id,
-        "lemma": func.lower(WordToken.lemma),
-        "pos": func.lower(WordToken.POS),
-        "form": func.lower(WordToken.form),
-        "morph": func.lower(WordToken.morph),
-     }
-    if order_by_key not in order_by:
-        order_by_key = "order_id"
-    order_by = order_by.get(order_by_key)
-
-    args = []
-
-    if len(value_filters) > 1:
-        and_filters = [and_(*branch_filters) for branch_filters in value_filters]
-        args = [or_(*and_filters)]
-    elif len(value_filters) == 1:
-        args = value_filters[0]
-
-    tokens = WordToken.query.filter(*args).order_by(
-        order_by.desc()
-        if bool(int(request.args.get("desc", "0")))  # default sort order is ascending
-        else order_by
+    form: Dict[str, str] = request.form if request.method == "POST" else request.args
+    token_dict: Dict[str, str] = {
+        key: value
+        for key, value in form.items()
+        if key not in {"caseBox", "page", "limit"}
+    }
+    tokens, order_by_key, input_values = corpus.token_search(
+        token_dict=token_dict,
+        case_sensitive='caseBox' not in form,
+        desc=int(request.args.get("desc", "0"))
     )
 
     page = int_or(request.args.get("page"), 1)
