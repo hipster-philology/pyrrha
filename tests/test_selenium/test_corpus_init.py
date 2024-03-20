@@ -672,7 +672,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
                 }
             )
         # Start it
-        second_app = Process(target=app.run, daemon=True, kwargs=dict(host="localhost", port="4567"))
+        second_app = Process(target=app.run, kwargs=dict(host="localhost", port="4567"))
         second_app.start()
 
         self.driver_find_element_by_id("new_corpus_link").click()
@@ -705,6 +705,5 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             "Operation finished with success ! 2 tokens analyzed in total.",
             "Lemmatization happened"
         )
-
         # Kill second app
         second_app.terminate()
