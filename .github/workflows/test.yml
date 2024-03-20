@@ -36,7 +36,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install pytest pytest-cov coveralls flake8
+        pip install pytest pytest-cov coveralls flake8 pytest-sugar
     - name: Set up TEST_DATABASE_URL
       run: |
         echo "TEST_DATABASE_URL=postgresql://pyrrha:pyrrha@localhost:5432/data-test" >> $GITHUB_ENV

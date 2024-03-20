@@ -147,10 +147,8 @@ class TestUpdateControlList(TestBase):
         # Check that we can edit informations about markdown or whatever
         self.driver.get(self.url_for_with_port("control_lists_bp.information_edit", control_list_id=1))
         self.driver_find_element_by_id("cl_notes").send_keys("# This is some notes")
-        self.driver.save_screenshot("HELLOOOO1.png")
         self.driver_find_element_by_id("submit").click()
         self.driver.get(self.url_for_with_port("control_lists_bp.information_read", control_list_id=1))
-        self.driver.save_screenshot("HELLOOOO2.png")
         self.assertEqual(
             self.driver_find_element_by_tag_name("h1").text, "This is some notes",
             "Check that edition works"

@@ -731,7 +731,6 @@ class TokensSearchThroughFieldsBase(TestBase):
             self.driver_find_element_by_class_name("pagination"),
             "a"
         )
-        self.driver.save_screenshot("first.results.png")
         for page_index in range(0, len(pagination)):
             # self.driver_find_element_by_class_name("pagination").find_elements_by_tag_name("a")[page_index].click()
             self.element_find_elements_by_tag_name(
