@@ -466,6 +466,7 @@ que	que4	CONsub	_
 	dieu	NOMpro	NOMB.=s|GENRE=m|CAS=n
 vos	vos1	PROper	PERS.=2|NOMB.=p|GENRE=m|CAS=r
 soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
+
         self.driver_find_element_by_id("label_checkbox_reuse").click()
         self.driver_find_element_by_id("control_list_select").click()
         self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
@@ -473,7 +474,11 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("submit").click()
 
         self.assertEqual(
-            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted([
+                e.text.strip()
+                for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")
+                if e.text.strip()
+            ]),
             sorted([
                 'At least one line of your corpus is missing a token/form. Check line 1'
             ]),
@@ -498,9 +503,13 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
 
         self.driver_find_element_by_id("submit").click()
-
+        self.driver.save_screenshot("error.png")
         self.assertEqual(
-            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
+            sorted([
+                e.text.strip()
+                for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")
+                if e.text.strip()
+            ]),
             sorted([
                 'You did not input any text.'
             ]),
@@ -672,7 +681,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
                 }
             )
         # Start it
-        second_app = Process(target=app.run, kwargs=dict(host="localhost", port="4567"))
+        second_app = Process(target=app.run, daemon=True, kwargs=dict(host="localhost", port="4567"))
         second_app.start()
 
         self.driver_find_element_by_id("new_corpus_link").click()
@@ -706,6 +715,8 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             "Lemmatization happened"
         )
         # Kill second app
-        second_app.terminate()
-        second_app.close()
-        second_app.kill()
+        try:
+            second_app.terminate()
+            second_app.join(2)
+        finally:
+            second_app.close()
