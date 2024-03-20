@@ -2,22 +2,25 @@
 import csv
 import io
 import enum
-from typing import Iterable, Optional, Dict, List
+from typing import Iterable, Optional, Dict, List, Tuple
+from itertools import product
 # PIP Packages
 import unidecode
+import sqlalchemy.exc
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
-import sqlalchemy.exc
-from sqlalchemy import func, literal, not_
+from sqlalchemy import func, literal, not_, or_, and_
 from werkzeug.exceptions import BadRequest
 from flask import url_for
+
 # Application imports
-from .. import db
-from ..utils import validate_length
-from ..utils.forms import strip_or_none
-from ..utils.tsv import TSV_CONFIG
-from ..errors import MissingTokenColumnValue, NoTokensInput
+from app import db
+from app.utils import validate_length
+from app.utils.tsv import TSV_CONFIG
+from app.errors import MissingTokenColumnValue, NoTokensInput
 from app.utils import PreferencesUpdateError
+from app.utils.forms import strip_or_none, column_search_filter, prepare_search_string
+
 # Models
 from .user import User
 from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
@@ -594,6 +597,105 @@ class Corpus(db.Model):
             **preproc(string, self.id)
         ))
         db.session.commit()
+
+    def token_search(
+            self,
+            token_dict: Dict[str, str],
+            order_by_key: str = "order_id",
+            desc: bool = False,
+            case_sensitive: bool = False
+    ):
+        """ Perform a complex search on tokens, returns a query
+
+        ToDo: Add a proximity filter that allows contextual search
+        ToDo: Add test outside of the interface
+
+        :param token_dict:
+        :param order_by_key:
+        :param desc:
+        :param case_sensitive:
+        :return: tokens, order_by_key, input_values
+
+        Corpus.token_search({"form": "d*"})
+        """
+        # nom des colonnes disponibles pour le corpus (POS, form, etc)
+        columns = tuple(["form"] + [
+            col if col == "POS" else col.lower()
+            for col in self.get_columns_headings()
+        ])
+
+        # Cleaned up values from the input form
+        input_values: Dict[str, Optional[str]] = {}
+
+        # make a dict with values split for each OR operator
+        fields: Dict[str, List[str]] = {}
+
+        for name in columns:
+            value: Optional[str] = strip_or_none(token_dict.get(name))
+            input_values[name] = value
+
+            # split values with the '|' OR operator but keep escaped '\|' ones
+            if value:
+                fields[name] = prepare_search_string(value)
+
+        # all search combinations
+        fields: List[List[Tuple[str, str]]] = [
+            [
+                (field, value)
+                for value in fields[field]
+            ]
+            for field in fields
+        ]
+        # Création combinaison de recherches possibles pipe product
+        # If source_dict = {"POS": "NOM|VER", "lemma": "mang*"}
+        # Then fields = [[("POS", "NOM"), ("POS", "VER")], [("lemma", "mang*")]]
+        # And search_branches :
+        #    [{"POS": "NOM", "lemma": "mang*"}, {"POS": "VER", "lemma": "mang*"}]
+        # * => fields = [["a", "b"], ["c"]]
+        # product(*fields) == product(fields[0], fields[1])
+        search_branches: List[Dict[str, str]] = [dict(prod) for prod in product(*fields)]
+
+        value_filters = []
+        # for each branch filter (= OR clauses if any)
+        for search_branch in search_branches:
+            # filtre minimal = bon corpus (id)
+            branch_filters = [WordToken.corpus == self.id]
+
+            # for each field (lemma, pos, form, morph)
+            for name, value in search_branch.items():
+                # transformation couple clé valeur en filtre SQLalchemy
+                branch_filters.extend(
+                    column_search_filter(getattr(WordToken, name), value, case_sensitive=case_sensitive))
+
+            value_filters.append(branch_filters)
+
+        if not value_filters:  # If the search is empty, we only search for the corpus_id
+            value_filters.append([WordToken.corpus == self.id])
+
+        # there is at least one OR clause
+        # get sort arguments (sort per default by WordToken.order_id)
+        order_by = {
+            "order_id": WordToken.order_id,
+            "lemma": func.lower(WordToken.lemma),
+            "pos": func.lower(WordToken.POS),
+            "form": func.lower(WordToken.form),
+            "morph": func.lower(WordToken.morph),
+        }
+        if order_by_key not in order_by:
+            order_by_key = "order_id"
+        order_by = order_by.get(order_by_key)
+
+        args = []
+
+        if len(value_filters) > 1:
+            and_filters = [and_(*branch_filters) for branch_filters in value_filters]
+            args = [or_(*and_filters)]
+        elif len(value_filters) == 1:
+            args = value_filters[0]
+
+        tokens = WordToken.query.filter(*args).order_by(order_by.desc() if desc else order_by)
+
+        return tokens, order_by_key, input_values
 
 
 class WordToken(db.Model):
