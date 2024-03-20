@@ -54,7 +54,7 @@ class CorpusUser(db.Model):
 class Column(db.Model):
     """Column."""
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id"))
+    corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete="CASCADE"))
     heading = db.Column(db.String(32))
     hidden = db.Column(db.Boolean, default=False)
 
@@ -1367,7 +1367,7 @@ class TokenHistory(db.Model):
 class CorpusCustomDictionary(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id'), nullable=False)
+    corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"), nullable=False)
     label = db.Column(db.String(128), nullable=False)
     secondary_label = db.Column(db.String(128))
     category = db.Column(db.String(10), nullable=False)
