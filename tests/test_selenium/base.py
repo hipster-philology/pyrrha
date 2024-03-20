@@ -218,6 +218,13 @@ class TestBase(LiveServerTestCase):
 
     def setUp(self):
         """Setup the test driver and create test users"""
+        try:
+            from pytest_cov.embed import cleanup_on_sigterm
+        except ImportError:
+            pass
+        else:
+            cleanup_on_sigterm()
+
         if not database_exists(db.engine.url):
             create_database(db.engine.url)
         db.session.commit()
