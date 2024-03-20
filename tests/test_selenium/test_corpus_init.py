@@ -503,7 +503,6 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
 
         self.driver_find_element_by_id("submit").click()
-        self.driver.save_screenshot("error.png")
         self.assertEqual(
             sorted([
                 e.text.strip()
