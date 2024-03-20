@@ -17,4 +17,6 @@ def lemmatizing():
     )
     return r
 
-app.run(port="4567")
+
+if __name__ == "__main__":
+    app.run(port="4567")

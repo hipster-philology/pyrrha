@@ -1,7 +1,6 @@
 import os
 from flask import Flask, g
 
-from config import config
 from flask_compress import Compress
 from flask_login import LoginManager
 from flask_mail import Mail
@@ -29,6 +28,7 @@ login_manager.login_view = 'account.login'
 
 def create_app(config_name="dev"):
     """ Create the application """
+    from config import config
 
     app = Flask(
         __name__,
