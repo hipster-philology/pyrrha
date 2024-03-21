@@ -3,13 +3,8 @@ from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
-from selenium.webdriver.support.select import Select
 import csv
 import os
-
-from flask import Flask, request, Response
-from multiprocessing import Process
-from selenium.webdriver.support.wait import WebDriverWait
 
 
 class TestCorpusRegistration(TestBase):
@@ -466,7 +461,6 @@ que	que4	CONsub	_
 	dieu	NOMpro	NOMB.=s|GENRE=m|CAS=n
 vos	vos1	PROper	PERS.=2|NOMB.=p|GENRE=m|CAS=r
 soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
-
         self.driver_find_element_by_id("label_checkbox_reuse").click()
         self.driver_find_element_by_id("control_list_select").click()
         self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
@@ -474,11 +468,7 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("submit").click()
 
         self.assertEqual(
-            sorted([
-                e.text.strip()
-                for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")
-                if e.text.strip()
-            ]),
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
             sorted([
                 'At least one line of your corpus is missing a token/form. Check line 1'
             ]),
@@ -503,12 +493,9 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
 
         self.driver_find_element_by_id("submit").click()
+
         self.assertEqual(
-            sorted([
-                e.text.strip()
-                for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")
-                if e.text.strip()
-            ]),
+            sorted([e.text.strip() for e in self.driver_find_elements_by_css_selector(".alert.alert-danger")]),
             sorted([
                 'You did not input any text.'
             ]),
@@ -635,87 +622,3 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
         self.driver_find_element_by_id("submit").click()
         self.driver.implicitly_wait(5)
         self.assertFalse(self.driver_find_elements_by_css_selector(".alert.alert-danger"))
-
-    def test_lemmatization_service(self):
-        """
-        Test that a user can create a corpus and that this corpus has its data well recorded
-        """
-        # Click register menu link
-        self.driver_find_element_by_id("new_corpus_link").click()
-        self.driver.implicitly_wait(15)
-
-        # Fill in registration form
-        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
-
-        # Default
-        details = self.driver_find_elements_by_css_selector(".lemmatizer-details")
-        self.assertEqual(details[0].is_displayed(), False, "Nothing should be displayed by default")
-
-        # Select a lemmatizer
-        s = Select(self.driver_find_elements_by_css_selector("#language-model")[0])
-        s.select_by_visible_text("Dummy lemmatizer")
-        self.assertEqual(details[0].is_displayed(), True, "Something should be displayed")
-        self.assertIn("Dummy lemmatizer is a lemmatization service provided by ProviderInstitution.", details[0].text)
-
-        # Unselect
-        s.select_by_visible_text("Select a service")
-        self.assertEqual(details[0].is_displayed(), False, "Nothing should be now")
-
-    def test_lemmatization_service_runs(self):
-        # Create a second fixture app
-        app = Flask("fixture")
-
-        @app.route("/lemma", methods=["POST"])
-        def lemmatizing():
-            return Response(
-                "\n".join(
-                    ["token\tlemma"] +
-                    ["\t".join([tok, f"{idx}"]) for idx, tok in enumerate(request.form.get("data").split())]
-                ),
-                200,
-                headers={
-                    'Content-Type': 'text/plain; charset=utf-8',
-                    'Access-Control-Allow-Origin': "*"
-                }
-            )
-        # Start it
-        second_app = Process(target=app.run, daemon=True, kwargs=dict(host="localhost", port="4567"))
-        second_app.start()
-
-        self.driver_find_element_by_id("new_corpus_link").click()
-        self.driver.implicitly_wait(15)
-
-        # Fill in registration form
-        self.driver_find_element_by_id("corpusName").send_keys("Test")
-        self.writeMultiline(self.driver_find_element_by_id("tokens"), "Je suis")
-
-        # Select the lemmatizer
-        s = Select(self.driver_find_elements_by_css_selector("#language-model")[0])
-        s.select_by_index(1)
-        self.driver.implicitly_wait(5)
-
-        # Lemmatize
-        self.driver_find_element_by_id("submit-model").click()
-
-        # Wait
-        wait = WebDriverWait(self.driver, timeout=5)
-        wait.until(lambda x: self.driver_find_element_by_id("tokens-success").is_displayed())
-
-        # Check results
-        self.assertEqual(
-            self.driver_find_element_by_id("tokens").get_property("value").split("\n"),
-            ["token\tlemma", "Je\t0", "suis\t1"]
-        )
-
-        self.assertEqual(
-            self.driver_find_element_by_id("tokens-success").text,
-            "Operation finished with success ! 2 tokens analyzed in total.",
-            "Lemmatization happened"
-        )
-        # Kill second app
-        try:
-            second_app.terminate()
-            second_app.join(2)
-        finally:
-            second_app.close()

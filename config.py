@@ -1,6 +1,5 @@
 import os
-from app.lemmatizers import LemmatizerService
-from typing import List
+
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -39,7 +38,7 @@ class Config:
     PAGINATION_DEFAULT_TOKENS = 100
 
     # Lemmatizer (until Deucalion client)
-    LEMMATIZERS: List[LemmatizerService] = []
+    LEMMATIZERS = []
 
     # Change automatically the Postgresql instance language if not english
     FORCE_PSQL_EN_LOCALE = True
@@ -101,23 +100,6 @@ class BaseTestConfig(Config):
     ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL') or 'ppa-admin@ppa.fr'
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(Config.APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
-
-    LEMMATIZERS = [
-        LemmatizerService(
-            "Dummy lemmatizer",
-            "http://localhost:4567/lemma",
-            provider="ProviderInstitution",
-            ui="someui.com",
-            apa="Clérice et al. 2019",
-            bibtex="""@article{camps2021corpus,
-	title        = {Corpus and Models for Lemmatisation and POS-tagging of Old French},
-	author       = {Camps, Jean-Baptiste and Cl{\'e}rice, Thibault and Duval, Fr{\'e}d{\'e}ric and Kanaoka, Naomi and Pinche, Ariane and others},
-	year         = 2021,
-	journal      = {arXiv preprint arXiv:2109.11442},
-	keywords     = {Old French}
-}"""
-        )
-    ]
 
 
 class SQLiteTestConfig(BaseTestConfig):

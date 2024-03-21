@@ -9,6 +9,7 @@ class TestBookmark(TestBase):
 
     def set_bookmark(self, tok_id, page=None):
         self.driver.get(self.url_for_with_port("main.tokens_correct", corpus_id="1", page=page))
+        self.driver.save_screenshot("token.png")
         self.driver_find_element_by_id("dd_t"+str(tok_id)).click()
         self.driver.implicitly_wait(2)
         dd = self.driver_find_element_by_css_selector("*[aria-labelledby='dd_t{}']".format(tok_id))
