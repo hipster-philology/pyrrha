@@ -297,7 +297,7 @@ class Corpus(db.Model):
             ).order_by(order_by)
         return db.session.query(cls).filter(cls.control_list == self.control_lists_id).order_by(order_by)
 
-    def get_unallowed(self, allowed_type="lemma"):
+    def get_unallowed(self, allowed_type="lemma", ignore=False):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
         AllowedPOS, AllowedMorph) nor with a corpus custom dictionary
 
@@ -317,22 +317,52 @@ class Corpus(db.Model):
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
 
-        allowed = db.session.query(cls).filter(
-            cls.control_list == self.control_lists_id,
-            cls.label == prop
-        )
-        custom_dict = db.session.query(CorpusCustomDictionary).filter(
-            CorpusCustomDictionary.corpus == self.id,
-            CorpusCustomDictionary.category == allowed_type,
-            CorpusCustomDictionary.label == prop
-        )
-        return db.session.query(WordToken).filter(
-            db.and_(
-                WordToken.corpus == self.id,
-                not_(allowed.exists()),
-                not_(custom_dict.exists())
+        if ignore:
+            regex_liste = []
+            if "metadata" in ignore:
+                regex_liste.append(r'^(?!\[[^\]]+:[^\]]*\]$).*')
+            if "ignore" in ignore:
+                regex_liste.append(r'^(?!^\[IGNORE\]$)')
+            if "punct" in ignore:
+                regex_liste.append(r"(?!^[^\w\s]$).")
+            if "numeral" in ignore:
+                regex_liste.append(r'(?!^\d+$).+')
+            regex = "".join(regex_liste)
+            allowed = db.session.query(cls).filter(
+                cls.control_list == self.control_lists_id,
+                cls.label == prop
             )
-        ).order_by(WordToken.order_id)
+            custom_dict = db.session.query(CorpusCustomDictionary).filter(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == allowed_type,
+                CorpusCustomDictionary.label == prop
+            )
+            return db.session.query(WordToken).filter(
+                db.and_(
+                    WordToken.corpus == self.id,
+                    not_(allowed.exists()),
+                    not_(custom_dict.exists()),
+                    WordToken.form.op('~')(regex)
+                )
+            ).order_by(WordToken.order_id)
+
+        else:
+            allowed = db.session.query(cls).filter(
+                cls.control_list == self.control_lists_id,
+                cls.label == prop
+            )
+            custom_dict = db.session.query(CorpusCustomDictionary).filter(
+                CorpusCustomDictionary.corpus == self.id,
+                CorpusCustomDictionary.category == allowed_type,
+                CorpusCustomDictionary.label == prop
+            )
+            return db.session.query(WordToken).filter(
+                db.and_(
+                    WordToken.corpus == self.id,
+                    not_(allowed.exists()),
+                    not_(custom_dict.exists())
+                )
+            ).order_by(WordToken.order_id)
 
     @property
     def tokens_count(self):
