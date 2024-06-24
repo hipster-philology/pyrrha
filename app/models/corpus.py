@@ -434,7 +434,7 @@ class Corpus(db.Model):
     def create(
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
-            context_left=None, context_right=None, control_list: ControlLists = None, controlList_filter=None,
+            context_left=None, context_right=None, control_list: ControlLists = None,
             delimiter_token=None, columns=None
     ):
         """ Create a corpus
@@ -458,22 +458,13 @@ class Corpus(db.Model):
                 db.session.flush()
 
                 if allowed_lemma is not None and len(allowed_lemma) > 0:
-                    if controlList_filter:
-                        AllowedLemma.add_batch(allowed_lemma, control_list.id, controlList_filter)
-                    else:
-                        AllowedLemma.add_batch(allowed_lemma, control_list.id)
+                    AllowedLemma.add_batch(allowed_lemma, control_list.id)
 
                 if allowed_POS is not None and len(allowed_POS) > 0:
-                    if controlList_filter:
-                        AllowedPOS.add_batch(allowed_POS, control_list.id, controlList_filter)
-                    else:
-                        AllowedPOS.add_batch(allowed_POS, control_list.id)
+                    AllowedPOS.add_batch(allowed_POS, control_list.id)
 
                 if allowed_morph is not None and len(allowed_morph) > 0:
-                    if controlList_filter:
-                        AllowedMorph.add_batch(allowed_morp, control_list.id, controlList_filter)
-                    else:
-                        AllowedMorph.add_batch(allowed_morph, control_list.id)
+                    AllowedMorph.add_batch(allowed_morph, control_list.id)
 
             c = Corpus(
                 name=name,

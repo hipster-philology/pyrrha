@@ -308,7 +308,7 @@ class AllowedLemma(db.Model):
     )
 
     @staticmethod
-    def add_batch(allowed_values, control_lists_id, controlList_filter=None, _commit=False):
+    def add_batch(allowed_values, control_lists_id, _commit=False):
         """ Add a batch of allowed values
 
         :param allowed_values: List of dictionary with label and readable keys
