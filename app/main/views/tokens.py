@@ -67,38 +67,6 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
     )
 
 
-@main.route('/corpus/<corpus_id>/tokens/unallowed/<allowed_type>/correct/filter', methods=['POST'])
-@login_required
-@requires_corpus_access("corpus_id")
-def tokens_correct_unallowed_filter(corpus_id, allowed_type):
-    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    list_filter=[]
-    if request.method=="POST":
-        list_filter.append(request.form.get("punct"))
-        list_filter.append(request.form.get("numeral"))
-        list_filter.append(request.form.get("ignore"))
-        list_filter.append(request.form.get("metadata"))
-        filtered_filter=[]
-        for el in list_filter:
-            if el != None:
-                filtered_filter.append(el)
-        filter = " ".join(filtered_filter)
-        print(filter)
-
-
-    tokens = corpus \
-        .get_unallowed(allowed_type, ignore=filter) \
-        .paginate(
-        page=int_or(request.args.get("page"), 1),
-        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
-    )
-    return render_template_with_nav_info(
-        'main/tokens_correct_unallowed.html',
-        corpus=corpus,
-        tokens=tokens,
-        allowed_type=allowed_type,
-        changed=corpus.changed(tokens.items))
-
 
 @main.route('/corpus/<int:corpus_id>/tokens/changes/similar/<int:record_id>')
 @login_required
@@ -170,7 +138,6 @@ def tokens_correct_single(corpus_id, token_id):
         )
         if "similar" in corpus.displayed_columns_by_name:
             similar = {
-                "count": change_record.similar_remaining,
                 "link": url_for(".tokens_similar_to_record", corpus_id=corpus_id, record_id=change_record.id)
             }
         else:

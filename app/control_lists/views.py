@@ -374,3 +374,31 @@ def information_edit(control_list_id, control_list):
 def information_read(control_list_id):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
     return render_template_with_nav_info('control_lists/information_read.html', control_list=control_list)
+
+
+@control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
+@login_required
+def ignore_terms_filter(control_list_id):
+    current_control_list = ControlLists.query.filter_by(**{"id": control_list_id}).first_or_404()
+    list_filter = []
+    if request.method == "POST":
+        list_filter.append(request.form.get("punct"))
+        list_filter.append(request.form.get("numeral"))
+        list_filter.append(request.form.get('ignore'))
+        list_filter.append(request.form.get('metadata'))
+        filtered_filter = []
+        for el in list_filter:
+            if el != None:
+                filtered_filter.append(el)
+        filter = " ".join(filtered_filter)
+        current_control_list.filter_punct = 'punct' in filter
+        current_control_list.filter_metadata = 'metadata' in filter
+        current_control_list.filter_numeral = 'numeral' in filter
+        current_control_list.filter_ignore='ignore' in filter
+
+        db.session.commit()
+
+        flash('The filters have been updated.', 'success')
+        current_control_list = ControlLists.query.filter_by(**{"id": control_list_id}).first_or_404()
+        return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_control_list)
+    return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_control_list)

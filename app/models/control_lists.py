@@ -43,6 +43,10 @@ class ControlLists(db.Model):
     bibliography = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(10), nullable=True)
     notes = db.Column(db.Text, nullable=True)
+    filter_punct = db.Column(db.Boolean, unique=False, default=True)
+    filter_numeral = db.Column(db.Boolean, unique=False, default=False)
+    filter_metadata = db.Column(db.Boolean, unique=False, default=False)
+    filter_ignore = db.Column(db.Boolean, unique=False, default=False)
 
     # For caching purposes, we record the last time these fields were edited
     #last_lemma_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
@@ -240,6 +244,7 @@ class ControlLists(db.Model):
             ).exists()
         ).scalar()
 
+
     @staticmethod
     def add_default_lists(path=None):
         """ Loads the default lists from the config folder
@@ -255,7 +260,7 @@ class ControlLists(db.Model):
             print("[ControlLists] Adding %s " % data["name"])
             cl = ControlLists(**data, public=PublicationStatus.public)
             db.session.add(cl)
-            db.session.flush()  # Get the AutoIncrement ID
+            db.session.flush()  # Get the AutoIncrement ID/home/jjanes
             configs = [
                 ("lemma.txt", AllowedLemma, read_input_lemma),
                 ("POS.txt", AllowedPOS, read_input_POS),
@@ -303,7 +308,7 @@ class AllowedLemma(db.Model):
     )
 
     @staticmethod
-    def add_batch(allowed_values, control_lists_id, _commit=False):
+    def add_batch(allowed_values, control_lists_id, controlList_filter=None, _commit=False):
         """ Add a batch of allowed values
 
         :param allowed_values: List of dictionary with label and readable keys
@@ -344,6 +349,9 @@ class AllowedLemma(db.Model):
                 for allowed in query.order_by(AllowedLemma.id).all()
             ]
         )
+
+
+
 
 
 class AllowedPOS(db.Model):

@@ -7,6 +7,7 @@ from itertools import product
 # PIP Packages
 import unidecode
 import sqlalchemy.exc
+import re
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
 from sqlalchemy import func, literal, not_, or_, and_
@@ -297,7 +298,7 @@ class Corpus(db.Model):
             ).order_by(order_by)
         return db.session.query(cls).filter(cls.control_list == self.control_lists_id).order_by(order_by)
 
-    def get_unallowed(self, allowed_type="lemma", ignore=False):
+    def get_unallowed(self, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
         AllowedPOS, AllowedMorph) nor with a corpus custom dictionary
 
@@ -317,52 +318,60 @@ class Corpus(db.Model):
         else:
             raise ValueError("Get Allowed value had %s and it's not from the lemma, POS, morph set" % allowed_type)
 
-        if ignore:
-            regex_liste = []
-            if "metadata" in ignore:
-                regex_liste.append(r'^(?!\[[^\]]+:[^\]]*\]$).*')
-            if "ignore" in ignore:
-                regex_liste.append(r'^(?!^\[IGNORE\]$)')
-            if "punct" in ignore:
-                regex_liste.append(r"(?!^[^\w\s]$).")
-            if "numeral" in ignore:
-                regex_liste.append(r'(?!^\d+$).+')
-            regex = "".join(regex_liste)
-            allowed = db.session.query(cls).filter(
-                cls.control_list == self.control_lists_id,
-                cls.label == prop
-            )
-            custom_dict = db.session.query(CorpusCustomDictionary).filter(
-                CorpusCustomDictionary.corpus == self.id,
-                CorpusCustomDictionary.category == allowed_type,
-                CorpusCustomDictionary.label == prop
-            )
-            return db.session.query(WordToken).filter(
-                db.and_(
-                    WordToken.corpus == self.id,
-                    not_(allowed.exists()),
-                    not_(custom_dict.exists()),
-                    WordToken.form.op('~')(regex)
-                )
-            ).order_by(WordToken.order_id)
+        allowed = db.session.query(cls).filter(
+            cls.control_list == self.control_lists_id,
+            cls.label == prop
+        )
+        custom_dict = db.session.query(CorpusCustomDictionary).filter(
+            CorpusCustomDictionary.corpus == self.id,
+            CorpusCustomDictionary.category == allowed_type,
+            CorpusCustomDictionary.label == prop
+        )
 
-        else:
-            allowed = db.session.query(cls).filter(
-                cls.control_list == self.control_lists_id,
-                cls.label == prop
-            )
-            custom_dict = db.session.query(CorpusCustomDictionary).filter(
-                CorpusCustomDictionary.corpus == self.id,
-                CorpusCustomDictionary.category == allowed_type,
-                CorpusCustomDictionary.label == prop
-            )
-            return db.session.query(WordToken).filter(
-                db.and_(
-                    WordToken.corpus == self.id,
-                    not_(allowed.exists()),
-                    not_(custom_dict.exists())
-                )
-            ).order_by(WordToken.order_id)
+        list_darguments = [
+            WordToken.corpus == self.id,
+            not_(allowed.exists()),
+            not_(custom_dict.exists())
+        ]
+
+        current_control_list = ControlLists.query.filter_by(**{"id": self.control_lists_id}).first_or_404()
+
+        allowed = db.session.query(cls).filter(
+            cls.control_list == self.control_lists_id,
+            cls.label == prop
+        )
+        custom_dict = db.session.query(CorpusCustomDictionary).filter(
+            CorpusCustomDictionary.corpus == self.id,
+            CorpusCustomDictionary.category == allowed_type,
+            CorpusCustomDictionary.label == prop
+        )
+
+        list_darguments = [
+            WordToken.corpus == self.id,
+            not_(allowed.exists()),
+            not_(custom_dict.exists())
+        ]
+
+        dict_filter = {'punct': current_control_list.filter_punct,
+                       'metadata': current_control_list.filter_metadata,
+                       'ignore': current_control_list.filter_ignore,
+                       'numeral': current_control_list.filter_numeral}
+
+        if True in dict_filter.values():
+            regex_liste = []
+            if dict_filter['metadata']:
+                regex_liste.append(r'^(?!\[[^\]]+:[^\]]*\]$).*')
+            if dict_filter['ignore']:
+                regex_liste.append(r'^(?!^\[IGNORE\]$)')
+            if dict_filter['punct']:
+                regex_liste.append(r"(?!^[^\w\s]$).")
+            if dict_filter["numeral"]:
+                regex_liste.append(r'(?!^\d+$).+')
+            list_darguments.append(WordToken.form.op('~')("".join(regex_liste)))
+
+        return db.session.query(WordToken).filter(
+            db.and_(*list_darguments)
+        ).order_by(WordToken.order_id)
 
     @property
     def tokens_count(self):
@@ -425,7 +434,7 @@ class Corpus(db.Model):
     def create(
             name, word_tokens_dict,
             allowed_lemma=None, allowed_POS=None, allowed_morph=None,
-            context_left=None, context_right=None, control_list: ControlLists = None,
+            context_left=None, context_right=None, control_list: ControlLists = None, controlList_filter=None,
             delimiter_token=None, columns=None
     ):
         """ Create a corpus
@@ -449,13 +458,22 @@ class Corpus(db.Model):
                 db.session.flush()
 
                 if allowed_lemma is not None and len(allowed_lemma) > 0:
-                    AllowedLemma.add_batch(allowed_lemma, control_list.id)
+                    if controlList_filter:
+                        AllowedLemma.add_batch(allowed_lemma, control_list.id, controlList_filter)
+                    else:
+                        AllowedLemma.add_batch(allowed_lemma, control_list.id)
 
                 if allowed_POS is not None and len(allowed_POS) > 0:
-                    AllowedPOS.add_batch(allowed_POS, control_list.id)
+                    if controlList_filter:
+                        AllowedPOS.add_batch(allowed_POS, control_list.id, controlList_filter)
+                    else:
+                        AllowedPOS.add_batch(allowed_POS, control_list.id)
 
                 if allowed_morph is not None and len(allowed_morph) > 0:
-                    AllowedMorph.add_batch(allowed_morph, control_list.id)
+                    if controlList_filter:
+                        AllowedMorph.add_batch(allowed_morp, control_list.id, controlList_filter)
+                    else:
+                        AllowedMorph.add_batch(allowed_morph, control_list.id)
 
             c = Corpus(
                 name=name,
@@ -1127,13 +1145,31 @@ class WordToken(db.Model):
         }
 
         allowed_column = corpus.displayed_columns_by_name
+        current_control_list = ControlLists.query.filter_by(**{"id": corpus.control_lists_id}).first_or_404()
+        dict_filter ={'punct': current_control_list.filter_punct,
+                      'metadata': current_control_list.filter_metadata,
+                      'ignore':current_control_list.filter_ignore,
+                      'numeral':current_control_list.filter_numeral}
+        print(dict_filter)
 
+        regex_liste = []
+        if True in dict_filter.values():
+            if dict_filter['metadata']:
+                regex_liste.append(r'(\[[^\]]+:[^\]]*\]$)')
+            if dict_filter['ignore']:
+                regex_liste.append(r'(^\[IGNORE\])')
+            if dict_filter['punct']:
+                regex_liste.append(r"(^[^\w\s]$)")
+            if dict_filter['numeral']:
+                regex_liste.append(r'(^\d+$)')
+        regex = "|".join(regex_liste)
         if lemma is not None \
                 and "lemma" in allowed_column \
                 and allowed_lemma.count() > 0 \
                 and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
-            if not corpus.has_custom_dictionary_value("lemma", lemma):
-                statuses["lemma"] = False
+                if not re.match(regex,lemma):
+                    if not corpus.has_custom_dictionary_value("lemma", lemma):
+                        statuses["lemma"] = False
 
         if POS is not None \
                 and "POS" in allowed_column \
@@ -1148,6 +1184,8 @@ class WordToken(db.Model):
                 and corpus.get_allowed_values("morph", label=morph).count() == 0:
             if not corpus.has_custom_dictionary_value("morph", morph):
                 statuses["morph"] = False
+
+
         return statuses
 
     @staticmethod

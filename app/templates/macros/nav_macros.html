@@ -261,25 +261,7 @@
                 </a>
             {% endif %}
         </div>
-        <div>
-             <div class="btn-group btn-group-sm" role="group">
-                  <a class="btn btn-outline-dark title">{{ _('Correction: Ignore Invalide Lemmas: ') }}</a>
-                 {% set url = request.path %}
-                 {% if 'lemma' in request.path %}
-                 <form class="btn-group btn-outline-dark title" method="post" action="{{url_for("main.tokens_correct_unallowed_filter", corpus_id=corpus.id, allowed_type='lemma')}}">
-                 {% endif %}
-                 {% if 'morph' in request.path %}
-                 <form class="btn-group btn-outline-dark title" method="post" action="{{url_for("main.tokens_correct_unallowed_filter", corpus_id=corpus.id, allowed_type='morph')}}">
-                 {% endif %}
-                 {% if 'POS' in request.path %}
-                 <form class="btn-group btn-outline-dark title" method="post" action="{{url_for("main.tokens_correct_unallowed_filter", corpus_id=corpus.id, allowed_type='POS')}}">
-                 {% endif %}
-                 <a class="btn btn-outline-dark title"><input type="checkbox" value="punct" name="punct" title="Allow punctuation as lemma"> Punctuation</a>
-                 <a class="btn btn-outline-dark title"><input type="checkbox" value="numeral" name="numeral" title="Allow numerals as lemma"> Numeral</a>
-                 <a class="btn btn-outline-dark title"><input type="checkbox" value="ignore" name="ignore" title="Allow lemma [IGNORE]"> Ignore</a>
-                 <a class="btn btn-outline-dark title"><input type="checkbox" value="metadata" name="metadata" title="Allow metadata such as [METADATA:something] and [REF:1.2.3]"> Metadata</a>
-                 <button type="submit"  class="btn btn-outline-dark title">Submit</button>
-                 </form></div></div>
+
     </div></div>
     </div>
     <hr />

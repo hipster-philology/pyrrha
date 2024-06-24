@@ -36,7 +36,6 @@ def _get_available():
         lists[cl.str_public].append(cl)
     return lists
 
-
 @main.route('/corpus/new', methods=["POST", "GET"])
 @login_required
 def corpus_new():
@@ -110,6 +109,18 @@ def corpus_new():
                 form_kwargs.update({"word_tokens_dict": tokens, "allowed_lemma": allowed_lemma,
                                     "allowed_POS": allowed_POS, "allowed_morph": allowed_morph})
 
+            list_filter = []
+            if request.form.get("ignoreforms"):
+                list_filter.append(request.form.get("punct"))
+                list_filter.append(request.form.get("numeral"))
+                list_filter.append(request.form.get("ignore"))
+                list_filter.append(request.form.get("metadata"))
+                filtered_filter = []
+                for el in list_filter:
+                    if el != None:
+                        filtered_filter.append(el)
+                filter = " ".join(filtered_filter)
+                form_kwargs.update({"filter":filter})
             try:
                 corpus: Corpus = Corpus.create(**form_kwargs)
                 db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
