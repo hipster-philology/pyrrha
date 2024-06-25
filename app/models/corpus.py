@@ -24,7 +24,7 @@ from app.utils.forms import strip_or_none, column_search_filter, prepare_search_
 
 # Models
 from .user import User
-from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
+from .control_lists import ControlLists, ControlListsUser, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
 
 
 from collections import namedtuple
@@ -298,7 +298,7 @@ class Corpus(db.Model):
             ).order_by(order_by)
         return db.session.query(cls).filter(cls.control_list == self.control_lists_id).order_by(order_by)
 
-    def get_unallowed(self, allowed_type="lemma"):
+    def get_unallowed(self, current_user, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
         AllowedPOS, AllowedMorph) nor with a corpus custom dictionary
 
@@ -334,29 +334,12 @@ class Corpus(db.Model):
             not_(custom_dict.exists())
         ]
 
-        current_control_list = ControlLists.query.filter_by(**{"id": self.control_lists_id}).first_or_404()
-
-        allowed = db.session.query(cls).filter(
-            cls.control_list == self.control_lists_id,
-            cls.label == prop
-        )
-        custom_dict = db.session.query(CorpusCustomDictionary).filter(
-            CorpusCustomDictionary.corpus == self.id,
-            CorpusCustomDictionary.category == allowed_type,
-            CorpusCustomDictionary.label == prop
-        )
-
-        list_darguments = [
-            WordToken.corpus == self.id,
-            not_(allowed.exists()),
-            not_(custom_dict.exists())
-        ]
-
-        dict_filter = {'punct': current_control_list.filter_punct,
-                       'metadata': current_control_list.filter_metadata,
-                       'ignore': current_control_list.filter_ignore,
-                       'numeral': current_control_list.filter_numeral}
-
+        current_controlListUser = ControlListsUser.query.filter_by(
+            **{"control_lists_id":self.control_lists_id, "user_id": current_user.id}).first_or_404()
+        dict_filter = {'punct': current_controlListUser.filter_punct,
+                       'metadata': current_controlListUser.filter_metadata,
+                       'ignore': current_controlListUser.filter_ignore,
+                       'numeral': current_controlListUser.filter_numeral}
         if True in dict_filter.values():
             regex_liste = []
             if dict_filter['metadata']:
@@ -364,9 +347,9 @@ class Corpus(db.Model):
             if dict_filter['ignore']:
                 regex_liste.append(r'^(?!^\[IGNORE\]$)')
             if dict_filter['punct']:
-                regex_liste.append(r"(?!^[^\w\s]$).")
+                regex_liste.append(r"((?!^[^\w\s]$).)")
             if dict_filter["numeral"]:
-                regex_liste.append(r'(?!^\d+$).+')
+                regex_liste.append(r'(^(?!\d+$).+)')
             list_darguments.append(WordToken.form.op('~')("".join(regex_liste)))
 
         return db.session.query(WordToken).filter(
@@ -476,6 +459,8 @@ class Corpus(db.Model):
             )
             db.session.add(c)
             db.session.commit()
+
+
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
             db.session.rollback()
             raise e
@@ -1111,7 +1096,7 @@ class WordToken(db.Model):
         return query
 
     @staticmethod
-    def is_valid(lemma, POS, morph, corpus):
+    def is_valid(lemma, POS, morph, corpus, user_id):
         """ Check if a token is valid for a given corpus
 
         :param lemma: Lemma value of the token to validate
@@ -1136,12 +1121,12 @@ class WordToken(db.Model):
         }
 
         allowed_column = corpus.displayed_columns_by_name
-        current_control_list = ControlLists.query.filter_by(**{"id": corpus.control_lists_id}).first_or_404()
-        dict_filter ={'punct': current_control_list.filter_punct,
-                      'metadata': current_control_list.filter_metadata,
-                      'ignore':current_control_list.filter_ignore,
-                      'numeral':current_control_list.filter_numeral}
-        print(dict_filter)
+        current_controlListUser = ControlListsUser.query.filter_by(
+            **{"control_lists_id": corpus.control_lists_id, "user_id": user_id}).first_or_404()
+        dict_filter = {'punct': current_controlListUser.filter_punct,
+                       'metadata': current_controlListUser.filter_metadata,
+                       'ignore': current_controlListUser.filter_ignore,
+                       'numeral': current_controlListUser.filter_numeral}
 
         regex_liste = []
         if True in dict_filter.values():
@@ -1366,7 +1351,7 @@ class WordToken(db.Model):
             raise error
 
         # Check if values are correct regarding allowed values
-        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
+        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus, user_id=user_id)
         if False in list(validity.values()):
             error_msg = "Invalid value in {}".format(
                 ", ".join([key for key in validity.keys() if validity[key] is False])

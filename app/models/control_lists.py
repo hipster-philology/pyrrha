@@ -43,10 +43,6 @@ class ControlLists(db.Model):
     bibliography = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(10), nullable=True)
     notes = db.Column(db.Text, nullable=True)
-    filter_punct = db.Column(db.Boolean, unique=False, default=True)
-    filter_numeral = db.Column(db.Boolean, unique=False, default=False)
-    filter_metadata = db.Column(db.Boolean, unique=False, default=False)
-    filter_ignore = db.Column(db.Boolean, unique=False, default=False)
 
     # For caching purposes, we record the last time these fields were edited
     #last_lemma_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
@@ -285,6 +281,11 @@ class ControlListsUser(db.Model):
     control_lists_id = db.Column(db.Integer, db.ForeignKey("control_lists.id"), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
+
+    filter_punct = db.Column(db.Boolean, unique=False, default=False)
+    filter_numeral = db.Column(db.Boolean, unique=False, default=False)
+    filter_metadata = db.Column(db.Boolean, unique=False, default=False)
+    filter_ignore = db.Column(db.Boolean, unique=False, default=False)
 
     control = db.relationship("ControlLists", backref=backref("control_lists_user", cascade="all, delete-orphan"))
     user = db.relationship(User, backref=backref("control_lists_user", cascade="all, delete-orphan"))

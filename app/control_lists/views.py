@@ -7,7 +7,7 @@ from werkzeug.exceptions import BadRequest, NotFound, Forbidden
 
 
 from app.main.views.utils import render_template_with_nav_info
-from app.models import ControlLists, AllowedLemma, WordToken, User, PublicationStatus, CorpusCustomDictionary
+from app.models import ControlLists, ControlListsUser, AllowedLemma, WordToken, User, PublicationStatus, CorpusCustomDictionary
 from app import db, email
 from ..utils import PyrrhaError
 from ..utils.forms import strip_or_none
@@ -379,7 +379,8 @@ def information_read(control_list_id):
 @control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
 @login_required
 def ignore_terms_filter(control_list_id):
-    current_control_list = ControlLists.query.filter_by(**{"id": control_list_id}).first_or_404()
+    current_controlListUser = ControlListsUser.query.filter_by(**{"control_lists_id":control_list_id,"user_id":current_user.id}).first_or_404()
+    print(current_controlListUser)
     list_filter = []
     if request.method == "POST":
         list_filter.append(request.form.get("punct"))
@@ -391,14 +392,16 @@ def ignore_terms_filter(control_list_id):
             if el != None:
                 filtered_filter.append(el)
         filter = " ".join(filtered_filter)
-        current_control_list.filter_punct = 'punct' in filter
-        current_control_list.filter_metadata = 'metadata' in filter
-        current_control_list.filter_numeral = 'numeral' in filter
-        current_control_list.filter_ignore='ignore' in filter
+        current_controlListUser.filter_punct = 'punct' in filter
+        current_controlListUser.filter_metadata = 'metadata' in filter
+        current_controlListUser.filter_numeral = 'numeral' in filter
+        current_controlListUser.filter_ignore = 'ignore' in filter
 
         db.session.commit()
 
         flash('The filters have been updated.', 'success')
-        current_control_list = ControlLists.query.filter_by(**{"id": control_list_id}).first_or_404()
-        return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_control_list)
-    return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_control_list)
+        current_controlListUser = ControlListsUser.query.filter_by(**{"control_lists_id":control_list_id,"user_id":current_user.id}).first_or_404()
+        return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id,
+                                             current_control_list=current_controlListUser)
+
+    return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_controlListUser)

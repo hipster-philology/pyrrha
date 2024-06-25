@@ -1,13 +1,11 @@
 {% extends 'layouts/base.html' %}
-{% import 'macros/form_macros.html' as f %}
+{% import 'macros/nav_macros.html' as nav %}
+
+{% block page_title %}Control List {{current_control_list.name}}{% endblock %}
 
 {% block content %}
-    <div class="container">
-        <div class="row">
-            <h2>
-                <i class="fa fa-edit mr-2"></i>{{ _('Change the filters for Control List') }}
-            </h2>
-        </div>
+<h1>{{current_control_list.name}}</h1>
+<h2>{{ _('Change the filters for Control List') }}</h2>
         <div class="row ">
             <form method="POST">
         <ul>

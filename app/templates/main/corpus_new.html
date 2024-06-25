@@ -225,24 +225,34 @@ escoutez	escouter	VERcjg	MODE=imp|PERS.=2|NOMB.=p</pre>
                     Ignore Elements in Control List:
                 </label>
             </div>
-            <div class="col-md-6">
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="Numeral">
-                <label class="form-check-label" for="hyphens-remove">{{ _('Remove Numeral') }}</label>
-              </div>
-              <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="Punctuation">
-                <label class="form-check-label" for="punct-keep">{{ _('Remove Punctuation') }}</label>
-              </div>
-                <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="Metadata">
-                <label class="form-check-label" for="punct-keep">{{ _('Remove Metadata such as [METADATA:something] or [REF:1.2.3]') }}</label>
-              </div>
-                <div class="form-check">
-                <input type="checkbox" class="form-check-input" id="ignore_ignore">
-                <label class="form-check-label" for="punct-keep">{{ _('Remove [IGNORE]') }}</label>
-              </div>
-            </div>
+    <div class="col">
+            <ul>
+                <li>
+                    <label>
+                        <input type="checkbox" name="punct" value="punct">
+                        Punctuation
+                    </label>
+                </li>
+            <li>
+                    <label>
+                        <input type="checkbox" name="numeral" value="numeral">
+                        Numeral
+                    </label>
+                </li>
+            <li>
+                    <label>
+                        <input type="checkbox" name="metadata" value="metadata">
+                        Metadata
+                    </label>
+                </li>
+            <li>
+                    <label>
+                        <input type="checkbox" name="ignore" value="ignore">
+                        Ignore
+                    </label>
+                </li>
+        </ul>
+        </div>
         </div>
         </div>
     </fieldset>

@@ -110,22 +110,30 @@ def corpus_new():
                                     "allowed_POS": allowed_POS, "allowed_morph": allowed_morph})
 
             list_filter = []
-            if request.form.get("ignoreforms"):
-                list_filter.append(request.form.get("punct"))
-                list_filter.append(request.form.get("numeral"))
-                list_filter.append(request.form.get("ignore"))
-                list_filter.append(request.form.get("metadata"))
-                filtered_filter = []
-                for el in list_filter:
-                    if el != None:
-                        filtered_filter.append(el)
-                filter = " ".join(filtered_filter)
-                form_kwargs.update({"filter":filter})
+            list_filter.append(request.form.get("punct"))
+            list_filter.append(request.form.get("numeral"))
+            list_filter.append(request.form.get("ignore"))
+            list_filter.append(request.form.get("metadata"))
+            filtered_filter = []
+            for el in list_filter:
+                if el != None:
+                    filtered_filter.append(el)
+            filter = " ".join(filtered_filter)
+            print("FILTER "+str(filter))
+
             try:
                 corpus: Corpus = Corpus.create(**form_kwargs)
                 db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
                 # Add a link to the control list
                 ControlLists.link(corpus.control_lists_id, current_user.id, is_owner=cl_owner)
+                db.session.commit()
+                current_controlListUser = ControlListsUser.query.filter_by(
+                    **{"control_lists_id": corpus.control_lists_id, "user_id": current_user.id}).first_or_404()
+                print(current_controlListUser)
+                current_controlListUser.filter_punct = 'punct' in filter
+                current_controlListUser.filter_metadata = 'metadata' in filter
+                current_controlListUser.filter_numeral = 'numeral' in filter
+                current_controlListUser.filter_ignore = 'ignore' in filter
                 db.session.commit()
                 flash("New corpus registered", category="success")
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
@@ -154,6 +162,7 @@ def corpus_new():
                 flash(exception, category="error")
                 return error()
             except Exception as e:
+                print(e)
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 return error()
