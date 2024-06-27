@@ -298,7 +298,7 @@ class Corpus(db.Model):
             ).order_by(order_by)
         return db.session.query(cls).filter(cls.control_list == self.control_lists_id).order_by(order_by)
 
-    def get_unallowed(self, current_user, allowed_type="lemma"):
+    def get_unallowed(self, user_id, corpus_id, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
         AllowedPOS, AllowedMorph) nor with a corpus custom dictionary
 
@@ -333,9 +333,9 @@ class Corpus(db.Model):
             not_(allowed.exists()),
             not_(custom_dict.exists())
         ]
-
+        current_corpus = Corpus.query.filter_by(**{"id":corpus_id}).first_or_404()
         current_controlListUser = ControlListsUser.query.filter_by(
-            **{"control_lists_id":self.control_lists_id, "user_id": current_user.id}).first_or_404()
+            **{"control_lists_id":current_corpus.control_lists_id, "user_id": user_id}).first_or_404()
         dict_filter = {'punct': current_controlListUser.filter_punct,
                        'metadata': current_controlListUser.filter_metadata,
                        'ignore': current_controlListUser.filter_ignore,
@@ -1121,6 +1121,7 @@ class WordToken(db.Model):
         }
 
         allowed_column = corpus.displayed_columns_by_name
+
         current_controlListUser = ControlListsUser.query.filter_by(
             **{"control_lists_id": corpus.control_lists_id, "user_id": user_id}).first_or_404()
         dict_filter = {'punct': current_controlListUser.filter_punct,

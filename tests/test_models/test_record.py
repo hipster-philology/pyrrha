@@ -91,8 +91,8 @@ class TestChangeRecord(TestModels):
         token, change_record = WordToken.update(
             user_id=1,
             token_id=1, corpus_id=1,
-            lemma="cil", morph="smn", POS="u"
-        )
+            lemma="cil", morph="smn", POS="u")
+
         self.assertEqual(
             (token.lemma, token.morph, token.POS),
             ("cil", "smn", "u"),

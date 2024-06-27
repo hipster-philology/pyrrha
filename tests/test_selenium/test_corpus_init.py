@@ -104,7 +104,7 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(allowed.count(), 21, "There should be 21 allowed token")
 
         # Checking the model
-        self.assertEqual(corpus.get_unallowed("lemma").count(), 0, "There should be no unallowed value")
+        self.assertEqual(corpus.get_unallowed(user_id = 1, corpus_id = 1, allowed_type="lemma").count(), 0, "There should be no unallowed value")
 
     def test_registration_with_partial_allowed_lemma(self):
         """
@@ -151,7 +151,7 @@ class TestCorpusRegistration(TestBase):
 
         # Checking the model
         self.assertEqual(
-            corpus.get_unallowed("lemma").count(), 22,
+            corpus.get_unallowed(user_id=1, corpus_id=1, allowed_type="lemma").count(), 22,
             "There should be 22 unallowed value as only de saint martin are allowed"
         )
 
@@ -197,7 +197,7 @@ class TestCorpusRegistration(TestBase):
 
         # Checking the model
         self.assertEqual(
-            corpus.get_unallowed("lemma").count(), 22,
+            corpus.get_unallowed(user_id=1, corpus_id=1, allowed_lemma="lemma").count(), 22,
             "There should be 22 unallowed value as only de saint martin are allowed"
         )
 
