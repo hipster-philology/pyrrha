@@ -376,7 +376,7 @@ def information_read(control_list_id):
     return render_template_with_nav_info('control_lists/information_read.html', control_list=control_list)
 
 
-@control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
+"""@control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
 @login_required
 def ignore_terms_filter(control_list_id):
     current_controlListUser = ControlListsUser.query.filter_by(**{"control_lists_id":control_list_id,"user_id":current_user.id}).first_or_404()
@@ -404,4 +404,4 @@ def ignore_terms_filter(control_list_id):
         return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id,
                                              current_control_list=current_controlListUser)
 
-    return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_controlListUser)
+    return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_controlListUser)"""

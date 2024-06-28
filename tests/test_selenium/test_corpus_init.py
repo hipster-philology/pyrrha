@@ -27,9 +27,11 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.driver_find_element_by_id("label_checkbox_create").click()
+        self.driver.save_screenshot("./test_registration.png")
         self.driver_find_element_by_id("submit").click()
 
         self.driver.implicitly_wait(15)
+        self.driver.save_screenshot("./test_registration1.png")
         self.assertIn(
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
             "Result page is the corpus new page"
@@ -197,7 +199,7 @@ class TestCorpusRegistration(TestBase):
 
         # Checking the model
         self.assertEqual(
-            corpus.get_unallowed(user_id=1, corpus_id=1, allowed_lemma="lemma").count(), 22,
+            corpus.get_unallowed(user_id=1, corpus_id=1, allowed_type="lemma").count(), 22,
             "There should be 22 unallowed value as only de saint martin are allowed"
         )
 

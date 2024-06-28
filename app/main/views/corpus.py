@@ -119,7 +119,6 @@ def corpus_new():
                 if el != None:
                     filtered_filter.append(el)
             filter = " ".join(filtered_filter)
-            print("FILTER "+str(filter))
 
             try:
                 corpus: Corpus = Corpus.create(**form_kwargs)
@@ -129,7 +128,6 @@ def corpus_new():
                 db.session.commit()
                 current_controlListUser = ControlListsUser.query.filter_by(
                     **{"control_lists_id": corpus.control_lists_id, "user_id": current_user.id}).first_or_404()
-                print(current_controlListUser)
                 current_controlListUser.filter_punct = 'punct' in filter
                 current_controlListUser.filter_metadata = 'metadata' in filter
                 current_controlListUser.filter_numeral = 'numeral' in filter
@@ -137,6 +135,7 @@ def corpus_new():
                 db.session.commit()
                 flash("New corpus registered", category="success")
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
+                print(e)
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 flash(str(e.orig).lower())
