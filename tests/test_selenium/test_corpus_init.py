@@ -1,5 +1,5 @@
 from flask import url_for
-from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS, ControlLists
+from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS, ControlLists, ControlListsUser,User
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
@@ -27,11 +27,9 @@ class TestCorpusRegistration(TestBase):
         self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.driver_find_element_by_id("label_checkbox_create").click()
-        self.driver.save_screenshot("./test_registration.png")
         self.driver_find_element_by_id("submit").click()
 
         self.driver.implicitly_wait(15)
-        self.driver.save_screenshot("./test_registration1.png")
         self.assertIn(
             url_for('main.corpus_get', corpus_id=1), self.driver.current_url,
             "Result page is the corpus new page"
@@ -62,6 +60,7 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(oir.label_uniform, "oir", "It should be correctly saved and unidecoded")
         self.assertEqual(oir.POS, "VERinf", "It should be correctly saved with POS")
         self.assertEqual(oir.morph, None, "It should be correctly saved with morph")
+
 
     def test_registration_with_full_allowed_lemma(self):
         """
@@ -721,3 +720,31 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             second_app.join(2)
         finally:
             second_app.close()
+
+    def test_registration_filters(self):
+        self.add_control_lists()
+        target_cl = db.session.query(ControlLists). \
+            filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+
+        # Click register menu link
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Fill in registration form
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_reuse").click()
+        self.driver_find_element_by_id("control_list_select").click()
+        self.driver_find_element_by_id("cl_opt_" + str(target_cl.id)).click()
+        self.driver_find_element_by_id("punct").click()
+
+        self.driver_find_element_by_id("submit").click
+        self.driver.save_screenshot("./test_registration_filter.png")
+        self.driver.implicitly_wait(15)
+
+        #ne fonctionne pas, aller voir direct dans control list ignore si les cases sont cochées
+
+        CL = db.session.query(ControlLists).filter(ControlLists.name == "Ancien Français - École des Chartes").first()
+        CLUser = db.session.query(ControlListsUser).filter(ControlListsUser.control_lists_id == CL.id).first()
+        self.assertEqual(CLUser.filter_punct, True)
+        self.assertEqual(CLUser.filter_numeral, False)
