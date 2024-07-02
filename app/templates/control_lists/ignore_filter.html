@@ -1,0 +1,41 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/nav_macros.html' as nav %}
+
+{% block page_title %}Control List {{current_control_list.name}}{% endblock %}
+
+{% block content %}
+<h1>{{current_control_list.name}}</h1>
+<h2>{{ _('Change the filters for Control List') }}</h2>
+        <div class="row ">
+            <form method="POST">
+        <ul>
+                <li>
+                    <label>
+                        <input type="checkbox" name="punct" value="punct" {% if current_control_list.filter_punct %}checked{% endif %}>
+                        Punctuation
+                    </label>
+                </li>
+            <li>
+                    <label>
+                        <input type="checkbox" name="numeral" value="numeral" {% if current_control_list.filter_numeral %}checked{% endif %}>
+                        Numeral
+                    </label>
+                </li>
+            <li>
+                    <label>
+                        <input type="checkbox" name="metadata" value="metadata" {% if current_control_list.filter_metadata %}checked{% endif %}>
+                        Metadata
+                    </label>
+                </li>
+            <li>
+                    <label>
+                        <input type="checkbox" name="ignore" value="ignore" {% if current_control_list.filter_ignore %}checked{% endif %}>
+                        Ignore
+                    </label>
+                </li>
+        </ul>
+        <button type="submit">Submit</button>
+    </form>
+        </div>
+    </div>
+{% endblock %}

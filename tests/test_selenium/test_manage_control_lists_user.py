@@ -199,3 +199,20 @@ doit	devoir	VERcjg"""
 
         el = self.get_ownership_table()
         self.assertTrue(len([e for e in el if e.get_property("checked")]) == 1)
+
+    def test_change_filter(self):
+        self.addControlLists("wauchier")
+        self.go_to_control_lists_management("Wauchier")
+
+        self.driver_find_element_by_link_text("Ignore values").click()
+        self.driver_find_element_by_id("punct").click()
+        self.driver_find_element_by_id("submit").click()
+
+        self.driver.implicitly_wait(15)
+
+        self.assertEqual(
+            self.driver_find_element_by_css_selector(".alert.alert-success").text.strip(),
+            'The filters have been updated.',
+            "The filters have not been updated."
+        )
+

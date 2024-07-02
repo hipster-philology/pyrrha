@@ -1,5 +1,5 @@
 from flask import url_for
-from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS, ControlLists
+from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, AllowedPOS, ControlLists, ControlListsUser,User
 from app import db
 from tests.test_selenium.base import TestBase
 from tests.fixtures import PLAINTEXT_CORPORA
@@ -61,6 +61,7 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(oir.POS, "VERinf", "It should be correctly saved with POS")
         self.assertEqual(oir.morph, None, "It should be correctly saved with morph")
 
+
     def test_registration_with_full_allowed_lemma(self):
         """
         Test that a user can create a corpus wit allowed lemmas and that this corpus has its data well recorded
@@ -104,7 +105,7 @@ class TestCorpusRegistration(TestBase):
         self.assertEqual(allowed.count(), 21, "There should be 21 allowed token")
 
         # Checking the model
-        self.assertEqual(corpus.get_unallowed("lemma").count(), 0, "There should be no unallowed value")
+        self.assertEqual(corpus.get_unallowed(user_id = 1, corpus_id = 1, allowed_type="lemma").count(), 0, "There should be no unallowed value")
 
     def test_registration_with_partial_allowed_lemma(self):
         """
@@ -151,7 +152,7 @@ class TestCorpusRegistration(TestBase):
 
         # Checking the model
         self.assertEqual(
-            corpus.get_unallowed("lemma").count(), 22,
+            corpus.get_unallowed(user_id=1, corpus_id=1, allowed_type="lemma").count(), 22,
             "There should be 22 unallowed value as only de saint martin are allowed"
         )
 
@@ -197,7 +198,7 @@ class TestCorpusRegistration(TestBase):
 
         # Checking the model
         self.assertEqual(
-            corpus.get_unallowed("lemma").count(), 22,
+            corpus.get_unallowed(user_id=1, corpus_id=1, allowed_type="lemma").count(), 22,
             "There should be 22 unallowed value as only de saint martin are allowed"
         )
 
@@ -719,3 +720,25 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             second_app.join(2)
         finally:
             second_app.close()
+
+    def test_registration_filters(self):
+        # Click register menu link
+        self.driver_find_element_by_id("new_corpus_link").click()
+        self.driver.implicitly_wait(15)
+
+        # Fill in registration form
+        self.driver_find_element_by_id("corpusName").send_keys(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.writeMultiline(self.driver_find_element_by_id("tokens"), PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.driver_find_element_by_id("label_checkbox_create").click()
+        self.driver_find_element_by_id("punct").click()
+        self.driver_find_element_by_id("submit").click()
+        self.driver.implicitly_wait(15)
+
+        self.driver_find_element_by_link_text("Dashboard").click()
+        controllists_dashboard = self.driver_find_element_by_id("control_lists-dashboard")
+        self.element_find_element_by_partial_link_text(controllists_dashboard, "Wauchier").click()
+        self.driver_find_element_by_link_text("Ignore values").click()
+        punct = self.driver_find_element_by_id("punct")
+        numeral = self.driver_find_element_by_id('numeral')
+        self.assertTrue(punct.get_property("checked"))
+        self.assertFalse(numeral.get_property("checked"))

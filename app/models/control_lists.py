@@ -240,6 +240,7 @@ class ControlLists(db.Model):
             ).exists()
         ).scalar()
 
+
     @staticmethod
     def add_default_lists(path=None):
         """ Loads the default lists from the config folder
@@ -255,7 +256,7 @@ class ControlLists(db.Model):
             print("[ControlLists] Adding %s " % data["name"])
             cl = ControlLists(**data, public=PublicationStatus.public)
             db.session.add(cl)
-            db.session.flush()  # Get the AutoIncrement ID
+            db.session.flush()  # Get the AutoIncrement ID/home/jjanes
             configs = [
                 ("lemma.txt", AllowedLemma, read_input_lemma),
                 ("POS.txt", AllowedPOS, read_input_POS),
@@ -280,6 +281,11 @@ class ControlListsUser(db.Model):
     control_lists_id = db.Column(db.Integer, db.ForeignKey("control_lists.id"), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
+
+    filter_punct = db.Column(db.Boolean, unique=False, default=False)
+    filter_numeral = db.Column(db.Boolean, unique=False, default=False)
+    filter_metadata = db.Column(db.Boolean, unique=False, default=False)
+    filter_ignore = db.Column(db.Boolean, unique=False, default=False)
 
     control = db.relationship("ControlLists", backref=backref("control_lists_user", cascade="all, delete-orphan"))
     user = db.relationship(User, backref=backref("control_lists_user", cascade="all, delete-orphan"))
@@ -344,6 +350,9 @@ class AllowedLemma(db.Model):
                 for allowed in query.order_by(AllowedLemma.id).all()
             ]
         )
+
+
+
 
 
 class AllowedPOS(db.Model):

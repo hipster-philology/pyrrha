@@ -564,7 +564,7 @@ class TokenCorrectBase(TestBase):
         if go_to_edit_token_page is None:
             go_to_edit_token_page = self.go_to_edit_token_page(corpus_id)
         go_to_edit_token_page()
-
+        self.driver.save_screenshot("./token_correct_1.png")
         if additional_action_before is not None:
             additional_action_before()
 
@@ -583,14 +583,16 @@ class TokenCorrectBase(TestBase):
             td = self.element_find_element_by_class_name(row, "token_morph")
         else:
             td = self.element_find_element_by_class_name(row, "token_lemma")
-
+        self.driver.save_screenshot("./token_correct_2.png")
         # Click, clear the td and send a new value
         td.click()
         td.clear()
+        self.driver.save_screenshot("./token_correct_25.png")
         td.send_keys(value)
-
+        self.driver.save_screenshot("./token_correct_3.png")
         # Save
         self.element_find_element_by_css_selector(row, "a.save").click()
+        self.driver.save_screenshot("./token_correct_3.png")
         # It's safer to wait for the AJAX call to be completed
         row = self.driver_find_element_by_id("token_" + id_row + "_row")
 
@@ -631,10 +633,10 @@ class TokenCorrectBase(TestBase):
         self.addCorpus(with_token=True, tokens_up_to=24)
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
+        self.driver.save_screenshot('./token_correct_4.png')
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "Save")
         self.assert_saved(row)
-
         self.assertIn("table-changed", row.get_attribute("class"))
         self.driver.refresh()
         row = self.driver_find_element_by_id("token_1_row")

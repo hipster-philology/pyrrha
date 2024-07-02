@@ -1,4 +1,4 @@
-from app.models import ChangeRecord, WordToken, Corpus, ControlLists
+from app.models import ChangeRecord, WordToken, Corpus, ControlLists, ControlListsUser, CorpusUser
 from .base import TestModels
 import copy
 
@@ -14,6 +14,7 @@ SimilarityFixtures = [
     WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 6
     WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 7
     WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 8
+
 ]
 
 
@@ -57,6 +58,7 @@ class TestChangeRecord(TestModels):
     def test_similar_lemma_single_change(self):
         """ Ensure only similar features are fixed """
         self.load_fixtures()
+
         token, change_record = WordToken.update(
             user_id=1,
             token_id=1, corpus_id=1,
@@ -91,8 +93,8 @@ class TestChangeRecord(TestModels):
         token, change_record = WordToken.update(
             user_id=1,
             token_id=1, corpus_id=1,
-            lemma="cil", morph="smn", POS="u"
-        )
+            lemma="cil", morph="smn", POS="u")
+
         self.assertEqual(
             (token.lemma, token.morph, token.POS),
             ("cil", "smn", "u"),

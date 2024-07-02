@@ -13,6 +13,13 @@
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='lemma')}}">{{ _('Lemma') }}</a></li>
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='POS')}}">{{ _('POS') }}</a></li>
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.read_allowed_values", control_list_id=control_list.id, allowed_type='morph')}}">{{ _('Morphologies') }}</a></li>
+        {%  if control_list.can_edit() or current_user.is_admin() %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.rename", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> {{ _('Rename') }}</a></li>
+      {% endif %}
+      {%  if control_list.can_edit() or current_user.is_admin() %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.information_edit", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> {{ _('Edit informations') }}</a></li>
+      {% endif %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.ignore_terms_filter", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> {{ _('Ignore values') }}</a></li>
     </ul>
     {{ _('Others') }}
     <ul class="nav flex-column">
@@ -20,11 +27,6 @@
       {%  if control_list.can_edit() and not current_user.is_admin() %}
       <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.propose_as_public", control_list_id=control_list.id)}}"><i class="fa fa-share-alt"></i> {{ _('Make public') }}</a></li>
       {% endif %}
-      {%  if control_list.can_edit() or current_user.is_admin() %}
-      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.rename", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> {{ _('Rename') }}</a></li>
-      {% endif %}
-      {%  if control_list.can_edit() or current_user.is_admin() %}
-      <li class="nav-item"><a class="nav-link" href="{{url_for("control_lists_bp.information_edit", control_list_id=control_list.id)}}"><i class="fa fa-edit"></i> {{ _('Edit informations') }}</a></li>
-      {% endif %}
+
     </ul>
 {% endmacro -%}

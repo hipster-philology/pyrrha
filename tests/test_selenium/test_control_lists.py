@@ -54,7 +54,8 @@ class TestUpdateControlList(TestBase):
                 'POS',
                 'Propose changes',
                 'Wauchier',
-                'Rename'
+                'Rename',
+                "Ignore values"
             ]),
             "Full rewrite are limited to control lists users"
         )
@@ -183,7 +184,7 @@ class TestUpdateControlList(TestBase):
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
             sorted(["Guidelines",
-                    "Edit informations", 'Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier']),
+                    "Edit informations", 'Lemma', 'Morphologies', 'POS', 'Propose changes', 'Rename', 'Wauchier', 'Ignore values']),
             "Full rewrite are limited to control lists users"
         )
 
@@ -274,7 +275,7 @@ class TestUpdateControlList(TestBase):
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
             sorted(['Lemma', "Guidelines",
-                    'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
+                    'Morphologies', 'POS', 'Propose changes', 'Wauchier', 'Ignore values']),
             "Only contacting and reading is possible to users"
         )
 
