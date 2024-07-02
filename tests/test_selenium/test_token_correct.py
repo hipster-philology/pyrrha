@@ -99,6 +99,28 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assert_saved(row)
         self.assert_token_has_values(token, lemma="mout", POS="ADVgen", morph="NOMB.=s|GENRE=m|CAS=n")
 
+    def test_edit_token_with_filter(self):
+        self.addCorpus(with_token=True)
+        self.driver.save_screenshot("./test_edit_token_filter1.png")
+        self.driver.refresh()
+        # modifier les filtres
+        self.driver_find_element_by_link_text("Dashboard").click()
+        controllists_dashboard = self.driver_find_element_by_id("control_lists-dashboard")
+        self.driver.save_screenshot("./test_edit_token_filter2.png")
+        self.element_find_element_by_partial_link_text(controllists_dashboard, "Wauchier").click()
+        self.driver.save_screenshot("./test_edit_token_filter4.png")
+        self.driver_find_element_by_link_text("Ignore values").click()
+        self.driver.save_screenshot("./test_edit_token_filter5.png")
+        self.driver_find_element_by_id("punct").click()
+        self.driver_find_element_by_id("submit").click()
+        self.driver.save_screenshot("./test_edit_token_filter6.png")
+        self.driver.implicitly_wait(15)
+
+        # ajouter corpus
+        token, status_text, row = self.edith_nth_row_value(",", id_row="1")
+        self.assert_token_has_values(token, lemma=",")
+        self.assert_saved(row)
+
 
 class TestTokensCorrectFloovant(TokenCorrectBase):
     CORPUS = "floovant"
@@ -162,6 +184,8 @@ class TestTokensCorrectFloovant(TokenCorrectBase):
         token, status_text, row = self.edith_nth_row_value("seignor", id_row="1", value_type="lemma")
         self.assert_unchanged(row)
         self.assertNotIn("table-changed", row.get_attribute("class"))
+
+
 
 
 class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):

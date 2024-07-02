@@ -183,3 +183,4 @@ class TestTokenEdit(TestBase):
             [("Addition", "oulala", ""), ("Deletion", "", "oulala")],
             "History should be saved"
         )
+
