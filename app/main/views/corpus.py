@@ -3,6 +3,7 @@ from flask_login import current_user, login_required
 import sqlalchemy.exc
 from sqlalchemy import func, distinct, text
 from typing import List
+import logging
 
 
 from app import db
@@ -41,6 +42,9 @@ def _get_available():
 def corpus_new():
     """ Register a new corpus
     """
+    logging.basicConfig(filename='./pyrrha_corpus_creation.log', level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
+    logger = logging.getLogger(__name__)
     lemmatizers = current_app.config.get("LEMMATIZERS", [])
 
     def normal_view():
@@ -92,8 +96,9 @@ def corpus_new():
                 tokens = read_input_tokens(request.form.get("tsv"))
                 try:
                     control_list = ControlLists.query.get_or_404(request.form.get("control_list_select"))
-                except Exception:
+                except Exception as e:
                     flash("This control list does not exist", category="error")
+                    logger.error(e)
                     return error()
                 form_kwargs.update({"word_tokens_dict": tokens,
                                     "control_list": control_list})
@@ -139,6 +144,7 @@ def corpus_new():
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 flash(str(e.orig).lower())
+                logger.error(e)
                 if db.session.get_bind().dialect.name == "postgresql":
                     unique_constraint = 'duplicate key value violates unique constraint "corpus_name_key"'
                 else:
@@ -151,6 +157,7 @@ def corpus_new():
                 db.session.rollback()
                 flash("At least one line of your corpus is missing a token/form. Check line %s " % exc.line,
                       category="error")
+                logger.error(exc)
                 return error()
             except NoTokensInput:
                 db.session.rollback()
@@ -164,6 +171,7 @@ def corpus_new():
                 print(e)
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
+                logger.error(e)
                 return error()
             return redirect(url_for(".corpus_get", corpus_id=corpus.id))
 
