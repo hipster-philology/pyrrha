@@ -100,6 +100,8 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assert_token_has_values(token, lemma="mout", POS="ADVgen", morph="NOMB.=s|GENRE=m|CAS=n")
 
     def test_edit_token_with_filter(self):
+        self.add_user("foo", "foo")
+        self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
         self.addCorpus(with_token=True)
         self.driver.save_screenshot("./test_edit_token_filter1.png")
         self.driver.refresh()

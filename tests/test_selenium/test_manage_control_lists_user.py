@@ -201,11 +201,9 @@ doit	devoir	VERcjg"""
         self.assertTrue(len([e for e in el if e.get_property("checked")]) == 1)
 
     def test_change_filter(self):
-        # grant access to foo
-        foo_email = self.add_user("foo", "bar")
+        self.add_user("foo", "foo")
+        self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
         self.addControlLists("wauchier")
-
-        self.addControlListsUser("Wauchier", foo_email, False)
         self.driver.refresh()
         self.go_to_control_lists_management("Wauchier")
 

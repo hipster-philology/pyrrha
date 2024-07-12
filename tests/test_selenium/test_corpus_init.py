@@ -722,6 +722,8 @@ soit	estre1	VERcjg	MODE=sub|TEMPS=pst|PERS.=3|NOMB.=s""")
             second_app.close()
 
     def test_registration_filters(self):
+        self.add_user("foo", "foo")
+        self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
         # Click register menu link
         self.driver_find_element_by_id("new_corpus_link").click()
         self.driver.implicitly_wait(15)
