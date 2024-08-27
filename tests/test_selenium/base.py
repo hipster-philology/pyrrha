@@ -147,6 +147,9 @@ class TestBase(LiveServerTestCase):
     def driver_find_element_by_id(self, *args, **kwargs):
         return self.driver.find_element(By.ID, *args, **kwargs)
 
+    def driver_find_element_by_name(self, *args, **kwargs):
+        return self.driver.find_element(By.NAME, *args, **kwargs)
+
     def driver_find_element_by_css_selector(self, *args, **kwargs):
         return self.driver.find_element(By.CSS_SELECTOR, *args, **kwargs)
 
