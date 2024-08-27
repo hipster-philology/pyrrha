@@ -379,8 +379,11 @@ def information_read(control_list_id):
 @control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
 @login_required
 def ignore_terms_filter(control_list_id):
-    current_controlListUser = ControlListsUser.query.filter_by(**{"control_lists_id":control_list_id,"user_id":current_user.id}).first_or_404()
-    print(current_controlListUser)
+    current_controlListUser = ControlListsUser.retrieve(
+        user_id=current_user.id,
+        control_list_id=control_list_id
+    ).first_or_404()
+
     list_filter = []
     if request.method == "POST":
         list_filter.append(request.form.get("punct"))
@@ -389,18 +392,21 @@ def ignore_terms_filter(control_list_id):
         list_filter.append(request.form.get('metadata'))
         filtered_filter = []
         for el in list_filter:
-            if el != None:
+            if el is not None:
                 filtered_filter.append(el)
-        filter = " ".join(filtered_filter)
-        current_controlListUser.filter_punct = 'punct' in filter
-        current_controlListUser.filter_metadata = 'metadata' in filter
-        current_controlListUser.filter_numeral = 'numeral' in filter
-        current_controlListUser.filter_ignore = 'ignore' in filter
 
+        current_controlListUser.filter_punct = 'punct' in filtered_filter
+        current_controlListUser.filter_metadata = 'metadata' in filtered_filter
+        current_controlListUser.filter_numeral = 'numeral' in filtered_filter
+        current_controlListUser.filter_ignore = 'ignore' in filtered_filter
+        db.session.add(current_controlListUser)
         db.session.commit()
 
         flash('The filters have been updated.', 'success')
-        current_controlListUser = ControlListsUser.query.filter_by(**{"control_lists_id":control_list_id,"user_id":current_user.id}).first_or_404()
+        current_controlListUser = ControlListsUser.retrieve(
+            user_id=current_user.id,
+            control_list_id=control_list_id
+        ).first()
         return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id,
                                              current_control_list=current_controlListUser)
 

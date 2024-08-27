@@ -5,6 +5,7 @@ import os
 import csv
 import signal
 import logging
+from typing import Union
 import tempfile
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException
@@ -362,8 +363,11 @@ elit
             self.addControlListsUser(cl.name, user_mail, is_owner=owner)
         return cl
 
-    def addControlListsUser(self, cl_name, email, is_owner=False):
-        cl = ControlLists.query.filter(ControlLists.name == cl_name).first()
+    def addControlListsUser(self, cl_name: Union[str, int], email, is_owner=False):
+        if isinstance(cl_name, str):
+            cl = ControlLists.query.filter(ControlLists.name == cl_name).first()
+        else:
+            cl = ControlLists.query.filter(ControlLists.id == cl_name).first()
         user = User.query.filter(User.email == email).first()
         new_clu = ControlListsUser(control_lists_id=cl.id, user_id=user.id, is_owner=is_owner)
         self.db.session.add(new_clu)
@@ -567,7 +571,6 @@ class TokenCorrectBase(TestBase):
         if go_to_edit_token_page is None:
             go_to_edit_token_page = self.go_to_edit_token_page(corpus_id)
         go_to_edit_token_page()
-        self.driver.save_screenshot("./token_correct_1.png")
         if additional_action_before is not None:
             additional_action_before()
 
@@ -578,7 +581,7 @@ class TokenCorrectBase(TestBase):
             )
 
         # Take the first row
-        row = self.driver_find_element_by_id("token_" + id_row + "_row")
+        row = self.driver_find_element_by_id(f"token_{id_row}_row")
         # Take the td to edit
         if value_type == "POS":
             td = self.element_find_element_by_class_name(row, "token_pos")
@@ -586,28 +589,25 @@ class TokenCorrectBase(TestBase):
             td = self.element_find_element_by_class_name(row, "token_morph")
         else:
             td = self.element_find_element_by_class_name(row, "token_lemma")
-        self.driver.save_screenshot("./token_correct_2.png")
         # Click, clear the td and send a new value
         td.click()
         td.clear()
-        self.driver.save_screenshot("./token_correct_25.png")
         td.send_keys(value)
-        self.driver.save_screenshot("./token_correct_3.png")
         # Save
         self.element_find_element_by_css_selector(row, "a.save").click()
-        self.driver.save_screenshot("./token_correct_3.png")
         # It's safer to wait for the AJAX call to be completed
-        row = self.driver_find_element_by_id("token_" + id_row + "_row")
+        row = self.driver_find_element_by_id(f"token_{id_row}_row")
 
+        rel_tr = f"[rel='token_{id_row}_row'] .badge-status"
         WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located(
-                (By.CSS_SELECTOR, "[rel='token_{}_row'] .badge-status".format(id_row))
+                (By.CSS_SELECTOR, rel_tr)
             )
         )
 
         return (
             self.db.session.get(WordToken, int(id_row)),
-            self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
+            self.driver_find_element_by_css_selector(rel_tr).text.strip(),
             row
         )
 
@@ -636,7 +636,6 @@ class TokenCorrectBase(TestBase):
         self.addCorpus(with_token=True, tokens_up_to=24)
         self.driver.refresh()
         token, status_text, row = self.edith_nth_row_value("un", corpus_id=self.CORPUS_ID)
-        self.driver.save_screenshot('./token_correct_4.png')
         self.assertEqual(token.lemma, "un", "Lemma should have been changed")
         self.assertEqual(status_text, "Save")
         self.assert_saved(row)
