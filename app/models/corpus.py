@@ -337,20 +337,19 @@ class Corpus(db.Model):
         current_corpus = Corpus.query.filter_by(**{"id":corpus_id}).first_or_404()
         current_controlListUser = ControlListsUser.query.filter_by(
             **{"control_lists_id":current_corpus.control_lists_id, "user_id": user_id}).first_or_404()
-        dict_filter = {'punct': current_controlListUser.filter_punct,
-                       'metadata': current_controlListUser.filter_metadata,
-                       'ignore': current_controlListUser.filter_ignore,
-                       'numeral': current_controlListUser.filter_numeral}
-        if True in dict_filter.values():
-            regex_liste = []
-            if dict_filter['metadata']:
-                regex_liste.append(r'^(?!\[[^\]]+:[^\]]*\]$).*')
-            if dict_filter['ignore']:
-                regex_liste.append(r'^(?!^\[IGNORE\]$)')
-            if dict_filter['punct']:
-                regex_liste.append(r"((?!^[^\w\s]$).)")
-            if dict_filter["numeral"]:
-                regex_liste.append(r'(^(?!\d+$).+)')
+
+        regex_liste = []
+        if current_controlListUser:
+            if current_controlListUser.filter_metadata:
+                regex_liste.append(ControlListsUser.re_filter_metadata)
+            if current_controlListUser.filter_ignore:
+                regex_liste.append(ControlListsUser.re_filter_ignore)
+            if current_controlListUser.filter_punct:
+                regex_liste.append(ControlListsUser.re_filter_punct)
+            if current_controlListUser.filter_numeral:
+                regex_liste.append(ControlListsUser.re_filter_numeral)
+
+        if regex_liste:
             list_darguments.append(WordToken.form.op('~')("".join(regex_liste)))
 
         return db.session.query(WordToken).filter(
