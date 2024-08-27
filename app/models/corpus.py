@@ -7,7 +7,7 @@ from itertools import product
 # PIP Packages
 import unidecode
 import sqlalchemy.exc
-import re
+import regex as re
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
 from sqlalchemy import func, literal, not_, or_, and_
@@ -337,20 +337,19 @@ class Corpus(db.Model):
         current_corpus = Corpus.query.filter_by(**{"id":corpus_id}).first_or_404()
         current_controlListUser = ControlListsUser.query.filter_by(
             **{"control_lists_id":current_corpus.control_lists_id, "user_id": user_id}).first_or_404()
-        dict_filter = {'punct': current_controlListUser.filter_punct,
-                       'metadata': current_controlListUser.filter_metadata,
-                       'ignore': current_controlListUser.filter_ignore,
-                       'numeral': current_controlListUser.filter_numeral}
-        if True in dict_filter.values():
-            regex_liste = []
-            if dict_filter['metadata']:
-                regex_liste.append(r'^(?!\[[^\]]+:[^\]]*\]$).*')
-            if dict_filter['ignore']:
-                regex_liste.append(r'^(?!^\[IGNORE\]$)')
-            if dict_filter['punct']:
-                regex_liste.append(r"((?!^[^\w\s]$).)")
-            if dict_filter["numeral"]:
-                regex_liste.append(r'(^(?!\d+$).+)')
+
+        regex_liste = []
+        if current_controlListUser:
+            if current_controlListUser.filter_metadata:
+                regex_liste.append(ControlListsUser.re_filter_metadata)
+            if current_controlListUser.filter_ignore:
+                regex_liste.append(ControlListsUser.re_filter_ignore)
+            if current_controlListUser.filter_punct:
+                regex_liste.append(ControlListsUser.re_filter_punct)
+            if current_controlListUser.filter_numeral:
+                regex_liste.append(ControlListsUser.re_filter_numeral)
+
+        if regex_liste:
             list_darguments.append(WordToken.form.op('~')("".join(regex_liste)))
 
         return db.session.query(WordToken).filter(
@@ -1097,7 +1096,7 @@ class WordToken(db.Model):
         return query
 
     @staticmethod
-    def is_valid(lemma, POS, morph, corpus, user_id, filter):
+    def is_valid(lemma, POS, morph, corpus, user_id):
         """ Check if a token is valid for a given corpus
 
         :param lemma: Lemma value of the token to validate
@@ -1122,38 +1121,32 @@ class WordToken(db.Model):
         }
 
         allowed_column = corpus.displayed_columns_by_name
-        if filter:
-            current_controlListUser = ControlListsUser.query.filter_by(
-                **{"control_lists_id": corpus.control_lists_id, "user_id": user_id}).first_or_404()
-            dict_filter = {'punct': current_controlListUser.filter_punct,
-                           'metadata': current_controlListUser.filter_metadata,
-                           'ignore': current_controlListUser.filter_ignore,
-                           'numeral': current_controlListUser.filter_numeral}
+        if lemma and "lemma" in allowed_column and allowed_lemma.count():
+            current_controlListUser = ControlListsUser.retrieve(
+                user_id=user_id, control_list_id=corpus.control_lists_id
+            ).first()
             regex_liste = []
-            if True in dict_filter.values():
-                if dict_filter['metadata']:
-                    regex_liste.append(r'(\[[^\]]+:[^\]]*\]$)')
-                if dict_filter['ignore']:
-                    regex_liste.append(r'(^\[IGNORE\])')
-                if dict_filter['punct']:
-                    regex_liste.append(r"(^[^\w\s]$)")
-                if dict_filter['numeral']:
-                    regex_liste.append(r'(^\d+$)')
-            regex = "|".join(regex_liste)
+            if current_controlListUser:
+                if current_controlListUser.filter_metadata:
+                    regex_liste.append(ControlListsUser.re_filter_metadata)
+                if current_controlListUser.filter_ignore:
+                    regex_liste.append(ControlListsUser.re_filter_ignore)
+                if current_controlListUser.filter_punct:
+                    regex_liste.append(ControlListsUser.re_filter_punct)
+                if current_controlListUser.filter_numeral:
+                    regex_liste.append(ControlListsUser.re_filter_numeral)
 
-        if lemma is not None \
-                and "lemma" in allowed_column \
-                and allowed_lemma.count() > 0 \
-                and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
-            if filter:
-                if not re.match(regex, lemma):
-                    if not corpus.has_custom_dictionary_value("lemma", lemma):
-                        statuses["lemma"] = False
-                    else:
-                        if not corpus.has_custom_dictionary_value("lemma", lemma):
-                            statuses["lemma"] = False
-            else:
-                if not corpus.has_custom_dictionary_value("lemma", lemma):
+            ignored_by_regex = False
+
+            for regex in regex_liste:
+                if re.match(regex, lemma) is not None:
+                    ignored_by_regex = True
+
+            if (
+                    not ignored_by_regex and
+                    corpus.has_custom_dictionary_value("lemma", lemma) is False and
+                    corpus.get_allowed_values("lemma", label=lemma).count() == 0
+                ):
                     statuses["lemma"] = False
 
         if POS is not None \
@@ -1169,7 +1162,6 @@ class WordToken(db.Model):
                 and corpus.get_allowed_values("morph", label=morph).count() == 0:
             if not corpus.has_custom_dictionary_value("morph", morph):
                 statuses["morph"] = False
-
 
         return statuses
 
@@ -1327,7 +1319,7 @@ class WordToken(db.Model):
         return csv_file.getvalue()
 
     @staticmethod
-    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None, filter=False):
+    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None):
         """ Update a given token with lemma, POS and morph value
 
         :param user_id: ID of the user who performs the update
@@ -1358,9 +1350,10 @@ class WordToken(db.Model):
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
-
+        print(token)
         # Check if values are correct regarding allowed values
-        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus, user_id=user_id, filter=filter)
+        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus, user_id=user_id)
+        print(token.POS, validity)
         if False in list(validity.values()):
             error_msg = "Invalid value in {}".format(
                 ", ".join([key for key in validity.keys() if validity[key] is False])
@@ -1370,7 +1363,6 @@ class WordToken(db.Model):
             error.statuses = validity
             error.invalid_columns = [key for key in validity.keys() if validity[key] is False]
             raise error
-
         # Updating
         if not lemma:
             lemma = token.lemma
@@ -1495,7 +1487,7 @@ class WordToken(db.Model):
                     WordToken.id != token.id,
                     *filtering
                 )
-            )
+        )
 
 
 class TokenHistory(db.Model):

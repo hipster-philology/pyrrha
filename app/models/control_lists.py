@@ -8,9 +8,11 @@ import glob
 from collections import Counter
 # PIP Packages
 import unidecode
+import regex as re
 import yaml
+from flask_sqlalchemy.query import Query as FlaskQuery
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, Query
 from sqlalchemy import literal, case
 from werkzeug.exceptions import BadRequest
 # APP Logic
@@ -290,6 +292,17 @@ class ControlListsUser(db.Model):
     control = db.relationship("ControlLists", backref=backref("control_lists_user", cascade="all, delete-orphan"))
     user = db.relationship(User, backref=backref("control_lists_user", cascade="all, delete-orphan"))
 
+    re_filter_metadata = r'(\[[^\]]+:[^\]]*\]$)'
+    re_filter_ignore = r'(^\[IGNORE\])'
+    re_filter_punct = "(^[^\w\s]$)"
+    re_filter_numeral = r'(^\d+$)'
+
+    @classmethod
+    def retrieve(cls, user_id: int, control_list_id: int) -> FlaskQuery:
+        return cls.query.filter(db.and_(
+            cls.user_id == user_id,
+            cls.control_lists_id == control_list_id
+        ))
 
 class AllowedLemma(db.Model):
     """ An allowed lemma is a lemma that is accepted
@@ -350,9 +363,6 @@ class AllowedLemma(db.Model):
                 for allowed in query.order_by(AllowedLemma.id).all()
             ]
         )
-
-
-
 
 
 class AllowedPOS(db.Model):

@@ -1,3 +1,4 @@
+from app.models import ControlListsUser
 from tests.test_selenium.base import TokenCorrectBase, TokenCorrect2CorporaBase
 import selenium
 from sqlalchemy import text
@@ -100,24 +101,27 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         self.assert_token_has_values(token, lemma="mout", POS="ADVgen", morph="NOMB.=s|GENRE=m|CAS=n")
 
     def test_edit_token_with_filter(self):
-        self.add_user("foo", "foo")
-        self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
-        self.addCorpus(with_token=True)
+        corpus = self.addCorpus(with_token=True, cl=True, with_allowed_lemma=True)
+        clu = self.addControlListsUser(corpus.control_lists_id, self.app.config["ADMIN_EMAIL"], is_owner=True)
         self.driver.refresh()
+
+        # ajouter corpus
+        token, status_text, row = self.edith_nth_row_value("#", id_row="1")
+        self.assertNotEqual(token.lemma, "#", "Lemma # is forbidden in control list")
+
         # modifier les filtres
         self.driver_find_element_by_link_text("Dashboard").click()
         controllists_dashboard = self.driver_find_element_by_id("control_lists-dashboard")
         self.element_find_element_by_partial_link_text(controllists_dashboard, "Wauchier").click()
-        self.driver_find_element_by_link_text("Ignore values").click()
+        self.driver_find_element_by_partial_link_text("Ignore values").click()
         self.driver_find_element_by_name("punct").click()
         self.driver_find_element_by_id("submit").click()
-        self.driver.save_screenshot("./test_edit_token_filter6.png")
-        self.driver.implicitly_wait(15)
+        self.driver.implicitly_wait(5)
 
         # ajouter corpus
-        token, status_text, row = self.edith_nth_row_value(",", id_row="1")
-        self.assert_token_has_values(token, lemma=",")
+        token, status_text, row = self.edith_nth_row_value("]", value_type="lemma", id_row="1")
         self.assert_saved(row)
+        self.assert_token_has_values(token, lemma="]")
 
 
 class TestTokensCorrectFloovant(TokenCorrectBase):

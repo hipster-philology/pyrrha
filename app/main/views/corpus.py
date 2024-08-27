@@ -119,11 +119,7 @@ def corpus_new():
             list_filter.append(request.form.get("numeral"))
             list_filter.append(request.form.get("ignore"))
             list_filter.append(request.form.get("metadata"))
-            filtered_filter = []
-            for el in list_filter:
-                if el != None:
-                    filtered_filter.append(el)
-            filter = " ".join(filtered_filter)
+            list_filter = [flt for flt in list_filter if flt]
 
             try:
                 corpus: Corpus = Corpus.create(**form_kwargs)
@@ -133,10 +129,10 @@ def corpus_new():
                 db.session.commit()
                 current_controlListUser = ControlListsUser.query.filter_by(
                     **{"control_lists_id": corpus.control_lists_id, "user_id": current_user.id}).first_or_404()
-                current_controlListUser.filter_punct = 'punct' in filter
-                current_controlListUser.filter_metadata = 'metadata' in filter
-                current_controlListUser.filter_numeral = 'numeral' in filter
-                current_controlListUser.filter_ignore = 'ignore' in filter
+                current_controlListUser.filter_punct = 'punct' in list_filter
+                current_controlListUser.filter_metadata = 'metadata' in list_filter
+                current_controlListUser.filter_numeral = 'numeral' in list_filter
+                current_controlListUser.filter_ignore = 'ignore' in list_filter
                 db.session.commit()
                 flash("New corpus registered", category="success")
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
