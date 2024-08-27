@@ -208,7 +208,7 @@ doit	devoir	VERcjg"""
         self.go_to_control_lists_management("Wauchier")
 
         self.driver_find_element_by_link_text("Ignore values").click()
-        self.driver_find_element_by_id("punct").click()
+        self.driver_find_element_by_name("punct").click()
         self.driver_find_element_by_id("submit").click()
 
         self.driver.implicitly_wait(15)
