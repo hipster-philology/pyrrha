@@ -605,9 +605,12 @@ class TokenCorrectBase(TestBase):
             )
         )
 
+        token = self.db.session.get(WordToken, int(id_row))
+
+        self.db.session.refresh(token)
         return (
-            self.db.session.get(WordToken, int(id_row)),
-            self.driver_find_element_by_css_selector(rel_tr).text.strip(),
+            token,
+            self.element_find_element_by_css_selector(row, "#token_"+id_row+"_row > td a.save").text.strip(),
             row
         )
 

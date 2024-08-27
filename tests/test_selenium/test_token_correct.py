@@ -121,7 +121,6 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectBase):
         # ajouter corpus
         token, status_text, row = self.edith_nth_row_value("]", value_type="lemma", id_row="1")
         self.assert_saved(row)
-        self.db.session.refresh(token)  # For some reason, without this, it does not work. Maybe cache ?
         self.assert_token_has_values(token, lemma="]")
 
 
