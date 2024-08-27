@@ -1125,16 +1125,17 @@ class WordToken(db.Model):
         if lemma and "lemma" in allowed_column and allowed_lemma.count():
             current_controlListUser = ControlListsUser.retrieve(
                 user_id=user_id, control_list_id=corpus.control_lists_id
-            ).first_or_404()
+            ).first()
             regex_liste = []
-            if current_controlListUser.filter_metadata:
-                regex_liste.append(ControlListsUser.re_filter_metadata)
-            if current_controlListUser.filter_ignore:
-                regex_liste.append(ControlListsUser.re_filter_ignore)
-            if current_controlListUser.filter_punct:
-                regex_liste.append(ControlListsUser.re_filter_punct)
-            if current_controlListUser.filter_numeral:
-                regex_liste.append(ControlListsUser.re_filter_numeral)
+            if current_controlListUser:
+                if current_controlListUser.filter_metadata:
+                    regex_liste.append(ControlListsUser.re_filter_metadata)
+                if current_controlListUser.filter_ignore:
+                    regex_liste.append(ControlListsUser.re_filter_ignore)
+                if current_controlListUser.filter_punct:
+                    regex_liste.append(ControlListsUser.re_filter_punct)
+                if current_controlListUser.filter_numeral:
+                    regex_liste.append(ControlListsUser.re_filter_numeral)
 
             ignored_by_regex = False
 
@@ -1350,9 +1351,10 @@ class WordToken(db.Model):
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
-
+        print(token)
         # Check if values are correct regarding allowed values
         validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus, user_id=user_id)
+        print(token.POS, validity)
         if False in list(validity.values()):
             error_msg = "Invalid value in {}".format(
                 ", ".join([key for key in validity.keys() if validity[key] is False])
@@ -1362,7 +1364,6 @@ class WordToken(db.Model):
             error.statuses = validity
             error.invalid_columns = [key for key in validity.keys() if validity[key] is False]
             raise error
-
         # Updating
         if not lemma:
             lemma = token.lemma
