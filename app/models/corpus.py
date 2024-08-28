@@ -335,19 +335,19 @@ class Corpus(db.Model):
         ]
 
         current_corpus = Corpus.query.filter_by(**{"id":corpus_id}).first_or_404()
-        current_controlListUser = ControlListsUser.query.filter_by(
-            **{"control_lists_id":current_corpus.control_lists_id, "user_id": user_id}).first_or_404()
+        current_controlList = ControlLists.query.filter_by(
+            **{"id":current_corpus.control_lists_id}).first_or_404()
 
         regex_liste = []
-        if current_controlListUser:
-            if current_controlListUser.filter_metadata:
-                regex_liste.append(ControlListsUser.re_filter_metadata)
-            if current_controlListUser.filter_ignore:
-                regex_liste.append(ControlListsUser.re_filter_ignore)
-            if current_controlListUser.filter_punct:
-                regex_liste.append(ControlListsUser.re_filter_punct)
-            if current_controlListUser.filter_numeral:
-                regex_liste.append(ControlListsUser.re_filter_numeral)
+        if current_controlList:
+            if current_controlLists.filter_metadata:
+                regex_liste.append(ControlLists.re_filter_metadata)
+            if current_controlList.filter_ignore:
+                regex_liste.append(ControlLists.re_filter_ignore)
+            if current_controlList.filter_punct:
+                regex_liste.append(ControlLists.re_filter_punct)
+            if current_controlList.filter_numeral:
+                regex_liste.append(ControlLists.re_filter_numeral)
 
         if regex_liste:
             list_darguments.append(WordToken.form.op('~')("".join(regex_liste)))
@@ -1096,7 +1096,7 @@ class WordToken(db.Model):
         return query
 
     @staticmethod
-    def is_valid(lemma, POS, morph, corpus, user_id):
+    def is_valid(lemma, POS, morph, corpus):
         """ Check if a token is valid for a given corpus
 
         :param lemma: Lemma value of the token to validate
@@ -1121,20 +1121,22 @@ class WordToken(db.Model):
         }
 
         allowed_column = corpus.displayed_columns_by_name
-        if lemma and "lemma" in allowed_column and allowed_lemma.count():
-            current_controlListUser = ControlListsUser.retrieve(
-                user_id=user_id, control_list_id=corpus.control_lists_id
-            ).first()
+        print("test")
+        if lemma and "lemma" in allowed_column and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
+            print("test2")
+            current_controlList = ControlLists.query.filter_by(**{"id":corpus.control_lists_id}).first_or_404()
+            print(current_controlList)
             regex_liste = []
-            if current_controlListUser:
-                if current_controlListUser.filter_metadata:
-                    regex_liste.append(ControlListsUser.re_filter_metadata)
-                if current_controlListUser.filter_ignore:
-                    regex_liste.append(ControlListsUser.re_filter_ignore)
-                if current_controlListUser.filter_punct:
-                    regex_liste.append(ControlListsUser.re_filter_punct)
-                if current_controlListUser.filter_numeral:
-                    regex_liste.append(ControlListsUser.re_filter_numeral)
+            if current_controlList:
+                if current_controlList.filter_metadata:
+                    regex_liste.append(ControlLists.re_filter_metadata)
+                if current_controlList.filter_ignore:
+                    regex_liste.append(ControlLists.re_filter_ignore)
+                if current_controlList.filter_punct:
+                    regex_liste.append(ControlLists.re_filter_punct)
+                if current_controlList.filter_numeral:
+                    regex_liste.append(ControlLists.re_filter_numeral)
+            print(regex_liste)
 
             ignored_by_regex = False
 
@@ -1350,10 +1352,8 @@ class WordToken(db.Model):
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
-        print(token)
         # Check if values are correct regarding allowed values
-        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus, user_id=user_id)
-        print(token.POS, validity)
+        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):
             error_msg = "Invalid value in {}".format(
                 ", ".join([key for key in validity.keys() if validity[key] is False])

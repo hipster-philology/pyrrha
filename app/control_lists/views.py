@@ -379,11 +379,8 @@ def information_read(control_list_id):
 @control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
 @login_required
 def ignore_terms_filter(control_list_id):
-    current_controlListUser = ControlListsUser.retrieve(
-        user_id=current_user.id,
-        control_list_id=control_list_id
-    ).first_or_404()
-
+    current_controlList = ControlLists.query.filter_by(**{"id":control_list_id}).first_or_404()
+    print(current_controlList.filter_punct, current_controlList.filter_ignore)
     list_filter = []
     if request.method == "POST":
         list_filter.append(request.form.get("punct"))
@@ -395,19 +392,18 @@ def ignore_terms_filter(control_list_id):
             if el is not None:
                 filtered_filter.append(el)
 
-        current_controlListUser.filter_punct = 'punct' in filtered_filter
-        current_controlListUser.filter_metadata = 'metadata' in filtered_filter
-        current_controlListUser.filter_numeral = 'numeral' in filtered_filter
-        current_controlListUser.filter_ignore = 'ignore' in filtered_filter
-        db.session.add(current_controlListUser)
+        current_controlList.filter_punct = 'punct' in filtered_filter
+        current_controlList.filter_metadata = 'metadata' in filtered_filter
+        current_controlList.filter_numeral = 'numeral' in filtered_filter
+        current_controlList.filter_ignore = 'ignore' in filtered_filter
+        db.session.add(current_controlList)
         db.session.commit()
 
-        flash('The filters have been updated.', 'success')
-        current_controlListUser = ControlListsUser.retrieve(
-            user_id=current_user.id,
-            control_list_id=control_list_id
-        ).first()
-        return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id,
-                                             current_control_list=current_controlListUser)
 
-    return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_controlListUser)
+        flash('The filters have been updated.', 'success')
+        current_controlList = ControlLists.query.filter_by(**{"id":control_list_id}).first_or_404()
+        print(current_controlList.filter_punct, current_controlList.filter_ignore)
+        return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id,
+                                             current_control_list=current_controlList)
+
+    return render_template_with_nav_info('control_lists/ignore_filter.html', control_list_id=control_list_id, current_control_list=current_controlList)

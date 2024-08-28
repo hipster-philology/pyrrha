@@ -135,7 +135,7 @@ def tokens_correct_single(corpus_id, token_id):
             token_id=token_id, corpus_id=corpus_id,
             lemma=string_to_none(request.form.get("lemma")),
             POS=string_to_none(request.form.get("POS")),
-            morph=string_to_none(request.form.get("morph")),
+            morph=string_to_none(request.form.get("morph"))
         )
         if "similar" in corpus.displayed_columns_by_name:
             similar = {

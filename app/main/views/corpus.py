@@ -127,12 +127,11 @@ def corpus_new():
                 # Add a link to the control list
                 ControlLists.link(corpus.control_lists_id, current_user.id, is_owner=cl_owner)
                 db.session.commit()
-                current_controlListUser = ControlListsUser.query.filter_by(
-                    **{"control_lists_id": corpus.control_lists_id, "user_id": current_user.id}).first_or_404()
-                current_controlListUser.filter_punct = 'punct' in list_filter
-                current_controlListUser.filter_metadata = 'metadata' in list_filter
-                current_controlListUser.filter_numeral = 'numeral' in list_filter
-                current_controlListUser.filter_ignore = 'ignore' in list_filter
+                current_controlList = ControlLists.query.filter_by(**{"id":corpus.control_lists_id}).first_or_404()
+                current_controlList.filter_punct = 'punct' in list_filter
+                current_controlList.filter_metadata = 'metadata' in list_filter
+                current_controlList.filter_numeral = 'numeral' in list_filter
+                current_controlList.filter_ignore = 'ignore' in list_filter
                 db.session.commit()
                 flash("New corpus registered", category="success")
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
