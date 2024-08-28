@@ -54,7 +54,7 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     user_id = current_user.id
     tokens = corpus\
-        .get_unallowed(user_id, corpus_id, allowed_type)\
+        .get_unallowed(user_id, allowed_type)\
         .paginate(
             page=int_or(request.args.get("page"), 1),
             per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])

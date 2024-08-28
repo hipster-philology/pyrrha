@@ -275,7 +275,7 @@ class TestUpdateControlList(TestBase):
         self.assertEqual(
             sorted([link.text.strip() for link in links]),
             sorted(['Lemma', "Guidelines",
-                    'Morphologies', 'POS', 'Propose changes', 'Wauchier', 'Ignore values']),
+                    'Morphologies', 'POS', 'Propose changes', 'Wauchier']),
             "Only contacting and reading is possible to users"
         )
 

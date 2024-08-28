@@ -267,7 +267,7 @@ class ControlLists(db.Model):
             print("[ControlLists] Adding %s " % data["name"])
             cl = ControlLists(**data, public=PublicationStatus.public)
             db.session.add(cl)
-            db.session.flush()  # Get the AutoIncrement ID/home/jjanes
+            db.session.flush()  # Get the AutoIncrement ID
             configs = [
                 ("lemma.txt", AllowedLemma, read_input_lemma),
                 ("POS.txt", AllowedPOS, read_input_POS),

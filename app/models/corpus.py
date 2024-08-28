@@ -298,7 +298,7 @@ class Corpus(db.Model):
             ).order_by(order_by)
         return db.session.query(cls).filter(cls.control_list == self.control_lists_id).order_by(order_by)
 
-    def get_unallowed(self, user_id, corpus_id, allowed_type="lemma"):
+    def get_unallowed(self, user_id, allowed_type="lemma"):
         """ Search for WordToken that would not comply with Allowed Values (in AllowedLemma,
         AllowedPOS, AllowedMorph) nor with a corpus custom dictionary
 
@@ -334,13 +334,10 @@ class Corpus(db.Model):
             not_(custom_dict.exists())
         ]
 
-        current_corpus = Corpus.query.filter_by(**{"id":corpus_id}).first_or_404()
-        current_controlList = ControlLists.query.filter_by(
-            **{"id":current_corpus.control_lists_id}).first_or_404()
-
+        current_controlList = self.control_lists
         regex_liste = []
         if current_controlList:
-            if current_controlLists.filter_metadata:
+            if current_controlList.filter_metadata:
                 regex_liste.append(ControlLists.re_filter_metadata)
             if current_controlList.filter_ignore:
                 regex_liste.append(ControlLists.re_filter_ignore)
@@ -1122,8 +1119,7 @@ class WordToken(db.Model):
 
         allowed_column = corpus.displayed_columns_by_name
         if lemma and "lemma" in allowed_column and allowed_lemma.count():
-            current_controlList = ControlLists.query.filter_by(**{"id":corpus.control_lists_id}).first_or_404()
-            print(current_controlList)
+            current_controlList=corpus.control_lists
             regex_liste = []
             if current_controlList:
                 if current_controlList.filter_metadata:

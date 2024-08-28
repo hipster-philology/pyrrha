@@ -378,8 +378,9 @@ def information_read(control_list_id):
 
 @control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
 @login_required
-def ignore_terms_filter(control_list_id):
-    current_controlList = ControlLists.query.filter_by(**{"id":control_list_id}).first_or_404()
+@cl_editable("control_list_id")
+def ignore_terms_filter(control_list_id, control_list):
+    current_controlList = ControlLists.query.filter_by(**{"id":control_list.id}).first_or_404()
     print(current_controlList.filter_punct, current_controlList.filter_ignore)
     list_filter = []
     if request.method == "POST":

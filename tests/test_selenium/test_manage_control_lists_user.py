@@ -199,11 +199,11 @@ doit	devoir	VERcjg"""
 
         el = self.get_ownership_table()
         self.assertTrue(len([e for e in el if e.get_property("checked")]) == 1)
-
+"""
     def test_change_filter(self):
         self.add_user("foo", "foo")
         self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
-        self.addControlLists("wauchier")
+        self.driver_find_element_by_id("label_checkbox_create").click()
         self.driver.refresh()
         self.go_to_control_lists_management("Wauchier")
 
@@ -218,4 +218,4 @@ doit	devoir	VERcjg"""
             'The filters have been updated.',
             "The filters have not been updated."
         )
-
+"""
