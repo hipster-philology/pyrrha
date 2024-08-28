@@ -1121,9 +1121,7 @@ class WordToken(db.Model):
         }
 
         allowed_column = corpus.displayed_columns_by_name
-        print("test")
-        if lemma and "lemma" in allowed_column and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
-            print("test2")
+        if lemma and "lemma" in allowed_column and allowed_lemma.count():
             current_controlList = ControlLists.query.filter_by(**{"id":corpus.control_lists_id}).first_or_404()
             print(current_controlList)
             regex_liste = []
