@@ -279,7 +279,7 @@ class TestCorpusScript(TestCase):
             )
 
     @nottest
-    def make_test(self, tests, context):
+    def  make_test(self, tests, context):
         with self.app.app_context():
             with self.runner.isolated_filesystem() as f:
                 cur_dir = str(f)

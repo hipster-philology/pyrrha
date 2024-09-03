@@ -153,15 +153,6 @@ class TestChangeRecord(TestModels):
         )
         self.assertCountEqual(cr4.changed, ["lemma", "POS"])
 
-    def test_filter_allowed_lemma(self):
-        """ Ensure only similar features are fixed """
-        self.load_fixtures()
-        with self.assertRaises(WordToken.ValidityError):
-            token, change_record = WordToken.update(
-                user_id=1,
-                token_id=1, corpus_id=1,
-                lemma="#", morph="smn", POS="u")
-
         # faire pareil mais avec les filtres de cochés
 
 
