@@ -28,9 +28,12 @@ class TestFilters(TestModels):
             ("#", "filter_punct"),
             ("...", "filter_punct"),
             ("7", "filter_numeral"),
-            ("75", "filter_numeral")
+            ("7578", "filter_numeral"),
+            ("[METADATA:infomation]", "filter_metadata"),
+            ("[12.0:blabla]", "filter_metadata"),
+            ("[IGNORE]", "filter_ignore")
         ]
-        situations = ["filter_punct", "filter_numeral"]
+        situations = ["filter_punct", "filter_numeral", "filter_metadata", "filter_ignore"]
         cl = ControlLists.query.get(1)
         token = WordToken.query.get(1)
         corpus = Corpus.query.get(1)
@@ -45,4 +48,8 @@ class TestFilters(TestModels):
                 self.db.session.refresh(token)
                 self.db.session.refresh(corpus)
                 for category, filtre in tests:
-                    print(WordToken.is_valid(lemma=category, POS=token.POS, morph=token.morph, corpus=corpus)["lemma"])
+                    validity = WordToken.is_valid(lemma=category, POS=token.POS, morph=token.morph, corpus=corpus)["lemma"]
+                    if filtre in combi:
+                        self.assertTrue(validity, "Filters are not working. Some elements that should not match the regex are being matched.")
+                    else:
+                        self.assertFalse(validity, "Filters are not working. Some elements are not match by the regex filters.")

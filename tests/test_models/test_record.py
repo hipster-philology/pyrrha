@@ -153,7 +153,5 @@ class TestChangeRecord(TestModels):
         )
         self.assertCountEqual(cr4.changed, ["lemma", "POS"])
 
-        # faire pareil mais avec les filtres de cochés
-
 
 
