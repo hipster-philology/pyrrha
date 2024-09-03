@@ -49,7 +49,7 @@ class TestFilters(TestModels):
                 self.db.session.refresh(corpus)
                 for category, filtre in tests:
                     validity = WordToken.is_valid(lemma=category, POS=token.POS, morph=token.morph, corpus=corpus)["lemma"]
-                    if filtre in combi:
+                    if filtre and filtre in combi:
                         self.assertTrue(validity, "Filters are not working. Some elements that should not match the regex are being matched.")
                     else:
                         self.assertFalse(validity, "Filters are not working. Some elements are not match by the regex filters.")
