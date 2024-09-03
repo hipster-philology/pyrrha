@@ -284,3 +284,5 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaBase):
         history_row = self.driver_find_elements_by_css_selector("tbody tr.history")
         self.assertEqual(len(history_row), 1, "There should be one record in the history")
 
+
+

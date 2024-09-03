@@ -1116,10 +1116,9 @@ class WordToken(db.Model):
             "POS": True,
             "morph": True
         }
-
         allowed_column = corpus.displayed_columns_by_name
-        if lemma and "lemma" in allowed_column and allowed_lemma.count():
-            current_controlList=corpus.control_lists
+        if lemma and "lemma" in allowed_column and allowed_lemma.count()>=0:
+            current_controlList = corpus.control_lists
             regex_liste = []
             if current_controlList:
                 if current_controlList.filter_metadata:
@@ -1130,19 +1129,17 @@ class WordToken(db.Model):
                     regex_liste.append(ControlLists.re_filter_punct)
                 if current_controlList.filter_numeral:
                     regex_liste.append(ControlLists.re_filter_numeral)
-            print(regex_liste)
-
             ignored_by_regex = False
 
             for regex in regex_liste:
                 if re.match(regex, lemma) is not None:
                     ignored_by_regex = True
-
             if (
-                    not ignored_by_regex and
+                    ignored_by_regex is False and
                     corpus.has_custom_dictionary_value("lemma", lemma) is False and
                     corpus.get_allowed_values("lemma", label=lemma).count() == 0
                 ):
+
                     statuses["lemma"] = False
 
         if POS is not None \
