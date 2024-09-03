@@ -1117,7 +1117,11 @@ class WordToken(db.Model):
             "morph": True
         }
         allowed_column = corpus.displayed_columns_by_name
-        if lemma and "lemma" in allowed_column and allowed_lemma.count()>=0:
+        if (lemma  # If we changed the lemma
+                and "lemma" in allowed_column  # And if the lemma is a column known to the project
+                and allowed_lemma.count()  # And if we have a list of accepted lemma,
+        ):
+            # then we check for lemma validity
             current_controlList = corpus.control_lists
             regex_liste = []
             if current_controlList:
