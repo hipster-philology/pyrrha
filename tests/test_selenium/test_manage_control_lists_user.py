@@ -199,11 +199,22 @@ doit	devoir	VERcjg"""
 
         el = self.get_ownership_table()
         self.assertTrue(len([e for e in el if e.get_property("checked")]) == 1)
-"""
+
+
+class TestNotAdmin(TestBase):
+    AUTO_LOG_IN = False
+
+    def go_to_control_lists_management(self, control_lists):
+        self.driver_find_element_by_link_text("Dashboard").click()
+        controllists_dashboard = self.driver_find_element_by_id("control_lists-dashboard")
+        self.element_find_element_by_partial_link_text(controllists_dashboard, control_lists).click()
+
     def test_change_filter(self):
-        self.add_user("foo", "foo")
-        self.login("%s.%s@ppa.fr" % ("foo", "foo"), self.app.config['ADMIN_PASSWORD'])
-        self.driver_find_element_by_id("label_checkbox_create").click()
+        """Check that the owner of a control list can change one of the filters """
+        self.addControlLists("wauchier", no_corpus_user=True)
+        foo_email = self.add_user("foo", "bar")
+        clu = self.addControlListsUser("Wauchier", foo_email, is_owner=True)
+        self.login(foo_email, self.app.config["ADMIN_PASSWORD"])
         self.driver.refresh()
         self.go_to_control_lists_management("Wauchier")
 
@@ -218,4 +229,3 @@ doit	devoir	VERcjg"""
             'The filters have been updated.',
             "The filters have not been updated."
         )
-"""
