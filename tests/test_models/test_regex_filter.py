@@ -1,15 +1,33 @@
-from .test_record import SimilarityFixtures
-from app.models import ChangeRecord, WordToken, Corpus, ControlLists, ControlListsUser, CorpusUser, Column
+from app.models import ChangeRecord, WordToken, Corpus, ControlLists, Column, AllowedLemma
 from .base import TestModels
 import copy
 from itertools import combinations
 
+
+SimilarityFixtures = [
+    ControlLists(id=1, name="CL Fixture"),
+    Corpus(id=1, name="Fixtures !", control_lists_id=1),
+    Column(heading="Lemma", corpus_id=1),
+    Column(heading="POS", corpus_id=1),
+    Column(heading="Morph", corpus_id=1),
+    Column(heading="Similar", corpus_id=1),
+    WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="smn", POS="p"),  # 1
+    WordToken(corpus=1, form="Cil", lemma="celle", left_context="_", right_context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
+    WordToken(corpus=1, form="Cil", lemma="cil", left_context="_", right_context="_", label_uniform="cil", morph="smn", POS="p"),      # 3
+    WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="mmn", POS="p"),  # 4
+    WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="mmn", POS="n"),  # 5
+    WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 6
+    WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 7
+    WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 8
+    AllowedLemma(id=1, label="celui", label_uniform="celui", control_list=1)
+]
 
 class TestFilters(TestModels):
 
     def load_fixtures(self):
         for fixture in SimilarityFixtures:
             self.db.session.add(copy.deepcopy(fixture))
+            self.db.session.flush()
         self.db.session.commit()
 
     def test_filter_allowed_lemma(self):
@@ -50,6 +68,6 @@ class TestFilters(TestModels):
                 for category, filtre in tests:
                     validity = WordToken.is_valid(lemma=category, POS=token.POS, morph=token.morph, corpus=corpus)["lemma"]
                     if filtre and filtre in combi:
-                        self.assertTrue(validity, "Filters are not working. Some elements that should not match the regex are being matched.")
+                        self.assertTrue(validity, f"Filters are not working. `{category}` should be matched by `{filtre}` in {', '.join(combi) or 'absence of filters'}")
                     else:
-                        self.assertFalse(validity, "Filters are not working. Some elements are not match by the regex filters.")
+                        self.assertFalse(validity, f"Filters are not working. `{category}` should not be matched by `{filtre}` in {', '.join(combi) or 'absence of filters'}")
