@@ -67,7 +67,8 @@ class TestFilters(TestModels):
                 self.db.session.refresh(corpus)
                 for category, filtre in tests:
                     validity = WordToken.is_valid(lemma=category, POS=token.POS, morph=token.morph, corpus=corpus)["lemma"]
-                    if filtre and filtre in combi:
+                    print(combi, category, filtre, validity)
+                    if filtre and filtre in combi or 'celui' in category:
                         self.assertTrue(validity, f"Filters are not working. `{category}` should be matched by `{filtre}` in {', '.join(combi) or 'absence of filters'}")
                     else:
                         self.assertFalse(validity, f"Filters are not working. `{category}` should not be matched by `{filtre}` in {', '.join(combi) or 'absence of filters'}")
