@@ -338,7 +338,10 @@ class Corpus(db.Model):
         regex_liste = []
         if current_controlList:
             if current_controlList.filter_metadata:
-                list_darguments.append(WordToken.form.op('!~')(ControlLists.re_filter_metadata))
+                try:
+                    list_darguments.append(WordToken.form.op('!~')(ControlLists.re_filter_metadata))
+                except Exception:
+                    list_darguments.append(WordToken.form.op('not regexp')(ControlLists.re_filter_metadata))
             if current_controlList.filter_ignore:
                 regex_liste.append(ControlLists.re_filter_ignore)
             if current_controlList.filter_punct:
@@ -347,7 +350,10 @@ class Corpus(db.Model):
                 regex_liste.append(ControlLists.re_filter_numeral)
 
         if regex_liste:
-            list_darguments.append(WordToken.lemma.op('!~')("".join(regex_liste)))
+            try:
+                list_darguments.append(WordToken.lemma.op('!~')("".join(regex_liste)))
+            except Exception:
+                list_darguments.append(WordToken.lemma.op('not regexp')("".join(regex_liste)))
 
         return db.session.query(WordToken).filter(
             db.and_(*list_darguments)
