@@ -12,7 +12,7 @@ SimilarityFixtures = [
     Column(heading="Morph", corpus_id=1),
     Column(heading="Similar", corpus_id=1),
     WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="smn", POS="p"),  # 1
-    WordToken(corpus=1, form="Cil", lemma="celle", left_context="_", right_context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
+    WordToken(corpus=1, form="[METADATA:blabla]", lemma="celle", left_context="_", right_context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
     WordToken(corpus=1, form="Cil", lemma="cil", left_context="_", right_context="_", label_uniform="cil", morph="smn", POS="p"),      # 3
     WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="mmn", POS="p"),  # 4
     WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="mmn", POS="n"),  # 5
@@ -47,11 +47,9 @@ class TestFilters(TestModels):
             ("...", "filter_punct"),
             ("7", "filter_numeral"),
             ("7578", "filter_numeral"),
-            ("[METADATA:infomation]", "filter_metadata"),
-            ("[12.0:blabla]", "filter_metadata"),
             ("[IGNORE]", "filter_ignore")
         ]
-        situations = ["filter_punct", "filter_numeral", "filter_metadata", "filter_ignore"]
+        situations = ["filter_punct", "filter_numeral", "filter_ignore"]
         cl = ControlLists.query.get(1)
         token = WordToken.query.get(1)
         corpus = Corpus.query.get(1)
@@ -72,3 +70,17 @@ class TestFilters(TestModels):
                         self.assertTrue(validity, f"Filters are not working. `{category}` should be matched by `{filtre}` in {', '.join(combi) or 'absence of filters'}")
                     else:
                         self.assertFalse(validity, f"Filters are not working. `{category}` should not be matched by `{filtre}` in {', '.join(combi) or 'absence of filters'}")
+
+    def test_metadata_filter(self):
+        self.load_fixtures()
+        corpus = Corpus.query.get(1)
+        cl = ControlLists.query.get(1)
+        token = corpus.get_unallowed().first()
+        self.assertEqual(token.form, "[METADATA:blabla]", f'Metadata are considered as unallowed token when there is no filter metadata.')
+        setattr(cl, "filter_metadata", True)
+        self.db.session.add(cl)
+        self.db.session.commit()
+        self.db.session.refresh(corpus)
+        token = corpus.get_unallowed().first()
+        self.assertNotEqual(token.form, "[METADATA:blabla]", f'Metadata filter is not working. [METADATA:blabla] should not be considered as unallowed.')
+
