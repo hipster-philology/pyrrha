@@ -39,7 +39,9 @@ CorpusStatistics = namedtuple("CorpusStatistics",
 class CorpusUser(db.Model):
     """
         Association proxy that link users to corpora
-        :param corpus_id: a corpus ID
+        :param corpus_id: a corpus                 except:
+
+                    ID
         :param user_id: a user ID
     """
     corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
@@ -338,10 +340,10 @@ class Corpus(db.Model):
         regex_liste = []
         if current_controlList:
             if current_controlList.filter_metadata:
-                try:
-                    list_darguments.append(WordToken.form.op('!~')(ControlLists.re_filter_metadata))
-                except Exception:
+                if 'SQLite' in str(db.session.connection().dialect):
                     list_darguments.append(WordToken.form.op('not regexp')(ControlLists.re_filter_metadata))
+                else:
+                    list_darguments.append(WordToken.form.op('!~')(ControlLists.re_filter_metadata))
             if current_controlList.filter_ignore:
                 regex_liste.append(ControlLists.re_filter_ignore)
             if current_controlList.filter_punct:
@@ -350,10 +352,10 @@ class Corpus(db.Model):
                 regex_liste.append(ControlLists.re_filter_numeral)
 
         if regex_liste:
-            try:
-                list_darguments.append(WordToken.lemma.op('!~')("".join(regex_liste)))
-            except Exception:
+            if 'SQLite' in str(db.session.connection().dialect):
                 list_darguments.append(WordToken.lemma.op('not regexp')("".join(regex_liste)))
+            else:
+                list_darguments.append(WordToken.lemma.op('!~')("".join(regex_liste)))
 
         return db.session.query(WordToken).filter(
             db.and_(*list_darguments)
