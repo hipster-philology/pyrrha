@@ -42,8 +42,6 @@ def _get_available():
 def corpus_new():
     """ Register a new corpus
     """
-    logging.basicConfig(filename='./pyrrha_corpus_creation.log', level=logging.DEBUG,
-                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
     logger = logging.getLogger(__name__)
     lemmatizers = current_app.config.get("LEMMATIZERS", [])
 
