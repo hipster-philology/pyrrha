@@ -3,7 +3,6 @@ from flask_login import current_user, login_required
 import sqlalchemy.exc
 from sqlalchemy import func, distinct, text
 from typing import List
-import logging
 
 
 from app import db
@@ -22,7 +21,8 @@ from ...errors import MissingTokenColumnValue, NoTokensInput
 from .utils import requires_corpus_admin_access, requires_corpus_access
 from ..forms import Delete
 from app.utils import PreferencesUpdateError, PersonalDictionaryError
-
+from app import logger
+import logging
 AUTOCOMPLETE_LIMIT = 20
 
 
@@ -42,7 +42,7 @@ def _get_available():
 def corpus_new():
     """ Register a new corpus
     """
-    logger = logging.getLogger(__name__)
+
     lemmatizers = current_app.config.get("LEMMATIZERS", [])
 
     def normal_view():

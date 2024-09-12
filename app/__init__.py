@@ -26,6 +26,11 @@ login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'account.login'
 
+logging.basicConfig(filename='./pyrrha_corpus_creation.log', level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
+logger = logging.getLogger(__name__)
+
 
 def create_app(config_name="dev"):
     """ Create the application """
@@ -65,8 +70,7 @@ def create_app(config_name="dev"):
     md = Markdown(app, safe_mode=True)
     babel.init_app(app, locale_selector=get_locale)
 
-    logging.basicConfig(filename='./pyrrha_corpus_creation.log', level=logging.DEBUG,
-                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
 
     # Register Jinja template functions
     from .main import main as main_blueprint
