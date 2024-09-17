@@ -37,7 +37,7 @@ class TestFilters(TestModels):
             token, change_record = WordToken.update(
                 user_id=1,
                 token_id=1, corpus_id=1,
-                lemma="#", morph="smn", POS="u")
+                form = "Cil", lemma="#", morph="smn", POS="u")
 
     def test_combinatory_regex(self):
         self.load_fixtures()
@@ -64,8 +64,7 @@ class TestFilters(TestModels):
                 self.db.session.refresh(token)
                 self.db.session.refresh(corpus)
                 for category, filtre in tests:
-                    validity = WordToken.is_valid(lemma=category, POS=token.POS, morph=token.morph, corpus=corpus)["lemma"]
-                    print(combi, category, filtre, validity)
+                    validity = WordToken.is_valid(form = token.form, lemma=category, POS=token.POS, morph=token.morph, corpus=corpus)["lemma"]
                     if filtre and filtre in combi or 'celui' in category:
                         self.assertTrue(validity, f"Filters are not working. `{category}` should be matched by `{filtre}` in {', '.join(combi) or 'absence of filters'}")
                     else:
@@ -83,4 +82,13 @@ class TestFilters(TestModels):
         self.db.session.refresh(corpus)
         token = corpus.get_unallowed().first()
         self.assertNotEqual(token.form, "[METADATA:blabla]", f'Metadata filter is not working. [METADATA:blabla] should not be considered as unallowed.')
+        
+        token = WordToken.query.get(2)
+        validity_lemma = WordToken.is_valid(form = token.form, lemma="blabla", POS=token.POS, morph=token.morph,corpus=corpus)["lemma"]
+        self.assertTrue(validity_lemma, f"Filter metadata is not working for lemma")
+        validity_pos = WordToken.is_valid(form = token.form, lemma=token.lemma, POS="blabla", morph=token.morph,corpus=corpus)["POS"]
+        validity_morph = WordToken.is_valid(form = token.form, lemma=token.lemma, POS=token.POS, morph="blabla",corpus=corpus)["morph"]
+
+
+
 

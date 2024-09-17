@@ -1101,7 +1101,7 @@ class WordToken(db.Model):
         return query
 
     @staticmethod
-    def is_valid(lemma, POS, morph, corpus):
+    def is_valid(lemma, POS, morph, corpus, form):
         """ Check if a token is valid for a given corpus
 
         :param lemma: Lemma value of the token to validate
@@ -1125,46 +1125,53 @@ class WordToken(db.Model):
             "morph": True
         }
         allowed_column = corpus.displayed_columns_by_name
-        if (lemma  # If we changed the lemma
+        current_controlList = corpus.control_lists
+        print(form)
+        print(current_controlList.filter_metadata)
+        print(re.match(current_controlList.re_filter_metadata, form))
+        if form and current_controlList.filter_metadata and re.match(current_controlList.re_filter_metadata, form):
+            pass
+        else:
+            if (lemma  # If we changed the lemma
                 and "lemma" in allowed_column  # And if the lemma is a column known to the project
                 and allowed_lemma.count()  # And if we have a list of accepted lemma,
-        ):
-            # then we check for lemma validity
-            current_controlList = corpus.control_lists
-            regex_liste = []
-            if current_controlList:
-                if current_controlList.filter_ignore:
-                    regex_liste.append(ControlLists.re_filter_ignore)
-                if current_controlList.filter_punct:
-                    regex_liste.append(ControlLists.re_filter_punct)
-                if current_controlList.filter_numeral:
-                    regex_liste.append(ControlLists.re_filter_numeral)
-            ignored_by_regex = False
-
-            for regex in regex_liste:
-                if re.match(regex, lemma) is not None:
-                    ignored_by_regex = True
-            if (
-                    ignored_by_regex is False and
-                    corpus.has_custom_dictionary_value("lemma", lemma) is False and
-                    corpus.get_allowed_values("lemma", label=lemma).count() == 0
                 ):
+            # then we check for lemma validity
+            
+                    regex_liste = []
+                    if current_controlList:
+                        if current_controlList.filter_ignore:
+                            regex_liste.append(ControlLists.re_filter_ignore)
+                        if current_controlList.filter_punct:
+                            regex_liste.append(ControlLists.re_filter_punct)
+                        if current_controlList.filter_numeral:
+                            regex_liste.append(ControlLists.re_filter_numeral)
+                    ignored_by_regex = False
 
-                    statuses["lemma"] = False
+                    for regex in regex_liste:
+                        if re.match(regex, lemma) is not None:
+                            ignored_by_regex = True
+                    if (
+                        ignored_by_regex is False and
+                        corpus.has_custom_dictionary_value("lemma", lemma) is False and
+                        corpus.get_allowed_values("lemma", label=lemma).count() == 0
+                        ):
 
-        if POS is not None \
+                        statuses["lemma"] = False
+
+            if POS is not None \
                 and "POS" in allowed_column \
                 and allowed_POS.count() > 0 \
                 and corpus.get_allowed_values("POS", label=POS).count() == 0:
-            if not corpus.has_custom_dictionary_value("POS", POS):
-                statuses["POS"] = False
+                if not corpus.has_custom_dictionary_value("POS", POS):
+                    statuses["POS"] = False
 
-        if morph is not None \
+            if morph is not None \
                 and "morph" in allowed_column \
                 and allowed_morph.count() > 0 \
                 and corpus.get_allowed_values("morph", label=morph).count() == 0:
-            if not corpus.has_custom_dictionary_value("morph", morph):
-                statuses["morph"] = False
+                if not corpus.has_custom_dictionary_value("morph", morph):
+                    statuses["morph"] = False
 
         return statuses
 
@@ -1322,7 +1329,7 @@ class WordToken(db.Model):
         return csv_file.getvalue()
 
     @staticmethod
-    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None):
+    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None, form=None):
         """ Update a given token with lemma, POS and morph value
 
         :param user_id: ID of the user who performs the update
@@ -1331,6 +1338,8 @@ class WordToken(db.Model):
         :type corpus_id: int
         :param token_id: Id of the token
         :type token_id: int
+        :param form: Form
+        :type form: str
         :param lemma: Lemma
         :type lemma: str
         :param POS: PartOfSpeech
@@ -1344,6 +1353,7 @@ class WordToken(db.Model):
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
         # Strip if things are not None
+        form = strip_or_none(form)
         lemma = strip_or_none(lemma)
         POS = strip_or_none(POS)
         morph = strip_or_none(morph)
@@ -1354,7 +1364,7 @@ class WordToken(db.Model):
             error.msg = "No value where changed"
             raise error
         # Check if values are correct regarding allowed values
-        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
+        validity = WordToken.is_valid(form=form, lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):
             error_msg = "Invalid value in {}".format(
                 ", ".join([key for key in validity.keys() if validity[key] is False])
@@ -1700,6 +1710,7 @@ class ChangeRecord(db.Model):
         ).all():
             apply = {"user_id": user_id, "token_id": token.id, "corpus_id": token.corpus}
             apply.update({attr: val[1] for attr, val in watch.items() if val[0] == getattr(token, attr)})
+            print(apply)
             WordToken.update(**apply)
             changed.append(token)
         return changed
