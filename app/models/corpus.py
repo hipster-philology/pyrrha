@@ -340,7 +340,7 @@ class Corpus(db.Model):
         regex_liste = []
         if current_controlList:
             if current_controlList.filter_metadata:
-                if 'SQLite' in str(db.session.connection().dialect):
+                if db.session.get_bind().dialect.name == 'sqlite':
                     list_darguments.append(WordToken.form.op('not regexp')(ControlLists.re_filter_metadata))
                 else:
                     list_darguments.append(WordToken.form.op('!~')(ControlLists.re_filter_metadata))
@@ -352,7 +352,7 @@ class Corpus(db.Model):
                 regex_liste.append(ControlLists.re_filter_numeral)
 
         if regex_liste:
-            if 'SQLite' in str(db.session.connection().dialect):
+            if db.session.get_bind().dialect.name == 'sqlite':
                 list_darguments.append(WordToken.lemma.op('not regexp')("".join(regex_liste)))
             else:
                 list_darguments.append(WordToken.lemma.op('!~')("".join(regex_liste)))
@@ -1126,38 +1126,32 @@ class WordToken(db.Model):
         }
         allowed_column = corpus.displayed_columns_by_name
         current_controlList = corpus.control_lists
-        print(form)
-        print(current_controlList.filter_metadata)
-        print(re.match(current_controlList.re_filter_metadata, form))
-        if form and current_controlList.filter_metadata and re.match(current_controlList.re_filter_metadata, form):
-            pass
-        else:
+        metadata_filtered = (
+            form
+            and current_controlList
+            and current_controlList.filter_metadata
+            and re.match(current_controlList.re_filter_metadata, form)
+        )
+        if not metadata_filtered:
             if (lemma  # If we changed the lemma
                 and "lemma" in allowed_column  # And if the lemma is a column known to the project
-                and allowed_lemma.count()  # And if we have a list of accepted lemma,
+                and allowed_lemma.count()  # And if we have a list of accepted lemma
                 ):
-            # then we check for lemma validity
-            
-                    regex_liste = []
-                    if current_controlList:
-                        if current_controlList.filter_ignore:
-                            regex_liste.append(ControlLists.re_filter_ignore)
-                        if current_controlList.filter_punct:
-                            regex_liste.append(ControlLists.re_filter_punct)
-                        if current_controlList.filter_numeral:
-                            regex_liste.append(ControlLists.re_filter_numeral)
-                    ignored_by_regex = False
-
-                    for regex in regex_liste:
-                        if re.match(regex, lemma) is not None:
-                            ignored_by_regex = True
-                    if (
-                        ignored_by_regex is False and
-                        corpus.has_custom_dictionary_value("lemma", lemma) is False and
-                        corpus.get_allowed_values("lemma", label=lemma).count() == 0
-                        ):
-
-                        statuses["lemma"] = False
+                regex_liste = []
+                if current_controlList:
+                    if current_controlList.filter_ignore:
+                        regex_liste.append(ControlLists.re_filter_ignore)
+                    if current_controlList.filter_punct:
+                        regex_liste.append(ControlLists.re_filter_punct)
+                    if current_controlList.filter_numeral:
+                        regex_liste.append(ControlLists.re_filter_numeral)
+                ignored_by_regex = any(re.match(regex, lemma) for regex in regex_liste)
+                if (
+                    not ignored_by_regex
+                    and not corpus.has_custom_dictionary_value("lemma", lemma)
+                    and corpus.get_allowed_values("lemma", label=lemma).count() == 0
+                ):
+                    statuses["lemma"] = False
 
             if POS is not None \
                 and "POS" in allowed_column \
@@ -1710,7 +1704,6 @@ class ChangeRecord(db.Model):
         ).all():
             apply = {"user_id": user_id, "token_id": token.id, "corpus_id": token.corpus}
             apply.update({attr: val[1] for attr, val in watch.items() if val[0] == getattr(token, attr)})
-            print(apply)
             WordToken.update(**apply)
             changed.append(token)
         return changed

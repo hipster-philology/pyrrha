@@ -308,7 +308,7 @@ def make_cli():
 
     @cli.command("db-upgrade", help="Do small migrations")
     @click.argument("migration_name",
-              type=click.Choice(['controllist-markdown', 'add-columns', "user-language"], case_sensitive=False))
+              type=click.Choice(['controllist-markdown', 'add-columns', "user-language", "controllist-filters"], case_sensitive=False))
     def db_add_table(migration_name):
         columns = {
             "controllist-markdown": [
@@ -316,6 +316,14 @@ def make_cli():
             ],
             "user-language": [
                 ("users", (db.Column("locale", db.String(10), default="en", nullable=True),))
+            ],
+            "controllist-filters": [
+                ("control_lists", (
+                    db.Column("filter_punct", db.Boolean, default=False),
+                    db.Column("filter_numeral", db.Boolean, default=False),
+                    db.Column("filter_metadata", db.Boolean, default=False),
+                    db.Column("filter_ignore", db.Boolean, default=False),
+                ))
             ]
         }
 

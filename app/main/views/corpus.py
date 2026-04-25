@@ -133,7 +133,6 @@ def corpus_new():
                 db.session.commit()
                 flash("New corpus registered", category="success")
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
-                print(e)
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 flash(str(e.orig).lower())
@@ -161,7 +160,6 @@ def corpus_new():
                 flash(exception, category="error")
                 return error()
             except Exception as e:
-                print(e)
                 db.session.rollback()
                 flash("The corpus cannot be registered. Check your data", category="error")
                 logger.error(e)

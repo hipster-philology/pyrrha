@@ -52,7 +52,7 @@ class ControlLists(db.Model):
 
     re_filter_metadata = r'(\[[^\]]+:[^\]]*\]$)'
     re_filter_ignore = r'(^\[IGNORE\])'
-    re_filter_punct = "(^[^\w\s]+$)"
+    re_filter_punct = r"(^[^\w\s]+$)"
     re_filter_numeral = r'(^\d+$)'
 
     # For caching purposes, we record the last time these fields were edited

@@ -52,7 +52,6 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
     :param allowed_type: Type of allowed value to check agains (lemma, POS, morph)
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    user_id = current_user.id
     tokens = corpus\
         .get_unallowed(allowed_type)\
         .paginate(
