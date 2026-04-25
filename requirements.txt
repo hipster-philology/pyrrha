@@ -27,13 +27,18 @@ Markdown
 
 # Other libraries
 unidecode==1.3.4 # For normalization
-PyYaml==6.0 # Control list loading
+PyYaml
 
 # Testing utilities
 coverage
 cov-core==1.15.0
-nose==1.3.7
 selenium>=3.141.0
 Flask-Testing==0.8.1
 mock==5.1.0
 regex
+pytest
+pytest-cov
+flake8 
+pytest-sugar
+playwright>=1.40.0
+pytest-playwright>=0.4.4
