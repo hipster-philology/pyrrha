@@ -365,13 +365,13 @@
                 tr.classList.add("table-changed");
 
                 receptor.appendChild(
-                    createElement('<span class="badge badge-success badge-status">Saved</span>')
+                    createElement('<span class="badge badge-success badge-status badge-saving-response">Saved</span>')
                 );
 
             }).catch(function(error){
                 receptor.appendChild(
                     createElement(
-                        `<span class="badge badge-danger badge-status">
+                        `<span class="badge badge-danger badge-status badge-saving-response">
                             ${error.message}
                         </span>`
                     )

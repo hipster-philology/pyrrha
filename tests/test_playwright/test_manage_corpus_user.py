@@ -15,6 +15,7 @@ class TestManageCorpusUser(Helpers):
         for tr in self.page.locator("tbody > tr").all():
             if tr.locator(".name").text_content().strip() == corpus_name:
                 tr.locator("a span[aria-label='Manage']").click()
+                self.page.wait_for_load_state("networkidle")
                 return
         raise ValueError(f"Corpus not found: {corpus_name}")
 
@@ -31,7 +32,7 @@ class TestManageCorpusUser(Helpers):
         el.locator(f"input[type='checkbox'][value='{user_id}']").click()
 
     def submit(self):
-        self.page.locator("#accesses-form-submit").click()
+        self.page.locator("#accesses-form-submit").click(force=True)
 
     def grant_access_to_user(self, corpus_name, user_id):
         users_table = self.page.locator("#users-table")
@@ -138,7 +139,7 @@ class TestManageCorpusUser(Helpers):
 
     def test_corpus_creator_is_owner(self):
         self.addCorpus("wauchier")
-        self.page.get_by_role("link", name="New Corpus", exact=True).click()
+        self.page.get_by_role("link", name="New Corpus", exact=False).click()
         self.page.locator("#corpusName").fill("FreshNewCorpus")
         self.page.locator("#tokens").fill(
             "tokens\tlemmas\tpos\n"

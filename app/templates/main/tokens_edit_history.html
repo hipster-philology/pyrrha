@@ -7,7 +7,7 @@
 
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_edit_history") }}
 
-<table class="table table-bordered">
+<table class="table table-bordered" id="token-change-history">
     <thead><tr><th>{{ _('User') }}</th><th>{{ _('Date') }}</th><th>{{ _('Type') }}</th><th>{{ _('Ancienne valeur') }}</th><th>{{ _('Nouvelle valeur') }}</th></tr></thead>
     <tbody>
         {% for token in tokens.items -%}

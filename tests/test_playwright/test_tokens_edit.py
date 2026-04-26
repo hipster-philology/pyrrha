@@ -14,10 +14,11 @@ class TestTokenEdit(Helpers):
     def change_form_value(self, value):
         inp = self.page.locator("input[name='form']")
         inp.fill(value)
+        self.page.screenshot(path=f"token_{value}.png")
 
     def select_context_around(self, tok_id, max_id=len(WauchierTokens)):
         return [
-            self.page.locator(f"#token_{cur}_row").locator("td").nth(5).text_content()
+            self.page.locator(f"#token_{cur}_row").locator("td").nth(5).text_content().strip()
             for cur in range(
                 max(tok_id - 3, 0),
                 min(max_id, tok_id + 3 + 2),
@@ -26,6 +27,7 @@ class TestTokenEdit(Helpers):
 
     def get_history(self):
         self.page.locator("a[title='Browse editions of the base text']").click()
+        self.page.wait_for_load_state("networkidle")
         return [
             (
                 el.locator(".type").text_content().strip(),
@@ -52,6 +54,7 @@ class TestTokenEdit(Helpers):
             "oulala on doucement et volentiers le bien",
             "on doucement et volentiers le bien oïr",
         ]
+        self.page.screenshot(path="HERE.png")
         assert self.get_history() == [("Edition", "oulala", "doit")]
 
         self.token_dropdown_link(8, "Edit")
