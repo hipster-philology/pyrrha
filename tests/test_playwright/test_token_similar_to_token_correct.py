@@ -48,7 +48,7 @@ class TestTokenSimilarToTokenCorrect(TokenEditBase):
         similar_elem = self.get_similar_badge(row)
         assert similar_elem.text_content().strip() == "2 similar to see"
         similar_elem.click()
-
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 2, "There are two similar POS to edit"
         self.page.locator(".save-lemma").click()
         try:
@@ -61,40 +61,57 @@ class TestTokenSimilarToTokenCorrect(TokenEditBase):
         self.addCorpus(with_token=True, with_allowed_lemma=True)
         self.go_to_edit_token_page("1", as_callback=False)
         similar_count = self.go_to_filter_similar_with(token_id="2", as_callback=False)
+        self.page.wait_for_load_state("networkidle")
         assert similar_count == "3", "There should be three similar tokens"
         assert len(self.get_main_table_body_rows()) == 3
 
         self.apply_new_filter("a.complete")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 0
         self.apply_new_filter("a.lemma")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 3
         self.apply_new_filter("a.POS")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 0
         self.apply_new_filter("a.morph")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 3
         self.apply_new_filter("a.lemma_ex")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 0
         self.apply_new_filter("a.POS_ex")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 3
         self.apply_new_filter("a.morph_ex")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 0
 
         self.go_to_edit_token_page("1", as_callback=False)
+        self.page.wait_for_load_state("networkidle")
         similar_count = self.go_to_filter_similar_with(token_id="24", as_callback=False)
+        self.page.wait_for_load_state("networkidle")
         assert similar_count == "3", "There should be three similar tokens"
         assert len(self.get_main_table_body_rows()) == 3
 
         self.apply_new_filter("a.complete")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 1
         self.apply_new_filter("a.lemma")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 1
         self.apply_new_filter("a.POS")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 1
         self.apply_new_filter("a.morph")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 3
         self.apply_new_filter("a.lemma_ex")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 2
         self.apply_new_filter("a.POS_ex")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 2
         self.apply_new_filter("a.morph_ex")
+        self.page.wait_for_load_state("networkidle")
         assert len(self.get_main_table_body_rows()) == 0

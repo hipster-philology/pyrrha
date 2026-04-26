@@ -1,6 +1,7 @@
 """Tests for corpus creation / registration."""
 import csv
 import pytest
+from flask import url_for
 
 from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, ControlLists
 from app import db
@@ -27,7 +28,8 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 
-        assert "corpus_get" in self.page.url or "corpus/1" in self.page.url
+        with self.app.test_request_context():
+            assert url_for('main.corpus_get', corpus_id=1) in self.page.url
 
         corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         assert corpus is not None
@@ -205,8 +207,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#corpusName").fill(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#label_checkbox_reuse").click()
-        self.page.locator("#control_list_select").click()
-        self.page.locator(f"#cl_opt_{target_cl.id}").click()
+        self.page.select_option("#control_list_select", str(target_cl.id))
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 
@@ -215,10 +216,10 @@ class TestCorpusRegistration(Helpers):
         assert WordToken.query.filter(WordToken.corpus == corpus.id).count() == 25
 
         control_list = ControlLists.query.filter(ControlLists.id == corpus.control_lists_id).first()
-        assert control_list.name == "Ancien Français - École des Chartes"
+        assert control_list.name.strip() == "Ancien Français - École des Chartes"
 
         self.page.locator("#toggle_controllists").click()
-        assert self.page.locator(".dd-control_list").text_content() == "Ancien Français - École des Chartes"
+        assert self.page.locator(".dd-control_list").text_content().strip() == "Ancien Français - École des Chartes"
 
     def test_registration_with_false_control_list(self):
         self.add_control_lists()
@@ -231,15 +232,18 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#corpusName").fill(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#label_checkbox_reuse").click()
-        self.page.locator("#control_list_select").click()
-        self.page.locator(f"#cl_opt_{target_cl.id}").click()
+        self.page.select_option("#control_list_select", str(target_cl.id))
+        # Changing the ID in javascript to check safety
         self.page.locator(f"#cl_opt_{target_cl.id}").evaluate("el => el.value = '99999'")
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 
         assert (
-            self.page.locator(".alert.alert-danger").text_content().strip()
-            == "This control list does not exist"
+            "This control list does not exist" in
+            [
+                warning.text_content().strip()
+                for warning in self.page.locator(".alert.alert-danger").all()
+            ]
         )
 
     def test_registration_with_wrongly_formated_input(self):
@@ -262,14 +266,13 @@ class TestCorpusRegistration(Helpers):
             "soit\testre1\tVERcjg\tMODE=sub|TEMPS=pst|PERS.=3|NOMB.=s"
         )
         self.page.locator("#label_checkbox_reuse").click()
-        self.page.locator("#control_list_select").click()
-        self.page.locator(f"#cl_opt_{target_cl.id}").click()
+        self.page.select_option("#control_list_select", str(target_cl.id))
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 
         assert sorted(
             e.text_content().strip()
-            for e in self.page.locator(".alert.alert-danger").all()
+            for e in self.page.locator(".alert.alert-danger:visible").all()
             if e.text_content().strip()
         ) == sorted(["At least one line of your corpus is missing a token/form. Check line 1"])
 
@@ -283,14 +286,13 @@ class TestCorpusRegistration(Helpers):
 
         self.page.locator("#corpusName").fill(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.page.locator("#label_checkbox_reuse").click()
-        self.page.locator("#control_list_select").click()
-        self.page.locator(f"#cl_opt_{target_cl.id}").click()
+        self.page.select_option("#control_list_select", str(target_cl.id))
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 
         assert sorted(
             e.text_content().strip()
-            for e in self.page.locator(".alert.alert-danger").all()
+            for e in self.page.locator(".alert.alert-danger:visible").all()
             if e.text_content().strip()
         ) == sorted(["You did not input any text."])
 
@@ -328,8 +330,7 @@ class TestCorpusRegistration(Helpers):
         self.go_to_new_corpus()
         self.page.locator("#corpusName").fill("example")
         self.page.locator("#label_checkbox_reuse").click()
-        self.page.locator("#control_list_select").click()
-        self.page.locator(f"#cl_opt_{target_cl.id}").click()
+        self.page.select_option("#control_list_select", str(target_cl.id))
 
         invalid = "btOUZvzXARqNbnmvVIrcqjAbsRGIvZQsrhspGusZypNlUJSubtOztbiMiwipTpQJVTvSDZyIGCaONJ"
         self.page.locator("#tokens").fill(
@@ -339,7 +340,7 @@ class TestCorpusRegistration(Helpers):
         self.page.wait_for_load_state("networkidle")
 
         assert (
-            self.page.locator(".alert.alert-danger").first.text_content().strip()
+            self.page.locator(".alert.alert-danger:visible").text_content().strip()
             == f"ln. 2, column 'form': '{invalid}' is too long (maximum 64 characters)"
         )
 
@@ -352,14 +353,13 @@ class TestCorpusRegistration(Helpers):
         self.go_to_new_corpus()
         self.page.locator("#corpusName").fill("example")
         self.page.locator("#label_checkbox_reuse").click()
-        self.page.locator("#control_list_select").click()
-        self.page.locator(f"#cl_opt_{target_cl.id}").click()
+        self.page.select_option("#control_list_select", str(target_cl.id))
         self.page.locator("#tokens").fill(
             "form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
         )
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
-        assert self.page.locator(".alert.alert-danger").count() == 0
+        assert self.page.locator(".alert.alert-danger:visible").count() == 0
 
     def test_corpus_name_unique_user(self):
         self.add_control_lists()
@@ -414,7 +414,11 @@ class TestCorpusRegistration(Helpers):
                 },
             )
 
-        second_app = Process(target=fixture_app.run, daemon=True, kwargs={"host": "localhost", "port": 4567})
+        second_app = Process(
+            target=fixture_app.run,
+            daemon=True,
+            kwargs={"host": "localhost", "port": 4567}
+        )
         second_app.start()
 
         try:
@@ -428,7 +432,7 @@ class TestCorpusRegistration(Helpers):
 
             assert self.page.locator("#tokens").input_value().split("\n") == ["token\tlemma", "Je\t0", "suis\t1"]
             assert (
-                self.page.locator("#tokens-success").text_content()
+                self.page.locator("#tokens-success").text_content().strip()
                 == "Operation finished with success ! 2 tokens analyzed in total."
             )
         finally:

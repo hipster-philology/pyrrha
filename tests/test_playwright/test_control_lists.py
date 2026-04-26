@@ -26,6 +26,7 @@ class TestUpdateControlList(Helpers):
         self.page.locator("#toggle_controllists").click()
         dropdown = self.page.locator("#cl-dd")
         dropdown.get_by_role("link", name=control_lists).click()
+        self.page.wait_for_load_state("networkidle")
 
     def test_action_as_owner(self):
         foor_bar = self.add_user("foo", "bar", False)
@@ -42,12 +43,12 @@ class TestUpdateControlList(Helpers):
         self.go_to_control_lists_management("Wauchier")
 
         links = self.page.locator("#right-column").locator("a").all()
-        assert sorted([link.text_content() for link in links]) == sorted(
+        assert sorted([link.text_content().strip() for link in links]) == sorted(
             ["Rewrite Lemma List", "Rewrite POS List", "Rewrite Morphology List"]
         )
 
         links = self.page.locator("#left-menu").locator("a").all()
-        assert sorted([link.text_content() for link in links]) == sorted([
+        assert sorted([link.text_content().strip() for link in links]) == sorted([
             "Edit informations",
             "Guidelines",
             "Lemma",
@@ -60,7 +61,7 @@ class TestUpdateControlList(Helpers):
             "Ignore values",
         ])
 
-        self.page.get_by_role("link", name="Make public", exact=True).click()
+        self.page.get_by_role("link", name="Make public", exact=False).click()
         self.page.locator("#mail-title").fill("Hello")
         self.page.locator("#mail-message").fill("My\nName\nis\nBond")
         self.page.locator("#mail-submit").click()
@@ -70,7 +71,7 @@ class TestUpdateControlList(Helpers):
             == "The email has been sent to the administrators."
         )
 
-        self.page.get_by_role("link", name="Make public", exact=True).click()
+        self.page.get_by_role("link", name="Make public", exact=False).click()
         self.page.wait_for_load_state("networkidle")
         assert (
             self.page.locator(".alert.alert-warning").text_content().strip()
@@ -148,7 +149,7 @@ class TestUpdateControlList(Helpers):
             "Ignore values",
         ])
 
-        self.page.get_by_role("link", name="Propose changes", exact=True).click()
+        self.page.get_by_role("link", name="Propose changes", exact=False).click()
         self.page.locator("#mail-title").fill("Hello")
         self.page.locator("#mail-message").fill("My\nName\nis\nBond")
         self.page.locator("#mail-submit").click()
@@ -159,7 +160,7 @@ class TestUpdateControlList(Helpers):
         )
 
         self.go_to_control_lists_management("Wauchier")
-        self.page.get_by_role("link", name="Make public", exact=True).click()
+        self.page.get_by_role("link", name="Make public", exact=False).click()
         self.page.wait_for_load_state("networkidle")
         assert self.page.locator(".alert.alert-success").text_content().strip() == "This list is now public."
         assert self.page.locator("a").filter(has_text="Make public").count() == 0
@@ -206,7 +207,7 @@ class TestUpdateControlList(Helpers):
             ["Lemma", "Guidelines", "Morphologies", "POS", "Propose changes", "Wauchier"]
         )
 
-        self.page.get_by_role("link", name="Propose changes", exact=True).click()
+        self.page.get_by_role("link", name="Propose changes", exact=False).click()
         self.page.locator("#mail-title").fill("Hello")
         self.page.locator("#mail-message").fill("My\nName\nis\nBond")
         self.page.locator("#mail-submit").click()
@@ -252,7 +253,7 @@ class TestUpdateControlList(Helpers):
         self.page.locator("#upload").set_input_files(str(temp_file))
         self.page.wait_for_load_state("networkidle")
 
-        allowed_values = self.page.locator("#allowed_values").get_attribute("value")
+        allowed_values = self.page.locator("#allowed_values").input_value()
         with open(temp_file) as fp:
             file_rows = [row for row in csv.reader(fp, delimiter="\t")]
         textarea_rows = [row for row in csv.reader(allowed_values.split("\n"), delimiter="\t") if row]

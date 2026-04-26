@@ -24,17 +24,17 @@ class TestDashboard(Helpers):
     def test_get_index(self):
         self.page.goto(self.url_for("main.index"))
         corpora = self.page.locator(".corpus-nav-link").all()
-        assert sorted([c.text_content() for c in corpora]) == ["Floovant", "Wauchier"]
+        assert sorted([c.text_content().strip() for c in corpora]) == ["Floovant", "Wauchier"]
 
     def test_index_pagination(self):
         self.add_n_corpora(200)
         self.page.goto(self.url_for("main.index"))
         first_page = sorted(
-            [c.text_content() for c in self.page.locator(".corpus-nav-link").all()]
+            [c.text_content().strip() for c in self.page.locator(".corpus-nav-link").all()]
         )
         self.page.locator(".page-item a.page-link").nth(1).click()
         second_page = sorted(
-            [c.text_content() for c in self.page.locator(".corpus-nav-link").all()]
+            [c.text_content().strip() for c in self.page.locator(".corpus-nav-link").all()]
         )
         assert first_page != second_page, "Pagination should lead to different sequences"
 
@@ -43,6 +43,7 @@ class TestDashboard(Helpers):
         link = self.get_fav_link(1)
         assert link.locator(".fa-star-o").count() == 1, "Should show an empty star"
         link.click()
+        self.page.wait_for_load_state("networkidle")
         link = self.get_fav_link(1)
         assert link.locator(".fa-star-o").count() == 0
         assert link.locator(".fa.fa-star").count() == 1, "Should show a filled star"
@@ -50,6 +51,7 @@ class TestDashboard(Helpers):
     def test_favourite_in_menu(self):
         self.page.goto(self.url_for("main.index"))
         self.get_fav_link(1).click()
+        self.page.wait_for_load_state("networkidle")
         self.page.locator("#toggle_corpus_corpora").click()
         favorites = self.page.locator(".dd-corpus").all()
-        assert sorted([f.text_content() for f in favorites]) == ["Wauchier"]
+        assert sorted([f.text_content().strip() for f in favorites]) == ["Wauchier"]

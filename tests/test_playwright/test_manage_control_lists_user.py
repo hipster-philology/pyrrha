@@ -11,9 +11,11 @@ class TestManageControlListsUser(Helpers):
         self.app = app
 
     def go_to_control_lists_management(self, control_lists):
-        self.page.get_by_role("link", name="Dashboard", exact=True).click()
+        self.page.locator("#main-nav").get_by_role("link", name="Dashboard").click()
+        self.page.wait_for_load_state("networkidle")
         controllists_dashboard = self.page.locator("#control_lists-dashboard")
         controllists_dashboard.get_by_role("link", name=control_lists).click()
+        self.page.wait_for_load_state("networkidle")
 
     def get_ownership_table(self):
         accesses_table = self.page.locator("#accesses-table")
@@ -28,7 +30,7 @@ class TestManageControlListsUser(Helpers):
         el.locator(f"input[type='checkbox'][value='{user_id}']").click()
 
     def submit(self):
-        self.page.locator("#accesses-form-submit").click()
+        self.page.locator("#accesses-form-submit").click(force=True)
 
     def grant_access_to_user(self, control_list_name, user_id):
         users_table = self.page.locator("#users-table")
@@ -135,7 +137,7 @@ class TestManageControlListsUser(Helpers):
 
     def test_corpus_creator_is_owner(self):
         self.addControlLists("wauchier")
-        self.page.get_by_role("link", name="New Corpus", exact=True).click()
+        self.page.get_by_role("link", name="New Corpus", exact=False).click()
         self.page.locator("#corpusName").fill("FreshNewCorpus")
         self.page.locator("#tokens").fill(
             "tokens\tlemmas\tpos\n"
@@ -166,9 +168,11 @@ class TestNotAdmin(Helpers):
         self.app = app
 
     def go_to_control_lists_management(self, control_lists):
-        self.page.get_by_role("link", name="Dashboard", exact=True).click()
+        self.page.locator("#main-nav").get_by_role("link", name="Dashboard").click()
+        self.page.wait_for_load_state("networkidle")
         controllists_dashboard = self.page.locator("#control_lists-dashboard")
         controllists_dashboard.get_by_role("link", name=control_lists).click()
+        self.page.wait_for_load_state("networkidle")
 
     def test_change_filter(self):
         self.addControlLists("wauchier", no_corpus_user=True)

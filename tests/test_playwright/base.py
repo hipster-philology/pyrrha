@@ -38,7 +38,10 @@ LOREM_IPSUM = (
 
 
 class Helpers:
-    """Browser + ORM helpers shared across all test classes."""
+    """Browser + ORM helpers shared across all test classes.
+
+    :property page:
+    """
 
     # ------------------------------------------------------------------
     # Auth
@@ -49,6 +52,7 @@ class Helpers:
         self.page.locator("#email").fill(email)
         self.page.locator("#password").fill(password)
         self.page.locator("#submit").click()
+        self.page.wait_for_load_state("networkidle")
 
     def logout(self):
         self.page.goto(self.url_for("account.logout"))
@@ -124,7 +128,9 @@ class Helpers:
         db.session.commit()
         return email
 
-    def add_favorite(self, user_id, corpora_ids):
+    def add_favorite(self, user_id, corpora_ids, reset: bool = True):
+        if reset:
+            Favorite.query.filter_by(user_id=user_id).delete()
         for corpus_id in corpora_ids:
             db.session.add(Favorite(user_id=user_id, corpus_id=corpus_id))
         db.session.commit()
@@ -166,6 +172,8 @@ class Helpers:
         self.page.locator(f"#dd_t{tok_id}").click()
         dd = self.page.locator(f"*[aria-labelledby='dd_t{tok_id}']")
         dd.get_by_role("link", name=link).click()
+        self.page.wait_for_load_state("networkidle")
+        self.page.screenshot(path=f"token_{tok_id}_{link}.png")
 
     def writeMultiline(self, locator, text):
         locator.fill(text)
@@ -258,6 +266,7 @@ class TokenCorrectHelpers(Helpers):
         if go_to_edit_token_page is None:
             go_to_edit_token_page = self.go_to_edit_token_page(corpus_id)
         go_to_edit_token_page()
+        self.page.wait_for_load_state("networkidle")
 
         if additional_action_before is not None:
             additional_action_before()
@@ -282,7 +291,7 @@ class TokenCorrectHelpers(Helpers):
         td.fill(value)
         row.locator("a.save").click()
 
-        self.page.locator(f"[rel='token_{id_row}_row'] .badge-status").wait_for(
+        self.page.locator(f"[rel='token_{id_row}_row'] .badge-saving-response").wait_for(
             state="visible", timeout=10000
         )
 
@@ -291,7 +300,7 @@ class TokenCorrectHelpers(Helpers):
 
         return (
             token,
-            row.locator(f"#token_{id_row}_row > td a.save").text_content().strip(),
+            self.page.locator(f"#token_{id_row}_row > td a.save").text_content().strip(),
             row,
         )
 
@@ -307,9 +316,12 @@ class TokenCorrectHelpers(Helpers):
             td = row.locator(".token_lemma")
 
         td.click()
-        td.fill(value)
+        td.fill("")
+        td.type(value)
 
         autocomplete_el = self.page.locator(autocomplete_selector)
+        self.page.wait_for_load_state("networkidle")
+        self.page.screenshot(path="autocomplete.png")
         autocomplete_el.wait_for(state="visible", timeout=5000)
         autocomplete_el.click()
 
@@ -324,7 +336,7 @@ class TokenCorrectHelpers(Helpers):
 
         return (
             token,
-            row.locator(f"#token_{id_row}_row > td a.save").text_content().strip(),
+            self.page.locator(f"#token_{id_row}_row > td a.save").text_content().strip(),
             row,
         )
 
@@ -367,12 +379,15 @@ class TokensSearchHelpers(Helpers):
 
         result = []
 
+        self.page.wait_for_load_state("networkidle")
+
         def get_field(row_loc, f):
             return row_loc.locator(f".{f}").text_content().strip()
 
-        pagination = self.page.locator(".pagination").locator("a").all()
+        pagination = self.page.locator(".pagination").first.locator("a").all()
         for page_index in range(len(pagination)):
-            self.page.locator(".pagination").locator("a").nth(page_index).click()
+            self.page.locator(".pagination").first.locator("a").nth(page_index).click()
+            self.page.wait_for_load_state("networkidle")
             res_table = self.page.locator("#result_table tbody")
             rows = res_table.locator("tr").all()
             for row_loc in rows:

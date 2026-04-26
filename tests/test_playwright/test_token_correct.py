@@ -32,6 +32,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectHelpers):
         self.assert_saved(row)
 
         self.page.reload()
+        self.page.wait_for_load_state("networkidle")
         token, status_text, row = self.edith_nth_row_value("WRONG", id_row="2")
         self.assert_token_has_values(token, lemma="saint")
         self.assert_invalid_value(row, "lemma")
@@ -256,7 +257,9 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaHelpers):
         row = self.page.locator("tr.token-anchor[data-token-order='1']").first
         assert row.locator("td").nth(1).text_content() == "seint", "Token was removed"
 
-        self.page.get_by_role("link", name="History", exact=True).click()
+        self.page.locator('a[title="Browse the annotations\' history"]').click()
+        self.page.wait_for_load_state("networkidle")
         assert len(_db.session.execute(text("SELECT * FROM change_record")).all()) == 1
+        self.page.screenshot(path="truc.png")
         history_rows = self.page.locator("tbody tr.history").all()
         assert len(history_rows) == 1
