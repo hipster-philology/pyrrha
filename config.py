@@ -1,6 +1,7 @@
 import os
 from app.lemmatizers import LemmatizerService
 from typing import List
+from sqlalchemy.pool import NullPool
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -53,7 +54,7 @@ class DevelopmentConfig(Config):
     DEBUG = True
     ASSETS_DEBUG = True
     SQLALCHEMY_DATABASE_URI = os.environ.get('DEV_DATABASE_URL') or \
-        "postgresql://user:pwd@localhost:5432/data-dev"
+        "postgresql+psycopg://user:pwd@localhost:5432/data-dev"
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Email
@@ -127,7 +128,8 @@ class SQLiteTestConfig(BaseTestConfig):
 
 class PostgreSQLTestConfig(BaseTestConfig):
     SQLALCHEMY_DATABASE_URI = os.environ.get('TEST_DATABASE_URL') or \
-        'postgresql:///data-test'
+        'postgresql+psycopg:///data-test'
+    SQLALCHEMY_ENGINE_OPTIONS = {"poolclass": NullPool}
 
 
 config = {

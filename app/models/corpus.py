@@ -7,11 +7,12 @@ from itertools import product
 # PIP Packages
 import unidecode
 import sqlalchemy.exc
+import regex as re
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
 from sqlalchemy import func, literal, not_, or_, and_
 from werkzeug.exceptions import BadRequest
-from flask import url_for
+from flask import url_for, abort
 
 # Application imports
 from app import db
@@ -23,7 +24,7 @@ from app.utils.forms import strip_or_none, column_search_filter, prepare_search_
 
 # Models
 from .user import User
-from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
+from .control_lists import ControlLists, ControlListsUser, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
 
 
 from collections import namedtuple
@@ -38,7 +39,9 @@ CorpusStatistics = namedtuple("CorpusStatistics",
 class CorpusUser(db.Model):
     """
         Association proxy that link users to corpora
-        :param corpus_id: a corpus ID
+        :param corpus_id: a corpus                 except:
+
+                    ID
         :param user_id: a user ID
     """
     corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
@@ -89,6 +92,13 @@ class Corpus(db.Model):
     word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
     changes = db.relationship("ChangeRecord", cascade="all,delete")
     columns = db.relationship("Column", cascade="all,delete")
+
+    @classmethod
+    def get_or_404(cls, id_, description: Optional[str] = None):
+        rv = db.session.get(cls, id_)
+        if rv is None:
+            abort(404, description=description)
+        return rv
 
     @property
     def last_change(self):
@@ -326,12 +336,36 @@ class Corpus(db.Model):
             CorpusCustomDictionary.category == allowed_type,
             CorpusCustomDictionary.label == prop
         )
+
+        list_darguments = [
+            WordToken.corpus == self.id,
+            not_(allowed.exists()),
+            not_(custom_dict.exists())
+        ]
+
+        current_controlList = self.control_lists
+        regex_liste = []
+        if current_controlList:
+            if current_controlList.filter_metadata:
+                if db.session.get_bind().dialect.name == 'sqlite':
+                    list_darguments.append(WordToken.form.op('not regexp')(ControlLists.re_filter_metadata))
+                else:
+                    list_darguments.append(WordToken.form.op('!~')(ControlLists.re_filter_metadata))
+            if current_controlList.filter_ignore:
+                regex_liste.append(ControlLists.re_filter_ignore)
+            if current_controlList.filter_punct:
+                regex_liste.append(ControlLists.re_filter_punct)
+            if current_controlList.filter_numeral:
+                regex_liste.append(ControlLists.re_filter_numeral)
+
+        if regex_liste:
+            if db.session.get_bind().dialect.name == 'sqlite':
+                list_darguments.append(WordToken.lemma.op('not regexp')("".join(regex_liste)))
+            else:
+                list_darguments.append(WordToken.lemma.op('!~')("".join(regex_liste)))
+
         return db.session.query(WordToken).filter(
-            db.and_(
-                WordToken.corpus == self.id,
-                not_(allowed.exists()),
-                not_(custom_dict.exists())
-            )
+            db.and_(*list_darguments)
         ).order_by(WordToken.order_id)
 
     @property
@@ -437,6 +471,8 @@ class Corpus(db.Model):
             )
             db.session.add(c)
             db.session.commit()
+
+
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
             db.session.rollback()
             raise e
@@ -1072,7 +1108,7 @@ class WordToken(db.Model):
         return query
 
     @staticmethod
-    def is_valid(lemma, POS, morph, corpus):
+    def is_valid(lemma, POS, morph, corpus, form):
         """ Check if a token is valid for a given corpus
 
         :param lemma: Lemma value of the token to validate
@@ -1095,29 +1131,49 @@ class WordToken(db.Model):
             "POS": True,
             "morph": True
         }
-
         allowed_column = corpus.displayed_columns_by_name
+        current_controlList = corpus.control_lists
+        metadata_filtered = (
+            form
+            and current_controlList
+            and current_controlList.filter_metadata
+            and re.match(current_controlList.re_filter_metadata, form)
+        )
+        if not metadata_filtered:
+            if (lemma  # If we changed the lemma
+                and "lemma" in allowed_column  # And if the lemma is a column known to the project
+                and allowed_lemma.count()  # And if we have a list of accepted lemma
+                ):
+                regex_liste = []
+                if current_controlList:
+                    if current_controlList.filter_ignore:
+                        regex_liste.append(ControlLists.re_filter_ignore)
+                    if current_controlList.filter_punct:
+                        regex_liste.append(ControlLists.re_filter_punct)
+                    if current_controlList.filter_numeral:
+                        regex_liste.append(ControlLists.re_filter_numeral)
+                ignored_by_regex = any(re.match(regex, lemma) for regex in regex_liste)
+                if (
+                    not ignored_by_regex
+                    and not corpus.has_custom_dictionary_value("lemma", lemma)
+                    and corpus.get_allowed_values("lemma", label=lemma).count() == 0
+                ):
+                    statuses["lemma"] = False
 
-        if lemma is not None \
-                and "lemma" in allowed_column \
-                and allowed_lemma.count() > 0 \
-                and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
-            if not corpus.has_custom_dictionary_value("lemma", lemma):
-                statuses["lemma"] = False
-
-        if POS is not None \
+            if POS is not None \
                 and "POS" in allowed_column \
                 and allowed_POS.count() > 0 \
                 and corpus.get_allowed_values("POS", label=POS).count() == 0:
-            if not corpus.has_custom_dictionary_value("POS", POS):
-                statuses["POS"] = False
+                if not corpus.has_custom_dictionary_value("POS", POS):
+                    statuses["POS"] = False
 
-        if morph is not None \
+            if morph is not None \
                 and "morph" in allowed_column \
                 and allowed_morph.count() > 0 \
                 and corpus.get_allowed_values("morph", label=morph).count() == 0:
-            if not corpus.has_custom_dictionary_value("morph", morph):
-                statuses["morph"] = False
+                if not corpus.has_custom_dictionary_value("morph", morph):
+                    statuses["morph"] = False
+
         return statuses
 
     @staticmethod
@@ -1274,7 +1330,7 @@ class WordToken(db.Model):
         return csv_file.getvalue()
 
     @staticmethod
-    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None):
+    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None, form=None):
         """ Update a given token with lemma, POS and morph value
 
         :param user_id: ID of the user who performs the update
@@ -1283,6 +1339,8 @@ class WordToken(db.Model):
         :type corpus_id: int
         :param token_id: Id of the token
         :type token_id: int
+        :param form: Form
+        :type form: str
         :param lemma: Lemma
         :type lemma: str
         :param POS: PartOfSpeech
@@ -1296,6 +1354,7 @@ class WordToken(db.Model):
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
         # Strip if things are not None
+        form = strip_or_none(form)
         lemma = strip_or_none(lemma)
         POS = strip_or_none(POS)
         morph = strip_or_none(morph)
@@ -1305,9 +1364,8 @@ class WordToken(db.Model):
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
-
         # Check if values are correct regarding allowed values
-        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
+        validity = WordToken.is_valid(form=form, lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):
             error_msg = "Invalid value in {}".format(
                 ", ".join([key for key in validity.keys() if validity[key] is False])
@@ -1317,7 +1375,6 @@ class WordToken(db.Model):
             error.statuses = validity
             error.invalid_columns = [key for key in validity.keys() if validity[key] is False]
             raise error
-
         # Updating
         if not lemma:
             lemma = token.lemma
@@ -1442,7 +1499,7 @@ class WordToken(db.Model):
                     WordToken.id != token.id,
                     *filtering
                 )
-            )
+        )
 
 
 class TokenHistory(db.Model):

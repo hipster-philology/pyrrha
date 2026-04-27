@@ -7,7 +7,7 @@ from werkzeug.exceptions import BadRequest, NotFound, Forbidden
 
 
 from app.main.views.utils import render_template_with_nav_info
-from app.models import ControlLists, AllowedLemma, WordToken, User, PublicationStatus, CorpusCustomDictionary
+from app.models import ControlLists, ControlListsUser, AllowedLemma, WordToken, User, PublicationStatus, CorpusCustomDictionary
 from app import db, email
 from ..utils import PyrrhaError
 from ..utils.forms import strip_or_none
@@ -71,7 +71,7 @@ def lemma_list(control_list_id):
     can_edit = is_owner or current_user.is_admin()
     if request.method == "DELETE" and can_edit:
         value = request.args.get("id")
-        lemma = AllowedLemma.query.get_or_404(value)
+        lemma = AllowedLemma.get_or_404(value)
         try:
             AllowedLemma.query.filter(
                 AllowedLemma.id == lemma.id,
@@ -105,11 +105,9 @@ def lemma_list(control_list_id):
             return make_response(jsonify({"message": "Unknown Error"}), 400)
     elif request.method == "GET":
         kwargs = {}
-        page = request.args.get("page", "1")
-        page = (page.isnumeric()) and int(page) or 1
+        page = request.args.get("page", 1, type=int)
 
-        limit = request.args.get("limit", "1000")
-        limit = (limit.isnumeric()) and int(limit) or 1
+        limit = request.args.get("limit", 1000, type=int)
         kw = strip_or_none(request.args.get("kw", ""))
         template = "control_lists/read_lemma.html"
         allowed_values = control_list.get_allowed_values(
@@ -374,3 +372,41 @@ def information_edit(control_list_id, control_list):
 def information_read(control_list_id):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
     return render_template_with_nav_info('control_lists/information_read.html', control_list=control_list)
+
+
+@control_lists_bp.route("/controls/<int:control_list_id>/ignore_terms", methods=["POST", "GET"])
+@login_required
+@cl_editable("control_list_id")
+def ignore_terms_filter(control_list_id, control_list):
+    list_filter = []
+    if request.method == "POST":
+        list_filter.append(request.form.get("punct"))
+        list_filter.append(request.form.get("numeral"))
+        list_filter.append(request.form.get('ignore'))
+        list_filter.append(request.form.get('metadata'))
+        filtered_filter = []
+        for el in list_filter:
+            if el is not None:
+                filtered_filter.append(el)
+
+        control_list.filter_punct = 'punct' in filtered_filter
+        control_list.filter_metadata = 'metadata' in filtered_filter
+        control_list.filter_numeral = 'numeral' in filtered_filter
+        control_list.filter_ignore = 'ignore' in filtered_filter
+        db.session.add(control_list)
+        db.session.commit()
+
+
+        flash('The filters have been updated.', 'success')
+        db.session.refresh(control_list)
+        return render_template_with_nav_info(
+            'control_lists/ignore_filter.html',
+            control_list_id=control_list_id,
+            control_list=control_list
+        )
+
+    return render_template_with_nav_info(
+        'control_lists/ignore_filter.html',
+        control_list_id=control_list_id,
+        control_list=control_list
+    )

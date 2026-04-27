@@ -31,7 +31,7 @@ def requires_corpus_admin_access(corpus_id_key):
     def wrapper(f):
         @wraps(f)
         def wrapped(*args, **kwargs):
-            if not Corpus.query.get_or_404(request.view_args[corpus_id_key]).is_owned_by(
+            if not Corpus.get_or_404(request.view_args[corpus_id_key]).is_owned_by(
                     current_user
             ) and not current_user.is_admin():
                 flash("You have not admin access to this corpus.")

@@ -1,0 +1,69 @@
+{% extends 'layouts/base.html' %}
+{% import 'macros/nav_macros.html' as nav %}
+
+{% block page_title %}Control List {{control_list.name}}{% endblock %}
+
+{% block content %}
+<h1>{{control_list.name}}</h1>
+<h2>{{ _('Change the filters for Control List') }}</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <p class="text-muted">
+            {{ _('Filters allow Pyrrha to automatically skip certain tokens during annotation based on their form or lemma.
+            Skipped tokens are not presented for correction and their annotation is left unchanged.
+            Enable the filters that are relevant to your corpus.') }}
+        </p>
+
+        <form method="POST">
+            <div class="form-group">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="ignore" value="ignore" id="filter_ignore"
+                        {% if control_list.filter_ignore %}checked{% endif %}>
+                    <label class="form-check-label font-weight-bold" for="filter_ignore">
+                        {{ _('Ignore') }}
+                    </label>
+                    <small class="form-text text-muted">
+                        {{ _('Skips tokens whose lemma is <code>[IGNORE]</code>. Use this to mark tokens that should never be annotated, such as editorial markers or tokens deliberately excluded from the analysis.') | safe }}
+                    </small>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="punct" value="punct" id="filter_punct"
+                        {% if control_list.filter_punct %}checked{% endif %}>
+                    <label class="form-check-label font-weight-bold" for="filter_punct">
+                        {{ _('Punctuation') }}
+                    </label>
+                    <small class="form-text text-muted">
+                        {{ _('Skips tokens whose form consists entirely of non-alphanumeric characters (e.g. <code>.</code>, <code>,</code>, <code>;</code>). Punctuation tokens typically do not require lemmatisation.') | safe }}
+                    </small>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="numeral" value="numeral" id="filter_numeral"
+                        {% if control_list.filter_numeral %}checked{% endif %}>
+                    <label class="form-check-label font-weight-bold" for="filter_numeral">
+                        {{ _('Numeral') }}
+                    </label>
+                    <small class="form-text text-muted">
+                        {{ _('Skips tokens whose form consists entirely of digits (e.g. <code>1</code>, <code>42</code>). Numeral tokens are generally not relevant for lexical annotation.') | safe }}
+                    </small>
+                </div>
+
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" name="metadata" value="metadata" id="filter_metadata"
+                        {% if control_list.filter_metadata %}checked{% endif %}>
+                    <label class="form-check-label font-weight-bold" for="filter_metadata">
+                        {{ _('Metadata') }}
+                    </label>
+                    <small class="form-text text-muted">
+                        {{ _('Skips tokens whose form matches the pattern <code>[Key:Value]</code> (e.g. <code>[Milestone:chapter_1]</code>). These tokens encode structural or documentary metadata embedded in the token stream and should not be annotated as words.') | safe }}
+                    </small>
+                </div>
+            </div>
+
+            <button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

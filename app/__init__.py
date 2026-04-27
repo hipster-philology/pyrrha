@@ -1,4 +1,5 @@
 import os
+import logging
 from flask import Flask, g
 
 from flask_compress import Compress
@@ -24,6 +25,11 @@ babel = Babel()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'account.login'
+
+logging.basicConfig(filename='./pyrrha_corpus_creation.log', level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
+logger = logging.getLogger(__name__)
 
 
 def create_app(config_name="dev"):
@@ -63,6 +69,8 @@ def create_app(config_name="dev"):
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
     babel.init_app(app, locale_selector=get_locale)
+
+
 
     # Register Jinja template functions
     from .main import main as main_blueprint

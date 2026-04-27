@@ -10,11 +10,12 @@ from csv import reader
 from unittest import TestCase
 
 from click.testing import CliRunner
-from nose.tools import nottest
+
 from sqlalchemy_utils import database_exists, create_database
 
 from app import create_app, db
 from app.cli import make_cli
+from tests.conftest import teardown_db
 from app.models import (
     AllowedLemma,
     AllowedMorph,
@@ -25,8 +26,8 @@ from tests.db_fixtures import add_corpus
 
 
 class TestCorpusScript(TestCase):
-    def clear_db(self, app):
-        with app.app_context():
+    def clear_db(self):
+        with self.app.app_context():
             try:
                 db.drop_all()
             except:
@@ -40,24 +41,23 @@ class TestCorpusScript(TestCase):
 
     def setUp(self):
         self.app = create_app("test")
-
-        # We create all cli to check that it does not overwrite anything
         with self.app.app_context():
             if not database_exists(db.engine.url):
                 create_database(db.engine.url)
+            teardown_db()
             db.create_all()
             db.session.commit()
             self.cli = make_cli()
-
         self.runner = CliRunner()
 
     def tearDown(self):
-        self.clear_db(self.app)
+        self.clear_db()
+        with self.app.app_context():
+            teardown_db()
 
     def invoke(self, *commands):
         return self.runner.invoke(self.cli, ["--config", "test"] + list(commands))
 
-    @nottest
     def pos_test(self):
         with self.app.app_context():
             POS = AllowedPOS.query.filter(AllowedPOS.control_list == 1).all()
@@ -72,14 +72,12 @@ class TestCorpusScript(TestCase):
                     "POS should be consistent with import file"
                 )
 
-    @nottest
     def token_test(self, result, success_msg="Corpus created under the name Wauchier2 with 25 tokens"):
         self.assertIn(
             success_msg,
             result.output
         )
 
-    @nottest
     def morph_test(self):
         with self.app.app_context():
             morphs = AllowedMorph.query.filter(AllowedMorph.control_list == 1).all()
@@ -101,7 +99,6 @@ class TestCorpusScript(TestCase):
                 "Input allowed morphs should have been correctly inserted"
             )
 
-    @nottest
     def lemma_test(self):
         with self.app.app_context():
             output_data = AllowedLemma.query.filter(AllowedLemma.control_list == 1).all()
@@ -278,8 +275,7 @@ class TestCorpusScript(TestCase):
                 "There should be no files"
             )
 
-    @nottest
-    def make_test(self, tests, context):
+    def  make_test(self, tests, context):
         with self.app.app_context():
             with self.runner.isolated_filesystem() as f:
                 cur_dir = str(f)
@@ -324,7 +320,7 @@ class TestCorpusScript(TestCase):
                         "Context should be right"
                     )
 
-        self.clear_db(self.app)
+        self.clear_db()
         with self.app.app_context():
             db.create_all()
 

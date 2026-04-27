@@ -50,20 +50,18 @@ def make_cli():
         """Edits a user by id or email
         """
         with app.app_context():
-            try:
-                int(user_id_or_email)
-                user_id = user_id_or_email
-            except ValueError:
-                lookup = User.query.filter(User.email == user_id_or_email).first()
-                user_id = lookup.id if lookup else None
-
-            if not user_id:
-                click.echo(f"User with email '{user_id_or_email}' not found.")
-
-            user = User.query.filter(User.id == user_id).first()
-            if not user:
-                click.echo(f"User with id '{user_id}' not found.")
-                return
+            if user_id_or_email.isnumeric():
+                user = User.query.filter(User.id == int(user_id_or_email)).first()
+                user_id = user.id if user else None
+                if not user:
+                    click.echo(f"User with id '{user_id}' not found.")
+                    return
+            else:
+                user = User.query.filter(User.email == user_id_or_email).first()
+                user_id = user.id if user else None
+                if not user_id:
+                    click.echo(f"User with email '{user_id_or_email}' not found.")
+                    return
             
             if is_confirmed and not user.confirmed:
                 User.query.filter(User.id == user_id).update({User.confirmed: True})
@@ -308,7 +306,7 @@ def make_cli():
 
     @cli.command("db-upgrade", help="Do small migrations")
     @click.argument("migration_name",
-              type=click.Choice(['controllist-markdown', 'add-columns', "user-language"], case_sensitive=False))
+              type=click.Choice(['controllist-markdown', 'add-columns', "user-language", "controllist-filters"], case_sensitive=False))
     def db_add_table(migration_name):
         columns = {
             "controllist-markdown": [
@@ -316,6 +314,14 @@ def make_cli():
             ],
             "user-language": [
                 ("users", (db.Column("locale", db.String(10), default="en", nullable=True),))
+            ],
+            "controllist-filters": [
+                ("control_lists", (
+                    db.Column("filter_punct", db.Boolean, default=False),
+                    db.Column("filter_numeral", db.Boolean, default=False),
+                    db.Column("filter_metadata", db.Boolean, default=False),
+                    db.Column("filter_ignore", db.Boolean, default=False),
+                ))
             ]
         }
 
