@@ -45,9 +45,10 @@ class TestUserAccount(Helpers):
         self.page.locator("#first_name").fill("john")
         self.page.locator("#last_name").fill("doe")
         self.page.locator("#email").fill("john.doe@ppa.fr")
-        self.page.locator("#password").fill(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
-        self.page.locator("#password2").fill(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
-        self.page.evaluate("const s = document.querySelector('#submit'); if(s) s.removeAttribute('disabled');")
+        self.page.locator("#password").fill("")
+        self.page.locator("#password").type(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
+        self.page.locator("#password2").fill("")
+        self.page.locator("#password2").type(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 
@@ -65,9 +66,10 @@ class TestUserAccount(Helpers):
         self.page.goto(url)
         self.page.wait_for_load_state("networkidle")
         self.page.locator("#email").fill(self.app.config["ADMIN_EMAIL"])
-        self.page.locator("#new_password").fill(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
-        self.page.locator("#new_password2").fill(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
-        self.page.evaluate("const s = document.querySelector('#submit'); if(s) s.removeAttribute('disabled');")
+        self.page.locator("#new_password").fill("")
+        self.page.locator("#new_password").type(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
+        self.page.locator("#new_password2").fill("")
+        self.page.locator("#new_password2").type(self.app.config["ADMIN_PASSWORD"] + "testcase01!")
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
         assert self.url_for("main.index") in self.page.url
@@ -157,10 +159,12 @@ class TestUserAccount(Helpers):
         self.page.wait_for_load_state("networkidle")
         self.page.get_by_role("link", name="Change password").click()
         self.page.wait_for_load_state("networkidle")
+        self.page.locator("#old_password").fill("")
         self.page.locator("#old_password").fill(self.app.config["ADMIN_PASSWORD"])
-        self.page.locator("#new_password").fill(self.app.config["ADMIN_PASSWORD"] + "new")
-        self.page.locator("#new_password2").fill(self.app.config["ADMIN_PASSWORD"] + "new")
-        self.page.evaluate("const s = document.querySelector('#submit'); if(s) s.removeAttribute('disabled');")
+        self.page.locator("#new_password").fill("")
+        self.page.locator("#new_password").type(self.app.config["ADMIN_PASSWORD"] + "new")
+        self.page.locator("#new_password2").fill("")
+        self.page.locator("#new_password2").type(self.app.config["ADMIN_PASSWORD"] + "new")
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
         self.logout()
@@ -185,15 +189,14 @@ class TestUserAccount(Helpers):
         self.page.get_by_role("link", name="Delete user").click()
         self.page.wait_for_load_state("networkidle")
         # checkbox is display:none — trigger change via jQuery to get href, then navigate
-        self.page.evaluate("$('input[type=checkbox]').prop('checked', true).trigger('change');")
-        delete_href = self.page.locator(".deletion").get_attribute("href")
-        self.page.goto(f"http://localhost:{PORT}{delete_href}")
+        self.page.locator("input[type='checkbox']").check()
+        self.page.locator(".deletion").click()
         self.page.wait_for_load_state("networkidle")
 
         assert User.query.filter(User.email == foo_email).first() is None
         corpus = Corpus.query.filter(Corpus.name == "Wauchier").first()
         assert corpus is not None
-        assert CorpusUser.query.filter(CorpusUser.user_id == foo_id).first() is None
+        assert CorpusUser.query.filter(CorpusUser.corpus_id == foo_id).first() is None
 
         # assert you cannot delete your own account
         self.page.locator("#main-nav").get_by_role("link", name="Dashboard").click()
@@ -204,10 +207,8 @@ class TestUserAccount(Helpers):
         self.page.wait_for_load_state("networkidle")
         self.page.get_by_role("link", name="Delete user").click()
         self.page.wait_for_load_state("networkidle")
-        self.page.evaluate(
-            "$('input[type=checkbox]').prop('checked', true).trigger('change');"
-            "window.location.href = $('.deletion').attr('href');"
-        )
+        self.page.locator("input[type='checkbox']").check()
+        self.page.locator(".deletion").click()
         self.page.wait_for_load_state("networkidle")
         assert User.query.filter(User.email == self.app.config["ADMIN_EMAIL"]).first() is not None
 
@@ -293,8 +294,10 @@ class TestUserAccount(Helpers):
         self.page.locator("#first_name").fill("foo")
         self.page.locator("#last_name").fill("bar")
         self.page.locator("#email").fill("foo.bar@ppa.fr")
-        self.page.locator("#password").fill(self.app.config["ADMIN_PASSWORD"])
-        self.page.locator("#password2").fill(self.app.config["ADMIN_PASSWORD"])
+        self.page.locator("#password").fill("")
+        self.page.locator("#password2").fill("")
+        self.page.locator("#password").type(self.app.config["ADMIN_PASSWORD"])
+        self.page.locator("#password2").type(self.app.config["ADMIN_PASSWORD"])
         self.page.evaluate("const s = document.querySelector('#submit'); if(s) s.removeAttribute('disabled');")
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
@@ -313,9 +316,10 @@ class TestUserAccount(Helpers):
         self.page.locator("#first_name").fill(first)
         self.page.locator("#last_name").fill(last)
         self.page.locator("#email").fill(email)
-        self.page.locator("#password").fill(password)
-        self.page.locator("#password2").fill(password)
-        self.page.evaluate("const s = document.querySelector('#submit'); if(s) s.removeAttribute('disabled');")
+        self.page.locator("#password").fill("")
+        self.page.locator("#password2").fill("")
+        self.page.locator("#password").type(password)
+        self.page.locator("#password2").type(password)
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 

@@ -173,7 +173,6 @@ class Helpers:
         dd = self.page.locator(f"*[aria-labelledby='dd_t{tok_id}']")
         dd.get_by_role("link", name=link).click()
         self.page.wait_for_load_state("networkidle")
-        self.page.screenshot(path=f"token_{tok_id}_{link}.png")
 
     def writeMultiline(self, locator, text):
         locator.fill(text)
@@ -321,7 +320,6 @@ class TokenCorrectHelpers(Helpers):
 
         autocomplete_el = self.page.locator(autocomplete_selector)
         self.page.wait_for_load_state("networkidle")
-        self.page.screenshot(path="autocomplete.png")
         autocomplete_el.wait_for(state="visible", timeout=5000)
         autocomplete_el.click()
 

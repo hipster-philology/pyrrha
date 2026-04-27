@@ -260,6 +260,5 @@ class TestTokensEditTwoCorpora(TokenCorrect2CorporaHelpers):
         self.page.locator('a[title="Browse the annotations\' history"]').click()
         self.page.wait_for_load_state("networkidle")
         assert len(_db.session.execute(text("SELECT * FROM change_record")).all()) == 1
-        self.page.screenshot(path="truc.png")
         history_rows = self.page.locator("tbody tr.history").all()
         assert len(history_rows) == 1

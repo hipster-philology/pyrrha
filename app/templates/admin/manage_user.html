@@ -73,7 +73,7 @@
                     </h3>
 
                     <div>
-                        <input type="checkbox" tabindex="0" class="hidden">
+                        <input type="checkbox" tabindex="0" />
                         <label>{{ _('I understand that this action cannot be undone.') }}</label>
                     </div>
                     <a class="deletion btn btn-primary disabled" tabindex="-1" role="button" aria-disabled="true">{{ _('Delete
@@ -94,14 +94,23 @@
     </div>
 
     <script type="text/javascript">
-        $('input[type=checkbox]').change(function () {
-            if ($(this).prop("checked")) {
-                $('.deletion.btn').removeClass('disabled')
-                    .attr('href', '{{ url_for('admin.delete_user', user_id=user.id) }}');
-            }
-            else {
-                $('.deletion.btn').addClass('disabled').removeAttr('href');
-            }
-        });
+document.querySelectorAll('input[type="checkbox"]').forEach(function (checkbox) {
+    checkbox.addEventListener('change', function () {
+        const buttons = document.querySelectorAll('.deletion.btn');
+        if (this.checked) {
+            buttons.forEach(function (btn) {
+                btn.classList.remove('disabled');
+                btn.setAttribute('href', '{{ url_for('admin.delete_user', user_id=user.id) }}');
+                btn.setAttribute('aria-disabled', 'false');
+            });
+        } else {
+            buttons.forEach(function (btn) {
+                btn.classList.add('disabled');
+                btn.removeAttribute('href');
+                btn.setAttribute('aria-disabled', 'true');
+            });
+        }
+    });
+});
     </script>
 {% endblock %}
