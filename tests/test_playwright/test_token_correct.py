@@ -63,7 +63,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectHelpers):
     def test_edit_POS_autoselect(self):
         """ [Wauchier] Edit POS of a token with autoselection """
         self.addCorpus(with_token=True, with_allowed_lemma=True, with_allowed_pos=True, tokens_up_to=24)
-        self.driver.refresh()
+        self.page.reload()
         token, status_text, row = self.edith_nth_row_value(
             "ADJ", id_row="1", value_type="POS",
             autocomplete_selector=".autocomplete-suggestion[data-val='ADJqua']"
