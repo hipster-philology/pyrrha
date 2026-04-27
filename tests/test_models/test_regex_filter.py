@@ -50,9 +50,9 @@ class TestFilters(TestModels):
             ("[IGNORE]", "filter_ignore")
         ]
         situations = ["filter_punct", "filter_numeral", "filter_ignore"]
-        cl = ControlLists.query.get(1)
-        token = WordToken.query.get(1)
-        corpus = Corpus.query.get(1)
+        cl = self.db.session.get(ControlLists, 1)
+        token = self.db.session.get(WordToken, 1)
+        corpus = self.db.session.get(Corpus, 1)
         for i in range(len(situations)+1):
             for combi in combinations(situations, i):
                 for filtre in situations:
@@ -72,8 +72,8 @@ class TestFilters(TestModels):
 
     def test_metadata_filter(self):
         self.load_fixtures()
-        corpus = Corpus.query.get(1)
-        cl = ControlLists.query.get(1)
+        corpus = self.db.session.get(Corpus, 1)
+        cl = self.db.session.get(ControlLists, 1)
         token = corpus.get_unallowed().first()
         self.assertEqual(token.form, "[METADATA:blabla]", f'Metadata are considered as unallowed token when there is no filter metadata.')
         setattr(cl, "filter_metadata", True)
@@ -83,7 +83,7 @@ class TestFilters(TestModels):
         token = corpus.get_unallowed().first()
         self.assertNotEqual(token.form, "[METADATA:blabla]", f'Metadata filter is not working. [METADATA:blabla] should not be considered as unallowed.')
         
-        token = WordToken.query.get(2)
+        token = self.db.session.get(WordToken, 2)
         validity_lemma = WordToken.is_valid(form = token.form, lemma="blabla", POS=token.POS, morph=token.morph,corpus=corpus)["lemma"]
         self.assertTrue(validity_lemma, f"Filter metadata is not working for lemma")
         validity_pos = WordToken.is_valid(form = token.form, lemma=token.lemma, POS="blabla", morph=token.morph,corpus=corpus)["POS"]

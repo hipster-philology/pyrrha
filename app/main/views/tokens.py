@@ -127,7 +127,7 @@ def tokens_correct_single(corpus_id, token_id):
     :param corpus_id: Id of the corpus
     :param token_id: Id of the token
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     try:
         token, change_record = WordToken.update(
             user_id=current_user.id,
@@ -182,7 +182,7 @@ def tokens_export(corpus_id):
 
     :param corpus_id: ID of the corpus
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     format = request.args.get("format", "").lower()
     filename = slugify(corpus.name)
     allowed_columns = corpus.displayed_columns_by_name
@@ -254,7 +254,7 @@ def tokens_history(corpus_id):
 
     :param corpus_id: ID of the corpus
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 20))
     return render_template_with_nav_info('main/tokens_history.html', corpus=corpus, tokens=tokens)
 
@@ -267,7 +267,7 @@ def tokens_search_through_fields(corpus_id):
 
     :param corpus_id: Id of the corpus
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     # test suppression:
     if not corpus.has_access(current_user):
         abort(403)
@@ -305,7 +305,7 @@ def tokens_edit_form(corpus_id, token_id):
     :param corpus_id: Id of the corpus
     :param token_id: Id of the token
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
     page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
     go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
@@ -329,7 +329,7 @@ def tokens_del_row(corpus_id, token_id):
     :param token_id: Id of the token
     :return:
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
     page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
     go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
@@ -358,7 +358,7 @@ def tokens_add_row(corpus_id, token_id):
     :param token_id: Id of the token
     :return:
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
     page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
     go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
@@ -383,7 +383,7 @@ def tokens_edit_history(corpus_id):
     :param corpus_id: Id of the corpus
     :return:
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     tokens = TokenHistory.query.filter_by(corpus=corpus.id).paginate(
             page=int_or(request.args.get("page"), 1),
             per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])

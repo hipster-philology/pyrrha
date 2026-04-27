@@ -93,7 +93,7 @@ def corpus_new():
             if request.form.get("control_list") == "reuse":
                 tokens = read_input_tokens(request.form.get("tsv"))
                 try:
-                    control_list = ControlLists.query.get_or_404(request.form.get("control_list_select"))
+                    control_list = ControlLists.get_or_404(request.form.get("control_list_select"))
                 except Exception as e:
                     flash("This control list does not exist", category="error")
                     logger.error(e)
@@ -174,7 +174,7 @@ def corpus_new():
 @requires_corpus_access("corpus_id")
 def corpus_fav(corpus_id):
     """ Mark a corpus as favorite """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     corpus.toggle_favorite(current_user.id)
     return redirect(url_for("main.index"))
 
@@ -187,7 +187,7 @@ def corpus_get(corpus_id):
 
     :param corpus_id: ID of the corpus
     """
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
 
     limit_corr = request.args.get("limit", 10)
     if isinstance(limit_corr, str):
@@ -259,7 +259,7 @@ def corpus_bookmark(corpus_id):
             token=bm.token_id
         )
     else:
-        bm = Corpus.query.get_or_404(corpus_id).get_bookmark(current_user)
+        bm = Corpus.get_or_404(corpus_id).get_bookmark(current_user)
         if bm:
             link = "{uri}#token_{token}_row".format(
                 uri=url_for("main.tokens_correct", corpus_id=corpus_id, page=bm.page),
@@ -274,7 +274,7 @@ def corpus_bookmark(corpus_id):
 @main.route('/corpus/<int:corpus_id>/delete', methods=["GET", "POST"])
 @requires_corpus_admin_access("corpus_id")
 def corpus_delete(corpus_id: int):
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
 
     form = Delete(prefix="delete")
     if request.method == "POST" and form.validate():
@@ -324,11 +324,11 @@ def switch_control_lists_access(
 @requires_corpus_admin_access("corpus_id")
 def control_list_switch(corpus_id: int):
     """Switch control list."""
-    corpus = Corpus.query.get_or_404(corpus_id)
-    current_control_lists = ControlLists.query.get_or_404(corpus.control_lists_id)
+    corpus = Corpus.get_or_404(corpus_id)
+    current_control_lists = ControlLists.get_or_404(corpus.control_lists_id)
     if request.args.get("control_list_select"):
         try:
-            control_list = ControlLists.query.get_or_404(
+            control_list = ControlLists.get_or_404(
                 request.args.get("control_list_select")
             )
             users = [
@@ -361,7 +361,7 @@ def control_list_switch(corpus_id: int):
 
 @main.route('/corpus/<int:corpus_id>/fixtures')
 def generate_fixtures(corpus_id):
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
     tokens = corpus.get_tokens().all()
@@ -383,7 +383,7 @@ def search_value_api(corpus_id, allowed_type):
     form = request.args.get("form", "")
     if not form.strip():
         return jsonify([])
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
     return jsonify(
@@ -411,7 +411,7 @@ def custom_dictionary_search_value_api(corpus_id, category):
     form = request.args.get("form", "")
     if not form.strip():
         return jsonify([])
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
     return jsonify(
@@ -433,7 +433,7 @@ def custom_dictionary_search_value_api(corpus_id, category):
 @requires_corpus_access("corpus_id")
 def preferences(corpus_id: int):
     """Show preferences view."""
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
     corpus_user = CorpusUser.query.filter(
         CorpusUser.corpus_id == corpus_id,
         CorpusUser.user_id == current_user.id
@@ -487,7 +487,7 @@ def preferences(corpus_id: int):
 @requires_corpus_access("corpus_id")
 def corpus_custom_dict(corpus_id: int):
     """Show preferences view."""
-    corpus = Corpus.query.get_or_404(corpus_id)
+    corpus = Corpus.get_or_404(corpus_id)
 
     if request.method == "PATCH":
         category = request.form.get("category", None)
