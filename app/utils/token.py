@@ -9,11 +9,15 @@ import time
 from hashlib import sha512
 
 from flask import current_app
-from authlib import joserfc as jose
+from joserfc import jwt
+from joserfc.jwk import OctKey
+from joserfc.errors import JoseError
 from typing import TYPE_CHECKING, Optional, Dict, Callable, Union
 
 if TYPE_CHECKING:
     from app.models.user import User
+
+_ALGORITHMS = ['HS512']
 
 
 def get_reset_token_salt(user: "User") -> str:
@@ -30,13 +34,13 @@ def get_reset_token_salt(user: "User") -> str:
     ])
 
 
-def get_reset_token_key(user: "User") -> bytes:
+def get_reset_token_key(user: "User") -> OctKey:
     key_salt = get_reset_token_salt(user)
     app_secret_key = current_app.config.get('SECRET_KEY')
     key_base_string = f'{key_salt}-signer-{app_secret_key}'
     key_base_bytes = key_base_string.encode()
     key_bytes = sha512(key_base_bytes).digest()
-    return key_bytes
+    return OctKey.import_key(key_bytes)
 
 
 def get_reset_token(user, expires_sec: int = 1800, additional_fields: Optional[Dict[str, str]] = None) -> str:
@@ -51,11 +55,8 @@ def get_reset_token(user, expires_sec: int = 1800, additional_fields: Optional[D
         **(additional_fields or {})
     )
 
-    key_bytes = get_reset_token_key(user)
-
-    token_bytes = jose.jwt.encode(header, payload, key_bytes)
-    token_string = token_bytes.decode('utf-8')
-    return token_string
+    key = get_reset_token_key(user)
+    return jwt.encode(header, payload, key, algorithms=_ALGORITHMS)
 
 
 def verify_reset_token(
@@ -68,29 +69,31 @@ def verify_reset_token(
         return False
 
     try:
-        payload = jose.jwt.decode(token_string, get_reset_token_key(user))
-        payload.validate()
-    except (
-            jose.errors.DecodeError,
-            jose.errors.ExpiredTokenError,
-            jose.errors.BadSignatureError,
-    ):
+        token = jwt.decode(token_string, get_reset_token_key(user), algorithms=_ALGORITHMS)
+    except JoseError:
         return False
 
-    # authlib treats iat/exp claims as optional
-    # ensure they are in the payload, and fail if not
-    if 2 != len({'iat', 'exp'} & set(payload.keys())):
+    claims = token.claims
+
+    claims_registry = jwt.JWTClaimsRegistry(now=int(time.time()))
+    try:
+        claims_registry.validate(claims)
+    except JoseError:
+        return False
+
+    # ensure iat/exp are present
+    if 2 != len({'iat', 'exp'} & set(claims.keys())):
         return False
 
     # in the unlikely event that the salt matches,
     # but the user_id does not, fail
-    if user.id != payload.get('user_id'):
+    if user.id != claims.get('user_id'):
         return False
 
-    else:
-        if payload_cb is not None:
-            if not payload_cb(payload):
-                return False
-        if get_payload:
-            return payload
-        return True
+    if payload_cb is not None:
+        if not payload_cb(claims):
+            return False
+
+    if get_payload:
+        return claims
+    return True

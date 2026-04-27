@@ -20,7 +20,7 @@ Flask-Mail
 email_validator
 Flask-Compress
 python-slugify
-authlib
+joserfc
 itsdangerous
 flask-babel
 Markdown
