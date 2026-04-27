@@ -24,6 +24,8 @@ from ..utils.forms import prepare_search_string, column_search_filter, read_inpu
 from .user import User
 # Session
 from flask_login import current_user
+from flask import abort
+from typing import Optional
 
 
 class PublicationStatus(enum.Enum):
@@ -69,6 +71,13 @@ class ControlLists(db.Model):
         ).label("priority")
     )
 
+    @classmethod
+    def get_or_404(cls, id_, description: Optional[str] = None):
+        rv = db.session.get(cls, id_)
+        if rv is None:
+            abort(404, description=description)
+        return rv
+
     @property
     def str_public(self):
         return self.public.name
@@ -100,7 +109,7 @@ class ControlLists(db.Model):
         if not user:
             raise BadRequest(description="You have no right to access the Control List")
         if user.is_admin():
-            cl = ControlLists.query.get_or_404(control_list_id)
+            cl = ControlLists.get_or_404(control_list_id)
             return cl, cl.is_owned_by(user)
         data = db.session.query(ControlLists, ControlListsUser.is_owner).filter(
             db.and_(
@@ -327,6 +336,13 @@ class AllowedLemma(db.Model):
     __table_args__ = (
         db.Index('unique_label_per_control', 'label', 'control_list', unique=True),
     )
+
+    @classmethod
+    def get_or_404(cls, id_, description: Optional[str] = None):
+        rv = db.session.get(cls, id_)
+        if rv is None:
+            abort(404, description=description)
+        return rv
 
     @staticmethod
     def add_batch(allowed_values, control_lists_id, _commit=False):

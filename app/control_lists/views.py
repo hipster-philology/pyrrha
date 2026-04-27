@@ -71,7 +71,7 @@ def lemma_list(control_list_id):
     can_edit = is_owner or current_user.is_admin()
     if request.method == "DELETE" and can_edit:
         value = request.args.get("id")
-        lemma = AllowedLemma.query.get_or_404(value)
+        lemma = AllowedLemma.get_or_404(value)
         try:
             AllowedLemma.query.filter(
                 AllowedLemma.id == lemma.id,

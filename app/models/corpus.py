@@ -12,7 +12,7 @@ from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import backref
 from sqlalchemy import func, literal, not_, or_, and_
 from werkzeug.exceptions import BadRequest
-from flask import url_for
+from flask import url_for, abort
 
 # Application imports
 from app import db
@@ -92,6 +92,13 @@ class Corpus(db.Model):
     word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
     changes = db.relationship("ChangeRecord", cascade="all,delete")
     columns = db.relationship("Column", cascade="all,delete")
+
+    @classmethod
+    def get_or_404(cls, id_, description: Optional[str] = None):
+        rv = db.session.get(cls, id_)
+        if rv is None:
+            abort(404, description=description)
+        return rv
 
     @property
     def last_change(self):

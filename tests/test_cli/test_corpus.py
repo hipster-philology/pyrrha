@@ -26,8 +26,8 @@ from tests.db_fixtures import add_corpus
 
 
 class TestCorpusScript(TestCase):
-    def clear_db(self, app):
-        with app.app_context():
+    def clear_db(self):
+        with self.app.app_context():
             try:
                 db.drop_all()
             except:
@@ -320,7 +320,7 @@ class TestCorpusScript(TestCase):
                         "Context should be right"
                     )
 
-        self.clear_db(self.app)
+        self.clear_db()
         with self.app.app_context():
             db.create_all()
 
