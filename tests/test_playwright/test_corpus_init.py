@@ -17,6 +17,7 @@ class TestCorpusRegistration(Helpers):
         self.app = app
 
     def go_to_new_corpus(self):
+        self.page.screenshot(path="screenshot.png")
         self.page.locator("#new_corpus_link").click()
         self.page.wait_for_load_state("networkidle")
 

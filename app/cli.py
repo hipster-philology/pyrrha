@@ -50,20 +50,18 @@ def make_cli():
         """Edits a user by id or email
         """
         with app.app_context():
-            try:
-                int(user_id_or_email)
-                user_id = user_id_or_email
-            except ValueError:
-                lookup = User.query.filter(User.email == user_id_or_email).first()
-                user_id = lookup.id if lookup else None
-
-            if not user_id:
-                click.echo(f"User with email '{user_id_or_email}' not found.")
-
-            user = User.query.filter(User.id == user_id).first()
-            if not user:
-                click.echo(f"User with id '{user_id}' not found.")
-                return
+            if user_id_or_email.isnumeric():
+                user = User.query.filter(User.id == int(user_id_or_email)).first()
+                user_id = user.id if user else None
+                if not user:
+                    click.echo(f"User with id '{user_id}' not found.")
+                    return
+            else:
+                user = User.query.filter(User.email == user_id_or_email).first()
+                user_id = user.id if user else None
+                if not user_id:
+                    click.echo(f"User with email '{user_id_or_email}' not found.")
+                    return
             
             if is_confirmed and not user.confirmed:
                 User.query.filter(User.id == user_id).update({User.confirmed: True})

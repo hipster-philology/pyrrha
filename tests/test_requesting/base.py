@@ -5,6 +5,7 @@ from flask import url_for
 from app.models import User, Role
 from app import create_app, db
 from sqlalchemy_utils import database_exists, create_database
+from tests.conftest import teardown_db
 
 
 class TestBase(TestCase):
@@ -35,13 +36,7 @@ class TestBase(TestCase):
         """
         Will be called after every test
         """
-
-        db.session.remove()
-        db.drop_all()
-        # https://stackoverflow.com/questions/66876181/how-do-i-close-a-flask-sqlalchemy-connection-that-i-used-in-a-thread/67077811#67077811
-        if self.db.engine.dialect.name == "postgresql":
-            db.session.close()
-            db.engine.dispose()
+        teardown_db()
 
     def addCorpus(self, corpus, *args, **kwargs):
         if corpus == "wauchier":
