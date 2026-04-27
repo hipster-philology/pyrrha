@@ -12,7 +12,7 @@ import regex as re
 import yaml
 from flask_sqlalchemy.query import Query as FlaskQuery
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import backref, Query
+from sqlalchemy.orm import backref, Query, column_property
 from sqlalchemy import literal, case
 from werkzeug.exceptions import BadRequest
 # APP Logic
@@ -32,7 +32,6 @@ class PublicationStatus(enum.Enum):
     private = -1
 
 
-_PublicationStatusOrder = dict(public = -1, submitted = -1, private = 1)
 
 
 class ControlLists(db.Model):
@@ -62,7 +61,13 @@ class ControlLists(db.Model):
 
     users = association_proxy('control_lists_user', 'user')
 
-    _sort_logic = case(_PublicationStatusOrder, value=public).label("priority")
+    _sort_logic = column_property(
+        case(
+            (public == PublicationStatus.public, -1),
+            (public == PublicationStatus.submitted, -1),
+            else_=1,
+        ).label("priority")
+    )
 
     @property
     def str_public(self):

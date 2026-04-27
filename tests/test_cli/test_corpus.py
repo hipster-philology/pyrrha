@@ -15,6 +15,7 @@ from sqlalchemy_utils import database_exists, create_database
 
 from app import create_app, db
 from app.cli import make_cli
+from tests.conftest import teardown_db
 from app.models import (
     AllowedLemma,
     AllowedMorph,
@@ -40,19 +41,19 @@ class TestCorpusScript(TestCase):
 
     def setUp(self):
         self.app = create_app("test")
-
-        # We create all cli to check that it does not overwrite anything
         with self.app.app_context():
             if not database_exists(db.engine.url):
                 create_database(db.engine.url)
+            teardown_db()
             db.create_all()
             db.session.commit()
             self.cli = make_cli()
-
         self.runner = CliRunner()
 
     def tearDown(self):
-        self.clear_db(self.app)
+        self.clear_db()
+        with self.app.app_context():
+            teardown_db()
 
     def invoke(self, *commands):
         return self.runner.invoke(self.cli, ["--config", "test"] + list(commands))

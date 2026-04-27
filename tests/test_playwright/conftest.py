@@ -7,6 +7,7 @@ from sqlalchemy_utils import create_database, database_exists
 
 from app import create_app, db
 from app.models import Role, User
+from tests.conftest import teardown_db
 
 PORT = 8943
 
@@ -37,7 +38,7 @@ def auto_login():
 @pytest.fixture
 def app(auto_login):
     flask_app = create_app("test")
-    flask_app.config.update(JSONIFY_PRETTYPRINT_REGULAR=False, LIVESERVER_PORT=PORT)
+    flask_app.config.update(JSONIFY_PRETTYPRINT_REGULAR=False, LIVESERVER_PORT=PORT, DEBUG=True)
     flask_app.DEBUG = True
     flask_app.client = flask_app.test_client()
     if auto_login:
@@ -64,17 +65,16 @@ def setup_db(app, app_ctx):
     Role.add_default_roles()
     User.add_default_users()
     yield
-    if db.engine.dialect.name == "postgresql":
-        db.session.close()
-        db.engine.dispose()
-    db.drop_all()
+    teardown_db()
 
 
 @pytest.fixture
 def live_server(app, setup_db):
     from werkzeug.serving import make_server
+    from werkzeug.debug import DebuggedApplication
 
-    server = make_server("localhost", PORT, app)
+    wsgi_app = DebuggedApplication(app, evalex=False)
+    server = make_server("localhost", PORT, wsgi_app)
     thread = threading.Thread(target=server.serve_forever)
     thread.daemon = True
     thread.start()

@@ -3,6 +3,7 @@ import pytest
 from app import create_app, db
 from app.email import send_email_async
 from app.models import User, Role
+from tests.conftest import teardown_db
 
 
 @pytest.fixture
@@ -15,7 +16,7 @@ def app():
     Role.add_default_roles()
     User.add_default_users()
     yield flask_app
-    db.drop_all()
+    teardown_db()
     ctx.pop()
 
 

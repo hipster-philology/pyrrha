@@ -43,7 +43,7 @@ jobs:
         python -m playwright install chromium
     - name: Set up TEST_DATABASE_URL
       run: |
-        echo "TEST_DATABASE_URL=postgresql://pyrrha:pyrrha@localhost:5432/data-test" >> $GITHUB_ENV
+        echo "TEST_DATABASE_URL=postgresql+psycopg://pyrrha:pyrrha@localhost:5432/data-test" >> $GITHUB_ENV
       if: matrix.test_dbms == 'postgresql'
     - name: Test with PyTest
       run: |

@@ -25,7 +25,7 @@ def dashboard():
     )
 
 
-@main.route('/dashboard/manage-control-lists-users/<cl_id>', methods=['GET', 'POST'])
+@main.route('/dashboard/manage-control-lists-users/<int:cl_id>', methods=['GET', 'POST'])
 @login_required
 def manage_control_lists_user(cl_id):
     """ Save or display corpus accesses

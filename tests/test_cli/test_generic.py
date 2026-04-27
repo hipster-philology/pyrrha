@@ -6,31 +6,23 @@ from click.testing import CliRunner
 from app import db, create_app
 from app.cli import make_cli
 from app.models import Corpus, ControlLists, Role, User
+from tests.conftest import teardown_db
 
 
 class TestGenericScript(TestCase):
     """ Tests for the generic parts of Scripts
      """
 
-    def clear_db(self, app):
-        with app.app_context():
-            try:
-                db.drop_all()
-            except:
-                pass
-
     def setUp(self):
         self.app = create_app("test")
-        self.clear_db(self.app)
-
-        # We create all cli to check that it does not overwrite anything
         with self.app.app_context():
+            teardown_db()
             self.cli = make_cli()
-
         self.runner = CliRunner()
 
     def tearDown(self):
-        self.clear_db(self.app)
+        with self.app.app_context():
+            teardown_db()
 
     def invoke(self, commands):
         return self.runner.invoke(self.cli, ["--config", "test"] + commands)
@@ -141,7 +133,8 @@ class TestGenericScript(TestCase):
             user = db.session.get(User, TEST_USER_ID)
             self.assertFalse(user.confirmed)
 
-        response = self.invoke(["edit-user", f"{TEST_USER_ID}", "--confirm-mail"])
+        with self.app.app_context():
+            response = self.invoke(["edit-user", f"{TEST_USER_ID}", "--confirm-mail"])
 
         with self.app.app_context():
             user = db.session.get(User, TEST_USER_ID)

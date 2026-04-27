@@ -105,11 +105,9 @@ def lemma_list(control_list_id):
             return make_response(jsonify({"message": "Unknown Error"}), 400)
     elif request.method == "GET":
         kwargs = {}
-        page = request.args.get("page", "1")
-        page = (page.isnumeric()) and int(page) or 1
+        page = request.args.get("page", 1, type=int)
 
-        limit = request.args.get("limit", "1000")
-        limit = (limit.isnumeric()) and int(limit) or 1
+        limit = request.args.get("limit", 1000, type=int)
         kw = strip_or_none(request.args.get("kw", ""))
         template = "control_lists/read_lemma.html"
         allowed_values = control_list.get_allowed_values(

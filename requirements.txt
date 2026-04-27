@@ -5,9 +5,9 @@ Werkzeug
 psycopg[binary]
 
 # DB
-Flask-SQLAlchemy==3.1.1
-SQLAlchemy<=2.1.0
-sqlalchemy-utils==0.41.1
+Flask-SQLAlchemy
+SQLAlchemy
+sqlalchemy-utils==0.42.1
 
 # Forms
 Flask-WTF==1.2.1
