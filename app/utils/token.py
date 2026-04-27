@@ -9,7 +9,7 @@ import time
 from hashlib import sha512
 
 from flask import current_app
-from authlib import jose
+from authlib import joserfc as jose
 from typing import TYPE_CHECKING, Optional, Dict, Callable, Union
 
 if TYPE_CHECKING:
