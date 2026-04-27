@@ -9,7 +9,7 @@ import unidecode
 import sqlalchemy.exc
 import regex as re
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, aliased
 from sqlalchemy import func, literal, not_, or_, and_
 from werkzeug.exceptions import BadRequest
 from flask import url_for, abort
@@ -771,6 +771,13 @@ class WordToken(db.Model):
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
+    __table_args__ = (
+        # Covers the primary annotation query: filter by corpus, order by position
+        db.Index('ix_word_token_corpus_order', 'corpus', 'order_id'),
+        # Covers the similarity query: find all tokens in a corpus sharing a form
+        db.Index('ix_word_token_corpus_form', 'corpus', 'form'),
+    )
+
     _changes = db.relationship("ChangeRecord")
 
     CONTEXT_LEFT = 3
@@ -996,20 +1003,41 @@ class WordToken(db.Model):
 
     @staticmethod
     def get_similar_for_batch(corpus: Corpus, tokens: Iterable["WordToken"]):
-        forms = {token.form: [] for token in tokens}
-        for token in tokens:
+        token_list = list(tokens)
+        for token in token_list:
             token.similar = 0
-            forms[token.form].append(token)
 
-        for w in WordToken.query.filter(
-                db.and_(WordToken.corpus == corpus.id, WordToken.form.in_(list(forms.keys())))
-        ).all():
-            if w.form in forms:
-                for token in forms[w.form]:
-                    if w.lemma == token.lemma or w.POS == token.POS or w.morph == token.morph:
-                        token.similar += 1
-        for token in tokens:
-            token.similar = token.similar - 1 if token.similar > 0 else 0
+        if not token_list:
+            return
+
+        # Self-join: for each page token count OTHER corpus tokens that share
+        # the same form and at least one annotation field (lemma, POS, or morph).
+        # This avoids loading all matching corpus rows into Python.
+        PageToken = aliased(WordToken, flat=True)
+        CorpusToken = aliased(WordToken, flat=True)
+
+        rows = db.session.query(
+            PageToken.id,
+            func.count(CorpusToken.id)
+        ).join(
+            CorpusToken,
+            and_(
+                CorpusToken.corpus == PageToken.corpus,
+                CorpusToken.form == PageToken.form,
+                CorpusToken.id != PageToken.id,
+                or_(
+                    CorpusToken.lemma == PageToken.lemma,
+                    CorpusToken.POS == PageToken.POS,
+                    CorpusToken.morph == PageToken.morph,
+                )
+            )
+        ).filter(
+            PageToken.id.in_([t.id for t in token_list])
+        ).group_by(PageToken.id).all()
+
+        counts = {token_id: count for token_id, count in rows}
+        for token in token_list:
+            token.similar = counts.get(token.id, 0)
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
