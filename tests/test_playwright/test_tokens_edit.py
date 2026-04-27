@@ -14,7 +14,6 @@ class TestTokenEdit(Helpers):
     def change_form_value(self, value):
         inp = self.page.locator("input[name='form']")
         inp.fill(value)
-        self.page.screenshot(path=f"token_{value}.png")
 
     def select_context_around(self, tok_id, max_id=len(WauchierTokens)):
         return [
@@ -54,7 +53,6 @@ class TestTokenEdit(Helpers):
             "oulala on doucement et volentiers le bien",
             "on doucement et volentiers le bien oïr",
         ]
-        self.page.screenshot(path="HERE.png")
         assert self.get_history() == [("Edition", "oulala", "doit")]
 
         self.token_dropdown_link(8, "Edit")
