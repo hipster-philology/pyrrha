@@ -768,6 +768,7 @@ class WordToken(db.Model):
     label_uniform = db.Column(db.String(128))
     POS = db.Column(db.String(128))
     morph = db.Column(db.String(128))
+    gloss = db.Column(db.String(512), nullable=True)
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
@@ -809,6 +810,7 @@ class WordToken(db.Model):
             "lemma": self.lemma,
             "POS": self.POS,
             "morph": self.morph,
+            "gloss": self.gloss,
             "context": self.context
         }
 
@@ -1358,7 +1360,7 @@ class WordToken(db.Model):
         return csv_file.getvalue()
 
     @staticmethod
-    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None, form=None):
+    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None, form=None, gloss=None):
         """ Update a given token with lemma, POS and morph value
 
         :param user_id: ID of the user who performs the update
@@ -1375,6 +1377,8 @@ class WordToken(db.Model):
         :type POS: str
         :param morph: Morphology tag
         :type morph: str
+        :param gloss: Free-text gloss
+        :type gloss: str
         :return: Current token, Record Token
         :rtype: (WordToken, ChangeRecord)
         """
@@ -1386,9 +1390,10 @@ class WordToken(db.Model):
         lemma = strip_or_none(lemma)
         POS = strip_or_none(POS)
         morph = strip_or_none(morph)
+        gloss = strip_or_none(gloss) or None
 
         # Avoid updating for the same
-        if token.lemma == lemma and token.POS == POS and token.morph == morph:
+        if token.lemma == lemma and token.POS == POS and token.morph == morph and token.gloss == gloss:
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
@@ -1411,11 +1416,12 @@ class WordToken(db.Model):
         if not morph:
             morph = token.morph
 
-        record = ChangeRecord.track(user, token, lemma, POS, morph)
+        record = ChangeRecord.track(user, token, lemma, POS, morph, gloss_new=gloss)
         token.lemma = lemma
         token.label_uniform = unidecode.unidecode(lemma) if lemma else None
         token.POS = POS
         token.morph = morph
+        token.gloss = gloss
         db.session.add(token)
         db.session.commit()
         return token, record
@@ -1668,6 +1674,8 @@ class ChangeRecord(db.Model):
     lemma_new = db.Column(db.String(128))
     POS_new = db.Column(db.String(128))
     morph_new = db.Column(db.String(128))
+    gloss = db.Column(db.String(512), nullable=True)
+    gloss_new = db.Column(db.String(512), nullable=True)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     word_token = db.relationship('WordToken', lazy='select', viewonly=True)
     user = db.relationship(User, lazy='select', viewonly=True)
@@ -1682,7 +1690,7 @@ class ChangeRecord(db.Model):
         return WordToken.get_similar_to_record(self).count()
 
     @staticmethod
-    def track(user, token, lemma_new, POS_new, morph_new):
+    def track(user, token, lemma_new, POS_new, morph_new, gloss_new=None):
         """ Save the history of change for the token
 
         :param token: Token that has been updated
@@ -1693,6 +1701,8 @@ class ChangeRecord(db.Model):
         :type POS_new: str
         :param morph_new: New morphology assigned to the token
         :type morph_new: str
+        :param gloss_new: New gloss assigned to the token
+        :type gloss_new: str
         :return: Change Record history item
         :rtype: ChangeRecord
         """
@@ -1700,7 +1710,8 @@ class ChangeRecord(db.Model):
             user_id=user.id,
             corpus=token.corpus, word_token_id=token.id,
             form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph,
-            lemma_new=lemma_new, POS_new=POS_new, morph_new=morph_new
+            gloss=token.gloss,
+            lemma_new=lemma_new, POS_new=POS_new, morph_new=morph_new, gloss_new=gloss_new
         )
         db.session.add(tracked)
         return tracked
@@ -1714,7 +1725,7 @@ class ChangeRecord(db.Model):
         """
         return [
             attr
-            for attr in ["lemma", "morph", "POS"]
+            for attr in ["lemma", "morph", "POS", "gloss"]
             if getattr(self, attr) != getattr(self, attr+"_new")
         ]
 
