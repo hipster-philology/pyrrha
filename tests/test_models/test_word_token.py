@@ -5,6 +5,65 @@ import random
 import string
 
 
+class TestGetSimilarForBatch(TestModels):
+    """Regression tests for get_similar_for_batch — run before and after the SQL rewrite."""
+
+    def _make_corpus(self):
+        """Create a minimal corpus with known token forms for deterministic similarity counts."""
+        from app.models import ControlLists, Column
+        cl = ControlLists(name="TestCL")
+        self.db.session.add(cl)
+        self.db.session.flush()
+        corpus = Corpus(name="SimTest", control_lists_id=cl.id)
+        self.db.session.add(corpus)
+        self.db.session.flush()
+        for col in ("Lemma", "POS", "Morph"):
+            self.db.session.add(Column(heading=col, corpus_id=corpus.id))
+
+        tokens = [
+            # form "vos", same lemma → each is similar to the other
+            WordToken(corpus=corpus.id, order_id=1, form="vos", lemma="vos1", POS="PRO", morph="PERS.=2"),
+            WordToken(corpus=corpus.id, order_id=2, form="vos", lemma="vos1", POS="PRO", morph="PERS.=2"),
+            # form "de", appears twice but different lemma/POS/morph → not similar
+            WordToken(corpus=corpus.id, order_id=3, form="de", lemma="de1", POS="PRE", morph="_"),
+            WordToken(corpus=corpus.id, order_id=4, form="de", lemma="de2", POS="ADV", morph="X"),
+            # form "et", appears once → similar == 0
+            WordToken(corpus=corpus.id, order_id=5, form="et", lemma="et1", POS="CON", morph="_"),
+        ]
+        for t in tokens:
+            self.db.session.add(t)
+        self.db.session.commit()
+        return corpus, tokens
+
+    def test_similar_count_matching_form_and_lemma(self):
+        """Two tokens with same form and same lemma should each show similar=1."""
+        corpus, tokens = self._make_corpus()
+        page_tokens = [tokens[0], tokens[1]]  # both "vos" tokens
+        WordToken.get_similar_for_batch(corpus, page_tokens)
+        self.assertEqual(page_tokens[0].similar, 1)
+        self.assertEqual(page_tokens[1].similar, 1)
+
+    def test_similar_count_different_annotation(self):
+        """Two tokens with same form but no overlapping annotation should each show similar=0."""
+        corpus, tokens = self._make_corpus()
+        page_tokens = [tokens[2], tokens[3]]  # both "de", different lemma/POS/morph
+        WordToken.get_similar_for_batch(corpus, page_tokens)
+        self.assertEqual(page_tokens[0].similar, 0)
+        self.assertEqual(page_tokens[1].similar, 0)
+
+    def test_similar_count_unique_form(self):
+        """A token whose form appears only once should show similar=0."""
+        corpus, tokens = self._make_corpus()
+        page_tokens = [tokens[4]]  # "et" — only one occurrence
+        WordToken.get_similar_for_batch(corpus, page_tokens)
+        self.assertEqual(page_tokens[0].similar, 0)
+
+    def test_similar_count_empty_batch(self):
+        """Empty token list should not raise."""
+        corpus, _ = self._make_corpus()
+        WordToken.get_similar_for_batch(corpus, [])  # must not raise
+
+
 class TestWordToken(TestModels):
     def test_to_input_format(self):
         """ Test that export to input format works correctly """

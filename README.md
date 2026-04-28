@@ -49,17 +49,17 @@ git clone https://github.com/hipster-philology/pyrrha.git
 cd pyrrha/
 ```
 
-Create a virtual environment, source it and run
+Create a virtual environment, source it, and run:
 
 ```bash
 pip install -r requirements.txt
-python manage.py db-create
+python manage.py --config dev db-create
 ```
 
 ## Run
 
 ```bash
-python manage.py run
+python manage.py --config dev run
 ```
 
 ### Creating a new user locally
@@ -92,6 +92,84 @@ If you want to add a language
 python manage.py translate init fr
 python manage.py translate update
 python manage.py translate compile
+```
+
+## CLI Reference
+
+All commands are run via `manage.py`. Pass `--config <name>` to select the
+environment — `dev` (default), `prod`, or `test`.
+
+```
+python manage.py --config <env> <command> [options]
+```
+
+### Database setup
+
+| Command | Description |
+|---|---|
+| `db-create` | Create the database (if it doesn't exist) and apply all Alembic migrations. Run this once on a fresh install. |
+| `db-recreate` | Drop and recreate the database. **Destroys all data — do not use in production.** |
+| `db-fixtures` | Load demo corpora (Wauchier, Floovant) for local testing. |
+
+### Schema migrations (Alembic)
+
+Pyrrha uses [Alembic](https://alembic.sqlalchemy.org/) (via Flask-Migrate) for schema versioning. All `db-migrate` / `db-upgrade` commands below wrap Alembic.
+
+| Command | Description |
+|---|---|
+| `db-migrate -m "message"` | Auto-generate a new migration from model changes. Review the generated file in `migrations/versions/` before applying. |
+| `db-upgrade [--revision head]` | Apply all pending migrations (default: up to `head`). |
+| `db-downgrade [--revision -1]` | Revert migrations (default: one step back). |
+| `db-current` | Show the currently applied revision. |
+| `db-history` | List all migrations and their status. |
+| `db-stamp <revision>` | Mark the database as being at `revision` **without** running any SQL. Use `head` when onboarding an existing database that was created before Alembic was introduced — this tells Alembic "the schema is already current". |
+
+**Typical development workflow for a schema change:**
+
+```bash
+# 1. Edit the model in app/models/
+# 2. Generate the migration
+python manage.py --config dev db-migrate -m "Add gloss column to word_token"
+# 3. Review migrations/versions/<hash>_add_gloss_column_to_word_token.py
+# 4. Apply it
+python manage.py --config dev db-upgrade
+```
+
+**Onboarding an existing production database:**
+
+```bash
+# Run once after upgrading to a version that introduced Alembic
+python manage.py --config prod db-stamp head
+# From now on, use db-upgrade for all future schema changes
+python manage.py --config prod db-upgrade
+```
+
+### Database backup
+
+```bash
+python manage.py --config prod db-dump /backups/pyrrha_$(date +%Y%m%d).dump
+```
+
+For PostgreSQL, this calls `pg_dump --format=custom` and writes a binary dump
+that can be restored with `pg_restore`. For SQLite, it copies the database file.
+
+### Corpus management
+
+| Command | Description |
+|---|---|
+| `corpus-list` | List all corpora with their IDs. |
+| `corpus-from-file NAME --corpus FILE [--lemma FILE] [--POS FILE] [--morph FILE] [--left N] [--right N]` | Create a corpus from a TSV token file plus optional allowed-value lists. |
+| `corpus-from-dir NAME <dir>` | Create a corpus from a directory containing `tokens.csv`, `allowed_lemma.txt`, `allowed_pos.txt`, `allowed_morph.csv`. |
+| `corpus-dump <ID> --path <dir>` | Export a corpus (tokens + allowed values) to a directory. Use `corpus-list` to find the ID. |
+
+### User management
+
+```bash
+# Confirm email and grant Administrator role
+python manage.py edit-user someone@example.com --confirm-mail --role Administrator
+
+# Confirm email only
+python manage.py edit-user someone@example.com --confirm-mail
 ```
 
 ## How to contribute

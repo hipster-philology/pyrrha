@@ -6,6 +6,7 @@ psycopg[binary]
 
 # DB
 Flask-SQLAlchemy
+Flask-Migrate
 SQLAlchemy
 sqlalchemy-utils==0.42.1
 

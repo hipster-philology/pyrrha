@@ -5,6 +5,7 @@ from flask import Flask, g
 from flask_compress import Compress
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_babel import Babel
@@ -18,6 +19,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 mail = Mail()
 db = SQLAlchemy()
+migrate = Migrate()
 csrf = CSRFProtect()
 compress = Compress()
 babel = Babel()
@@ -64,6 +66,7 @@ def create_app(config_name="dev"):
     # Set up extensions
     mail.init_app(app)
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     #csrf.init_app(app)
     compress.init_app(app)
