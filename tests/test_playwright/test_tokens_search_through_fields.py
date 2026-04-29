@@ -37,27 +37,32 @@ class TestTokensSearchThroughFields(TokensSearchHelpers):
 
     def test_search_homepage(self):
         self.addCorpus(corpus="floovant")
-        self.go_to_search_tokens_page(2, as_callback=False)
-        result = []
-        res_table = self.page.locator("#result_table tbody")
-        for row_loc in res_table.locator("tr").all():
-            tds = row_loc.locator("td").all()
-            if tds:
-                result.append({
-                    "form": tds[1].text_content().strip(),
-                    "lemma": row_loc.locator(".token_lemma").text_content().strip(),
-                    "morph": row_loc.locator(".token_morph").text_content().strip(),
-                    "pos": row_loc.locator(".token_pos").text_content().strip(),
-                })
-        assert result[:3] == [
-            {"form": "SOIGNORS", "lemma": "seignor", "morph": "NOMB.=p|GENRE=m|CAS=n", "pos": "None"},
-            {"form": "or", "lemma": "or4", "morph": "DEGRE=-", "pos": "None"},
-            {"form": "escoutez", "lemma": "escouter", "morph": "MODE=imp|PERS.=2|NOMB.=p", "pos": "None"},
+        results = self.search(corpus_id=2)
+        # self.go_to_search_tokens_page(2, as_callback=False)
+        # result = []
+        # res_table = self.page.locator("#result_table tbody")
+        # for row_loc in res_table.locator("tr").all():
+        #     tds = row_loc.locator("td").all()
+        #     if tds:
+        #         result.append({
+        #             "form": tds[1].text_content().strip(),
+        #             "lemma": row_loc.locator(".token_lemma").text_content().strip(),
+        #             "morph": row_loc.locator(".token_morph").text_content().strip(),
+        #             "pos": row_loc.locator(".token_pos").text_content().strip(),
+        #         })
+        self.page.screenshot(path="none.png")
+        assert results[:3] == [
+            {"form": "SOIGNORS", "lemma": "seignor", "morph": "NOMB.=p|GENRE=m|CAS=n", "pos": ""},
+            {"form": "or", "lemma": "or4", "morph": "DEGRE=-", "pos": ""},
+            {"form": "escoutez", "lemma": "escouter", "morph": "MODE=imp|PERS.=2|NOMB.=p", "pos": ""},
         ]
 
     def test_search_with_pagination(self):
-        rows = self.search(lemma="*e*")
-        tokens = WordToken.query.filter(WordToken.lemma.like("%e%")).all()
+        rows = self.search(lemma="*e*", corpus_id=self.CORPUS_ID)
+        tokens = WordToken.query.filter(db.and_(
+            WordToken.lemma.like("%e%"),
+            WordToken.corpus == self.CORPUS_ID
+        )).all()
         assert len(rows) == len(tokens)
 
     def test_search_with_partial_form(self):
@@ -96,7 +101,10 @@ class TestTokensSearchThroughFields(TokensSearchHelpers):
         ]
 
         rows = self.search(morph="*None*")
-        tokens = WordToken.query.filter(WordToken.morph == "None").all()
+        tokens = WordToken.query.filter(db.and_(
+            WordToken.morph == "None",
+            WordToken.corpus == self.CORPUS_ID
+        )).all()
         assert len(rows) == len(tokens)
 
     def test_search_with_combinations(self):
@@ -120,11 +128,17 @@ class TestTokensSearchThroughFields(TokensSearchHelpers):
         ]
 
         rows = self.search(lemma="*le")
-        tokens = WordToken.query.filter(WordToken.lemma.like("%le")).all()
+        tokens = WordToken.query.filter(db.and_(
+            WordToken.lemma.like("%le"),
+            WordToken.corpus == self.CORPUS_ID
+        )).all()
         assert len(rows) == len(tokens)
 
         rows = self.search(lemma="*ai*")
-        tokens = WordToken.query.filter(WordToken.lemma.like("%ai%")).all()
+        tokens = WordToken.query.filter(db.and_(
+            WordToken.lemma.like("%ai%"),
+            WordToken.corpus == self.CORPUS_ID
+        )).all()
         assert len(rows) == len(tokens)
 
     def test_search_with_negation_operator(self):

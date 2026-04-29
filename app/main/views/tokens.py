@@ -16,6 +16,38 @@ from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
 
 
+def _corpus_urls(corpus, data_url=None):
+    """ Return the URL map shared between the HTML config and the data API. """
+    return {
+        "data": data_url or url_for("main.tokens_correct_data", corpus_id=corpus.id),
+        "save": url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=0)[:-1],
+        "edit": url_for("main.tokens_edit_form", corpus_id=corpus.id, token_id=0)[:-1],
+        "remove": url_for("main.tokens_del_row", corpus_id=corpus.id, token_id=0)[:-1],
+        "insert": url_for("main.tokens_add_row", corpus_id=corpus.id, token_id=0)[:-1],
+        "bookmark": url_for("main.corpus_bookmark", corpus_id=corpus.id),
+        "similar_record": url_for("main.tokens_similar_to_record", corpus_id=corpus.id, record_id=0)[:-1],
+        "custom_dict": url_for("main.corpus_custom_dict", corpus_id=corpus.id),
+        "autocomplete": {
+            "lemma": {
+                "allowed": corpus.allowed_search_route("lemma"),
+                "custom": corpus.custom_dictionary_search_route("lemma")
+            },
+            "POS": {
+                "allowed": corpus.allowed_search_route("POS"),
+                "custom": corpus.custom_dictionary_search_route("POS")
+            },
+            "morph": {
+                "allowed": corpus.allowed_search_route("morph"),
+                "custom": corpus.custom_dictionary_search_route("morph")
+            },
+            "gloss": {
+                "allowed": url_for("main.gloss_search_value_api", corpus_id=corpus.id),
+                "custom": None
+            }
+        }
+    }
+
+
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
 @login_required
 @requires_corpus_access("corpus_id")
@@ -25,21 +57,61 @@ def tokens_correct(corpus_id):
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+
+    # Minimal config — no token data; Vue fetches via tokens_correct_data
+    visible_cols = list(corpus.displayed_columns_by_name.keys())
+
+    pyrrha_config = {
+        "corpus_id": corpus.id,
+        "visible_columns": visible_cols,
+        "urls": _corpus_urls(corpus),
+    }
+
+    return render_template_with_nav_info(
+        'main/tokens_correct.html',
+        corpus=corpus,
+        pyrrha_config=pyrrha_config
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/correct/data')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_correct_data(corpus_id):
+    """ JSON endpoint: paginated token data for the annotation table. """
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     current_user.bookmark: Bookmark = corpus.get_bookmark(current_user)
 
-    tokens = corpus\
-        .get_tokens()\
-        .paginate(
-            page=int_or(request.args.get("page"), 1),
-            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
-        )
+    tokens = corpus.get_tokens().paginate(
+        page=int_or(request.args.get("page"), 1),
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+    )
 
     if "similar" in corpus.displayed_columns_by_name:
         WordToken.get_similar_for_batch(corpus, tokens.items)
 
     changed = corpus.changed(tokens.items)
 
-    return render_template_with_nav_info('main/tokens_correct.html', corpus=corpus, tokens=tokens, changed=changed)
+    tokens_data = []
+    for tok in tokens.items:
+        d = tok.to_dict()
+        d["changed"] = tok.id in changed
+        d["similar"] = getattr(tok, "similar", 0)
+        d["similar_link"] = url_for(
+            "main.tokens_similar_to_token", corpus_id=corpus.id, token_id=tok.id
+        ) if d["similar"] else None
+        d["left_context"] = tok.left_context or ""
+        d["right_context"] = tok.right_context or ""
+        tokens_data.append(d)
+
+    return jsonify({
+        "tokens": tokens_data,
+        "page": tokens.page,
+        "pages": tokens.pages,
+        "total": tokens.total,
+        "per_page": tokens.per_page,
+        "bookmark_token_id": current_user.bookmark.token_id if current_user.bookmark else None,
+    })
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/correct')
@@ -49,22 +121,53 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
     """ Page to edit tokens that have unallowed values
 
     :param corpus_id: Id of the corpus
-    :param allowed_type: Type of allowed value to check agains (lemma, POS, morph)
+    :param allowed_type: Type of allowed value to check against (lemma, POS, morph)
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    tokens = corpus\
-        .get_unallowed(allowed_type)\
-        .paginate(
-            page=int_or(request.args.get("page"), 1),
-            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
-        )
+    visible_cols = list(corpus.displayed_columns_by_name.keys())
+    pyrrha_config = {
+        "corpus_id": corpus.id,
+        "visible_columns": visible_cols,
+        "urls": _corpus_urls(
+            corpus,
+            data_url=url_for("main.tokens_correct_unallowed_data", corpus_id=corpus.id, allowed_type=allowed_type)
+        ),
+    }
     return render_template_with_nav_info(
         'main/tokens_correct_unallowed.html',
-        corpus=corpus,
-        tokens=tokens,
-        allowed_type=allowed_type,
-        changed=corpus.changed(tokens.items)
+        corpus=corpus, allowed_type=allowed_type,
+        pyrrha_config=pyrrha_config
     )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/unallowed/<allowed_type>/correct/data')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_correct_unallowed_data(corpus_id, allowed_type):
+    """ JSON endpoint: paginated unallowed tokens for the annotation table. """
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    tokens = corpus.get_unallowed(allowed_type).paginate(
+        page=int_or(request.args.get("page"), 1),
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+    )
+    changed = corpus.changed(tokens.items)
+    tokens_data = []
+    for tok in tokens.items:
+        d = tok.to_dict()
+        d["changed"] = tok.id in changed
+        d["similar"] = 0
+        d["similar_link"] = None
+        d["left_context"] = tok.left_context or ""
+        d["right_context"] = tok.right_context or ""
+        tokens_data.append(d)
+    return jsonify({
+        "tokens": tokens_data,
+        "page": tokens.page,
+        "pages": tokens.pages,
+        "total": tokens.total,
+        "per_page": tokens.per_page,
+        "bookmark_token_id": None,
+    })
 
 
 
@@ -72,50 +175,117 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_similar_to_record(corpus_id, record_id):
-    """ Find similar tokens to old values behind a changerecord
-
-    :param corpus_id: ID of the corpus
-    :param record_id: Id of the change record
-    """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
-    tokens = WordToken.get_similar_to_record(change_record=record).paginate(per_page=1000)
+    visible_cols = list(corpus.displayed_columns_by_name.keys())
+    pyrrha_config = {
+        "corpus_id": corpus.id,
+        "visible_columns": visible_cols,
+        "data_url": url_for("main.tokens_similar_to_record_data", corpus_id=corpus.id, record_id=record_id),
+        "apply_url": url_for("main.tokens_correct_from_record", corpus_id=corpus.id, record_id=record_id),
+        "record": {
+            "lemma":     record.lemma,     "lemma_new":  record.lemma_new,
+            "POS":       record.POS,       "POS_new":    record.POS_new,
+            "morph":     record.morph,     "morph_new":  record.morph_new,
+            "user":      "{}.{}".format(record.user.first_name[0], record.user.last_name),
+            "created_on": str(record.created_on),
+            "similar_remaining": record.similar_remaining,
+        },
+    }
     return render_template_with_nav_info(
-        # The Dict is a small hack to emulate paginate
-        'main/tokens_similar_to_record.html', corpus=corpus, tokens=tokens, record=record,
-        changed=corpus.changed(tokens.items)
+        'main/tokens_similar_to_record.html',
+        corpus=corpus, record=record,
+        pyrrha_config=pyrrha_config
     )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/changes/similar/<int:record_id>/data')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_similar_to_record_data(corpus_id, record_id):
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
+    tokens = WordToken.get_similar_to_record(change_record=record).paginate(
+        page=int_or(request.args.get("page"), 1),
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+    )
+    changed = corpus.changed(tokens.items)
+    tokens_data = []
+    for tok in tokens.items:
+        d = tok.to_dict()
+        d["changed"] = tok.id in changed
+        d["similar"] = 0
+        d["similar_link"] = None
+        d["left_context"] = tok.left_context or ""
+        d["right_context"] = tok.right_context or ""
+        tokens_data.append(d)
+    return jsonify({
+        "tokens": tokens_data,
+        "page": tokens.page,
+        "pages": tokens.pages,
+        "total": tokens.total,
+        "per_page": tokens.per_page,
+        "bookmark_token_id": None,
+    })
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:token_id>')
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_similar_to_token(corpus_id, token_id):
-    """ Find tokens similar to a given tokens
-
-    :param corpus_id: Id of the corpus
-    :param token_id: Id of the tokens
-
-
-    .. note:: Takes a mode GET argument (default : partial) that sets the way matching are effected
-    """
     mode = request.args.get("mode", "partial")
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
-    tokens = WordToken.get_nearly_similar_to(token, mode=mode)
     if request_wants_json():
+        tokens = WordToken.get_nearly_similar_to(token, mode=mode)
         if request.args.get("hits", "false").lower() == "true":
-            return jsonify([
-                tok.to_dict() for tok in tokens.all()
-            ])
+            return jsonify([tok.to_dict() for tok in tokens.all()])
         return jsonify({"count": tokens.count()})
-    tokens = tokens.paginate(per_page=1000)
+    visible_cols = list(corpus.displayed_columns_by_name.keys())
+    pyrrha_config = {
+        "corpus_id": corpus.id,
+        "visible_columns": visible_cols,
+        "urls": _corpus_urls(
+            corpus,
+            data_url=url_for("main.tokens_similar_to_token_data", corpus_id=corpus.id, token_id=token_id, mode=mode)
+        ),
+    }
     return render_template_with_nav_info(
-        # The Dict is a small hack to emulate paginate
         'main/tokens_similar_to_token.html',
-        corpus=corpus, tokens=tokens, mode=mode, token=token,
-        changed=corpus.changed(tokens.items)
+        corpus=corpus, mode=mode, token=token,
+        pyrrha_config=pyrrha_config
     )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/similar/<int:token_id>/data')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_similar_to_token_data(corpus_id, token_id):
+    mode = request.args.get("mode", "partial")
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
+    token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
+    tokens = WordToken.get_nearly_similar_to(token, mode=mode).paginate(
+        page=int_or(request.args.get("page"), 1),
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+    )
+    changed = corpus.changed(tokens.items)
+    tokens_data = []
+    for tok in tokens.items:
+        d = tok.to_dict()
+        d["changed"] = tok.id in changed
+        d["similar"] = 0
+        d["similar_link"] = None
+        d["left_context"] = tok.left_context or ""
+        d["right_context"] = tok.right_context or ""
+        tokens_data.append(d)
+    return jsonify({
+        "tokens": tokens_data,
+        "page": tokens.page,
+        "pages": tokens.pages,
+        "total": tokens.total,
+        "per_page": tokens.per_page,
+        "bookmark_token_id": None,
+    })
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct/<int:token_id>', methods=["POST"])
@@ -260,6 +430,14 @@ def tokens_history(corpus_id):
     return render_template_with_nav_info('main/tokens_history.html', corpus=corpus, tokens=tokens)
 
 
+def _search_token_dict(form):
+    return {
+        key: value
+        for key, value in form.items()
+        if key not in {"caseBox", "page", "limit", "orderBy", "desc"}
+    }
+
+
 @main.route('/corpus/<int:corpus_id>/tokens/search', methods=["POST", "GET"])
 @login_required
 @requires_corpus_access("corpus_id")
@@ -269,32 +447,84 @@ def tokens_search_through_fields(corpus_id):
     :param corpus_id: Id of the corpus
     """
     corpus = Corpus.get_or_404(corpus_id)
-    # test suppression:
     if not corpus.has_access(current_user):
         abort(403)
 
     form: Dict[str, str] = request.form if request.method == "POST" else request.args
-    token_dict: Dict[str, str] = {
-        key: value
-        for key, value in form.items()
-        if key not in {"caseBox", "page", "limit"}
+    token_dict = _search_token_dict(form)
+
+    # Only extract prefill values for the search form — no DB query on the shell view
+    input_values = {k: string_to_none(form.get(k)) for k in ('form', 'lemma', 'POS', 'morph')}
+    input_values = {k: v for k, v in input_values.items() if v}
+
+    visible_cols = list(corpus.displayed_columns_by_name.keys())
+    pyrrha_config = {
+        "corpus_id": corpus.id,
+        "visible_columns": visible_cols,
+        "urls": _corpus_urls(
+            corpus,
+            data_url=url_for("main.tokens_search_data", corpus_id=corpus.id)
+        ),
     }
-    tokens, order_by_key, input_values = corpus.token_search(
-        token_dict=token_dict,
-        case_sensitive='caseBox' not in form,
-        desc=int(request.args.get("desc", "0"))
+
+    return render_template_with_nav_info(
+        'main/tokens_search_through_fields.html',
+        corpus=corpus,
+        pyrrha_config=pyrrha_config,
+        has_results=bool(token_dict),
+        orderBy=request.args.get("orderBy", "order_id"),
+        desc=request.args.get("desc", "0"),
+        **input_values
     )
 
-    page = int_or(request.args.get("page"), 1)
-    per_page = int_or(request.args.get("limit"), 100)
-    tokens = tokens.paginate(page=page, per_page=per_page)
 
-    return render_template_with_nav_info('main/tokens_search_through_fields.html',
-                                         search_kwargs={"corpus_id": corpus.id, **input_values},
-                                         changed=corpus.changed(tokens.items),
-                                         desc=request.args.get("desc", "0"),
-                                         orderBy=order_by_key,
-                                         corpus=corpus, tokens=tokens, **input_values)
+@main.route('/corpus/<int:corpus_id>/tokens/search/data')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_search_data(corpus_id):
+    """ JSON endpoint: paginated search results for the annotation table. """
+    corpus = Corpus.get_or_404(corpus_id)
+    if not corpus.has_access(current_user):
+        abort(403)
+
+    token_dict = _search_token_dict(request.args)
+    if not token_dict:
+        return jsonify({"tokens": [], "page": 1, "pages": 0, "total": 0, "per_page": 100, "bookmark_token_id": None})
+
+    tokens_q, _, _ = corpus.token_search(
+        token_dict=token_dict,
+        case_sensitive='caseBox' not in request.args,
+        desc=int(request.args.get("desc", "0"))
+    )
+    tokens = tokens_q.paginate(
+        page=int_or(request.args.get("page"), 1),
+        per_page=int_or(request.args.get("limit"), 100)
+    )
+
+    if "similar" in corpus.displayed_columns_by_name:
+        WordToken.get_similar_for_batch(corpus, tokens.items)
+
+    changed = corpus.changed(tokens.items)
+    tokens_data = []
+    for tok in tokens.items:
+        d = tok.to_dict()
+        d["changed"] = tok.id in changed
+        d["similar"] = getattr(tok, "similar", 0)
+        d["similar_link"] = url_for(
+            "main.tokens_similar_to_token", corpus_id=corpus.id, token_id=tok.id
+        ) if d["similar"] else None
+        d["left_context"] = tok.left_context or ""
+        d["right_context"] = tok.right_context or ""
+        tokens_data.append(d)
+
+    return jsonify({
+        "tokens": tokens_data,
+        "page": tokens.page,
+        "pages": tokens.pages,
+        "total": tokens.total,
+        "per_page": tokens.per_page,
+        "bookmark_token_id": None,
+    })
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/edit/<int:token_id>', methods=["GET", "POST"])

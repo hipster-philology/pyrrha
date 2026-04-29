@@ -1,17 +1,18 @@
-{% import 'macros/nav_macros.html' as nav %}
-{% import 'macros/tokens_macros.html' as tokens_macros %}
-
 {% extends 'layouts/base.html' %}
+
+{% block custom_head_tags %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js" crossorigin="anonymous"></script>
+{% endblock %}
 
 {% block content %}
 
-<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('List of tokens') }} </h1>
+<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('List of tokens') }}</h1>
 
+<div id="annotation-table"></div>
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
-
-{{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=True, current_user=current_user) }}
-
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_correct") }}
+<script type="application/json" id="pyrrha-config">{{ pyrrha_config | tojson | safe }}</script>
+<script src="{{ url_for('static', filename='js/annotation-table.js') }}"></script>
 
 {% endblock %}

@@ -15,12 +15,14 @@ class TestTokenEdit(Helpers):
         inp = self.page.locator("input[name='form']")
         inp.fill(value)
 
-    def select_context_around(self, tok_id, max_id=len(WauchierTokens)):
+    def select_context_around(self, tok_id, max_id=len(WauchierTokens),
+                              context_len: int = 3):
         return [
-            self.page.locator(f"#token_{cur}_row").locator("td").nth(5).text_content().strip()
+            self.page.locator(f"#token_{cur}_row .at-cell.at-cell--ctx").first.text_content().strip().replace("\xa0", " ")
             for cur in range(
-                max(tok_id - 3, 0),
-                min(max_id, tok_id + 3 + 2),
+                max(tok_id - context_len, 0),
+                # Adding +2 because of python offset and we want {context_len} more than the current one
+                min(max_id, tok_id + context_len + 2),
             )
         ]
 
@@ -78,9 +80,11 @@ class TestTokenEdit(Helpers):
     def test_addition(self):
         self.addCorpus("wauchier")
         self.token_dropdown_link(5, "Add")
+        self.page.screenshot(path="addition_link.png")
         self.change_form_value("oulala")
         self.page.locator("button[type='submit']").click()
         self.page.wait_for_load_state("networkidle")
+        self.page.screenshot(path="addition_results.png", full_page=True)
 
         assert self.select_context_around(6) == [
             "De seint Martin mout doit oulala",
@@ -96,8 +100,10 @@ class TestTokenEdit(Helpers):
 
         self.token_dropdown_link(8, "Add")
         self.change_form_value("Oulipo")
+        self.page.screenshot(path="addition_link2.png")
         self.page.locator("button[type='submit']").click()
         self.page.wait_for_load_state("networkidle")
+        self.page.screenshot(path="addition_results2.png")
 
         assert self.select_context_around(8) == [
             "seint Martin mout doit oulala on doucement",

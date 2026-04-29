@@ -1,15 +1,17 @@
-{% import 'macros/nav_macros.html' as nav %}
+{% extends 'layouts/base.html' %}
 {% import 'macros/tokens_macros.html' as tokens_macros %}
 
-{% extends 'layouts/base.html' %}
+{% block custom_head_tags %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js" crossorigin="anonymous"></script>
+{% endblock %}
 
 {% block content %}
 
 {% set visible = corpus.displayed_columns_by_name %}
 
-<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('List of tokens') }} </h1>
-
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_similar_to_record", record_id=record.id) }}
+<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('List of tokens') }}</h1>
 
 <h2>{{ _('Change') }}</h2>
 
@@ -58,8 +60,9 @@
 </table>
 
 <h2>{{ _('Similar matching:') }} {{record.similar_remaining}}</h2>
-<div class="main">
-{{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, checkbox=True, record=record, link_back=True) }}
-</div>
+
+<div id="similar-record-table"></div>
+<script type="application/json" id="pyrrha-config">{{ pyrrha_config | tojson | safe }}</script>
+<script src="{{ url_for('static', filename='js/similar-record-table.js') }}"></script>
 
 {% endblock %}

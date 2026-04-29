@@ -4,7 +4,7 @@ Test classes inherit from one of the Helpers classes below and set
 self.page / self.url_for / self.app in an autouse setup fixture.
 """
 import csv
-from typing import Union
+from typing import Union, Optional
 
 import flask_login
 from playwright.sync_api import expect
@@ -169,8 +169,8 @@ class Helpers:
 
     def token_dropdown_link(self, tok_id, link, corpus_id="1"):
         self.page.goto(self.url_for("main.tokens_correct", corpus_id=corpus_id))
-        self.page.locator(f"#dd_t{tok_id}").click()
-        dd = self.page.locator(f"*[aria-labelledby='dd_t{tok_id}']")
+        self.page.locator(f"[data-token-order='{tok_id}'] .at-dd-toggle").click()
+        dd = self.page.locator(f"[data-token-order='{tok_id}'] .at-dd-menu:visible")
         dd.get_by_role("link", name=link).click()
         self.page.wait_for_load_state("networkidle")
 
@@ -231,14 +231,17 @@ class TokenCorrectHelpers(Helpers):
         row_id = row.get_attribute("id")
         return self.page.locator(f"[rel='{row_id}'] .similar-link")
 
+    def get_similar_hint(self, token_id):
+        return self.page.locator(f"#token_{token_id}_similar_hint span").first
+
     def assert_saved(self, row):
-        assert self._get_badge_text(row, ".badge-status.badge-success") == "Saved"
+        assert row.locator(".save-status.save-ok:visible").count() == 1
 
     def assert_invalid_value(self, row, category):
-        assert self._get_badge_text(row, ".badge-status.badge-danger") == f"Invalid value in {category}"
+        assert row.locator(f'[data-field="{category}"] .field-error-popdown').count() == 1
 
     def assert_unchanged(self, row):
-        assert self._get_badge_text(row, ".badge-status.badge-danger") == "No value where changed"
+        assert row.locator(".save-status.save-unchanged:visible").count() == 1
 
     def first_token_id(self, corpus_id):
         return (
@@ -248,6 +251,18 @@ class TokenCorrectHelpers(Helpers):
             .limit(1)
             .first()[0]
         )
+
+    def _get_td_input(self, id_row: str, value_type: str):
+        row = self.page.locator(f"#token_{id_row}_row")
+        if value_type == "POS":
+            td = row.locator("[data-field='POS'] .anno-field-input")
+        elif value_type == "morph":
+            td = row.locator("[data-field='morph'] .anno-field-input")
+        elif value_type == "gloss":
+            td = row.locator("[data-field='gloss'] .anno-field-input")
+        else:
+            td = row.locator("[data-field='lemma'] .anno-field-input")
+        return row, td
 
     def edith_nth_row_value(
         self,
@@ -278,19 +293,14 @@ class TokenCorrectHelpers(Helpers):
                 autocomplete_selector=autocomplete_selector,
             )
 
-        row = self.page.locator(f"#token_{id_row}_row")
-        if value_type == "POS":
-            td = row.locator(".token_pos")
-        elif value_type == "morph":
-            td = row.locator(".token_morph")
-        else:
-            td = row.locator(".token_lemma")
-
+        row, td = self._get_td_input(id_row, value_type)
         td.click()
-        td.fill(value)
-        row.locator("a.save").click()
+        td.fill("")
+        td.type(value)
 
-        self.page.locator(f"[rel='token_{id_row}_row'] .badge-saving-response").wait_for(
+        row.locator("button.save-btn").click()
+        self.page.wait_for_load_state("networkidle")
+        self.page.locator(f"#token_{id_row}_row .save-status").wait_for(
             state="visible", timeout=10000
         )
 
@@ -299,33 +309,26 @@ class TokenCorrectHelpers(Helpers):
 
         return (
             token,
-            self.page.locator(f"#token_{id_row}_row > td a.save").text_content().strip(),
             row,
         )
 
     def _edit_nth_row_value_autocomplete(
         self, value, id_row="1", value_type="lemma", autocomplete_selector=None
     ):
-        row = self.page.locator(f"#token_{id_row}_row")
-        if value_type == "POS":
-            td = row.locator(".token_pos")
-        elif value_type == "morph":
-            td = row.locator(".token_morph")
-        else:
-            td = row.locator(".token_lemma")
-
+        row, td = self._get_td_input(id_row, value_type)
         td.click()
         td.fill("")
         td.type(value)
 
-        autocomplete_el = self.page.locator(autocomplete_selector)
         self.page.wait_for_load_state("networkidle")
+        self.page.screenshot(path=f"{autocomplete_selector}.png")
+        autocomplete_el = self.page.locator(autocomplete_selector)
         autocomplete_el.wait_for(state="visible", timeout=5000)
         autocomplete_el.click()
 
-        row.locator("a.save").click()
+        row.locator("button.save-btn").click()
 
-        self.page.locator(f"[rel='token_{id_row}_row'] .badge-status").wait_for(
+        self.page.locator(f"#token_{id_row}_row .save-ok").wait_for(
             state="visible", timeout=10000
         )
 
@@ -334,7 +337,6 @@ class TokenCorrectHelpers(Helpers):
 
         return (
             token,
-            self.page.locator(f"#token_{id_row}_row > td a.save").text_content().strip(),
             row,
         )
 
@@ -368,8 +370,9 @@ class TokensSearchHelpers(Helpers):
             td.click()
             td.fill("" if field_value is None else str(field_value))
 
-    def search(self, form="", lemma="", pos="", morph="", case_insensitivity=False):
-        self.go_to_search_tokens_page(self.CORPUS_ID, as_callback=False)
+    def search(self, form="", lemma="", pos="", morph="", case_insensitivity=False,
+               corpus_id: Optional[int] = None):
+        self.go_to_search_tokens_page(corpus_id or self.CORPUS_ID, as_callback=False)
         self.fill_filter_row(form, lemma, pos, morph)
         if case_insensitivity:
             self.page.locator("#caseBox").click()
@@ -380,24 +383,24 @@ class TokensSearchHelpers(Helpers):
         self.page.wait_for_load_state("networkidle")
 
         def get_field(row_loc, f):
-            return row_loc.locator(f".{f}").text_content().strip()
+            return row_loc.locator(f".anno-field[data-field='{f}'] .anno-field-input").first.input_value().strip()
 
-        pagination = self.page.locator(".pagination").first.locator("a").all()
-        for page_index in range(len(pagination)):
-            self.page.locator(".pagination").first.locator("a").nth(page_index).click()
-            self.page.wait_for_load_state("networkidle")
-            res_table = self.page.locator("#result_table tbody")
-            rows = res_table.locator("tr").all()
-            for row_loc in rows:
-                tds = row_loc.locator("td").all()
-                if tds:
-                    result.append(
-                        {
-                            "form": tds[1].text_content().strip(),
-                            "lemma": get_field(row_loc, "token_lemma"),
-                            "morph": get_field(row_loc, "token_morph"),
-                            "pos": get_field(row_loc, "token_pos"),
-                        }
-                    )
+        while True:
+            # Wait until the loading indicator is gone before reading rows
+            self.page.locator(".at-table-wrap .at-loading").wait_for(state="hidden", timeout=10000)
+            res_table = self.page.locator(".at-table-wrap")
+            for row_loc in res_table.locator(".at-row").all():
+                result.append(
+                    {
+                        "form": row_loc.locator(".at-cell--form").text_content().strip(),
+                        "lemma": get_field(row_loc, "lemma"),
+                        "morph": get_field(row_loc, "morph"),
+                        "pos": get_field(row_loc, "POS"),
+                    }
+                )
+            if self.page.locator(".at-pagination").first.locator(".page-next.disabled").count() > 0:
+                break
+            else:
+                self.page.locator(".at-pagination").first.locator(".page-next a").click()
 
         return result

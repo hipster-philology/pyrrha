@@ -14,9 +14,10 @@ class TestBookmark(Helpers):
 
     def set_bookmark(self, tok_id, page=None):
         self.page.goto(self.url_for("main.tokens_correct", corpus_id="1", page=page))
-        self.page.locator(f"#dd_t{tok_id}").click()
-        dd = self.page.locator(f"*[aria-labelledby='dd_t{tok_id}']")
-        dd.get_by_role("link", name="Set as bookmark").click()
+        self.page.locator(f"#token_{tok_id}_row .at-dd-toggle").click()
+        dd = self.page.locator(f"#token_{tok_id}_row .at-dd-menu:visible")
+        dd.get_by_role("link", name="Bookmark").click()
+        self.page.wait_for_load_state("networkidle")
 
     def test_create_bookmark(self):
         self.addCorpus("wauchier")
@@ -51,10 +52,11 @@ class TestBookmark(Helpers):
         self.page.goto(self.url_for("main.tokens_correct", corpus_id="1"))
         self.page.locator("#bookmark_link").click()
         self.page.wait_for_load_state("networkidle")
-        assert self.page.url == self.url_for("main.tokens_correct", corpus_id="1")
+        assert self.url_for("main.tokens_correct", corpus_id="1") in self.page.url
 
         self.set_bookmark(220, 3)
         self.page.goto(self.url_for("main.tokens_correct", corpus_id="1"))
         self.page.locator("#bookmark_link").click()
         self.page.wait_for_load_state("networkidle")
-        assert self.page.url == self.url_for("main.tokens_correct", corpus_id="1", page=3) + "#token_220_row"
+        assert self.url_for("main.tokens_correct", corpus_id="1", page=3) in self.page.url
+        assert self.page.url.endswith("#token_220_row")
