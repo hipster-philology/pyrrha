@@ -144,6 +144,7 @@ class TestGenericScript(TestCase):
         """ Test that db is created """
 
         result = self.invoke(["db-create"])
+        print(result.output, result.stderr, result.stdout)
         self.assertIn("Created the database", result.output)
         with self.app.app_context():
             cl = ControlLists(name="Corpus1")

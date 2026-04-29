@@ -72,6 +72,7 @@ def corpus_new():
                     Column(heading="Lemma"),
                     Column(heading="POS"),
                     Column(heading="Morph"),
+                    Column(heading="Gloss"),
                     Column(heading="Similar"),
                 ]
             }
@@ -428,6 +429,26 @@ def custom_dictionary_search_value_api(corpus_id, category):
     )
 
 
+@main.route('/corpus/<int:corpus_id>/api/gloss')
+@login_required
+@requires_corpus_access("corpus_id")
+def gloss_search_value_api(corpus_id):
+    """ Autocomplete endpoint: distinct gloss values already in the corpus. """
+    form = request.args.get("form", "").strip()
+    corpus = Corpus.get_or_404(corpus_id)
+    if not corpus.has_access(current_user):
+        abort(403)
+    q = db.session.query(WordToken.gloss).filter(
+        WordToken.corpus == corpus_id,
+        WordToken.gloss.isnot(None),
+        WordToken.gloss != '',
+    )
+    if form:
+        q = q.filter(WordToken.gloss.ilike(f'%{form}%'))
+    q = q.distinct().order_by(WordToken.gloss).limit(AUTOCOMPLETE_LIMIT)
+    return jsonify([row[0] for row in q.all()])
+
+
 @main.route("/corpus/<int:corpus_id>/preferences", methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
@@ -471,6 +492,14 @@ def preferences(corpus_id: int):
                 f"Updated preferences",
                 category="success"
             )
+    # Ensure Gloss column exists for corpora created before it was introduced
+    existing_headings = {col.heading for col in corpus.columns}
+    if "Gloss" not in existing_headings:
+        gloss_col = Column(heading="Gloss", hidden=True)
+        gloss_col.corpus_id = corpus.id
+        db.session.add(gloss_col)
+        db.session.commit()
+
     return render_template_with_nav_info(
         "main/corpus_preferences.html",
         sep_token=corpus.delimiter_token or "",

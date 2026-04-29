@@ -1,16 +1,18 @@
-{% import 'macros/nav_macros.html' as nav %}
-{% import 'macros/tokens_macros.html' as tokens_macros %}
-
 {% extends 'layouts/base.html' %}
+
+{% block custom_head_tags %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js" crossorigin="anonymous"></script>
+{% endblock %}
 
 {% block content %}
 
 {% set visible = corpus.displayed_columns_by_name %}
 
-<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('Similar tokens') }} </h1>
+<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('Similar tokens') }}</h1>
 
-
-<div class="btn-group" role="group" aria-label="Mode of filtering">
+<div class="btn-group mb-3" role="group" aria-label="Mode of filtering">
     <a href="#" class="btn btn-outline-primary disabled">Match</a>
     <a href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='partial')}}" class="btn btn-outline-secondary partial {%if mode == 'partial' %}active{%endif%}">{{ _('Partial') }}</a>
     <a href="{{url_for('main.tokens_similar_to_token', token_id=token.id, corpus_id=corpus.id, mode='complete')}}" class="btn btn-outline-secondary complete {%if mode == 'complete' %}active{%endif%}">{{ _('Complete') }}</a>
@@ -38,9 +40,6 @@
 
 <p><small>{{ _('All matches are at least a match on form.') }}</small></p>
 
-{{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_similar_to_token", mode=mode, token_id=token.id) }}
-
-
 <h2>{{ _('Original token') }}</h2>
 
 <table class="table table-bordered">
@@ -48,38 +47,26 @@
         <tr>
             <th>{{ _('Form') }}</th>
             <th>{{ _('Context') }}</th>
-            {% if "lemma" in visible %}
-            <th>{{ _('Lemma') }}</th>
-            {% endif %}
-            {% if "POS" in visible %}
-            <th>{{ _('POS') }}</th>
-            {% endif %}
-            {% if "morph" in visible %}
-            <th>{{ _('Morph') }}</th>
-            {% endif %}
+            {% if "lemma" in visible %}<th>{{ _('Lemma') }}</th>{% endif %}
+            {% if "POS" in visible %}<th>{{ _('POS') }}</th>{% endif %}
+            {% if "morph" in visible %}<th>{{ _('Morph') }}</th>{% endif %}
         </tr>
     </thead>
     <tbody>
         <tr>
             <td>{{token.form}}</td>
             <td class="small">{{token.context}}</td>
-            {% if "lemma" in visible %}
-            <td >{{token.lemma}}</td>
-            {% endif %}
-            {% if "POS" in visible %}
-            <td >{{token.POS}}</td>
-            {% endif %}
-            {% if "morph" in visible %}
-            <td >{{token.morph}}</td>
-            {% endif %}
+            {% if "lemma" in visible %}<td>{{token.lemma}}</td>{% endif %}
+            {% if "POS" in visible %}<td>{{token.POS}}</td>{% endif %}
+            {% if "morph" in visible %}<td>{{token.morph}}</td>{% endif %}
         </tr>
     </tbody>
 </table>
 
 <h2>{{ _('Similar matching') }}</h2>
 
-<div class="main">
-    {{ tokens_macros.table(tokens, corpus=corpus, changed=changed, editable=True, similar=False) }}
-</div>
+<div id="annotation-table"></div>
+<script type="application/json" id="pyrrha-config">{{ pyrrha_config | tojson | safe }}</script>
+<script src="{{ url_for('static', filename='js/annotation-table.js') }}"></script>
 
 {% endblock %}

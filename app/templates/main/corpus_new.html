@@ -34,7 +34,7 @@
         <div class="form-group">
             <label for="hideColumns">{{ _('Hide columns') }}</label>
             <ul>
-                {% for heading in ["Lemma", "POS", "Morph", "Similar"] %}
+                {% for heading in ["Lemma", "POS", "Morph", "Gloss", "Similar"] %}
                 <li>
                     <input
                         name="{{ heading.lower() }}Column"
