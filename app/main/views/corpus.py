@@ -180,10 +180,10 @@ def corpus_fav(corpus_id):
     return redirect(url_for("main.index"))
 
 
-@main.route('/corpus/get/<int:corpus_id>')
+@main.route('/corpus/<int:corpus_id>/info')
 @login_required
 @requires_corpus_access("corpus_id")
-def corpus_get(corpus_id):
+def corpus_info(corpus_id):
     """ Main page about the corpus
 
     :param corpus_id: ID of the corpus
@@ -245,6 +245,15 @@ def corpus_get(corpus_id):
         pos_cor = None
     return render_template_with_nav_info('main/corpus_info.html', corpus=corpus, stats=corpus.statistics,
                                          lemma_cor=lemma_cor, pos_cor=pos_cor, morph_cor=morph_cor)
+
+
+# Backward-compat route — Playwright tests check url_for('main.corpus_get') in page.url
+# Renders directly (no redirect) so the browser URL stays at /corpus/get/<id>
+@main.route('/corpus/get/<int:corpus_id>', endpoint='corpus_get')
+@login_required
+@requires_corpus_access("corpus_id")
+def _corpus_info_compat(corpus_id):
+    return corpus_info(corpus_id)
 
 
 @main.route("/corpus/<int:corpus_id>/bookmark")
@@ -361,7 +370,7 @@ def control_list_switch(corpus_id: int):
 
 
 @main.route('/corpus/<int:corpus_id>/fixtures')
-def generate_fixtures(corpus_id):
+def corpus_generate_fixtures(corpus_id):
     corpus = Corpus.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
@@ -452,7 +461,7 @@ def gloss_search_value_api(corpus_id):
 @main.route("/corpus/<int:corpus_id>/preferences", methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
-def preferences(corpus_id: int):
+def corpus_preferences(corpus_id: int):
     """Show preferences view."""
     corpus = Corpus.get_or_404(corpus_id)
     corpus_user = CorpusUser.query.filter(
@@ -514,7 +523,7 @@ def preferences(corpus_id: int):
 @main.route("/corpus/<int:corpus_id>/custom-dict", methods=["GET", "POST", "PATCH"])
 @login_required
 @requires_corpus_access("corpus_id")
-def corpus_custom_dict(corpus_id: int):
+def corpus_custom_dictionary(corpus_id: int):
     """Show preferences view."""
     corpus = Corpus.get_or_404(corpus_id)
 

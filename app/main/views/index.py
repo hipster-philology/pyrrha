@@ -19,7 +19,7 @@ def index():
             page=int_or(request.args.get("page"), 1),
             per_page=20  # ToDo: Should it be hardcoded ?
         )
-        return render_template_with_nav_info("main/index_loggedin.html", corpora=corpora)
+        return render_template_with_nav_info("main/corpus_list.html", corpora=corpora)
 
     return render_template_with_nav_info('main/index.html')
 

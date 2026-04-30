@@ -6,6 +6,10 @@
 
 <h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('List of tokens') }} </h1>
 
+<a href="{{ url_for('main.tokens_history_download', corpus_id=corpus.id) }}" class="btn btn-secondary btn-sm mb-2">
+    <i class="fa fa-download"></i> {{ _('Download history (TSV)') }}
+</a>
+
 {{ nav.render_pagination(pagination=tokens, corpus_id=corpus.id, endpoint="main.tokens_history") }}
 
 {{ tokens_macros.table(tokens, corpus=corpus, tracking=True, link_back=True) }}

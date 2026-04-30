@@ -23,19 +23,18 @@ class TestDashboard(Helpers):
 
     def test_get_index(self):
         self.page.goto(self.url_for("main.index"))
-        corpora = self.page.locator(".corpus-nav-link").all()
-        assert sorted([c.text_content().strip() for c in corpora]) == ["Floovant", "Wauchier"]
+        assert self.get_corpus_names_in_list_browser(admin=False) == ["Floovant", "Wauchier"]
 
     def test_index_pagination(self):
         self.add_n_corpora(200)
+        # Get the first page
         self.page.goto(self.url_for("main.index"))
-        first_page = sorted(
-            [c.text_content().strip() for c in self.page.locator(".corpus-nav-link").all()]
-        )
-        self.page.locator(".page-item a.page-link").nth(1).click()
-        second_page = sorted(
-            [c.text_content().strip() for c in self.page.locator(".corpus-nav-link").all()]
-        )
+        first_page = self.get_corpus_names_in_list_browser(admin=False)
+
+        # Go to next page
+        self.page.locator(".pagination .page-item:not(.disabled) .next-link").click()
+        self.page.wait_for_load_state("networkidle")
+        second_page = self.get_corpus_names_in_list_browser(admin=False)
         assert first_page != second_page, "Pagination should lead to different sequences"
 
     def test_mark_favorite(self):

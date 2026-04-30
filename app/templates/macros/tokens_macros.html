@@ -384,7 +384,7 @@
                         if (status === false) {
                             tr.querySelector(selector).classList.add("table-danger");
                             let element = createElement(
-                                `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
+                                `<a class="badge badge-warning badge-status custom-dict" href="{{url_for("main.corpus_custom_dictionary", corpus_id=corpus.id)}}">
                                     ${_MessageAdd.replace('$val$', tr.querySelector(selector).innerText.trim()).replace('$key$', key)}
                                 </a>`
                             );

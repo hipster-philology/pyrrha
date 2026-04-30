@@ -51,7 +51,6 @@ class TestTokenSimilarToTokenCorrect(TokenEditBase):
         assert similar_elem.text_content().strip().startswith("2 similar tokens")
         similar_elem.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.screenshot(path="edit_token.png")
         assert len(self.get_main_table_annotation_rows()) == 2, "There are two similar POS to edit"
         self.page.locator(".srt-apply-btn").click()
         try:
@@ -65,7 +64,6 @@ class TestTokenSimilarToTokenCorrect(TokenEditBase):
         self.go_to_edit_token_page("1", as_callback=False)
         similar_count = self.go_to_filter_similar_with(token_id="2", as_callback=False)
         self.page.wait_for_load_state("networkidle")
-        self.page.screenshot(path="similar_file.png")
         assert similar_count == "3", "There should be three similar tokens"
         assert len(self.get_main_table_annotation_rows()) == 3
 

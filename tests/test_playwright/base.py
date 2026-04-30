@@ -64,6 +64,43 @@ class Helpers:
     def admin_login(self):
         self.login_with_user(self.app.config["ADMIN_EMAIL"])
 
+    def go_to_control_list_curation(self, name):
+        self.page.locator("#cl-dd").click()
+        self.page.locator("#cl-dd").get_by_role("link", name="Manage", exact=False).click()
+
+        controllists_dashboard = self.page.locator("#list-browser-cl")
+        controllists_dashboard.get_by_role("link", name=name).click()
+        self.page.wait_for_load_state("networkidle")
+
+    def go_to_admin_corpus_page(self):
+        self.page.get_by_role("link", name="Admin", exact=False).first.click()
+        self.page.wait_for_load_state("networkidle")
+        self.page.get_by_role("link", name="All Corpora", exact=False).click()
+        self.page.wait_for_load_state("networkidle")
+
+    def get_corpus_names_in_list_browser(self, admin: bool = False, get_next: bool = False):
+        corpora_dashboard = self.page.locator("#list-browser-corpora table")
+        if admin:
+            td_for_name_nth = 1
+        else:
+            td_for_name_nth = 2
+        current_page = sorted(
+            [
+                el.text_content().strip()
+                for el in corpora_dashboard.locator(f"tbody tr td:nth-child({td_for_name_nth})").all()
+            ]
+        )
+        if get_next is False:
+            return current_page
+        next_link = self.page.locator(".pagination .page-item:not(.disabled) .next-link")
+        if next_link.count() == 0:
+            return current_page
+        else:
+            next_link.first.click()
+            self.page.wait_for_load_state("networkidle")
+            return sorted(
+                current_page + self.get_corpus_names_in_list_browser(admin=admin, get_next=get_next)
+            )
     # ------------------------------------------------------------------
     # ORM helpers
     # ------------------------------------------------------------------
@@ -128,7 +165,7 @@ class Helpers:
         db.session.commit()
         return email
 
-    def add_favorite(self, user_id, corpora_ids, reset: bool = True):
+    def add_favorite_via_db(self, user_id, corpora_ids, reset: bool = True):
         if reset:
             Favorite.query.filter_by(user_id=user_id).delete()
         for corpus_id in corpora_ids:
@@ -321,7 +358,6 @@ class TokenCorrectHelpers(Helpers):
         td.type(value)
 
         self.page.wait_for_load_state("networkidle")
-        self.page.screenshot(path=f"{autocomplete_selector}.png")
         autocomplete_el = self.page.locator(autocomplete_selector)
         autocomplete_el.wait_for(state="visible", timeout=5000)
         autocomplete_el.click()

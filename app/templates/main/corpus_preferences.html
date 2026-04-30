@@ -1,6 +1,6 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<form method="POST" action="{{ url_for("main.preferences", corpus_id=corpus.id) }}">
+<form method="POST" action="{{ url_for("main.corpus_preferences", corpus_id=corpus.id) }}">
         <h1>
             <i class="fa fa-cog"></i> {{ _('Preferences') }}
         </h1>

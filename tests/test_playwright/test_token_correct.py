@@ -125,9 +125,7 @@ class TestTokenCorrectWauchierCorpus(TokenCorrectHelpers):
         token, row = self.edith_nth_row_value("#", id_row="1")
         assert token.lemma != "#", "Lemma # is forbidden in control list"
 
-        self.page.get_by_role("link", name="Dashboard", exact=True).click()
-        controllists_dashboard = self.page.locator("#control_lists-dashboard")
-        controllists_dashboard.get_by_role("link", name="Wauchier").click()
+        self.go_to_control_list_curation("wauchier")
         self.page.get_by_role("link", name="Ignore values").click()
         self.page.locator("[name='punct']").click()
         self.page.locator("#submit").click()

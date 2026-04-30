@@ -26,7 +26,7 @@ def _corpus_urls(corpus, data_url=None):
         "insert": url_for("main.tokens_add_row", corpus_id=corpus.id, token_id=0)[:-1],
         "bookmark": url_for("main.corpus_bookmark", corpus_id=corpus.id),
         "similar_record": url_for("main.tokens_similar_to_record", corpus_id=corpus.id, record_id=0)[:-1],
-        "custom_dict": url_for("main.corpus_custom_dict", corpus_id=corpus.id),
+        "custom_dict": url_for("main.corpus_custom_dictionary", corpus_id=corpus.id),
         "autocomplete": {
             "lemma": {
                 "allowed": corpus.allowed_search_route("lemma"),
@@ -420,6 +420,13 @@ def tokens_export(corpus_id):
 @main.route('/corpus/get/<int:corpus_id>/history')
 @login_required
 @requires_corpus_access("corpus_id")
+def _tokens_history_compat(corpus_id):
+    return redirect(url_for('main.tokens_history', corpus_id=corpus_id), 301)
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/history')
+@login_required
+@requires_corpus_access("corpus_id")
 def tokens_history(corpus_id):
     """ History of changes in the corpus
 
@@ -428,6 +435,62 @@ def tokens_history(corpus_id):
     corpus = Corpus.get_or_404(corpus_id)
     tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 20))
     return render_template_with_nav_info('main/tokens_history.html', corpus=corpus, tokens=tokens)
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/history/download')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_history_download(corpus_id):
+    """ Download annotation history of the corpus as TSV
+
+    :param corpus_id: ID of the corpus
+    """
+    corpus = Corpus.get_or_404(corpus_id)
+    visible = corpus.displayed_columns_by_name
+    filename = slugify(corpus.name)
+
+    fieldnames = ["user", "edit", "context"]
+    for col in ("lemma", "POS", "morph", "gloss"):
+        if col in visible:
+            fieldnames += [col + "_old", col + "_new"]
+
+    def generate():
+        output = StringIO()
+        writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)
+        writer.writeheader()
+        yield output.getvalue()
+
+        records = ChangeRecord.query.filter_by(corpus=corpus_id).order_by(ChangeRecord.created_on.desc()).all()
+        for record in records:
+            output = StringIO()
+            writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)
+            ctx = ""
+            if record.word_token:
+                ctx = "{} {} {}".format(
+                    record.word_token.left_context or "",
+                    record.word_token.form,
+                    record.word_token.right_context or ""
+                ).strip()
+            row = {
+                "user": "{}.{}".format(record.user.first_name[0], record.user.last_name),
+                "edit": record.created_on.isoformat(),
+                "context": ctx,
+            }
+            for col in ("lemma", "POS", "morph", "gloss"):
+                if col in visible:
+                    row[col + "_old"] = getattr(record, col) or ""
+                    row[col + "_new"] = getattr(record, col + "_new") or ""
+            writer.writerow(row)
+            yield output.getvalue()
+
+    return Response(
+        response=stream_with_context(generate()),
+        status=200,
+        content_type="text/tab-separated-values",
+        headers={
+            "Content-Disposition": 'attachment; filename="{}-history.tsv"'.format(filename)
+        }
+    )
 
 
 def _search_token_dict(form):

@@ -50,7 +50,6 @@ class TestTokensSearchThroughFields(TokensSearchHelpers):
         #             "morph": row_loc.locator(".token_morph").text_content().strip(),
         #             "pos": row_loc.locator(".token_pos").text_content().strip(),
         #         })
-        self.page.screenshot(path="none.png")
         assert results[:3] == [
             {"form": "SOIGNORS", "lemma": "seignor", "morph": "NOMB.=p|GENRE=m|CAS=n", "pos": ""},
             {"form": "or", "lemma": "or4", "morph": "DEGRE=-", "pos": ""},
