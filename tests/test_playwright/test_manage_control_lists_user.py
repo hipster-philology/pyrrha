@@ -11,10 +11,10 @@ class TestManageControlListsUser(Helpers):
         self.app = app
 
     def go_to_control_lists_management(self, control_lists):
-        self.page.locator("#main-nav").get_by_role("link", name="Dashboard").click()
+        self.page.locator("#toggle_controllists").click()
+        self.page.locator("#cl-dd").get_by_role("link", name="Manage").click()
         self.page.wait_for_load_state("networkidle")
-        controllists_dashboard = self.page.locator("#control_lists-dashboard")
-        controllists_dashboard.get_by_role("link", name=control_lists).click()
+        self.page.locator(f"#list-browser-cl tr[title='{control_lists}'] a[title='Manage users']").click()
         self.page.wait_for_load_state("networkidle")
 
     def get_ownership_table(self):
@@ -137,7 +137,7 @@ class TestManageControlListsUser(Helpers):
 
     def test_corpus_creator_is_owner(self):
         self.addControlLists("wauchier")
-        self.page.get_by_role("link", name="New Corpus", exact=False).click()
+        self.page.get_by_role("link", name="New Corpus", exact=False).first.click()
         self.page.locator("#corpusName").fill("FreshNewCorpus")
         self.page.locator("#tokens").fill(
             "tokens\tlemmas\tpos\n"
@@ -167,20 +167,13 @@ class TestNotAdmin(Helpers):
         self.url_for = url_for_port
         self.app = app
 
-    def go_to_control_lists_management(self, control_lists):
-        self.page.locator("#main-nav").get_by_role("link", name="Dashboard").click()
-        self.page.wait_for_load_state("networkidle")
-        controllists_dashboard = self.page.locator("#control_lists-dashboard")
-        controllists_dashboard.get_by_role("link", name=control_lists).click()
-        self.page.wait_for_load_state("networkidle")
-
     def test_change_filter(self):
         self.addControlLists("wauchier", no_corpus_user=True)
         foo_email = self.add_user("foo", "bar")
         self.addControlListsUser("Wauchier", foo_email, is_owner=True)
         self.login(foo_email, self.app.config["ADMIN_PASSWORD"])
         self.page.reload()
-        self.go_to_control_lists_management("Wauchier")
+        self.go_to_control_list_curation("Wauchier")
 
         self.page.get_by_role("link", name="Ignore values").click()
         self.page.locator("[name='punct']").click()

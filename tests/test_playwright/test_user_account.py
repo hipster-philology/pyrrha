@@ -77,9 +77,9 @@ class TestUserAccount(Helpers):
     def test_admin_change_user_email(self):
         foo_email = self.add_user("foo", "bar")
         self.admin_login()
-        self.page.get_by_role("link", name="Dashboard").click()
+        self.page.get_by_role("link", name="Admin", exact=False).first.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.locator("#admin-dashboard").get_by_role("link", name="Registered Users").click()
+        self.page.locator("#main-container").get_by_role("link", name="Registered Users").click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator(".role").nth(1).click()
         self.page.wait_for_load_state("networkidle")
@@ -98,9 +98,9 @@ class TestUserAccount(Helpers):
     def test_admin_change_role(self):
         foo_email = self.add_user("foo", "bar")
         self.admin_login()
-        self.page.get_by_role("link", name="Dashboard").click()
+        self.page.get_by_role("link", name="Admin", exact=False).first.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.locator("#admin-dashboard").get_by_role("link", name="Registered Users").click()
+        self.page.locator("#main-container").get_by_role("link", name="Registered Users").click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator(".role").nth(1).click()
         self.page.wait_for_load_state("networkidle")
@@ -116,9 +116,9 @@ class TestUserAccount(Helpers):
         assert user.role_id == expected_role_id
 
         # try to change your own admin role
-        self.page.get_by_role("link", name="Dashboard").click()
+        self.page.get_by_role("link", name="Admin", exact=False).first.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.locator("#admin-dashboard").get_by_role("link", name="Registered Users").click()
+        self.page.locator("#main-container").get_by_role("link", name="Registered Users").click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator(".role").nth(0).click()
         self.page.wait_for_load_state("networkidle")
@@ -180,9 +180,9 @@ class TestUserAccount(Helpers):
         foo_id = foo_user.id
 
         self.admin_login()
-        self.page.get_by_role("link", name="Dashboard").click()
+        self.page.get_by_role("link", name="Admin", exact=False).first.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.locator("#admin-dashboard").get_by_role("link", name="Registered Users").click()
+        self.page.locator("#main-container").get_by_role("link", name="Registered Users").click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator(".role").nth(1).click()
         self.page.wait_for_load_state("networkidle")
@@ -199,9 +199,9 @@ class TestUserAccount(Helpers):
         assert CorpusUser.query.filter(CorpusUser.corpus_id == foo_id).first() is None
 
         # assert you cannot delete your own account
-        self.page.locator("#main-nav").get_by_role("link", name="Dashboard").click()
+        self.page.locator("#main-nav").get_by_role("link", name="Admin", exact=False).first.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.locator("#admin-dashboard").get_by_role("link", name="Registered Users").click()
+        self.page.locator("#main-container").get_by_role("link", name="Registered Users").click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator(".role").nth(0).click()
         self.page.wait_for_load_state("networkidle")
@@ -228,9 +228,9 @@ class TestUserAccount(Helpers):
 
     def test_invite_new_user(self):
         self.admin_login()
-        self.page.get_by_role("link", name="Dashboard").click()
+        self.page.get_by_role("link", name="Admin", exact=False).first.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.locator("#admin-dashboard").get_by_role("link", name="Invite New User").click()
+        self.page.locator("#main-container").get_by_role("link", name="Invite New User").click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator("#first_name").fill("foo")
         self.page.locator("#last_name").fill("bar")
@@ -274,9 +274,9 @@ class TestUserAccount(Helpers):
         assert self.page.locator(".alert-success").text_content().strip() == "You are now logged in. Welcome back!"
         assert self.page.locator("h3").first.text_content().strip() == "You need to confirm your account before continuing."
 
-        self.page.get_by_role("link", name="New Corpus").click()
+        self.page.get_by_role("link", name="New Corpus").first.click()
         self.page.get_by_role("link", name="Resend confirmation email")
-        self.page.get_by_role("link", name="Dashboard").click()
+        self.page.get_by_role("link", name="Corpora", exact=False).first.click()
         self.page.get_by_role("link", name="Resend confirmation email")
 
         self.logout()
@@ -287,9 +287,9 @@ class TestUserAccount(Helpers):
 
     def test_admin_add_new_user(self):
         self.admin_login()
-        self.page.get_by_role("link", name="Dashboard").click()
+        self.page.get_by_role("link", name="Admin", exact=False).first.click()
         self.page.wait_for_load_state("networkidle")
-        self.page.locator("#admin-dashboard").get_by_role("link", name="Add New User").click()
+        self.page.locator("#main-container").get_by_role("link", name="Add New User").click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator("#first_name").fill("foo")
         self.page.locator("#last_name").fill("bar")

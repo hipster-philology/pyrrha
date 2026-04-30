@@ -6,7 +6,7 @@
         post_endpoint='main.manage_corpus_users',
         post_kwargs={'corpus_id':corpus.id},
         managed_item=corpus,
-        read_endpoint='main.corpus_get',
+        read_endpoint='main.corpus_info',
         read_kwargs={'corpus_id':corpus.id},
         current_user=current_user,
         users=users,

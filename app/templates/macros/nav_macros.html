@@ -21,11 +21,9 @@
 #}
 
 {% macro header_items(current_user) %}
-    {% set user = [] %}
-    {% if current_user.is_authenticated %}
-      {% set user = ([('main.dashboard', _('Dashboard'), 'fa fa-bars')]) %}
+    {% if current_user.is_authenticated and current_user.is_admin() %}
+      {{ render_menu_items([('main.dashboard', _('Admin'), 'fa fa-lock')]) }}
     {% endif %}
-    {{ render_menu_items( user ) }}
 {% endmacro %}
 
 {# This renders the right hand side of the navigation bar. If the user is logged in, it links to
@@ -61,6 +59,9 @@
 
               {% if current_user.is_authenticated %}
               <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('main.index') }}">{{ _('My Corpora') }}</a>
+              </li>
+              <li class="nav-item">
                 <a class="nav-link" id="new_corpus_link" href="{{url_for("main.corpus_new")}}">{{ _('New Corpus') }}</a>
               </li>
               {% endif %}
@@ -69,7 +70,7 @@
                 <a id="toggle_corpus_corpora"
                    class="nav-link dropdown-toggle"
                    data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                    Corpora
+                    {{ _('Favorites') }}
                 </a>
                 <div class="dropdown-menu">
                     {% for corpus in corpora %}
@@ -81,22 +82,28 @@
                     </div>
                   </li>
               {% endif -%}
-              {%- if control_lists %}
+              {%- if current_user.is_authenticated %}
                 <li class="nav-item dropdown" id="cl-dd">
                 <a id="toggle_controllists"
                    class="nav-link dropdown-toggle"
                    data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">
-                    {{ _('Control Lists') }} 
+                    {{ _('Control Lists') }}
                 </a>
                 <div class="dropdown-menu">
-                    {% for control_list in control_lists %}
-                        <a class="dropdown-item dd-control_list"
-                           id="dropdown_link_cl_{{control_list.id}}" href="{{url_for("control_lists_bp.get", control_list_id=control_list.id)}}">
-                            {{ control_list.name | safe }}
-                        </a>
-                    {% endfor %}
-                    </div>
-                  </li>
+                    <a class="dropdown-item font-weight-bold" href="{{ url_for('main.user_control_lists') }}">
+                        <i class="fa fa-th-list mr-1"></i>{{ _('Manage') }}
+                    </a>
+                    {% if control_lists %}
+                        <div class="dropdown-divider"></div>
+                        {% for control_list in control_lists %}
+                            <a class="dropdown-item dd-control_list"
+                               id="dropdown_link_cl_{{control_list.id}}" href="{{url_for("control_lists_bp.get", control_list_id=control_list.id)}}">
+                                {{ control_list.name | safe }}
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                </li>
               {% endif -%}
             </ul>
             <ul class="navbar-nav">
@@ -191,11 +198,16 @@
             <a class="btn btn-outline-dark title px-2">
                 {{ _('Corpus') }}
             </a>
-            <a class="btn btn-outline-dark" title="Get corpus statistics and informations" id="stats_{{corpus.id}}" href="{{url_for("main.corpus_get", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Get corpus statistics and informations" id="stats_{{corpus.id}}" href="{{url_for("main.corpus_info", corpus_id=corpus.id)}}">
                 <i class="fa fa-tachometer"></i> {{ _('Home') }}</a>
-            <a class="btn btn-outline-dark" title="Manage corpus' settings" href="{{url_for("main.preferences", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Manage corpus' settings" href="{{url_for("main.corpus_preferences", corpus_id=corpus.id)}}">
                 <i class="fa fa-cog"></i> {{ _('Preferences') }}
             </a>
+            {% if corpus.is_owned_by(current_user) or current_user.is_admin() %}
+            <a class="btn btn-outline-dark" title="Manage who can access this corpus" href="{{url_for("main.manage_corpus_users", corpus_id=corpus.id)}}">
+                <i class="fa fa-users"></i> {{ _('Users') }}
+            </a>
+            {% endif %}
         </div>
         <div class="btn-group btn-group-sm" role="group">
             <a class="btn btn-outline-dark title">
@@ -209,7 +221,7 @@
                         <i class="fa fa-exchange"></i> {{ _('Change') }}
                 </a>
             {% endif %}
-            <a class="btn btn-outline-dark" title="Edit value in the corpus custom dictionary" href="{{url_for("main.corpus_custom_dict", corpus_id=corpus.id)}}">
+            <a class="btn btn-outline-dark" title="Edit value in the corpus custom dictionary" href="{{url_for("main.corpus_custom_dictionary", corpus_id=corpus.id)}}">
                 <i class="fa fa-book"></i> {{ _('Corpus Custom Dictionary') }}
             </a>
         </div>

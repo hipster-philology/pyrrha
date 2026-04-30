@@ -18,7 +18,6 @@ class TestCorpusRegistration(Helpers):
         self.app = app
 
     def go_to_new_corpus(self):
-        self.page.screenshot(path="screenshot.png")
         self.page.locator("#new_corpus_link").click()
         self.page.wait_for_load_state("networkidle")
 
@@ -455,9 +454,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#submit").click()
         self.page.wait_for_load_state("networkidle")
 
-        self.page.get_by_role("link", name="Dashboard").click()
-        controllists_dashboard = self.page.locator("#control_lists-dashboard")
-        controllists_dashboard.get_by_role("link", name="Wauchier").click()
+        self.go_to_control_list_curation("Wauchier")
         self.page.get_by_role("link", name="Ignore values").click()
         self.page.wait_for_load_state("networkidle")
 

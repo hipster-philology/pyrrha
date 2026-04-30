@@ -12,11 +12,11 @@ class TestManageCorpusUser(Helpers):
 
     def go_to_corpus_management(self, corpus_name):
         self.page.goto(self.url_for("main.list_corpora"))
-        for tr in self.page.locator("tbody > tr").all():
-            if tr.locator(".name").text_content().strip() == corpus_name:
-                tr.locator("a span[aria-label='Manage']").click()
-                self.page.wait_for_load_state("networkidle")
-                return
+        self.page.wait_for_load_state("networkidle")
+        for tr in self.page.locator(f"tbody tr[title='{corpus_name}']").all():
+            tr.locator("a[title='Manage users']").click()
+            self.page.wait_for_load_state("networkidle")
+            return
         raise ValueError(f"Corpus not found: {corpus_name}")
 
     def get_ownership_table(self):
@@ -139,7 +139,7 @@ class TestManageCorpusUser(Helpers):
 
     def test_corpus_creator_is_owner(self):
         self.addCorpus("wauchier")
-        self.page.get_by_role("link", name="New Corpus", exact=False).click()
+        self.page.get_by_role("link", name="New Corpus", exact=False).first.click()
         self.page.locator("#corpusName").fill("FreshNewCorpus")
         self.page.locator("#tokens").fill(
             "tokens\tlemmas\tpos\n"
