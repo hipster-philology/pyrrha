@@ -2,6 +2,7 @@
 import csv
 import pytest
 from flask import url_for
+from playwright.sync_api import expect
 
 from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, ControlLists
 from app import db
@@ -314,7 +315,7 @@ class TestCorpusRegistration(Helpers):
         self.go_to_new_corpus()
         temp_file = self.create_temp_example_file(tmp_path)
         self.page.locator("#upload").set_input_files(str(temp_file))
-        self.page.wait_for_load_state("networkidle")
+        expect(self.page.locator("#tokens[data-upload-complete='true']")).to_be_attached()
 
         tokens_value = self.page.locator("#tokens").input_value()
         with open(temp_file) as fp:
