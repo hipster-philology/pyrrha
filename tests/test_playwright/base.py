@@ -216,6 +216,8 @@ class Helpers:
         locator.fill(text)
 
     def write_lorem_ipsum_tokens(self):
+        self.page.locator("#mode-annotated").click()
+        self.page.locator("#panel-annotated").wait_for(state="visible")
         self.page.locator("#tokens").fill(LOREM_IPSUM)
 
     def wait_until_shown(self, element_id):

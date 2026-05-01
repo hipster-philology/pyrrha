@@ -29,6 +29,8 @@ class TestTokenReference(Helpers):
         """Create the test corpus via the UI and return its DB object."""
         self.page.locator("#new_corpus_link").click()
         self.page.wait_for_load_state("networkidle")
+        self.page.locator("#mode-annotated").click()
+        self.page.locator("#panel-annotated").wait_for(state="visible")
 
         self.page.locator("#corpusName").fill(CORPUS_NAME)
         self.page.locator("#tokens").fill(REF_TSV)
