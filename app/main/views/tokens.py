@@ -444,11 +444,14 @@ def tokens_export(corpus_id):
         tokens = corpus.get_tokens().all()
         if format == "tsv":
             output = StringIO()
-            fieldnames = ["form", "lemma", "POS", "morph", "gloss"]
+            has_refs = any(tok.token_reference for tok in tokens)
+            fieldnames = (["token_reference"] if has_refs else []) + ["form", "lemma", "POS", "morph", "gloss"]
             writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)
             writer.writeheader()
             for tok in tokens:
                 row = {"form": tok.form}
+                if has_refs:
+                    row["token_reference"] = tok.token_reference or ""
                 for field in ("lemma", "POS", "morph", "gloss"):
                     if field in allowed_columns:
                         row[field] = getattr(tok, field)
@@ -462,6 +465,21 @@ def tokens_export(corpus_id):
                     "Content-Disposition": 'attachment; filename="{}.tsv"'.format(filename)
                 }
             )
+    elif format == "standoff-tei":
+        tokens = corpus.get_tokens().all()
+        base = tokens[0].id - 1
+        return Response(
+            stream_with_context(stream_template(
+                "tei/standoff.xml",
+                base=base,
+                tokens=tokens,
+                allowed_columns=allowed_columns,
+                delimiter=corpus.delimiter_token
+            )),
+            status=200,
+            headers={"Content-Disposition": 'attachment; filename="{}-standoff.xml"'.format(filename)},
+            mimetype="text/xml"
+        )
     elif format == "tei-geste":
         tokens = corpus.get_tokens().all()
         base = tokens[0].id - 1
