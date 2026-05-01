@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0">
+    <teiHeader>
+        <fileDesc>
+            <titleStmt><title></title></titleStmt>
+            <publicationStmt><p></p></publicationStmt>
+            <sourceDesc><p></p></sourceDesc>
+        </fileDesc>
+    </teiHeader>
+    <text>
+        <body>
+            <div>
+                <ab>
+                {% for token in tokens %}
+                    {%- if token.form != delimiter %}
+                    <w xml:id="{{ token.token_reference or ('t' ~ (token.id - base)) }}">{{ token.form }}</w>
+                    {%- endif %}
+                {% endfor %}
+                </ab>
+            </div>
+        </body>
+    </text>
+    <standOff>
+        <listAnnotation>
+        {% for token in tokens %}
+            {%- if token.form != delimiter %}
+            <annotationBlock corresp="#{{ token.token_reference or ('t' ~ (token.id - base)) }}">
+                <fs type="annotation">
+                    {% if "lemma" in allowed_columns and token.lemma %}
+                    <f name="lemma"><string>{{ token.lemma }}</string></f>
+                    {% endif %}
+                    {% if "POS" in allowed_columns and token.POS %}
+                    <f name="pos"><symbol value="{{ token.POS }}"/></f>
+                    {% endif %}
+                    {% if "morph" in allowed_columns and token.morph and token.morph != "None" %}
+                    <f name="msd"><string>{{ token.morph }}</string></f>
+                    {% endif %}
+                    {% if "gloss" in allowed_columns and token.gloss %}
+                    <f name="gloss"><string>{{ token.gloss }}</string></f>
+                    {% endif %}
+                </fs>
+            </annotationBlock>
+            {%- endif %}
+        {% endfor %}
+        </listAnnotation>
+    </standOff>
+</TEI>

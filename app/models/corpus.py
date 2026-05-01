@@ -778,6 +778,7 @@ class WordToken(db.Model):
     gloss = db.Column(db.String(512), nullable=True)
     needs_review = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
     review_comment = db.Column(db.String(512), nullable=True)
+    token_reference = db.Column(db.String(512), nullable=True)
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
@@ -822,6 +823,7 @@ class WordToken(db.Model):
             "gloss": self.gloss,
             "needs_review": self.needs_review,
             "review_comment": self.review_comment,
+            "token_reference": self.token_reference,
             "context": self.context
         }
 
@@ -1253,6 +1255,8 @@ class WordToken(db.Model):
         lemma_key = "lemma" if "lemma" in _keys else "lemmas"
         pos_key = "pos" if "pos" in _keys else "POS"
         morph_key = "morph"
+        gloss_key = "gloss" if "gloss" in _keys else None
+        ref_key = "token_reference" if "token_reference" in _keys else "ref" if "ref" in _keys else None
 
         for i, token in enumerate(word_tokens_dict):
 
@@ -1288,6 +1292,8 @@ class WordToken(db.Model):
                 label_uniform=label_uniform,
                 POS=POS,
                 morph=morph,
+                gloss=token.get(gloss_key) or None if gloss_key else None,
+                token_reference=token.get(ref_key) or None if ref_key else None,
                 left_context=" ".join(previous_token),
                 right_context=" ".join(next_token),
                 corpus=corpus_id,

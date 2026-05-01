@@ -549,7 +549,7 @@
 
         <!-- Col 1: ID spans 2 rows -->
         <div class="at-cell at-cell--id">
-          <a :href="'#tok' + token.order_id" :id="'tok' + token.order_id" class="at-order-id" tabindex="-1">{{ token.order_id }}</a>
+          <a :href="'#tok' + token.order_id" :id="'tok' + token.order_id" class="at-order-id" tabindex="-1">{{ token.token_reference ?? token.order_id }}</a>
           <button :class="['at-review-toggle', state.needs_review && 'at-review-toggle--active']"
                   :title="state.needs_review ? (state.review_comment || 'Flagged for review') : 'Mark for review'"
                   @click="state.showReviewPanel = !state.showReviewPanel" tabindex="-1">⚑</button>

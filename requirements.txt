@@ -3,6 +3,7 @@ Flask>3.0.0
 Jinja2
 Werkzeug
 psycopg[binary]
+lxml
 
 # DB
 Flask-SQLAlchemy
