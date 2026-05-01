@@ -45,6 +45,7 @@ class TestDashboard(Helpers):
 
         self.addCorpusUser("Floovant", foo_email, False)
         self.page.reload()
+        self.page.wait_for_load_state("networkidle")
 
         cols = self.get_corpus_names_in_list_browser(admin=False)
         assert len(cols) == 2
@@ -68,6 +69,7 @@ class TestDashboard(Helpers):
         )
         self.admin_login()
         self.go_to_admin_corpus_page()
+        self.page.wait_for_load_state("networkidle")
         corpora_names = self.get_corpus_names_in_list_browser(admin=True)
         assert corpora_names == inserted_corpora
 
