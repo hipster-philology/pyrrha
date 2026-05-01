@@ -26,12 +26,14 @@
             "columns": [
                 {"key": "fav",         "label": "",                        "link_key": "url_fav",     "icon_key": "fav_icon"},
                 {"key": "name",        "label": "{{ _('Name') }}",         "link_key": "url_correct"},
-                {"key": "token_count", "label": "{{ _('Tokens') }}"},
-                {"key": "user_count",  "label": "{{ _('Users') }}"},
-                {"key": "last_change", "label": "{{ _('Last change') }}"}
+                {"key": "token_count",       "label": "{{ _('Tokens') }}"},
+                {"key": "user_count",        "label": "{{ _('Users') }}"},
+                {"key": "needs_review_count","label": "{{ _('Needs review') }}", "link_key": "url_needs_review"},
+                {"key": "last_change",       "label": "{{ _('Last change') }}"}
             ],
             "actions": [
                 {"icon": "fa-download", "link_key": "url_export", "label": "{{ _('Export') }}"},
+                {"icon": "fa-flag", "link_key": "url_needs_review", "label": "{{ _('Tokens to review') }}"},
                 {"icon": "fa-users", "link_key": "url_manage", "label": "{{ _('Manage users') }}"},
                 {"icon": "fa-info-circle", "link_key": "url_get", "label": "{{ _('Details') }}"}
             ]

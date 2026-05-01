@@ -1,0 +1,18 @@
+{% extends 'layouts/base.html' %}
+
+{% block custom_head_tags %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block content %}
+
+<h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('Tokens flagged for review') }}</h1>
+
+<div id="annotation-table"></div>
+
+<script type="application/json" id="pyrrha-config">{{ pyrrha_config | tojson | safe }}</script>
+<script src="{{ url_for('static', filename='js/annotation-table.js') }}"></script>
+
+{% endblock %}

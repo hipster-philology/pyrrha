@@ -7,6 +7,7 @@ from csv import DictWriter
 from io import StringIO
 from typing import Dict
 
+from app import db
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
@@ -25,6 +26,7 @@ def _corpus_urls(corpus, data_url=None):
         "remove": url_for("main.tokens_del_row", corpus_id=corpus.id, token_id=0)[:-1],
         "insert": url_for("main.tokens_add_row", corpus_id=corpus.id, token_id=0)[:-1],
         "bookmark": url_for("main.corpus_bookmark", corpus_id=corpus.id),
+        "review": url_for("main.tokens_mark_review", corpus_id=corpus.id, token_id=0)[:-1],  # strips trailing 0
         "similar_record": url_for("main.tokens_similar_to_record", corpus_id=corpus.id, record_id=0)[:-1],
         "custom_dict": url_for("main.corpus_custom_dictionary", corpus_id=corpus.id),
         "autocomplete": {
@@ -343,6 +345,87 @@ def tokens_correct_from_record(corpus_id, record_id):
     record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
     changed = record.apply_changes_to(user_id=current_user.id, token_ids=request.json.get("word_tokens"))
     return jsonify([word_token.to_dict() for word_token in changed])
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/review/<int:token_id>', methods=["POST"])
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_mark_review(corpus_id, token_id):
+    """ Mark or unmark a token for review with an optional comment.
+
+    :param corpus_id: Id of the corpus
+    :param token_id: Id of the token
+    """
+    token = WordToken.query.filter_by(id=token_id, corpus=corpus_id).first_or_404()
+    if request.is_json:
+        data = request.get_json()
+    else:
+        data = request.form
+    needs_review = data.get('needs_review', 'false')
+    if isinstance(needs_review, str):
+        needs_review = needs_review.lower() == 'true'
+    else:
+        needs_review = bool(needs_review)
+    token.needs_review = needs_review
+    token.review_comment = string_to_none(data.get('review_comment')) if needs_review else None
+    db.session.add(token)
+    db.session.commit()
+    return jsonify({"token": token.to_dict()})
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/needs-review')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_needs_review(corpus_id):
+    """ Page to edit tokens flagged for review
+
+    :param corpus_id: Id of the corpus
+    """
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
+    visible_cols = list(corpus.displayed_columns_by_name.keys())
+    pyrrha_config = {
+        "corpus_id": corpus.id,
+        "visible_columns": visible_cols,
+        "urls": _corpus_urls(
+            corpus,
+            data_url=url_for("main.tokens_needs_review_data", corpus_id=corpus.id)
+        ),
+    }
+    return render_template_with_nav_info(
+        'main/tokens_needs_review.html',
+        corpus=corpus,
+        pyrrha_config=pyrrha_config
+    )
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/needs-review/data')
+@login_required
+@requires_corpus_access("corpus_id")
+def tokens_needs_review_data(corpus_id):
+    """ JSON endpoint: paginated tokens flagged for review. """
+    corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
+    tokens = corpus.get_needs_review().paginate(
+        page=int_or(request.args.get("page"), 1),
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+    )
+    changed = corpus.changed(tokens.items)
+    tokens_data = []
+    for tok in tokens.items:
+        d = tok.to_dict()
+        d["changed"] = tok.id in changed
+        d["similar"] = 0
+        d["similar_link"] = None
+        d["left_context"] = tok.left_context or ""
+        d["right_context"] = tok.right_context or ""
+        tokens_data.append(d)
+    return jsonify({
+        "tokens": tokens_data,
+        "page": tokens.page,
+        "pages": tokens.pages,
+        "total": tokens.total,
+        "per_page": tokens.per_page,
+        "bookmark_token_id": None,
+    })
 
 
 @main.route('/corpus/<int:corpus_id>/tokens')

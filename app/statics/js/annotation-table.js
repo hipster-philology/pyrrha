@@ -366,6 +366,10 @@
         saveStatus: null,
         saveMessage: '',
         invalidFields: {},
+        needs_review: props.token.needs_review ?? false,
+        review_comment: props.token.review_comment ?? '',
+        showReviewPanel: false,
+        reviewSaving: false,
       });
 
       const saved = reactive({
@@ -381,7 +385,7 @@
       const hasGloss   = computed(() => props.visibleColumns.includes('gloss'));
       const hasSimilar = computed(() => props.visibleColumns.includes('similar'));
 
-      const rowClass = computed(() => ['at-row', state.changed && 'at-row--changed']);
+      const rowClass = computed(() => ['at-row', state.changed && 'at-row--changed', state.needs_review && 'at-row--needs-review']);
       const simClass = computed(() => {
         if (state.similar > 100) return 'sim-badge sim-badge--many';
         if (state.similar > 0)   return 'sim-badge sim-badge--has';
@@ -511,13 +515,33 @@
         if (Object.keys(state.invalidFields).length === 0) save();
       }
 
+      async function saveReview(markForReview) {
+        state.reviewSaving = true;
+        try {
+          const body = new FormData();
+          body.append('needs_review', markForReview ? 'true' : 'false');
+          if (markForReview && state.review_comment) {
+            body.append('review_comment', state.review_comment);
+          }
+          const resp = await fetch(`${props.urls.review}${props.token.id}`, { method: 'POST', body });
+          if (resp.ok) {
+            const data = await resp.json();
+            state.needs_review = data.token.needs_review;
+            state.review_comment = data.token.review_comment ?? '';
+            state.showReviewPanel = false;
+          }
+        } finally {
+          state.reviewSaving = false;
+        }
+      }
+
       expose({ focusFirst, focusLast });
 
       return {
         state, saved, rowClass, simClass,
         hasLemma, hasPOS, hasMorph, hasGloss, hasSimilar,
         acUrls, refLemma, refPOS, refMorph, refGloss,
-        save, onDictAdded, onTabNext, onTabPrev,
+        save, onDictAdded, onTabNext, onTabPrev, saveReview,
       };
     },
     template: `
@@ -526,6 +550,9 @@
         <!-- Col 1: ID spans 2 rows -->
         <div class="at-cell at-cell--id">
           <a :href="'#tok' + token.order_id" :id="'tok' + token.order_id" class="at-order-id" tabindex="-1">{{ token.order_id }}</a>
+          <button :class="['at-review-toggle', state.needs_review && 'at-review-toggle--active']"
+                  :title="state.needs_review ? (state.review_comment || 'Flagged for review') : 'Mark for review'"
+                  @click="state.showReviewPanel = !state.showReviewPanel" tabindex="-1">⚑</button>
         </div>
 
         <!-- Col 2: Form spans 2 rows -->
@@ -605,6 +632,16 @@
           <span>{{ state.similarRecordCount }} similar token{{ state.similarRecordCount > 1 ? 's' : '' }} share this form — click to apply the same correction</span>
         </a>
 
+        <!-- Review panel — full-width row, shown when user opens the review flag form -->
+        <div v-if="state.showReviewPanel" class="at-cell at-review-panel">
+          <textarea v-model="state.review_comment" placeholder="Optional comment…" rows="2"></textarea>
+          <div class="at-review-actions">
+            <button class="at-review-flag-btn" @click="saveReview(true)" :disabled="state.reviewSaving">{{ state.reviewSaving ? '…' : 'Flag for review' }}</button>
+            <button v-if="state.needs_review" class="at-review-remove-btn" @click="saveReview(false)" :disabled="state.reviewSaving">Remove flag</button>
+            <button class="at-review-cancel-btn" @click="state.showReviewPanel = false">Cancel</button>
+          </div>
+        </div>
+
         <!-- Col 5: ⋯ menu spans 2 rows -->
         <div class="at-cell at-cell--dd">
           <div class="at-dropdown">
@@ -614,6 +651,8 @@
               <li><a :href="urls.remove + token.id" tabindex="-1">Delete row</a></li>
               <li><a :href="urls.insert + token.id" tabindex="-1">Add token after</a></li>
               <li><a :href="urls.bookmark + '?token_id=' + token.id + '&page=' + page" tabindex="-1">Bookmark</a></li>
+              <li><a href="#" tabindex="-1" @click.prevent="state.showReviewPanel = !state.showReviewPanel">{{ state.needs_review ? 'Edit review flag' : 'Mark for review' }}</a></li>
+              <li v-if="state.needs_review"><a href="#" tabindex="-1" @click.prevent="saveReview(false)">Remove review flag</a></li>
             </ul>
           </div>
         </div>
