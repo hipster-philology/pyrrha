@@ -79,6 +79,7 @@ class Helpers:
         self.page.wait_for_load_state("networkidle")
 
     def get_corpus_names_in_list_browser(self, admin: bool = False, get_next: bool = False):
+        self.page.wait_for_load_state("networkidle")
         corpora_dashboard = self.page.locator("#list-browser-corpora table")
         if admin:
             td_for_name_nth = 1
