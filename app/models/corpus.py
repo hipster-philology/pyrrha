@@ -368,6 +368,13 @@ class Corpus(db.Model):
             db.and_(*list_darguments)
         ).order_by(WordToken.order_id)
 
+    def get_needs_review(self):
+        """ Return all tokens in this corpus flagged for review """
+        return WordToken.query.filter(
+            WordToken.corpus == self.id,
+            WordToken.needs_review == True
+        ).order_by(WordToken.order_id)
+
     @property
     def tokens_count(self):
         """ Count the number of tokens
@@ -769,6 +776,8 @@ class WordToken(db.Model):
     POS = db.Column(db.String(128))
     morph = db.Column(db.String(128))
     gloss = db.Column(db.String(512), nullable=True)
+    needs_review = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
+    review_comment = db.Column(db.String(512), nullable=True)
     left_context = db.Column(db.String(512))
     right_context = db.Column(db.String(512))
 
@@ -811,6 +820,8 @@ class WordToken(db.Model):
             "POS": self.POS,
             "morph": self.morph,
             "gloss": self.gloss,
+            "needs_review": self.needs_review,
+            "review_comment": self.review_comment,
             "context": self.context
         }
 

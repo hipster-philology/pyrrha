@@ -254,6 +254,9 @@
             <a class="btn btn-outline-dark" title="Browse the annotations' history" href="{{url_for("main.tokens_history", corpus_id=corpus.id)}}">
                 <i class="fa fa-list"></i> {{ _('History') }}
             </a>
+            <a class="btn btn-outline-dark" title="Tokens flagged for review" href="{{url_for("main.tokens_needs_review", corpus_id=corpus.id)}}">
+                <i class="fa fa-flag"></i> {{ _('To review') }}
+            </a>
         </div>
         <div class="btn-group btn-group-sm" role="group">
             <a class="btn btn-outline-dark title"><i class="fa fa-pencil"></i> {{ _('Correct unallowed ...') }}</a>

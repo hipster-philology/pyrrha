@@ -51,7 +51,13 @@ def _corpus_subqueries():
         .correlate(Corpus)
         .scalar_subquery()
     )
-    return user_count, token_count, last_change, is_fav, owner_sort
+    needs_review_count = (
+        db.session.query(func.count(WordToken.id))
+        .filter(WordToken.corpus == Corpus.id, WordToken.needs_review == True)
+        .correlate(Corpus)
+        .scalar_subquery()
+    )
+    return user_count, token_count, last_change, is_fav, owner_sort, needs_review_count
 
 
 @main.route('/api/browse/corpora')
@@ -63,7 +69,7 @@ def browse_corpora_api():
         abort(403)
     admin_view = wants_admin
 
-    user_count_sq, token_count_sq, last_change_sq, is_fav_sq, owner_sort_sq = _corpus_subqueries()
+    user_count_sq, token_count_sq, last_change_sq, is_fav_sq, owner_sort_sq, needs_review_count_sq = _corpus_subqueries()
 
     base = db.session.query(
         Corpus,
@@ -71,6 +77,7 @@ def browse_corpora_api():
         token_count_sq.label('token_count'),
         last_change_sq.label('last_change'),
         is_fav_sq.label('is_fav'),
+        needs_review_count_sq.label('needs_review_count'),
     )
 
     if not admin_view:
@@ -126,7 +133,7 @@ def browse_corpora_api():
         owners_by_corpus.setdefault(corpus_id, []).append(f'{first} {last}')
 
     items = []
-    for corpus, user_count, token_count, last_change, is_fav in pagination.items:
+    for corpus, user_count, token_count, last_change, is_fav, needs_review_count in pagination.items:
         items.append({
             'id': corpus.id,
             'name': corpus.name,
@@ -136,11 +143,13 @@ def browse_corpora_api():
             'token_count': token_count,
             'is_fav': bool(is_fav),
             'fav_icon': 'fa-star' if is_fav else 'fa-star-o',
+            'needs_review_count': needs_review_count or 0,
             'url_correct': url_for('main.tokens_correct', corpus_id=corpus.id),
             'url_export': url_for('main.tokens_export', corpus_id=corpus.id),
             'url_manage': url_for('main.manage_corpus_users', corpus_id=corpus.id),
             'url_fav': url_for('main.corpus_fav', corpus_id=corpus.id),
             'url_get': url_for('main.corpus_info', corpus_id=corpus.id),
+            'url_needs_review': url_for('main.tokens_needs_review', corpus_id=corpus.id) if needs_review_count else None,
         })
 
     return jsonify({

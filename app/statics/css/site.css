@@ -340,17 +340,81 @@ https://codepen.io/sergiopedercini/pen/jmKdbj/?source=post_page-----------------
 .at-row:last-child { border-bottom: none; }
 .at-row:hover { background: var(--at-highlight); }
 .at-row--changed { background: rgba(59, 130, 246, 0.04); border-left: 4px solid #3b82f6; }
+.at-row--needs-review { background: rgba(234, 179, 8, 0.07); border-left: 4px solid #d97706; }
+
+.at-review-panel {
+  grid-column: 1 / -1;
+  padding: 8px 12px;
+  background: #fefce8;
+  border-top: 1px solid #fde047;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.at-review-panel textarea {
+  width: 100%;
+  font-size: 12px;
+  font-family: 'IBM Plex Mono', monospace;
+  border: 1px solid #f59e0b;
+  border-radius: 4px;
+  padding: 4px 8px;
+  resize: vertical;
+}
+.at-review-actions { display: flex; gap: 8px; align-items: center; }
+
+.at-review-flag-btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px; font-weight: 500;
+  background: #d97706; color: #fff;
+  border: none; border-radius: 4px; padding: 4px 12px; cursor: pointer;
+}
+.at-review-flag-btn:hover:not(:disabled) { background: #b45309; }
+.at-review-flag-btn:disabled { opacity: 0.5; cursor: default; }
+
+.at-review-cancel-btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px; font-weight: 500;
+  color: var(--at-text-secondary);
+  background: none; border: 1px solid var(--at-border-strong);
+  border-radius: 4px; padding: 4px 12px; cursor: pointer;
+}
+.at-review-cancel-btn:hover { background: var(--at-highlight); }
+
+.at-review-remove-btn {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 12px; font-weight: 500;
+  color: #dc2626;
+  background: none; border: 1px solid #dc2626;
+  border-radius: 4px; padding: 4px 12px; cursor: pointer;
+}
+.at-review-remove-btn:hover:not(:disabled) { background: #fee2e2; }
+.at-review-remove-btn:disabled { opacity: 0.5; cursor: default; }
 
 /* Cells */
 .at-cell { border-right: 1px solid var(--at-border); }
 
 .at-cell--id {
   grid-column: 1; grid-row: 1 / 3;
-  display: flex; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px;
   color: var(--at-text-muted); font-size: 11px;
 }
 .at-order-id { color: var(--at-text-muted); text-decoration: none; }
 .at-order-id:hover { color: var(--at-crimson); }
+
+.at-review-toggle {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  background: none;
+  border: 1px solid var(--at-border-strong);
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 12px; line-height: 1; padding: 0;
+  color: var(--at-border-strong);
+  transition: color .1s, background .1s, border-color .1s;
+}
+.at-review-toggle:hover { color: #d97706; background: #fef3c7; border-color: #f59e0b; }
+.at-review-toggle--active { color: #d97706; background: #fef3c7; border-color: #f59e0b; }
 
 /* Row 1+2 cells that span */
 .at-cell--form {
