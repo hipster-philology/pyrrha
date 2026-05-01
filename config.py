@@ -58,12 +58,12 @@ class DevelopmentConfig(Config):
     print('THIS APP IS IN DEBUG MODE. YOU SHOULD NOT SEE THIS IN PRODUCTION.')
 
     # Email
-    MAIL_SERVER = 'smtp.mailgun.org'
+    MAIL_SERVER = os.environ.get('MAIL_SERVER') or 'smtp.mailgun.org'
     MAIL_PORT = 465
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
-    MAIL_USERNAME = 'postmaster@sandboxfa7a873303c1425f8fda7947aa195696.mailgun.org'
-    MAIL_PASSWORD = 'c3c7cc3c785815a8728a6266745a70db-b6183ad4-c78d7487'
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
 
     ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD') or 'admin'
@@ -124,8 +124,8 @@ class BaseTestConfig(Config):
     MAIL_PORT = 465
     MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS') or False
     MAIL_USE_SSL = os.environ.get('MAIL_USE_SSL') or True
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME') or 'postmaster@sandboxfa7a873303c1425f8fda7947aa195696.mailgun.org'
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD') or 'c3c7cc3c785815a8728a6266745a70db-b6183ad4-c78d7487'
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
     SEND_MAIL_STATUS = os.environ.get('SEND_MAIL_STATUS', False)
 

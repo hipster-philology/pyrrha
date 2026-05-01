@@ -68,7 +68,7 @@ def create_app(config_name="dev"):
     db.init_app(app)
     migrate.init_app(app, db)
     login_manager.init_app(app)
-    #csrf.init_app(app)
+    csrf.init_app(app)
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
     babel.init_app(app, locale_selector=get_locale)

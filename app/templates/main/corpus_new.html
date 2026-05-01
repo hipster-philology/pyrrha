@@ -4,6 +4,7 @@
 
 {% block content %}
     <form method="POST" action="{{url_for("main.corpus_new")}}" id="form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     {{ validateLength.validateLength("tokens", {0: 64}) }}
     <h1>{{ _('Create a new corpus') }}</h1>
     <fieldset class="form-fieldset">
