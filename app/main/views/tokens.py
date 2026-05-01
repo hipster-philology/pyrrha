@@ -6,6 +6,7 @@ import math
 from csv import DictWriter
 from io import StringIO
 from typing import Dict
+from sqlalchemy.orm import selectinload
 
 from app import db
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
@@ -441,24 +442,34 @@ def tokens_export(corpus_id):
     filename = slugify(corpus.name)
     allowed_columns = corpus.displayed_columns_by_name
     if format in ["tsv"]:
-        tokens = corpus.get_tokens().all()
         if format == "tsv":
-            output = StringIO()
-            has_refs = any(tok.token_reference for tok in tokens)
+            has_refs = db.session.query(
+                WordToken.query.filter(
+                    WordToken.corpus == corpus_id,
+                    WordToken.token_reference.isnot(None)
+                ).exists()
+            ).scalar()
             fieldnames = (["token_reference"] if has_refs else []) + ["form", "lemma", "POS", "morph", "gloss"]
-            writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)
-            writer.writeheader()
-            for tok in tokens:
-                row = {"form": tok.form}
-                if has_refs:
-                    row["token_reference"] = tok.token_reference or ""
-                for field in ("lemma", "POS", "morph", "gloss"):
-                    if field in allowed_columns:
-                        row[field] = getattr(tok, field)
-                writer.writerow(row)
-            output.seek(0)
+
+            def generate():
+                out = StringIO()
+                w = DictWriter(out, fieldnames=fieldnames, **TSV_CONFIG)
+                w.writeheader()
+                yield out.getvalue()
+                for tok in corpus.get_tokens().yield_per(500):
+                    out = StringIO()
+                    w = DictWriter(out, fieldnames=fieldnames, **TSV_CONFIG)
+                    row = {"form": tok.form}
+                    if has_refs:
+                        row["token_reference"] = tok.token_reference or ""
+                    for field in ("lemma", "POS", "morph", "gloss"):
+                        if field in allowed_columns:
+                            row[field] = getattr(tok, field)
+                    w.writerow(row)
+                    yield out.getvalue()
+
             return Response(
-                response=stream_with_context(stream_tsv(output)),
+                response=stream_with_context(generate()),
                 status=200,
                 content_type="text/tab-separated-values",
                 headers={
@@ -561,7 +572,13 @@ def tokens_history_download(corpus_id):
         writer.writeheader()
         yield output.getvalue()
 
-        records = ChangeRecord.query.filter_by(corpus=corpus_id).order_by(ChangeRecord.created_on.desc()).all()
+        records = (
+            ChangeRecord.query
+            .filter_by(corpus=corpus_id)
+            .order_by(ChangeRecord.created_on.desc())
+            .options(selectinload(ChangeRecord.word_token), selectinload(ChangeRecord.user))
+            .yield_per(500)
+        )
         for record in records:
             output = StringIO()
             writer = DictWriter(output, fieldnames=fieldnames, **TSV_CONFIG)

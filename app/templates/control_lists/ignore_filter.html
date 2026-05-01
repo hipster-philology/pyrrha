@@ -16,6 +16,7 @@
         </p>
 
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" name="ignore" value="ignore" id="filter_ignore"

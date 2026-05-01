@@ -4,6 +4,7 @@
 {% block content %}
 
 <form method="POST" action="{{ url_for('.tokens_edit_form', token_id=token.id, corpus_id=corpus.id)}}" class="form col-md-9">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <h1>{{ _('Corpus') }} {{corpus.name}} - {{ _('Token Edit') }}</h1>
     <p>{{ _('This page allows you to correct the form of the following token') }}</p>
     <table class="table table-bordered">

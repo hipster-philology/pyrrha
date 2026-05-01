@@ -4,6 +4,11 @@
 
   const { createApp, ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } = Vue;
 
+  function csrfHeaders() {
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+    return token ? { 'X-CSRFToken': token } : {};
+  }
+
   // ── Allowed-list cache (session, 1 h TTL, 300 entries per category) ─────────
   const CACHE_TTL  = 60 * 60 * 1000;
   const CACHE_MAX  = 300;
@@ -227,7 +232,7 @@
           const body = new FormData();
           body.append('value', props.modelValue);
           body.append('category', props.fieldKey || props.label);
-          const resp = await fetch(props.customDictUrl, { method: 'PATCH', body });
+          const resp = await fetch(props.customDictUrl, { method: 'PATCH', body, headers: csrfHeaders() });
           const data = await resp.json();
           if (data.status !== false) { addedToDict.value = true; emit('dict-added'); }
         } finally { addingToDict.value = false; }
@@ -463,7 +468,7 @@
         if (hasMorph.value)  body.append('morph', state.morph);
         if (hasGloss.value)  body.append('gloss', state.gloss);
         try {
-          const resp = await fetch(`${props.urls.save}${props.token.id}`, { method: 'POST', body });
+          const resp = await fetch(`${props.urls.save}${props.token.id}`, { method: 'POST', body, headers: csrfHeaders() });
           const data = await resp.json();
           if (resp.ok) {
             state.changed = true;
@@ -523,7 +528,7 @@
           if (markForReview && state.review_comment) {
             body.append('review_comment', state.review_comment);
           }
-          const resp = await fetch(`${props.urls.review}${props.token.id}`, { method: 'POST', body });
+          const resp = await fetch(`${props.urls.review}${props.token.id}`, { method: 'POST', body, headers: csrfHeaders() });
           if (resp.ok) {
             const data = await resp.json();
             state.needs_review = data.token.needs_review;

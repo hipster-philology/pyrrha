@@ -160,6 +160,7 @@
 
     <form method="POST" id="accesses-form"
           action="{{ url_for(post_endpoint, **post_kwargs) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mt-3">
             {% if can_edit %}
                 <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage') }} {{ item_type_name }} {{ _('users') }}</h2>
