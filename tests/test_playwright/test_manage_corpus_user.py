@@ -140,6 +140,9 @@ class TestManageCorpusUser(Helpers):
     def test_corpus_creator_is_owner(self):
         self.addCorpus("wauchier")
         self.page.get_by_role("link", name="New Corpus", exact=False).first.click()
+        self.page.wait_for_load_state("networkidle")
+        self.page.locator("#mode-annotated").click()
+        self.page.locator("#panel-annotated").wait_for(state="visible")
         self.page.locator("#corpusName").fill("FreshNewCorpus")
         self.page.locator("#tokens").fill(
             "tokens\tlemmas\tpos\n"

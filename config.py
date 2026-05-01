@@ -72,8 +72,39 @@ class DevelopmentConfig(Config):
     SEND_MAIL_STATUS = os.environ.get('SEND_MAIL_STATUS', False)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=Config.APP_NAME, email=MAIL_USERNAME)
 
-    LEMMATIZERS = [
-        ("Ancien Français", "http://localhost:5001/")
+    LEMMATIZERS = [        LemmatizerService(
+            title="Latin",
+            uri="https://tal.chartes.psl.eu/deucalion/api/lasla/",
+            provider="PSL-École Nationale des Chartes & Huma-Num",
+            ui="https://tal.chartes.psl.eu/deucalion/latin",
+            apa="Thibault Clérice. (2020). Deucalion Latin Lemmatizer (0.1.1). "
+            "Zenodo. https://doi.org/10.5281/zenodo.3660914",
+            bibtex="""@software{thibault_clerice_2020_3660914,
+  author       = {Thibault Clérice},
+  title        = {Deucalion Latin Lemmatizer},
+  month        = feb,
+  year         = 2020,
+  publisher    = {Zenodo},
+  version      = {0.1.1},
+  doi          = {10.5281/zenodo.3660914},
+  url          = {https://doi.org/10.5281/zenodo.3660914}
+}"""
+        ),
+        LemmatizerService(
+            title="Old French",
+            uri="https://tal.chartes.psl.eu/deucalion/api/fro-1/",
+            provider="PSL-École Nationale des Chartes & Huma-Num",
+            ui="https://dh.chartes.psl.eu/deucalion/fro",
+            apa="Camps, J. B., Clérice, T., Duval, F., Kanaoka, N., & Pinche, A. (2021). Corpus and Models "
+            "for Lemmatisation and POS-tagging of Old French. arXiv preprint arXiv:2109.11442.",
+            bibtex="""@article{camps2021corpus,
+  title={Corpus and Models for Lemmatisation and POS-tagging of Old French},
+  author={Camps, Jean-Baptiste and Cl{\'e}rice, Thibault and Duval, Fr{\'e}d{\'e}ric and Kanaoka, Naomi and Pinche, Ariane and others},
+  journal={arXiv preprint arXiv:2109.11442},
+  year={2021}
+}"""
+        ),
+
     ]
 
     BABEL_TRANSLATION_DIRECTORIES = os.path.join(os.path.dirname(__file__), "translations")

@@ -20,6 +20,9 @@ class TestCorpusRegistration(Helpers):
     def go_to_new_corpus(self):
         self.page.locator("#new_corpus_link").click()
         self.page.wait_for_load_state("networkidle")
+        # Ensure mode 1 (pre-annotated TSV) is active so #tokens is visible.
+        self.page.locator("#mode-annotated").click()
+        self.page.locator("#panel-annotated").wait_for(state="visible")
 
     def test_registration(self):
         self.go_to_new_corpus()
@@ -132,29 +135,28 @@ class TestCorpusRegistration(Helpers):
 
     def test_tokenization(self):
         self.go_to_new_corpus()
-        self.page.locator("#tokens").fill("Ci gist mon seignor")
-        self.page.locator("#tokenize").click()
-        self.page.wait_for_load_state("networkidle")
+        # Tokenization lives in mode 2 (raw text).
+        self.page.locator("#mode-raw").click()
+        self.page.locator("#panel-raw").wait_for(state="visible")
 
-        assert self.page.locator("#tokens").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n"
+        self.page.locator("#raw-text-input").fill("Ci gist mon seignor")
+        self.page.locator("#tokenize").click()
+        assert self.page.locator("#tokens-result").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n"
         assert self.page.locator("#punct-keep").is_checked()
 
-        self.page.locator("#tokens").fill("Ci gist mon seignor...")
+        self.page.locator("#raw-text-input").fill("Ci gist mon seignor...")
         self.page.locator("#tokenize").click()
-        self.page.wait_for_load_state("networkidle")
-        assert self.page.locator("#tokens").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n.\t\t\t\n.\t\t\t\n.\t\t\t\n"
+        assert self.page.locator("#tokens-result").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n.\t\t\t\n.\t\t\t\n.\t\t\t\n"
 
-        self.page.locator("#tokens").fill("Ci gist mon seignor...")
+        self.page.locator("#raw-text-input").fill("Ci gist mon seignor...")
         self.page.locator("#punct-keep").click()
         self.page.locator("#tokenize").click()
-        self.page.wait_for_load_state("networkidle")
-        assert self.page.locator("#tokens").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n"
+        assert self.page.locator("#tokens-result").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n"
 
-        self.page.locator("#tokens").fill("Ci gist mon sei- gnor...")
+        self.page.locator("#raw-text-input").fill("Ci gist mon sei- gnor...")
         self.page.locator("#hyphens-remove").click()
         self.page.locator("#tokenize").click()
-        self.page.wait_for_load_state("networkidle")
-        assert self.page.locator("#tokens").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n"
+        assert self.page.locator("#tokens-result").input_value() == "form\tlemma\tPOS\tmorph\nCi\t\t\t\ngist\t\t\t\nmon\t\t\t\nseignor\t\t\t\n"
 
     def test_corpus_with_quotes(self):
         self.go_to_new_corpus()
@@ -313,7 +315,7 @@ class TestCorpusRegistration(Helpers):
     def test_registration_upload_file(self, tmp_path):
         self.go_to_new_corpus()
         temp_file = self.create_temp_example_file(tmp_path)
-        self.page.locator("#upload").set_input_files(str(temp_file))
+        self.page.locator("#upload-annotated").set_input_files(str(temp_file))
         expect(self.page.locator("#tokens[data-upload-complete='true']")).to_be_attached()
 
         tokens_value = self.page.locator("#tokens").input_value()
@@ -383,16 +385,19 @@ class TestCorpusRegistration(Helpers):
     def test_lemmatization_service(self):
         self.go_to_new_corpus()
         self.page.locator("#corpusName").fill(PLAINTEXT_CORPORA["Wauchier"]["name"])
-        self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
+        # Language model selector lives in mode 3.
+        self.page.locator("#mode-lemmatize").click()
+        self.page.locator("#panel-lemmatize").wait_for(state="visible")
 
         details = self.page.locator(".lemmatizer-details").all()
         assert not details[0].is_visible(), "Nothing should be displayed by default"
 
         self.page.locator("#language-model").select_option(label="Dummy lemmatizer")
         assert details[0].is_visible(), "Something should be displayed"
-        assert "Dummy lemmatizer is a lemmatization service provided by ProviderInstitution." in details[0].text_content()
+        assert "Dummy lemmatizer" in details[0].text_content()
+        assert "ProviderInstitution" in details[0].text_content()
 
-        self.page.locator("#language-model").select_option(label="Select a service")
+        self.page.locator("#language-model").select_option(label="Select a service…")
         assert not details[0].is_visible(), "Nothing should be displayed now"
 
     def test_lemmatization_service_runs(self):
@@ -425,17 +430,17 @@ class TestCorpusRegistration(Helpers):
         try:
             self.go_to_new_corpus()
             self.page.locator("#corpusName").fill("Test")
-            self.page.locator("#tokens").fill("Je suis")
+            # Lemmatization lives in mode 3.
+            self.page.locator("#mode-lemmatize").click()
+            self.page.locator("#panel-lemmatize").wait_for(state="visible")
+            self.page.locator("#mode3-input").fill("Je suis")
 
             self.page.locator("#language-model").select_option(index=1)
-            self.page.locator("#submit-model").click()
-            self.page.locator("#tokens-success").wait_for(state="visible", timeout=10000)
+            self.page.locator("#run-lemmatize").click()
+            self.page.locator("#lemmatize-progress").wait_for(state="hidden", timeout=10000)
 
-            assert self.page.locator("#tokens").input_value().split("\n") == ["token\tlemma", "Je\t0", "suis\t1"]
-            assert (
-                self.page.locator("#tokens-success").text_content().strip()
-                == "Operation finished with success ! 2 tokens analyzed in total."
-            )
+            assert self.page.locator("#tokens-result").input_value().split("\n") == ["token\tlemma", "Je\t0", "suis\t1"]
+            assert "Done" in self.page.locator("#lemmatize-status").text_content()
         finally:
             second_app.terminate()
             second_app.join(2)
