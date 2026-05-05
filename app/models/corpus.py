@@ -191,7 +191,7 @@ class Corpus(db.Model):
         all_type = all_lemma = all_morph = False
 
         if "lemma" in self.displayed_columns_by_name:
-            lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            lemma_acc = ChangeRecord.query.with_entities(ChangeRecord.word_token_id).distinct().filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.lemma != ChangeRecord.lemma_new
@@ -202,7 +202,7 @@ class Corpus(db.Model):
                 AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
 
         if "POS" in self.displayed_columns_by_name:
-            pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            pos_acc = ChangeRecord.query.with_entities(ChangeRecord.word_token_id).distinct().filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.POS != ChangeRecord.POS_new
@@ -212,7 +212,7 @@ class Corpus(db.Model):
             all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
 
         if "morph" in self.displayed_columns_by_name:
-            morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            morph_acc = ChangeRecord.query.with_entities(ChangeRecord.word_token_id).distinct().filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.morph != ChangeRecord.morph_new
@@ -1475,6 +1475,7 @@ class WordToken(db.Model):
                 WordToken.form == change_record.form,
                 lemma_match,
                 db.or_(
+                    db.false(),
                     *[
                         getattr(WordToken, attr) == getattr(change_record, attr)
                         for attr in changed
@@ -1628,6 +1629,8 @@ class CorpusCustomDictionary(db.Model):
             normalised = unidecode.unidecode(form)
             if normalised == form:
                 query_fields = [CorpusCustomDictionary.secondary_label]
+            else:
+                query_fields = [CorpusCustomDictionary.label]
 
         query = CorpusCustomDictionary.query.with_entities(*retrieve_fields)
         query = query.filter(
