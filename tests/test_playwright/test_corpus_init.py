@@ -493,7 +493,6 @@ class TestCorpusRegistration(Helpers):
         db.session.flush()
         db.session.add(CorpusUser(corpus=stale, user=user, is_owner=True))
         db.session.commit()
-        stale_id = stale.id
 
         self.go_to_new_corpus()
         self.page.locator("#corpusName").fill("New After Stale")
@@ -502,7 +501,8 @@ class TestCorpusRegistration(Helpers):
         self.submit_and_wait()
 
         db.session.expire_all()
-        assert Corpus.query.get(stale_id) is None, "Old pending corpus should have been deleted"
+        assert Corpus.query.filter_by(name="__stale_pending__").first() is None, \
+            "Old pending corpus should have been deleted"
 
     def test_submit_frozen_during_upload(self):
         """Submit button is disabled and progress bar is visible while chunks are in flight."""
