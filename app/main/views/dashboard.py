@@ -1,4 +1,6 @@
-from flask import request, url_for, redirect, abort, flash
+from datetime import datetime, timedelta
+
+from flask import request, url_for, redirect, abort, flash, current_app
 from flask_login import login_required, current_user
 from typing import List
 
@@ -115,6 +117,42 @@ def admin_list_corpora():
 @admin_required
 def _admin_list_corpora_compat():
     return redirect(url_for('main.admin_list_corpora'))
+
+
+@main.route('/dashboard/corpora/pending', methods=['GET'])
+@login_required
+@admin_required
+def admin_pending_corpora():
+    """List all pending (incomplete) corpora for admin review."""
+    max_age_hours = current_app.config.get("PENDING_CORPUS_MAX_AGE_HOURS", 24)
+    threshold = datetime.utcnow() - timedelta(hours=max_age_hours)
+
+    rows = (
+        db.session.query(Corpus, db.func.count(WordToken.id).label('token_count'))
+        .outerjoin(WordToken, WordToken.corpus == Corpus.id)
+        .filter(Corpus.status == 'pending')
+        .group_by(Corpus.id)
+        .order_by(Corpus.created_at.asc())
+        .all()
+    )
+    return render_template_with_nav_info(
+        'main/dashboard_pending_corpora.html',
+        rows=rows,
+        threshold=threshold,
+        max_age_hours=max_age_hours,
+    )
+
+
+@main.route('/dashboard/corpora/pending/<int:corpus_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_pending_corpus(corpus_id):
+    """Delete a pending corpus (admin only)."""
+    corpus = Corpus.query.filter_by(id=corpus_id, status='pending').first_or_404()
+    db.session.delete(corpus)
+    db.session.commit()
+    flash(f"Pending corpus '{corpus.name}' deleted.", category="success")
+    return redirect(url_for('main.admin_pending_corpora'))
 
 
 @main.route('/dashboard/control-lists', methods=['GET'])

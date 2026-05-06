@@ -500,7 +500,7 @@ def tokens_export(corpus_id):
                 base=base,
                 tokens=tokens,
                 allowed_columns=allowed_columns,
-                history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                history=TokenHistory.query.filter_by(corpus=corpus_id).options(selectinload(TokenHistory.user)).all(),
                 delimiter=corpus.delimiter_token
             )),
             status=200,
@@ -516,7 +516,7 @@ def tokens_export(corpus_id):
                 base=base,
                 tokens=tokens,
                 allowed_columns=allowed_columns,
-                history=TokenHistory.query.filter_by(corpus=corpus_id).all(),
+                history=TokenHistory.query.filter_by(corpus=corpus_id).options(selectinload(TokenHistory.user)).all(),
                 delimiter=corpus.delimiter_token
             )),
             status=200,

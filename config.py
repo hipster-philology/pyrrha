@@ -38,6 +38,8 @@ class Config:
 
     # Defaults
     PAGINATION_DEFAULT_TOKENS = 100
+    CORPUS_UPLOAD_CHUNK_SIZE = int(os.environ.get("CORPUS_UPLOAD_CHUNK_SIZE", 2000))
+    PENDING_CORPUS_MAX_AGE_HOURS = int(os.environ.get("PENDING_CORPUS_MAX_AGE_HOURS", 24))
 
     # Lemmatizer (until Deucalion client)
     LEMMATIZERS: List[LemmatizerService] = []

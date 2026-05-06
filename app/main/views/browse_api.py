@@ -84,6 +84,7 @@ def browse_corpora_api():
         base = base.filter(
             CorpusUser.corpus_id == Corpus.id,
             CorpusUser.user_id == current_user.id,
+            Corpus.status == 'active',
         )
 
     if search:

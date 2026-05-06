@@ -257,10 +257,9 @@ function validateTsv(tsvText) {
   const headers     = lines[0].split('\t');
   const expectedCols = headers.length;
 
-  if (headers[0] !== 'form') {
-    warnings.push(
-      `First column is "${headers[0]}", expected "form". ` +
-      'Make sure your TSV has at least: form, lemma, POS, morph.'
+  if (!headers.some(h => ['form', 'token', 'tokens'].includes(h))) {
+    errors.push(
+      'Missing mandatory column: your TSV must include a "form" column (also accepted: "token" or "tokens").'
     );
   }
 

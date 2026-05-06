@@ -1,6 +1,7 @@
 from flask import request, flash, redirect, url_for, abort, current_app, jsonify
 from flask_login import current_user, login_required
 import sqlalchemy.exc
+from werkzeug.exceptions import NotFound
 from sqlalchemy import func, distinct, text
 from typing import List
 
@@ -50,7 +51,8 @@ def corpus_new():
             'main/corpus_new.html',
             lemmatizers=lemmatizers,
             public_control_lists=_get_available(),
-            tsv=request.form.get("tsv", "")
+            tsv=request.form.get("tsv", ""),
+            chunk_size=current_app.config.get("CORPUS_UPLOAD_CHUNK_SIZE", 2000),
         )
 
     def error():
@@ -167,6 +169,152 @@ def corpus_new():
             return redirect(url_for(".corpus_get", corpus_id=corpus.id))
 
     return normal_view()
+
+
+@main.route('/corpus/new/init', methods=["POST"])
+@login_required
+def corpus_new_init():
+    """Create corpus shell + control list; return corpus_id for chunked token upload."""
+    data = request.get_json(silent=True) or {}
+
+    name = strip_or_none(data.get("name", ""))
+    if not name:
+        return jsonify({"error": "You forgot to give a name to your corpus"}), 400
+
+    context_left = data.get("context_left") or None
+    context_right = data.get("context_right") or None
+    delimiter_token = strip_or_none(data.get("delimiter_token", "")) or None
+
+    columns = [Column(heading="Lemma"), Column(heading="POS"), Column(heading="Morph"),
+               Column(heading="Gloss"), Column(heading="Similar")]
+    for col in columns:
+        col.hidden = bool(data.get(f"{col.heading.lower()}Column"))
+
+    if (data.get("lemmaColumn") and data.get("posColumn") and data.get("morphColumn")):
+        return jsonify({"error": "You can't disable Lemma and POS and Morph. Keep at least one."}), 400
+
+    # Clean up any previous pending corpora for this user before creating a new one
+    old_pending = (
+        db.session.query(Corpus)
+        .join(CorpusUser, CorpusUser.corpus_id == Corpus.id)
+        .filter(CorpusUser.user_id == current_user.id, Corpus.status == 'pending')
+        .all()
+    )
+    for old in old_pending:
+        db.session.delete(old)
+    if old_pending:
+        db.session.commit()
+
+    form_kwargs = dict(
+        name=name, context_left=context_left, context_right=context_right,
+        delimiter_token=delimiter_token, columns=columns,
+    )
+
+    control_list_mode = data.get("control_list", "create")
+    cl_owner = True
+    try:
+        if control_list_mode == "reuse":
+            control_list = ControlLists.get_or_404(data.get("control_list_select"))
+            cl_owner = False
+        else:
+            tokens_placeholder, allowed_lemma, allowed_morph, allowed_POS = \
+                create_input_format_convertion(
+                    None,
+                    data.get("allowed_lemma") or None,
+                    data.get("allowed_morph") or None,
+                    data.get("allowed_POS") or None,
+                )
+            form_kwargs.update(allowed_lemma=allowed_lemma, allowed_POS=allowed_POS,
+                               allowed_morph=allowed_morph)
+            control_list = None
+
+        if control_list_mode == "reuse":
+            form_kwargs["control_list"] = control_list
+
+        corpus = Corpus.create_shell(**form_kwargs)
+        db.session.add(CorpusUser(corpus=corpus, user=current_user, is_owner=True))
+        ControlLists.link(corpus.control_lists_id, current_user.id, is_owner=cl_owner)
+        db.session.commit()
+
+        list_filter = [f for f in [
+            data.get("punct"), data.get("numeral"),
+            data.get("ignore"), data.get("metadata"),
+        ] if f]
+        current_cl = ControlLists.query.get(corpus.control_lists_id)
+        current_cl.filter_punct = 'punct' in list_filter
+        current_cl.filter_metadata = 'metadata' in list_filter
+        current_cl.filter_numeral = 'numeral' in list_filter
+        current_cl.filter_ignore = 'ignore' in list_filter
+        db.session.commit()
+
+    except NotFound:
+        db.session.rollback()
+        return jsonify({"error": "This control list does not exist"}), 400
+    except sqlalchemy.exc.IntegrityError as e:
+        db.session.rollback()
+        logger.error(e)
+        return jsonify({"error": "The corpus cannot be registered. Check your data."}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(e)
+        return jsonify({"error": "The corpus cannot be registered. Check your data."}), 400
+
+    return jsonify({"corpus_id": corpus.id})
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/upload', methods=["POST"])
+@login_required
+def corpus_tokens_upload(corpus_id):
+    """Append a chunk of token dicts to a pending corpus."""
+    corpus = Corpus.get_or_404(corpus_id)
+    cu = CorpusUser.query.filter_by(corpus_id=corpus_id, user_id=current_user.id,
+                                    is_owner=True).first()
+    if not cu or corpus.status != 'pending':
+        abort(403)
+
+    data = request.get_json(silent=True) or {}
+    tokens = data.get("tokens", [])
+    if not tokens:
+        return jsonify({"tokens_received": 0})
+
+    try:
+        count = WordToken.add_batch(
+            corpus_id=corpus_id,
+            word_tokens_dict=tokens,
+            context_left=corpus.context_left,
+            context_right=corpus.context_right,
+        )
+        db.session.commit()
+    except MissingTokenColumnValue as exc:
+        db.session.rollback()
+        return jsonify({"error": f"At least one line of your corpus is missing a token/form. Check line {exc.line}"}), 400
+    except Exception as e:
+        db.session.rollback()
+        logger.error(e)
+        return jsonify({"error": "Token upload failed. Check your data."}), 400
+
+    return jsonify({"tokens_received": count})
+
+
+@main.route('/corpus/<int:corpus_id>/tokens/finalize', methods=["POST"])
+@login_required
+def corpus_tokens_finalize(corpus_id):
+    """Activate a pending corpus after all token chunks have been uploaded."""
+    corpus = Corpus.get_or_404(corpus_id)
+    cu = CorpusUser.query.filter_by(corpus_id=corpus_id, user_id=current_user.id,
+                                    is_owner=True).first()
+    if not cu or corpus.status != 'pending':
+        abort(403)
+
+    token_count = WordToken.query.filter_by(corpus=corpus_id).count()
+    if token_count == 0:
+        db.session.delete(corpus)
+        db.session.commit()
+        return jsonify({"error": "You did not input any text."}), 400
+
+    corpus.status = 'active'
+    db.session.commit()
+    return jsonify({"redirect": url_for(".corpus_get", corpus_id=corpus_id)})
 
 
 @main.route('/corpus/favorite/<int:corpus_id>')

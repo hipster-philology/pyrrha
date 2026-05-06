@@ -75,7 +75,7 @@
                 </div>
                 <div class="form-group mb-0">
                     <label for="tokens" id="tokensLabel">{{ _('Or paste TSV content') }}</label>
-                    <small id="tsvHelp" class="form-text text-muted">{{ _('The TSV should at least have the headers: form, lemma, POS, morph') }}</small>
+                    <small id="tsvHelp" class="form-text text-muted">{{ _('The TSV must have a "form" column (also accepted: "token" or "tokens"). Other columns (lemma, POS, morph…) are optional.') }}</small>
                     <small>{{ _('Example:') }}</small>
                     <pre class="mb-1">form	lemma	POS	morph
 SOIGNORS	seignor	NOMcom	NOMB.=p|GENRE=m|CAS=n
@@ -362,9 +362,28 @@ or	or4	ADVgen	DEGRE=-</pre>
         </div>
 
     </fieldset>
-<button type="submit" id="submit" class="btn btn-primary">Submit</button>
+<button type="submit" id="submit" class="btn btn-primary">{{ _('Submit') }}</button>
+
+<div id="upload-progress" style="display:none" class="mt-3">
+    <p id="upload-step" class="small font-weight-bold mb-1"></p>
+    <div class="progress mb-1">
+        <div id="upload-bar" class="progress-bar progress-bar-striped progress-bar-animated"
+             role="progressbar" style="width:0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+    </div>
+    <p id="upload-detail" class="small text-muted mb-1"></p>
+    <div id="upload-error" style="display:none" class="alert alert-danger py-2 small mt-1">
+        <span id="upload-error-msg"></span>
+        <button id="upload-retry" type="button" class="btn btn-sm btn-warning ml-2">{{ _('Retry') }}</button>
+        <button id="upload-abort" type="button" class="btn btn-sm btn-outline-danger ml-1">{{ _('Abort') }}</button>
+    </div>
+</div>
+
 <script src="{{ url_for('static', filename='js/tei-ingestion.js') }}"></script>
 <script type="text/javascript">
+var CORPUS_INIT_URL     = "{{ url_for('main.corpus_new_init') }}";
+var CORPUS_UPLOAD_URL   = "{{ url_for('main.corpus_tokens_upload', corpus_id=0) }}".replace('/0/', '/{id}/');
+var CORPUS_FINALIZE_URL = "{{ url_for('main.corpus_tokens_finalize', corpus_id=0) }}".replace('/0/', '/{id}/');
+var CHUNK_SIZE = {{ chunk_size | int }};
 document.addEventListener('DOMContentLoaded', function () {
 
     // \u2500\u2500 TSV validation display \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -440,15 +459,201 @@ document.addEventListener('DOMContentLoaded', function () {
     bindFileUpload('upload-mode3',     'mode3-input');
 
     // \u2500\u2500 Sync mode-1 textarea \u2192 tokens-result on submit \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+    // ── Chunked corpus upload ─────────────────────────────────────────────────────────────
+    var csrfToken = document.querySelector('meta[name="csrf-token"]') &&
+                    document.querySelector('meta[name="csrf-token"]').content;
+
+    function parseTsvToObjects(tsvText) {
+        var lines = tsvText.split('\n').filter(function(l) { return l.trim() !== ''; });
+        if (lines.length < 2) return [];
+        var headers = lines[0].split('\t');
+        return lines.slice(1).map(function(line) {
+            var cols = line.split('\t');
+            var obj = {};
+            headers.forEach(function(h, i) { obj[h] = cols[i] !== undefined ? cols[i] : ''; });
+            return obj;
+        });
+    }
+
+    function setUploadProgress(step, pct, detail) {
+        document.getElementById('upload-step').textContent = step;
+        var bar = document.getElementById('upload-bar');
+        bar.style.width = pct + '%';
+        bar.setAttribute('aria-valuenow', pct);
+        document.getElementById('upload-detail').textContent = detail || '';
+    }
+
+    function showUploadError(msg, retryFn) {
+        var errDiv = document.getElementById('upload-error');
+        document.getElementById('upload-error-msg').textContent = msg;
+        errDiv.style.display = 'block';
+        document.getElementById('upload-retry').onclick = function() {
+            errDiv.style.display = 'none';
+            retryFn();
+        };
+    }
+
+    function collectMetadata() {
+        var data = {
+            name:            (document.getElementById('corpusName') || {}).value,
+            context_left:    (document.getElementById('context_left') || {}).value,
+            context_right:   (document.getElementById('context_right') || {}).value,
+            delimiter_token: (document.getElementById('sep_token') || {}).value,
+            control_list:    (document.querySelector('input[name="control_list"]:checked') || {}).value,
+            control_list_select: document.getElementById('control_list_select')
+                                 ? document.getElementById('control_list_select').value : null,
+            allowed_lemma:   document.getElementById('allowed_lemma')
+                             ? document.getElementById('allowed_lemma').value : null,
+            allowed_POS:     document.getElementById('allowed_POS')
+                             ? document.getElementById('allowed_POS').value : null,
+            allowed_morph:   document.getElementById('allowed_morph')
+                             ? document.getElementById('allowed_morph').value : null,
+        };
+        ['punct','numeral','metadata','ignore'].forEach(function(name) {
+            var el = document.querySelector('input[name="' + name + '"]:checked');
+            if (el) data[name] = el.value;
+        });
+        ['lemmaColumn','posColumn','morphColumn','glossColumn','similarColumn'].forEach(function(name) {
+            var el = document.querySelector('input[name="' + name + '"]');
+            if (el && el.checked) data[name] = true;
+        });
+        return data;
+    }
+
+    async function doChunkedUpload(tokens) {
+        var submitBtn = document.getElementById('submit');
+        var progressDiv = document.getElementById('upload-progress');
+        var originalText = submitBtn.textContent;
+        submitBtn.disabled = true;
+        submitBtn.textContent = '⏳ ' + originalText;
+        progressDiv.style.display = 'block';
+        document.getElementById('upload-error').style.display = 'none';
+
+        function restoreSubmit() {
+            submitBtn.disabled = false;
+            submitBtn.textContent = originalText;
+        }
+
+        setUploadProgress('{{ _("Creating corpus…") }}', 5, '');
+        var initResp, initData;
+        try {
+            initResp = await fetch(CORPUS_INIT_URL, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+                body: JSON.stringify(collectMetadata()),
+            });
+            initData = await initResp.json();
+        } catch(e) {
+            showUploadError('{{ _("Network error during corpus creation: ") }}' + e.message,
+                            function() { doChunkedUpload(tokens); });
+            restoreSubmit();
+            return;
+        }
+        if (!initResp.ok) {
+            showUploadError(initData.error || '{{ _("Corpus creation failed.") }}',
+                            function() { doChunkedUpload(tokens); });
+            restoreSubmit();
+            return;
+        }
+        var corpusId = initData.corpus_id;
+        var uploadUrl   = CORPUS_UPLOAD_URL.replace('{id}', corpusId);
+        var finalizeUrl = CORPUS_FINALIZE_URL.replace('{id}', corpusId);
+
+        var chunks = [];
+        for (var i = 0; i < tokens.length; i += CHUNK_SIZE) {
+            chunks.push(tokens.slice(i, i + CHUNK_SIZE));
+        }
+        var totalTokens = tokens.length;
+
+        async function uploadChunk(idx) {
+            setUploadProgress(
+                '{{ _("Uploading tokens…") }}',
+                Math.round(10 + (idx / Math.max(chunks.length, 1)) * 80),
+                (Math.min((idx + 1) * CHUNK_SIZE, totalTokens)) + ' / ' + totalTokens + ' {{ _("tokens uploaded") }}'
+            );
+            var resp, respData;
+            try {
+                resp = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+                    body: JSON.stringify({tokens: chunks[idx], chunk_index: idx}),
+                });
+                respData = await resp.json();
+            } catch(e) {
+                showUploadError('{{ _("Network error on chunk ") }}' + (idx+1) + ': ' + e.message,
+                    function() { uploadChunk(idx).then(function(ok) { if (ok) continueFrom(idx+1); }); });
+                return false;
+            }
+            if (!resp.ok) {
+                showUploadError('{{ _("Error on chunk ") }}' + (idx+1) + ': ' + (respData.error || '{{ _("Upload failed.") }}'),
+                    function() { uploadChunk(idx).then(function(ok) { if (ok) continueFrom(idx+1); }); });
+                return false;
+            }
+            return true;
+        }
+
+        async function continueFrom(idx) {
+            for (var i = idx; i < chunks.length; i++) {
+                var ok = await uploadChunk(i);
+                if (!ok) return;
+            }
+            await finalize();
+        }
+
+        async function finalize() {
+            setUploadProgress('{{ _("Finalizing…") }}', 95, '');
+            var resp, data;
+            try {
+                resp = await fetch(finalizeUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
+                });
+                data = await resp.json();
+            } catch(e) {
+                showUploadError('{{ _("Network error during finalization: ") }}' + e.message,
+                                function() { finalize(); });
+                restoreSubmit();
+                return;
+            }
+            if (!resp.ok) {
+                showUploadError(data.error || '{{ _("Finalization failed.") }}',
+                                function() { finalize(); });
+                restoreSubmit();
+                return;
+            }
+            setUploadProgress('{{ _("Done!") }}', 100, '');
+            window.location.href = data.redirect;
+        }
+
+        document.getElementById('upload-abort').onclick = function() {
+            progressDiv.style.display = 'none';
+            restoreSubmit();
+        };
+
+        if (chunks.length === 0) {
+            await finalize();
+        } else {
+            await continueFrom(0);
+        }
+    }
+
     var form = document.getElementById('form');
     if (form) {
-        form.addEventListener('submit', function () {
+        form.addEventListener('submit', function(evt) {
+            evt.preventDefault();
+            // Abort if client-side validateLength already flagged errors
+            if (document.querySelector('[id^="validateLengthError"]')) {
+                return;
+            }
             var modeEl = document.querySelector('input[name="input_mode"]:checked');
             if (modeEl && modeEl.value === 'annotated') {
                 var src = document.getElementById('tokens');
                 var dst = document.getElementById('tokens-result');
                 if (src && dst) dst.value = src.value;
             }
+            var tsvText = (document.getElementById('tokens-result') || {}).value || '';
+            var tokens = parseTsvToObjects(tsvText.trim());
+            doChunkedUpload(tokens);
         });
     }
 

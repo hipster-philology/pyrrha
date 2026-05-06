@@ -54,12 +54,17 @@ describe('validateTsv', () => {
     expect(errors[5]).toMatch(/2 more/);
   });
 
-  test('warning when first column is not "form"', () => {
+  test('"token" is accepted as a valid form column without warning', () => {
     const tsv = 'token\tlemma\tPOS\nDe\tde\tPRE';
     const { errors, warnings } = validateTsv(tsv);
     expect(errors).toHaveLength(0);
-    expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toMatch(/form/);
+    expect(warnings).toHaveLength(0);
+  });
+
+  test('error when no form/token/tokens column present', () => {
+    const tsv = 'lemma\tPOS\nde\tPRE';
+    const { errors } = validateTsv(tsv);
+    expect(errors.some(e => /mandatory/i.test(e) || /form/i.test(e))).toBe(true);
   });
 
   test('blank lines in data are ignored', () => {
@@ -68,12 +73,11 @@ describe('validateTsv', () => {
     expect(errors).toHaveLength(0);
   });
 
-  test('token_reference column is accepted without warning', () => {
+  test('token_reference column alongside form is accepted without warning', () => {
     const tsv = 'token_reference\tform\tlemma\tPOS\nw1\tDe\tde\tPRE';
     const { errors, warnings } = validateTsv(tsv);
     expect(errors).toHaveLength(0);
-    // first col is token_reference, not form → warning expected
-    expect(warnings).toHaveLength(1);
+    expect(warnings).toHaveLength(0);
   });
 });
 

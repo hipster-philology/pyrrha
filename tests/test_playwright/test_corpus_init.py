@@ -4,7 +4,8 @@ import pytest
 from flask import url_for
 from playwright.sync_api import expect
 
-from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, ControlLists
+from app.models import Corpus, WordToken, AllowedLemma, AllowedMorph, ControlLists, CorpusUser
+from app.models.control_lists import PublicationStatus
 from app import db
 from tests.test_playwright.base import Helpers
 from tests.fixtures import PLAINTEXT_CORPORA
@@ -24,13 +25,17 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#mode-annotated").click()
         self.page.locator("#panel-annotated").wait_for(state="visible")
 
+    def submit_and_wait(self):
+        """Click submit and wait for the page to navigate away (chunked-upload happy path)."""
+        with self.page.expect_navigation(timeout=30000):
+            self.page.locator("#submit").click()
+
     def test_registration(self):
         self.go_to_new_corpus()
         self.page.locator("#corpusName").fill(PLAINTEXT_CORPORA["Wauchier"]["name"])
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#label_checkbox_create").click()
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         with self.app.test_request_context():
             assert url_for('main.corpus_get', corpus_id=1) in self.page.url
@@ -60,8 +65,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#label_checkbox_create").click()
         self.page.locator("#allowed_lemma").fill(PLAINTEXT_CORPORA["Wauchier"]["lemma"])
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         assert corpus is not None
@@ -77,8 +81,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#label_checkbox_create").click()
         self.page.locator("#allowed_lemma").fill(PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         assert corpus is not None
@@ -98,8 +101,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#label_checkbox_create").click()
         self.page.locator("#allowed_lemma").fill(PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
         self.page.locator("#allowed_morph").fill(PLAINTEXT_CORPORA["Wauchier"]["morph"])
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         assert corpus is not None
@@ -120,8 +122,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#label_checkbox_create").click()
         self.page.locator("#allowed_lemma").fill(PLAINTEXT_CORPORA["Wauchier"]["partial_lemma"])
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         assert corpus is not None
@@ -177,8 +178,7 @@ class TestCorpusRegistration(Helpers):
             "》\t》\tPONC\tMORPH=EMPTY\n"
         )
         self.page.locator("#label_checkbox_create").click()
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         corpus = Corpus.query.filter(Corpus.name == name).first()
         assert corpus is not None
@@ -211,8 +211,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#label_checkbox_reuse").click()
         self.page.select_option("#control_list_select", str(target_cl.id))
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         assert corpus is not None
@@ -239,15 +238,9 @@ class TestCorpusRegistration(Helpers):
         # Changing the ID in javascript to check safety
         self.page.locator(f"#cl_opt_{target_cl.id}").evaluate("el => el.value = '99999'")
         self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        expect(self.page.locator("#upload-error")).to_be_visible(timeout=10000)
 
-        assert (
-            "This control list does not exist" in
-            [
-                warning.text_content().strip()
-                for warning in self.page.locator(".alert.alert-danger").all()
-            ]
-        )
+        assert self.page.locator("#upload-error-msg").text_content().strip() == "This control list does not exist"
 
     def test_registration_with_wrongly_formated_input(self):
         self.add_control_lists()
@@ -271,13 +264,10 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#label_checkbox_reuse").click()
         self.page.select_option("#control_list_select", str(target_cl.id))
         self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        expect(self.page.locator("#upload-error")).to_be_visible(timeout=10000)
 
-        assert sorted(
-            e.text_content().strip()
-            for e in self.page.locator(".alert.alert-danger:visible").all()
-            if e.text_content().strip()
-        ) == sorted(["At least one line of your corpus is missing a token/form. Check line 1"])
+        assert "At least one line of your corpus is missing a token/form. Check line 1" in \
+            self.page.locator("#upload-error-msg").text_content()
 
     def test_registration_with_no_tsv_input(self):
         self.add_control_lists()
@@ -291,13 +281,9 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#label_checkbox_reuse").click()
         self.page.select_option("#control_list_select", str(target_cl.id))
         self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        expect(self.page.locator("#upload-error")).to_be_visible(timeout=10000)
 
-        assert sorted(
-            e.text_content().strip()
-            for e in self.page.locator(".alert.alert-danger:visible").all()
-            if e.text_content().strip()
-        ) == sorted(["You did not input any text."])
+        assert self.page.locator("#upload-error-msg").text_content().strip() == "You did not input any text."
 
     def test_registration_with_sep_token(self):
         self.go_to_new_corpus()
@@ -305,8 +291,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
         self.page.locator("#sep_token").fill("____")
         self.page.locator("#label_checkbox_create").click()
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
         assert corpus is not None
@@ -360,8 +345,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#tokens").fill(
             "form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
         )
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
         assert self.page.locator(".alert.alert-danger:visible").count() == 0
 
     def test_corpus_name_unique_user(self):
@@ -378,8 +362,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#tokens").fill(
             "form\tlemma\tPOS\tmorph\nSOIGNORS\tseignor\tNOMcom\tNOMB.=p|GENRE=m|CAS=n"
         )
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
         assert self.page.locator(".alert.alert-danger").count() == 0
 
     def test_lemmatization_service(self):
@@ -456,8 +439,7 @@ class TestCorpusRegistration(Helpers):
         self.page.locator("#label_checkbox_create").click()
         self.page.locator("[name='punct']").wait_for(state="visible", timeout=10000)
         self.page.locator("[name='punct']").click()
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        self.submit_and_wait()
 
         self.go_to_control_list_curation("Wauchier")
         self.page.get_by_role("link", name="Ignore values").click()
@@ -465,3 +447,149 @@ class TestCorpusRegistration(Helpers):
 
         assert self.page.locator("[name='punct']").is_checked()
         assert not self.page.locator("[name='numeral']").is_checked()
+
+    def test_chunked_registration(self):
+        """Corpus creation works end-to-end via the fetch() chunked flow."""
+        self.go_to_new_corpus()
+        self.page.locator("#corpusName").fill(PLAINTEXT_CORPORA["Wauchier"]["name"])
+        self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.page.locator("#label_checkbox_create").click()
+        with self.page.expect_navigation(timeout=30000):
+            self.page.locator("#submit").click()
+            expect(self.page.locator("#upload-progress")).to_be_visible()
+            expect(self.page.locator("#submit")).to_be_disabled()
+
+        corpus = Corpus.query.filter(Corpus.name == PLAINTEXT_CORPORA["Wauchier"]["name"]).first()
+        assert corpus is not None
+        assert corpus.status == 'active'
+        assert WordToken.query.filter(WordToken.corpus == corpus.id).count() == 25
+
+    def test_pending_corpus_hidden_from_dashboard(self):
+        """A corpus stuck in 'pending' must not appear in the user's corpus list."""
+        admin = self.app.config["ADMIN_EMAIL"]
+        user = __import__('app').models.User.query.filter_by(email=admin).first()
+        cl = ControlLists(name="CL pending test", public=PublicationStatus.private)
+        db.session.add(cl)
+        db.session.flush()
+        pending = Corpus(name="__pending_test__", control_lists_id=cl.id, status='pending')
+        db.session.add(pending)
+        db.session.flush()
+        db.session.add(CorpusUser(corpus=pending, user=user, is_owner=True))
+        db.session.commit()
+
+        self.page.goto(self.url_for('main.index'))
+        self.page.wait_for_load_state("networkidle")
+        assert "__pending_test__" not in self.page.content()
+
+    def test_stale_pending_corpus_cleaned_on_new_init(self):
+        """Starting a new corpus init deletes the user's previous pending corpus."""
+        admin_email = self.app.config["ADMIN_EMAIL"]
+        user = __import__('app').models.User.query.filter_by(email=admin_email).first()
+        cl = ControlLists(name="CL stale", public=PublicationStatus.private)
+        db.session.add(cl)
+        db.session.flush()
+        stale = Corpus(name="__stale_pending__", control_lists_id=cl.id, status='pending')
+        db.session.add(stale)
+        db.session.flush()
+        db.session.add(CorpusUser(corpus=stale, user=user, is_owner=True))
+        db.session.commit()
+
+        self.go_to_new_corpus()
+        self.page.locator("#corpusName").fill("New After Stale")
+        self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.page.locator("#label_checkbox_create").click()
+        self.submit_and_wait()
+
+        db.session.expire_all()
+        assert Corpus.query.filter_by(name="__stale_pending__").first() is None, \
+            "Old pending corpus should have been deleted"
+
+    def test_submit_frozen_during_upload(self):
+        """Submit button is disabled and progress bar is visible while chunks are in flight."""
+        self.go_to_new_corpus()
+        self.page.locator("#corpusName").fill("Freeze test")
+        self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.page.locator("#label_checkbox_create").click()
+
+        self.page.route("**/tokens/upload", lambda route: (
+            route.fulfill(status=200, body='{"tokens_received": 0}')
+        ))
+
+        self.page.locator("#submit").click()
+        expect(self.page.locator("#submit")).to_be_disabled()
+        expect(self.page.locator("#upload-progress")).to_be_visible()
+
+    def test_finalize_with_no_tokens_returns_error(self):
+        """Finalizing a pending corpus with zero tokens returns an error and deletes the corpus."""
+        admin_email = self.app.config["ADMIN_EMAIL"]
+        user = __import__('app').models.User.query.filter_by(email=admin_email).first()
+        cl = ControlLists(name="CL finalize test", public=PublicationStatus.private)
+        db.session.add(cl)
+        db.session.flush()
+        pending = Corpus(name="__finalize_test__", control_lists_id=cl.id, status='pending')
+        db.session.add(pending)
+        db.session.flush()
+        db.session.add(CorpusUser(corpus=pending, user=user, is_owner=True))
+        db.session.commit()
+        pending_id = pending.id
+
+        # Use the Playwright browser (already authenticated via _force_authenticated)
+        finalize_url = self.url_for('main.corpus_tokens_finalize', corpus_id=pending_id)
+        resp = self.page.request.post(finalize_url)
+        assert resp.status == 400
+        data = resp.json()
+        assert 'error' in data
+
+        db.session.expire_all()
+        assert Corpus.query.get(pending_id) is None
+
+
+class TestAdminPendingCorpora(Helpers):
+    @pytest.fixture(autouse=True)
+    def setup(self, page, url_for_port, app):
+        self.page = page
+        self.url_for = url_for_port
+        self.app = app
+
+    def test_admin_can_see_pending_corpora(self):
+        """Admin pending-corpora page lists a pending corpus."""
+        admin_email = self.app.config["ADMIN_EMAIL"]
+        user = __import__('app').models.User.query.filter_by(email=admin_email).first()
+        cl = ControlLists(name="CL admin pending", public=PublicationStatus.private)
+        db.session.add(cl)
+        db.session.flush()
+        pending = Corpus(name="__admin_pending__", control_lists_id=cl.id, status='pending')
+        db.session.add(pending)
+        db.session.flush()
+        db.session.add(CorpusUser(corpus=pending, user=user, is_owner=True))
+        db.session.commit()
+
+        self.page.goto(self.url_for('main.admin_pending_corpora'))
+        self.page.wait_for_load_state("networkidle")
+        assert "__admin_pending__" in self.page.content()
+
+    def test_admin_can_delete_pending_corpus(self):
+        """Admin can delete a pending corpus via the pending-corpora page."""
+        admin_email = self.app.config["ADMIN_EMAIL"]
+        user = __import__('app').models.User.query.filter_by(email=admin_email).first()
+        cl = ControlLists(name="CL admin delete", public=PublicationStatus.private)
+        db.session.add(cl)
+        db.session.flush()
+        pending = Corpus(name="__admin_delete__", control_lists_id=cl.id, status='pending')
+        db.session.add(pending)
+        db.session.flush()
+        db.session.add(CorpusUser(corpus=pending, user=user, is_owner=True))
+        db.session.commit()
+        pending_id = pending.id
+
+        self.page.goto(self.url_for('main.admin_pending_corpora'))
+        self.page.wait_for_load_state("networkidle")
+
+        self.page.on("dialog", lambda d: d.accept())
+        self.page.locator(f"form[action*='/{pending_id}/delete'] button[type=submit]").click()
+        self.page.wait_for_load_state("networkidle")
+
+        db.session.expire_all()
+        assert Corpus.query.get(pending_id) is None
+        # Flash message contains the name, so check the table rows specifically
+        assert self.page.locator("table tbody td", has_text="__admin_delete__").count() == 0

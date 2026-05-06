@@ -2,6 +2,7 @@
 import csv
 import io
 import enum
+from datetime import datetime
 from typing import Iterable, Optional, Dict, List, Tuple
 from itertools import product
 # PIP Packages
@@ -85,6 +86,8 @@ class Corpus(db.Model):
     context_right = db.Column(db.SmallInteger, default=3)
     control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
     delimiter_token = db.Column(db.String(12), default=None)
+    status = db.Column(db.Enum('pending', 'active', name='corpus_status'), nullable=False, default='active')
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     control_lists = db.relationship("ControlLists")
     word_token_history = db.relationship('TokenHistory', lazy='select', cascade="all, delete-orphan")
@@ -433,25 +436,15 @@ class Corpus(db.Model):
         return ChangeRecord.query.filter_by(corpus=self.id).order_by(ChangeRecord.created_on.desc()).paginate(page=page, per_page=limit)
 
     @staticmethod
-    def create(
-            name, word_tokens_dict,
-            allowed_lemma=None, allowed_POS=None, allowed_morph=None,
+    def create_shell(
+            name, allowed_lemma=None, allowed_POS=None, allowed_morph=None,
             context_left=None, context_right=None, control_list: ControlLists = None,
             delimiter_token=None, columns=None
     ):
-        """ Create a corpus
+        """Create the corpus record and control list without inserting tokens.
 
-        :param name: Name of the corpus
-        :param word_tokens_dict: Generator yielding a dictionaries of tokens
-        :param allowed_lemma: List of allowed lemma
-        :param allowed_POS: List of allowed POS
-        :param allowed_morph: list of Allowed Morph in the form of dict with keys (label, readable)
-        :param context_left: Number of tokens to keep on the left
-        :param context_right: Number of tokens to keep on the right
-        :param control_list: Control list to reuse
-        :param delimiter_token: Token used for separating passages
-        :return: Created Corpus
-        :rtype: Corpus
+        Returns a Corpus with status='pending'. Caller must later call
+        WordToken.add_batch() and set status='active' (or use Corpus.create()).
         """
         try:
             if not control_list:
@@ -474,15 +467,43 @@ class Corpus(db.Model):
                 delimiter_token=delimiter_token,
                 context_left=context_left,
                 context_right=context_right,
-                columns=columns
+                columns=columns,
+                status='pending',
             )
             db.session.add(c)
             db.session.commit()
-
-
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
             db.session.rollback()
             raise e
+        return c
+
+    @staticmethod
+    def create(
+            name, word_tokens_dict,
+            allowed_lemma=None, allowed_POS=None, allowed_morph=None,
+            context_left=None, context_right=None, control_list: ControlLists = None,
+            delimiter_token=None, columns=None
+    ):
+        """ Create a corpus
+
+        :param name: Name of the corpus
+        :param word_tokens_dict: Generator yielding a dictionaries of tokens
+        :param allowed_lemma: List of allowed lemma
+        :param allowed_POS: List of allowed POS
+        :param allowed_morph: list of Allowed Morph in the form of dict with keys (label, readable)
+        :param context_left: Number of tokens to keep on the left
+        :param context_right: Number of tokens to keep on the right
+        :param control_list: Control list to reuse
+        :param delimiter_token: Token used for separating passages
+        :return: Created Corpus
+        :rtype: Corpus
+        """
+        c = Corpus.create_shell(
+            name=name, allowed_lemma=allowed_lemma, allowed_POS=allowed_POS,
+            allowed_morph=allowed_morph, context_left=context_left,
+            context_right=context_right, control_list=control_list,
+            delimiter_token=delimiter_token, columns=columns,
+        )
 
         token_count = WordToken.add_batch(
             corpus_id=c.id, word_tokens_dict=word_tokens_dict,
@@ -492,6 +513,8 @@ class Corpus(db.Model):
         if token_count == 0:
             raise NoTokensInput("No tokens were given")
 
+        c.status = 'active'
+        db.session.commit()
         return c
 
     def update_allowed_values(self, allowed_type, allowed_values):
@@ -774,13 +797,13 @@ class WordToken(db.Model):
     lemma = db.Column(db.String(128))
     label_uniform = db.Column(db.String(128))
     POS = db.Column(db.String(128))
-    morph = db.Column(db.String(128))
-    gloss = db.Column(db.String(512), nullable=True)
+    morph = db.Column(db.String(1024))
+    gloss = db.Column(db.String(1024), nullable=True)
     needs_review = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
-    review_comment = db.Column(db.String(512), nullable=True)
+    review_comment = db.Column(db.String(1024), nullable=True)
     token_reference = db.Column(db.String(512), nullable=True)
-    left_context = db.Column(db.String(512))
-    right_context = db.Column(db.String(512))
+    left_context = db.Column(db.String(1024))
+    right_context = db.Column(db.String(1024))
 
     __table_args__ = (
         # Covers the primary annotation query: filter by corpus, order by position
