@@ -444,8 +444,8 @@ class AllowedMorph(db.Model):
     :param control_list: ID of the ControlLists this AllowedMorph is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(128))
-    readable = db.Column(db.String(256))
+    label = db.Column(db.String(1024))
+    readable = db.Column(db.String(1024))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
     @staticmethod

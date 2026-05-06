@@ -797,13 +797,13 @@ class WordToken(db.Model):
     lemma = db.Column(db.String(128))
     label_uniform = db.Column(db.String(128))
     POS = db.Column(db.String(128))
-    morph = db.Column(db.String(128))
-    gloss = db.Column(db.String(512), nullable=True)
+    morph = db.Column(db.String(1024))
+    gloss = db.Column(db.String(1024), nullable=True)
     needs_review = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
-    review_comment = db.Column(db.String(512), nullable=True)
+    review_comment = db.Column(db.String(1024), nullable=True)
     token_reference = db.Column(db.String(512), nullable=True)
-    left_context = db.Column(db.String(512))
-    right_context = db.Column(db.String(512))
+    left_context = db.Column(db.String(1024))
+    right_context = db.Column(db.String(1024))
 
     __table_args__ = (
         # Covers the primary annotation query: filter by corpus, order by position
