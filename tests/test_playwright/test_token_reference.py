@@ -39,8 +39,8 @@ class TestTokenReference(Helpers):
         # Use "Write your own" control list (simpler)
         self.page.locator("#label_checkbox_create").click()
 
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        with self.page.expect_navigation(timeout=30000):
+            self.page.locator("#submit").click()
 
         return Corpus.query.filter_by(name=CORPUS_NAME).first()
 

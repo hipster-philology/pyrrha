@@ -8,6 +8,9 @@
         </a>
         <h1 class="mb-0">{{ _('All Corpora') }}</h1>
         <span class="badge badge-danger" style="font-size:.8rem">{{ _('Admin') }}</span>
+        <a href="{{ url_for('main.admin_pending_corpora') }}" class="btn btn-sm btn-outline-warning ml-auto">
+            <i class="fa fa-hourglass-half"></i> {{ _('Pending corpora') }}
+        </a>
     </div>
 
     <script id="list-browser-corpora-config" type="application/json">

@@ -39,6 +39,7 @@ class TestDashboard(Helpers):
 
     def test_mark_favorite(self):
         self.page.goto(self.url_for("main.index"))
+        self.page.wait_for_load_state("networkidle")
         link = self.get_fav_link(1)
         assert link.locator(".fa-star-o").count() == 1, "Should show an empty star"
         link.click()
@@ -49,6 +50,7 @@ class TestDashboard(Helpers):
 
     def test_favourite_in_menu(self):
         self.page.goto(self.url_for("main.index"))
+        self.page.wait_for_load_state("networkidle")
         self.get_fav_link(1).click()
         self.page.wait_for_load_state("networkidle")
         self.page.locator("#toggle_corpus_corpora").click()

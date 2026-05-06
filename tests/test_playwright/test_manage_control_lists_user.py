@@ -151,8 +151,8 @@ class TestManageControlListsUser(Helpers):
             "doit\tdevoir\tVERcjg"
         )
         self.page.locator("#label_checkbox_create").click()
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        with self.page.expect_navigation(timeout=30000):
+            self.page.locator("#submit").click()
         self.go_to_control_lists_management("Control List FreshNewCorpus")
 
         el = self.get_ownership_table()

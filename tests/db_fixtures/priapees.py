@@ -6,6 +6,7 @@ corpus = Corpus(
     name="Priapees",
     id=3,
     control_lists_id=control_list.id,
+    status='active',
 )
 PriapeeColumns = [
     Column(heading="Lemma", corpus_id=3),

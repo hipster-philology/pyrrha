@@ -1,0 +1,67 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<div class="container mt-3">
+    <div class="d-flex align-items-center mb-3" style="gap:.75rem">
+        <a href="{{ url_for('main.admin_list_corpora') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-left"></i>
+        </a>
+        <h1 class="mb-0">{{ _('Pending Corpora') }}</h1>
+        <span class="badge badge-danger" style="font-size:.8rem">{{ _('Admin') }}</span>
+    </div>
+
+    <p class="text-muted small">
+        {{ _('Corpora stuck in <em>pending</em> state — token upload was started but never completed. Rows older than %(hours)s hours are highlighted.', hours=max_age_hours) }}
+    </p>
+
+    {% if not rows %}
+        <div class="alert alert-success">{{ _('No pending corpora.') }}</div>
+    {% else %}
+    <table class="table table-sm table-bordered">
+        <thead class="thead-light">
+            <tr>
+                <th>#</th>
+                <th>{{ _('Name') }}</th>
+                <th>{{ _('Owner(s)') }}</th>
+                <th>{{ _('Created') }}</th>
+                <th>{{ _('Tokens so far') }}</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for corpus, token_count in rows %}
+            {% set stale = corpus.created_at < threshold %}
+            <tr class="{{ 'table-warning' if stale else '' }}">
+                <td>{{ corpus.id }}</td>
+                <td>{{ corpus.name }}</td>
+                <td>
+                    {% for cu in corpus.corpus_users if cu.is_owner %}
+                        {{ cu.user.first_name }} {{ cu.user.last_name }}{% if not loop.last %}, {% endif %}
+                    {% else %}
+                        <em class="text-muted">—</em>
+                    {% endfor %}
+                </td>
+                <td>
+                    {{ corpus.created_at.strftime('%Y-%m-%d %H:%M') }}
+                    {% if stale %}
+                        <span class="badge badge-warning ml-1">{{ _('stale') }}</span>
+                    {% endif %}
+                </td>
+                <td>{{ token_count }}</td>
+                <td>
+                    <form method="POST"
+                          action="{{ url_for('main.admin_delete_pending_corpus', corpus_id=corpus.id) }}"
+                          onsubmit="return confirm('{{ _('Delete pending corpus') }} «{{ corpus.name }}»?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-danger">
+                            <i class="fa fa-trash"></i> {{ _('Delete') }}
+                        </button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+</div>
+{% endblock %}

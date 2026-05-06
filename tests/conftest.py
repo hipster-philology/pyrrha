@@ -16,5 +16,7 @@ def teardown_db():
     # leaving it causes flask_migrate.upgrade() to skip migrations on a fresh DB.
     with db.engine.connect() as conn:
         conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+        if db.engine.dialect.name == "postgresql":
+            conn.execute(text("DROP TYPE IF EXISTS corpus_status"))
         conn.commit()
     db.engine.dispose()

@@ -6,7 +6,8 @@ WCL = ControlLists(id=1, name="Wauchier")
 Wauchier = Corpus(
     name="Wauchier",
     id=1,
-    control_lists_id=WCL.id
+    control_lists_id=WCL.id,
+    status='active',
 )
 WauchierColumns = [
     Column(heading="Lemma", corpus_id=1),

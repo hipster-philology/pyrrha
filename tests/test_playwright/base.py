@@ -188,6 +188,7 @@ class Helpers:
             corpus = Corpus(
                 name="a" * (n + 1),
                 control_lists_id=1,
+                status='active',
                 columns=[
                     Column(heading="Lemma"),
                     Column(heading="POS"),

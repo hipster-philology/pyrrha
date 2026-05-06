@@ -78,8 +78,8 @@ class TestDashboard(Helpers):
         self.page.locator("#corpusName").fill("FreshNewCorpus")
         self.write_lorem_ipsum_tokens()
         self.page.locator("#label_checkbox_create").click()
-        self.page.locator("#submit").click()
-        self.page.wait_for_load_state("networkidle")
+        with self.page.expect_navigation(timeout=30000):
+            self.page.locator("#submit").click()
 
         # Check that that are added to favorite are visible
         self.add_favorite_via_db(user_id=self.get_admin_id(), corpora_ids=(3,), reset=False)
