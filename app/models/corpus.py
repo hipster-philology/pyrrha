@@ -1243,7 +1243,7 @@ class WordToken(db.Model):
         return statuses
 
     @staticmethod
-    def add_batch(corpus_id, word_tokens_dict, context_left=None, context_right=None):
+    def add_batch(corpus_id, word_tokens_dict, context_left=None, context_right=None, order_id_offset: int = 0):
         """ Add a batch of tokens to a corpus given a TSV
 
         :param corpus_id: Id of the corpus
@@ -1320,7 +1320,7 @@ class WordToken(db.Model):
                 left_context=" ".join(previous_token),
                 right_context=" ".join(next_token),
                 corpus=corpus_id,
-                order_id=i+1  # Asked by JB Camps...
+                order_id=order_id_offset + i + 1  # Asked by JB Camps...
             )
             for k in ("form",):
                 validate_length(k, wt[k], {"form": 128})
@@ -1505,7 +1505,7 @@ class WordToken(db.Model):
                     ]
                 )
             )
-        )
+        ).order_by(WordToken.order_id)
 
     @staticmethod
     def get_nearly_similar_to(token, mode):
@@ -1574,7 +1574,7 @@ class WordToken(db.Model):
                     WordToken.id != token.id,
                     *filtering
                 )
-        )
+        ).order_by(WordToken.order_id)
 
 
 class TokenHistory(db.Model):

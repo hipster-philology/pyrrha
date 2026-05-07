@@ -560,7 +560,9 @@ document.addEventListener('DOMContentLoaded', function () {
         var finalizeUrl = CORPUS_FINALIZE_URL.replace('{id}', corpusId);
 
         var chunks = [];
+        var chunkOffsets = [];
         for (var i = 0; i < tokens.length; i += CHUNK_SIZE) {
+            chunkOffsets.push(i);
             chunks.push(tokens.slice(i, i + CHUNK_SIZE));
         }
         var totalTokens = tokens.length;
@@ -576,7 +578,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 resp = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json', 'X-CSRFToken': csrfToken},
-                    body: JSON.stringify({tokens: chunks[idx], chunk_index: idx}),
+                    body: JSON.stringify({tokens: chunks[idx], chunk_index: idx, token_offset: chunkOffsets[idx]}),
                 });
                 respData = await resp.json();
             } catch(e) {

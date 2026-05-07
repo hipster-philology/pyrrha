@@ -277,12 +277,15 @@ def corpus_tokens_upload(corpus_id):
     if not tokens:
         return jsonify({"tokens_received": 0})
 
+    offset = int(data.get("token_offset", 0))
+
     try:
         count = WordToken.add_batch(
             corpus_id=corpus_id,
             word_tokens_dict=tokens,
             context_left=corpus.context_left,
             context_right=corpus.context_right,
+            order_id_offset=offset,
         )
         db.session.commit()
     except MissingTokenColumnValue as exc:
