@@ -464,6 +464,30 @@ class TestCorpusRegistration(Helpers):
         assert corpus.status == 'active'
         assert WordToken.query.filter(WordToken.corpus == corpus.id).count() == 25
 
+    def test_chunked_upload_order_ids_are_sequential(self):
+        """Tokens uploaded in multiple small chunks must have sequential, gap-free order_ids.
+
+        Regression: each chunk used to reset order_id to 1, causing duplicate order_ids
+        and undefined token ordering in the backend.
+        """
+        self.go_to_new_corpus()
+        self.page.locator("#corpusName").fill("Chunked order test")
+        self.page.locator("#tokens").fill(PLAINTEXT_CORPORA["Wauchier"]["data"])
+        self.page.locator("#label_checkbox_create").click()
+        # Force a tiny chunk size so 25 tokens are split across multiple chunks
+        self.page.evaluate("() => { CHUNK_SIZE = 5; }")
+        with self.page.expect_navigation(timeout=30000):
+            self.page.locator("#submit").click()
+
+        corpus = Corpus.query.filter(Corpus.name == "Chunked order test").first()
+        assert corpus is not None
+        assert corpus.status == 'active'
+        order_ids = [
+            t.order_id
+            for t in WordToken.query.filter_by(corpus=corpus.id).order_by(WordToken.order_id).all()
+        ]
+        assert order_ids == list(range(1, 26))
+
     def test_pending_corpus_hidden_from_dashboard(self):
         """A corpus stuck in 'pending' must not appear in the user's corpus list."""
         admin = self.app.config["ADMIN_EMAIL"]

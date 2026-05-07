@@ -106,6 +106,29 @@ class TestWordToken(TestModels):
         )
         self.assertEqual(WordToken.add_batch(corpus_id, [{"form": form}]), 1)
 
+    def test_add_batch_chunked_order_ids_are_sequential(self):
+        """Sending tokens in multiple chunks must produce strictly sequential order_ids.
+
+        Regression: before the fix, each chunk reset order_id to 1, causing duplicates.
+        """
+        self.addCorpus("floovant", tokens_up_to=0)
+        corpus_id = Corpus.query.one().id
+
+        chunk1 = [{"form": f"w{i}"} for i in range(3)]
+        chunk2 = [{"form": f"w{i}"} for i in range(3, 6)]
+
+        WordToken.add_batch(corpus_id, chunk1)
+        self.db.session.commit()
+        offset = WordToken.query.filter_by(corpus=corpus_id).count()
+        WordToken.add_batch(corpus_id, chunk2, order_id_offset=offset)
+        self.db.session.commit()
+
+        order_ids = [
+            t.order_id
+            for t in WordToken.query.filter_by(corpus=corpus_id).order_by(WordToken.order_id).all()
+        ]
+        self.assertEqual(order_ids, list(range(1, 7)))
+
     def test_update_batch_context(self):
         """Test updating left and right context.
 
