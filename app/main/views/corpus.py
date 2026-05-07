@@ -277,8 +277,9 @@ def corpus_tokens_upload(corpus_id):
     if not tokens:
         return jsonify({"tokens_received": 0})
 
+    offset = int(data.get("token_offset", 0))
+
     try:
-        offset = WordToken.query.filter_by(corpus=corpus_id).count()
         count = WordToken.add_batch(
             corpus_id=corpus_id,
             word_tokens_dict=tokens,
