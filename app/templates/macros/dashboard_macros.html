@@ -118,9 +118,9 @@
         <h2>{{ _('View and manage corpora users') }}</h2>
         <p class="form-text">{{ _('Add or remove corpus access to users') }}</p>
         {% if current_user.is_admin() %}
-            <a href="{{ url_for("main.list_corpora") }}">{{ _('See all as administrator') }}</a>
+            <a href="{{ url_for("main.admin_list_corpora") }}">{{ _('See all as administrator') }}</a>
         {% elif corpora|length > 10 %}
-            <a href="{{ url_for("main.list_corpora") }}">{{ _('More detailed view...') }}</a>
+            <a href="{{ url_for("main.admin_list_corpora") }}">{{ _('More detailed view...') }}</a>
         {% endif %}
         <div id="corpora-dashboard" class="list-group">
             <h3 class="list-group-item bg-dark text-white">{{ _('Corpora') }}</h3>
@@ -160,6 +160,7 @@
 
     <form method="POST" id="accesses-form"
           action="{{ url_for(post_endpoint, **post_kwargs) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mt-3">
             {% if can_edit %}
                 <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage') }} {{ item_type_name }} {{ _('users') }}</h2>

@@ -6,6 +6,7 @@
 
 <h2>Edit information about {{control_list.name}}</h2>
 <form method="post" action="{{url_for('control_lists_bp.information_edit', control_list_id=control_list.id)}}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
         <label for="cl_description">{{ _('Description') }}</label>
         <small id="cl_description_help" class="form-text text-muted">{{ _('Description of the control list') }}</small>

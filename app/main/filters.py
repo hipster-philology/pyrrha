@@ -20,7 +20,7 @@ def thousands(integer):
     :return: Formated number with grouped thousands
     :rtype: str
     """
-    return locale.format("%d", integer, 1)
+    return locale.format_string("%d", integer, grouping=True)
 
 
 @main.app_template_filter("json")

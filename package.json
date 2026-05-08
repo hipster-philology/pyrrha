@@ -1,0 +1,13 @@
+{
+  "devDependencies": {
+    "jest": "^29",
+    "jest-environment-jsdom": "^29"
+  },
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testMatch": ["**/tests/js/**/*.test.js"]
+  },
+  "scripts": {
+    "test:js": "jest"
+  }
+}

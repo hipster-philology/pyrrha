@@ -1,32 +1,36 @@
 {% extends 'layouts/base.html' %}
 {% import 'macros/dashboard_macros.html' as dashboard %}
 
-
 {% block content %}
-    <div class="container">
-        {% if current_user.is_admin() %}
-            <div id="admin-dashboard" class="list-group">
-                <h3 class="list-group-item bg-dark text-white">{{ _('User Dashboard') }}</h3>
-                        {{ dashboard.dashboard_option(_('Registered Users'), 'admin.registered_users',
-                                        description=_('View and manage user accounts'), icon='fa fa-users') }}
-                        {{ dashboard.dashboard_option(_('Add New User'), 'admin.new_user',
-                                        description=_('Create a new user account'), icon='fa fa-user-plus') }}
-                        {{ dashboard.dashboard_option(_('Invite New User'), 'admin.invite_user',
-                                        description=_('Invites a new user to create their own account'),
-                                        icon='fa fa-user-plus') }}
+<div class="container mt-3">
 
-            </div>
-            <div class="row">
-                <div class="col-6">
-                    {{ dashboard.corpora_users(current_user, dashboard_corpora) }}
-                </div>
-                <div class="col-6">
-                    {{ dashboard.control_lists_users(current_user, dashboard_control_lists) }}
-                </div>
-            </div>
-        {% else %}
-            {{ dashboard.corpora_users(current_user, dashboard_corpora) }}
-            {{ dashboard.control_lists_users(current_user, dashboard_control_lists) }}
-        {% endif %}
+    <div class="d-flex align-items-center mb-4" style="gap:.75rem">
+        <h1 class="mb-0">{{ _('Admin Dashboard') }}</h1>
+        <span class="badge badge-danger" style="font-size:.8rem">{{ _('Admin') }}</span>
     </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <h5 class="text-muted text-uppercase mb-2" style="font-size:.75rem;letter-spacing:.05em">{{ _('Users') }}</h5>
+            <div class="list-group mb-4">
+                {{ dashboard.dashboard_option(_('Registered Users'), 'admin.registered_users',
+                                description=_('View and manage user accounts'), icon='fa fa-users') }}
+                {{ dashboard.dashboard_option(_('Add New User'), 'admin.new_user',
+                                description=_('Create a new user account'), icon='fa fa-user-plus') }}
+                {{ dashboard.dashboard_option(_('Invite New User'), 'admin.invite_user',
+                                description=_('Invites a new user to create their own account'), icon='fa fa-user-plus') }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h5 class="text-muted text-uppercase mb-2" style="font-size:.75rem;letter-spacing:.05em">{{ _('Content') }}</h5>
+            <div class="list-group mb-4">
+                {{ dashboard.dashboard_option(_('All Corpora'), 'main.admin_list_corpora',
+                                description=_('Browse, search and manage every corpus'), icon='fa fa-database') }}
+                {{ dashboard.dashboard_option(_('All Control Lists'), 'main.admin_list_control_lists',
+                                description=_('Browse, search and manage every control list'), icon='fa fa-th-list') }}
+            </div>
+        </div>
+    </div>
+
+</div>
 {% endblock %}

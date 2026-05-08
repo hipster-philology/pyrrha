@@ -1,6 +1,7 @@
 {% extends "layouts/base.html" %}
 {% block content %}
-<form method="POST" action="{{ url_for("main.preferences", corpus_id=corpus.id) }}">
+<form method="POST" action="{{ url_for("main.corpus_preferences", corpus_id=corpus.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <h1>
             <i class="fa fa-cog"></i> {{ _('Preferences') }}
         </h1>

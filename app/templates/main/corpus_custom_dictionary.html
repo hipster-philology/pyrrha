@@ -1,7 +1,8 @@
 {% extends "layouts/base.html" %}
 {% block content %}
 {% set visible = corpus.displayed_columns_by_name %}
-<form method="POST" action="{{ url_for("main.corpus_custom_dict", corpus_id=corpus.id) }}">
+<form method="POST" action="{{ url_for("main.corpus_custom_dictionary", corpus_id=corpus.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <h1>
             <i class="fa fa-book"></i> {{ _('Custom dictionary') }}
         </h1>

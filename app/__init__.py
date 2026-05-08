@@ -1,9 +1,12 @@
+import hashlib
 import os
-from flask import Flask, g
+import logging
+from flask import Flask, g, url_for
 
 from flask_compress import Compress
 from flask_login import LoginManager
 from flask_mail import Mail
+from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
 from flask_babel import Babel
@@ -17,6 +20,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 
 mail = Mail()
 db = SQLAlchemy()
+migrate = Migrate()
 csrf = CSRFProtect()
 compress = Compress()
 babel = Babel()
@@ -24,6 +28,24 @@ babel = Babel()
 login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'account.login'
+
+logging.basicConfig(filename='./pyrrha_corpus_creation.log', level=logging.DEBUG,
+                        format='%(asctime)s %(levelname)s %(name)s %(message)s')
+
+logger = logging.getLogger(__name__)
+
+
+def _build_static_hashes(static_folder):
+    hashes = {}
+    if not static_folder or not os.path.isdir(static_folder):
+        return hashes
+    for root, _, files in os.walk(static_folder):
+        for fname in files:
+            full = os.path.join(root, fname)
+            rel = os.path.relpath(full, static_folder).replace(os.sep, '/')
+            with open(full, 'rb') as fh:
+                hashes[rel] = hashlib.md5(fh.read()).hexdigest()[:8]
+    return hashes
 
 
 def create_app(config_name="dev"):
@@ -58,11 +80,14 @@ def create_app(config_name="dev"):
     # Set up extensions
     mail.init_app(app)
     db.init_app(app)
+    migrate.init_app(app, db)
     login_manager.init_app(app)
-    #csrf.init_app(app)
+    csrf.init_app(app)
     compress.init_app(app)
     md = Markdown(app, safe_mode=True)
     babel.init_app(app, locale_selector=get_locale)
+
+
 
     # Register Jinja template functions
     from .main import main as main_blueprint
@@ -79,6 +104,32 @@ def create_app(config_name="dev"):
 
     from .control_lists import control_lists_bp
     app.register_blueprint(control_lists_bp)
+
+    # Static file cache-busting via versioned URLs
+    if app.debug:
+        @app.context_processor
+        def _versioned_url_for():
+            def dated_url_for(endpoint, **values):
+                if endpoint == 'static':
+                    filename = values.get('filename', '')
+                    filepath = os.path.join(app.static_folder, filename)
+                    if os.path.isfile(filepath):
+                        with open(filepath, 'rb') as fh:
+                            values['v'] = hashlib.md5(fh.read()).hexdigest()[:8]
+                return url_for(endpoint, **values)
+            return dict(url_for=dated_url_for)
+    else:
+        _hashes = _build_static_hashes(app.static_folder)
+
+        @app.context_processor
+        def _versioned_url_for():
+            def dated_url_for(endpoint, **values):
+                if endpoint == 'static':
+                    h = _hashes.get(values.get('filename', ''))
+                    if h:
+                        values['v'] = h
+                return url_for(endpoint, **values)
+            return dict(url_for=dated_url_for)
 
     return app
 

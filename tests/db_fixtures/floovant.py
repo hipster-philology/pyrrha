@@ -6,7 +6,8 @@ FCL = ControlLists(id=2, name="Floovant")
 Floovant = Corpus(
     name="Floovant",
     id=2,
-    control_lists_id=FCL.id
+    control_lists_id=FCL.id,
+    status='active',
 )
 FloovantColumns = [
     Column(heading="Lemma", corpus_id=2),

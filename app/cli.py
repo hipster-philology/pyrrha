@@ -1,9 +1,11 @@
 import click
 import os
+import subprocess
 
 from config import Config
 from app.models import Role, User, ControlLists
 from . import create_app, db
+import flask_migrate
 from .models import (
     Corpus,
     Column,
@@ -50,20 +52,18 @@ def make_cli():
         """Edits a user by id or email
         """
         with app.app_context():
-            try:
-                int(user_id_or_email)
-                user_id = user_id_or_email
-            except ValueError:
-                lookup = User.query.filter(User.email == user_id_or_email).first()
-                user_id = lookup.id if lookup else None
-
-            if not user_id:
-                click.echo(f"User with email '{user_id_or_email}' not found.")
-
-            user = User.query.filter(User.id == user_id).first()
-            if not user:
-                click.echo(f"User with id '{user_id}' not found.")
-                return
+            if user_id_or_email.isnumeric():
+                user = User.query.filter(User.id == int(user_id_or_email)).first()
+                user_id = user.id if user else None
+                if not user:
+                    click.echo(f"User with id '{user_id}' not found.")
+                    return
+            else:
+                user = User.query.filter(User.email == user_id_or_email).first()
+                user_id = user.id if user else None
+                if not user_id:
+                    click.echo(f"User with email '{user_id_or_email}' not found.")
+                    return
             
             if is_confirmed and not user.confirmed:
                 User.query.filter(User.id == user_id).update({User.confirmed: True})
@@ -77,12 +77,13 @@ def make_cli():
 
     @click.command("db-create")
     def db_create():
-        """ Creates a local database
+        """ Creates the database and applies all Alembic migrations.
         """
         with app.app_context():
             if not database_exists(db.engine.url):
                 create_database(db.engine.url)
-            db.create_all()
+
+            flask_migrate.upgrade()
 
             Role.add_default_roles()
             User.add_default_users()
@@ -90,7 +91,7 @@ def make_cli():
 
             db.session.commit()
             click.echo("Created the database")
-            if db.session.get_bind().dialect.name == "postgresql":
+            if db.engine.dialect.name == "postgresql":
                 lc_messages_query = db.session.execute(text("SHOW lc_messages;"))
                 psql_locale = lc_messages_query.fetchone()[0]
                 if not psql_locale.startswith("en"):
@@ -306,56 +307,18 @@ def make_cli():
                 ))
                 click.echo("--- Allowed POS Values dumped")
 
-    @cli.command("db-upgrade", help="Do small migrations")
-    @click.argument("migration_name",
-              type=click.Choice(['controllist-markdown', 'add-columns', "user-language"], case_sensitive=False))
-    def db_add_table(migration_name):
-        columns = {
-            "controllist-markdown": [
-                ("control_lists", (db.Column("notes", db.Text),))
-            ],
-            "user-language": [
-                ("users", (db.Column("locale", db.String(10), default="en", nullable=True),))
-            ]
-        }
+    @cli.command("db-stamp")
+    @click.argument("revision", default="head")
+    def db_stamp_cmd(revision):
+        """Mark the DB as being at REVISION without running migrations.
 
-        def add_column(engine, table_name, column):
-            column_name = column.compile(dialect=engine.dialect)
-            column_type = column.type.compile(engine.dialect)
-            engine.execute('ALTER TABLE %s ADD COLUMN %s %s' % (table_name, column_name, column_type))
-            return column_name, column_type
-
-        migration_name = migration_name.lower()
+        Use 'head' when onboarding an existing database that already has the
+        current schema (so Alembic won't try to re-create tables it sees).
+        """
         with app.app_context():
-            if migration_name == "add-columns":
-                import app.models as tables
-                Model = getattr(tables, "Column", None)
-                if Model:
-                    with app.app_context():
-                        Model.__table__.create(db.session.bind, checkfirst=True)
-                for corpus in Corpus.query.all():
-                    corpus.columns = [
-                        Column(corpus_id=corpus.id, heading="Lemma"),
-                        Column(corpus_id=corpus.id, heading="POS"),
-                        Column(corpus_id=corpus.id, heading="Morph"),
-                        Column(corpus_id=corpus.id, heading="Similar"),
-                    ]
-                return
-            if migration_name in columns:
-                changes = []
-                for table, columns in columns[migration_name]:
-                    for column in columns:
-                        name, _ = add_column(db.engine, table, column)
-                        changes.append(str(name))
+            flask_migrate.stamp(revision=revision)
+            click.echo(f"Database stamped at revision: {revision}")
 
-                click.echo(
-                    "Success: {} columns added [{}]".format(
-                        len(changes),
-                        ", ".join(changes))
-                )
-
-    cli.add_command(db_create)
-    
     @click.command("db-add", help="Small tool to add new table instead of migrating")
     @click.argument("model")
     def db_add_table(model):
@@ -373,10 +336,102 @@ def make_cli():
                 ]))
             )
 
+    # ── Alembic / migration commands ─────────────────────────────────────────
+
+    @click.command("db-migrate")
+    @click.option("-m", "--message", default=None, help="Migration message")
+    def db_migrate_cmd(message):
+        """Auto-generate a new Alembic migration from model changes."""
+        with app.app_context():
+            flask_migrate.migrate(message=message)
+
+    @click.command("db-upgrade")
+    @click.option("--revision", default="head", show_default=True,
+                  help="Target revision (default: head)")
+    def db_upgrade_cmd(revision):
+        """Apply pending Alembic migrations."""
+        with app.app_context():
+            flask_migrate.upgrade(revision=revision)
+
+    @click.command("db-downgrade")
+    @click.option("--revision", default="-1", show_default=True,
+                  help="Target revision (default: one step back)")
+    def db_downgrade_cmd(revision):
+        """Revert the last Alembic migration."""
+        with app.app_context():
+            flask_migrate.downgrade(revision=revision)
+
+    @click.command("db-current")
+    def db_current_cmd():
+        """Show the current Alembic revision."""
+        with app.app_context():
+            flask_migrate.current()
+
+    @click.command("db-history")
+    def db_history_cmd():
+        """Show Alembic migration history."""
+        with app.app_context():
+            flask_migrate.history()
+
+    # ── Database dump ─────────────────────────────────────────────────────────
+
+    @click.command("db-dump")
+    @click.argument("path")
+    def db_dump(path):
+        """Dump the full database to PATH.
+
+        For PostgreSQL, PATH should be a file path (pg_dump custom format).
+        For SQLite, PATH should be a .sql or .sqlite destination.
+        """
+        with app.app_context():
+            url = db.engine.url
+            dialect = db.engine.dialect.name
+
+            if dialect == "postgresql":
+                cmd = ["pg_dump", "--format=custom"]
+                if url.host:
+                    cmd += ["-h", url.host]
+                if url.port:
+                    cmd += ["-p", str(url.port)]
+                if url.username:
+                    cmd += ["-U", url.username]
+                cmd += ["-f", path]
+                if url.database:
+                    cmd.append(url.database)
+
+                env = os.environ.copy()
+                if url.password:
+                    env["PGPASSWORD"] = url.password
+
+                result = subprocess.run(cmd, env=env)
+                if result.returncode == 0:
+                    click.echo(f"Database dumped to {path}")
+                else:
+                    click.echo("pg_dump failed.", err=True)
+
+            elif dialect == "sqlite":
+                import shutil
+                db_path = url.database
+                if db_path and db_path != ":memory:":
+                    shutil.copy2(db_path, path)
+                    click.echo(f"SQLite database copied to {path}")
+                else:
+                    click.echo("Cannot dump an in-memory SQLite database.", err=True)
+
+            else:
+                click.echo(f"Unsupported dialect: {dialect}", err=True)
+
     cli.add_command(db_create)
     cli.add_command(db_fixtures)
     cli.add_command(db_recreate)
     cli.add_command(db_add_table)
+    cli.add_command(db_migrate_cmd, name="db-migrate")
+    cli.add_command(db_upgrade_cmd, name="db-upgrade")
+    cli.add_command(db_downgrade_cmd, name="db-downgrade")
+    cli.add_command(db_current_cmd, name="db-current")
+    cli.add_command(db_history_cmd, name="db-history")
+    cli.add_command(db_stamp_cmd, name="db-stamp")
+    cli.add_command(db_dump)
     cli.add_command(edit_user)
     cli.add_command(run)
     cli.add_command(corpus_ingest)

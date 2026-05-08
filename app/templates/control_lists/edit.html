@@ -9,6 +9,7 @@
 
 <h2>Edit allowed {{allowed_type}}</h2>
 <form method="post" action="{{url_for('control_lists_bp.edit', cl_id=control_list.id, allowed_type=allowed_type)}}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
         <label for="allowed_values">Allowed {{allowed_type}}</label>
         <small id="allowed_values_help" class="form-text text-muted">{{format_message}}</small>

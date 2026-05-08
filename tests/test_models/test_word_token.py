@@ -5,6 +5,65 @@ import random
 import string
 
 
+class TestGetSimilarForBatch(TestModels):
+    """Regression tests for get_similar_for_batch — run before and after the SQL rewrite."""
+
+    def _make_corpus(self):
+        """Create a minimal corpus with known token forms for deterministic similarity counts."""
+        from app.models import ControlLists, Column
+        cl = ControlLists(name="TestCL")
+        self.db.session.add(cl)
+        self.db.session.flush()
+        corpus = Corpus(name="SimTest", control_lists_id=cl.id)
+        self.db.session.add(corpus)
+        self.db.session.flush()
+        for col in ("Lemma", "POS", "Morph"):
+            self.db.session.add(Column(heading=col, corpus_id=corpus.id))
+
+        tokens = [
+            # form "vos", same lemma → each is similar to the other
+            WordToken(corpus=corpus.id, order_id=1, form="vos", lemma="vos1", POS="PRO", morph="PERS.=2"),
+            WordToken(corpus=corpus.id, order_id=2, form="vos", lemma="vos1", POS="PRO", morph="PERS.=2"),
+            # form "de", appears twice but different lemma/POS/morph → not similar
+            WordToken(corpus=corpus.id, order_id=3, form="de", lemma="de1", POS="PRE", morph="_"),
+            WordToken(corpus=corpus.id, order_id=4, form="de", lemma="de2", POS="ADV", morph="X"),
+            # form "et", appears once → similar == 0
+            WordToken(corpus=corpus.id, order_id=5, form="et", lemma="et1", POS="CON", morph="_"),
+        ]
+        for t in tokens:
+            self.db.session.add(t)
+        self.db.session.commit()
+        return corpus, tokens
+
+    def test_similar_count_matching_form_and_lemma(self):
+        """Two tokens with same form and same lemma should each show similar=1."""
+        corpus, tokens = self._make_corpus()
+        page_tokens = [tokens[0], tokens[1]]  # both "vos" tokens
+        WordToken.get_similar_for_batch(corpus, page_tokens)
+        self.assertEqual(page_tokens[0].similar, 1)
+        self.assertEqual(page_tokens[1].similar, 1)
+
+    def test_similar_count_different_annotation(self):
+        """Two tokens with same form but no overlapping annotation should each show similar=0."""
+        corpus, tokens = self._make_corpus()
+        page_tokens = [tokens[2], tokens[3]]  # both "de", different lemma/POS/morph
+        WordToken.get_similar_for_batch(corpus, page_tokens)
+        self.assertEqual(page_tokens[0].similar, 0)
+        self.assertEqual(page_tokens[1].similar, 0)
+
+    def test_similar_count_unique_form(self):
+        """A token whose form appears only once should show similar=0."""
+        corpus, tokens = self._make_corpus()
+        page_tokens = [tokens[4]]  # "et" — only one occurrence
+        WordToken.get_similar_for_batch(corpus, page_tokens)
+        self.assertEqual(page_tokens[0].similar, 0)
+
+    def test_similar_count_empty_batch(self):
+        """Empty token list should not raise."""
+        corpus, _ = self._make_corpus()
+        WordToken.get_similar_for_batch(corpus, [])  # must not raise
+
+
 class TestWordToken(TestModels):
     def test_to_input_format(self):
         """ Test that export to input format works correctly """
@@ -47,6 +106,29 @@ class TestWordToken(TestModels):
         )
         self.assertEqual(WordToken.add_batch(corpus_id, [{"form": form}]), 1)
 
+    def test_add_batch_chunked_order_ids_are_sequential(self):
+        """Sending tokens in multiple chunks must produce strictly sequential order_ids.
+
+        Regression: before the fix, each chunk reset order_id to 1, causing duplicates.
+        """
+        self.addCorpus("floovant", tokens_up_to=0)
+        corpus_id = Corpus.query.one().id
+
+        chunk1 = [{"form": f"w{i}"} for i in range(3)]
+        chunk2 = [{"form": f"w{i}"} for i in range(3, 6)]
+
+        WordToken.add_batch(corpus_id, chunk1)
+        self.db.session.commit()
+        offset = WordToken.query.filter_by(corpus=corpus_id).count()
+        WordToken.add_batch(corpus_id, chunk2, order_id_offset=offset)
+        self.db.session.commit()
+
+        order_ids = [
+            t.order_id
+            for t in WordToken.query.filter_by(corpus=corpus_id).order_by(WordToken.order_id).all()
+        ]
+        self.assertEqual(order_ids, list(range(1, 7)))
+
     def test_update_batch_context(self):
         """Test updating left and right context.
 
@@ -77,20 +159,20 @@ class TestWordToken(TestModels):
 
     def test_remove_corpus(self):
         self.addCorpus("wauchier")
-        self.assertEqual(Corpus.query.get(1).name, "Wauchier", "The corpus exists")
-        self.db.session.delete(Corpus.query.get(1))
+        self.assertEqual(self.db.session.get(Corpus, 1).name, "Wauchier", "The corpus exists")
+        self.db.session.delete(self.db.session.get(Corpus, 1))
         self.db.session.commit()
-        self.assertEqual(Corpus.query.get(1), None, "The corpus does not exist")
+        self.assertEqual(self.db.session.get(Corpus, 1), None, "The corpus does not exist")
 
     def test_remove_corpus_with_custom_dict(self):
         self.addCorpus("wauchier")
-        corpus: Corpus = Corpus.query.get(1)
+        corpus: Corpus = self.db.session.get(Corpus, 1)
         self.assertEqual(corpus.name, "Wauchier", "The corpus exists")
         # Add connections
         corpus.custom_dictionaries_update("lemma", "test")
         self.assertEqual(corpus.get_custom_dictionary("lemma", formatted=True), "test")
         # Delete the corpus
-        self.db.session.delete(Corpus.query.get(1))
+        self.db.session.delete(self.db.session.get(Corpus, 1))
         self.db.session.commit()
-        self.assertEqual(Corpus.query.get(1), None, "The corpus does not exist")
+        self.assertEqual(self.db.session.get(Corpus, 1), None, "The corpus does not exist")
 

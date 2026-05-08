@@ -8,9 +8,11 @@ import glob
 from collections import Counter
 # PIP Packages
 import unidecode
+import regex as re
 import yaml
+from flask_sqlalchemy.query import Query as FlaskQuery
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, Query, column_property
 from sqlalchemy import literal, case
 from werkzeug.exceptions import BadRequest
 # APP Logic
@@ -22,6 +24,8 @@ from ..utils.forms import prepare_search_string, column_search_filter, read_inpu
 from .user import User
 # Session
 from flask_login import current_user
+from flask import abort
+from typing import Optional
 
 
 class PublicationStatus(enum.Enum):
@@ -30,7 +34,6 @@ class PublicationStatus(enum.Enum):
     private = -1
 
 
-_PublicationStatusOrder = dict(public = -1, submitted = -1, private = 1)
 
 
 class ControlLists(db.Model):
@@ -43,6 +46,15 @@ class ControlLists(db.Model):
     bibliography = db.Column(db.Text, nullable=True)
     language = db.Column(db.String(10), nullable=True)
     notes = db.Column(db.Text, nullable=True)
+    filter_punct = db.Column(db.Boolean, unique=False, default=False)
+    filter_numeral = db.Column(db.Boolean, unique=False, default=False)
+    filter_metadata = db.Column(db.Boolean, unique=False, default=False)
+    filter_ignore = db.Column(db.Boolean, unique=False, default=False)
+
+    re_filter_metadata = r'(\[[^\]]+:[^\]]*\]$)'
+    re_filter_ignore = r'(^\[IGNORE\])'
+    re_filter_punct = r"(^[^\w\s]+$)"
+    re_filter_numeral = r'(^\d+$)'
 
     # For caching purposes, we record the last time these fields were edited
     #last_lemma_edit = db.Column(db.DateTime, default=datetime.datetime.utcnow)
@@ -51,7 +63,20 @@ class ControlLists(db.Model):
 
     users = association_proxy('control_lists_user', 'user')
 
-    _sort_logic = case(_PublicationStatusOrder, value=public).label("priority")
+    _sort_logic = column_property(
+        case(
+            (public == PublicationStatus.public, -1),
+            (public == PublicationStatus.submitted, -1),
+            else_=1,
+        ).label("priority")
+    )
+
+    @classmethod
+    def get_or_404(cls, id_, description: Optional[str] = None):
+        rv = db.session.get(cls, id_)
+        if rv is None:
+            abort(404, description=description)
+        return rv
 
     @property
     def str_public(self):
@@ -84,7 +109,7 @@ class ControlLists(db.Model):
         if not user:
             raise BadRequest(description="You have no right to access the Control List")
         if user.is_admin():
-            cl = ControlLists.query.get_or_404(control_list_id)
+            cl = ControlLists.get_or_404(control_list_id)
             return cl, cl.is_owned_by(user)
         data = db.session.query(ControlLists, ControlListsUser.is_owner).filter(
             db.and_(
@@ -240,6 +265,7 @@ class ControlLists(db.Model):
             ).exists()
         ).scalar()
 
+
     @staticmethod
     def add_default_lists(path=None):
         """ Loads the default lists from the config folder
@@ -281,9 +307,18 @@ class ControlListsUser(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
 
+
     control = db.relationship("ControlLists", backref=backref("control_lists_user", cascade="all, delete-orphan"))
     user = db.relationship(User, backref=backref("control_lists_user", cascade="all, delete-orphan"))
 
+
+
+    @classmethod
+    def retrieve(cls, user_id: int, control_list_id: int) -> FlaskQuery:
+        return cls.query.filter(db.and_(
+            cls.user_id == user_id,
+            cls.control_lists_id == control_list_id
+        ))
 
 class AllowedLemma(db.Model):
     """ An allowed lemma is a lemma that is accepted
@@ -301,6 +336,13 @@ class AllowedLemma(db.Model):
     __table_args__ = (
         db.Index('unique_label_per_control', 'label', 'control_list', unique=True),
     )
+
+    @classmethod
+    def get_or_404(cls, id_, description: Optional[str] = None):
+        rv = db.session.get(cls, id_)
+        if rv is None:
+            abort(404, description=description)
+        return rv
 
     @staticmethod
     def add_batch(allowed_values, control_lists_id, _commit=False):
@@ -402,8 +444,8 @@ class AllowedMorph(db.Model):
     :param control_list: ID of the ControlLists this AllowedMorph is related to
     """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    label = db.Column(db.String(128))
-    readable = db.Column(db.String(256))
+    label = db.Column(db.String(1024))
+    readable = db.Column(db.String(1024))
     control_list = db.Column(db.Integer, db.ForeignKey('control_lists.id'))
 
     @staticmethod

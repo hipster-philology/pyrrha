@@ -1,0 +1,38 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<div class="container mt-3">
+
+    <div class="d-flex align-items-center justify-content-between flex-wrap mb-3" style="gap:.5rem">
+        <h1 class="mb-0">{{ _('Control Lists') }}</h1>
+    </div>
+
+    <script id="list-browser-cl-config" type="application/json">
+    {
+        "api_url": "{{ url_for('main.browse_control_lists_api') }}",
+        "search_placeholder": "{{ _('Search by name…') }}",
+        "per_page": 20,
+        "title_key": "name",
+        "columns": [
+            {"key": "name",       "label": "{{ _('Name') }}",   "link_key": "url_get"},
+            {"key": "str_public", "label": "{{ _('Status') }}"}
+        ],
+        "actions": [
+            {"icon": "fa-users", "link_key": "url_manage", "label": "{{ _('Manage users') }}"}
+        ]
+    }
+    </script>
+    <div id="list-browser-cl"></div>
+
+</div>
+{% endblock %}
+
+{% block custom_head_tags %}
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="{{ url_for('static', filename='js/list-browser.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            createListBrowser('list-browser-cl', 'list-browser-cl-config');
+        });
+    </script>
+{% endblock %}

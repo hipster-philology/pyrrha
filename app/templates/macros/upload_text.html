@@ -17,7 +17,9 @@
         var file = files[0];
         var reader = new FileReader();
         reader.onload = function(event) {
-            document.getElementById(textArea).value = event.target.result;
+            var el = document.getElementById(textArea);
+            el.value = event.target.result;
+            el.dataset.uploadComplete = "true";
         };
         reader.readAsText(file);
     }

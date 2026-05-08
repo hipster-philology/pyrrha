@@ -2,16 +2,18 @@
 import csv
 import io
 import enum
+from datetime import datetime
 from typing import Iterable, Optional, Dict, List, Tuple
 from itertools import product
 # PIP Packages
 import unidecode
 import sqlalchemy.exc
+import regex as re
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.orm import backref
+from sqlalchemy.orm import backref, aliased
 from sqlalchemy import func, literal, not_, or_, and_
 from werkzeug.exceptions import BadRequest
-from flask import url_for
+from flask import url_for, abort
 
 # Application imports
 from app import db
@@ -23,7 +25,7 @@ from app.utils.forms import strip_or_none, column_search_filter, prepare_search_
 
 # Models
 from .user import User
-from .control_lists import ControlLists, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
+from .control_lists import ControlLists, ControlListsUser, AllowedPOS, AllowedMorph, AllowedLemma, PublicationStatus
 
 
 from collections import namedtuple
@@ -38,7 +40,9 @@ CorpusStatistics = namedtuple("CorpusStatistics",
 class CorpusUser(db.Model):
     """
         Association proxy that link users to corpora
-        :param corpus_id: a corpus ID
+        :param corpus_id: a corpus                 except:
+
+                    ID
         :param user_id: a user ID
     """
     corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
@@ -82,6 +86,8 @@ class Corpus(db.Model):
     context_right = db.Column(db.SmallInteger, default=3)
     control_lists_id = db.Column(db.Integer, db.ForeignKey('control_lists.id'), nullable=False)
     delimiter_token = db.Column(db.String(12), default=None)
+    status = db.Column(db.Enum('pending', 'active', name='corpus_status'), nullable=False, default='active')
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     control_lists = db.relationship("ControlLists")
     word_token_history = db.relationship('TokenHistory', lazy='select', cascade="all, delete-orphan")
@@ -89,6 +95,13 @@ class Corpus(db.Model):
     word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
     changes = db.relationship("ChangeRecord", cascade="all,delete")
     columns = db.relationship("Column", cascade="all,delete")
+
+    @classmethod
+    def get_or_404(cls, id_, description: Optional[str] = None):
+        rv = db.session.get(cls, id_)
+        if rv is None:
+            abort(404, description=description)
+        return rv
 
     @property
     def last_change(self):
@@ -181,7 +194,7 @@ class Corpus(db.Model):
         all_type = all_lemma = all_morph = False
 
         if "lemma" in self.displayed_columns_by_name:
-            lemma_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            lemma_acc = ChangeRecord.query.with_entities(ChangeRecord.word_token_id).distinct().filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.lemma != ChangeRecord.lemma_new
@@ -192,7 +205,7 @@ class Corpus(db.Model):
                 AllowedLemma.label).filter(AllowedLemma.control_list == self.control_lists_id)
 
         if "POS" in self.displayed_columns_by_name:
-            pos_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            pos_acc = ChangeRecord.query.with_entities(ChangeRecord.word_token_id).distinct().filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.POS != ChangeRecord.POS_new
@@ -202,7 +215,7 @@ class Corpus(db.Model):
             all_type = db.session.query(AllowedPOS.label).filter(AllowedPOS.control_list == self.control_lists_id)
 
         if "morph" in self.displayed_columns_by_name:
-            morph_acc = ChangeRecord.query.distinct(ChangeRecord.word_token_id).filter(
+            morph_acc = ChangeRecord.query.with_entities(ChangeRecord.word_token_id).distinct().filter(
                 db.and_(
                     ChangeRecord.corpus == self.id,
                     ChangeRecord.morph != ChangeRecord.morph_new
@@ -326,12 +339,43 @@ class Corpus(db.Model):
             CorpusCustomDictionary.category == allowed_type,
             CorpusCustomDictionary.label == prop
         )
+
+        list_darguments = [
+            WordToken.corpus == self.id,
+            not_(allowed.exists()),
+            not_(custom_dict.exists())
+        ]
+
+        current_controlList = self.control_lists
+        regex_liste = []
+        if current_controlList:
+            if current_controlList.filter_metadata:
+                if db.session.get_bind().dialect.name == 'sqlite':
+                    list_darguments.append(WordToken.form.op('not regexp')(ControlLists.re_filter_metadata))
+                else:
+                    list_darguments.append(WordToken.form.op('!~')(ControlLists.re_filter_metadata))
+            if current_controlList.filter_ignore:
+                regex_liste.append(ControlLists.re_filter_ignore)
+            if current_controlList.filter_punct:
+                regex_liste.append(ControlLists.re_filter_punct)
+            if current_controlList.filter_numeral:
+                regex_liste.append(ControlLists.re_filter_numeral)
+
+        if regex_liste:
+            if db.session.get_bind().dialect.name == 'sqlite':
+                list_darguments.append(WordToken.lemma.op('not regexp')("".join(regex_liste)))
+            else:
+                list_darguments.append(WordToken.lemma.op('!~')("".join(regex_liste)))
+
         return db.session.query(WordToken).filter(
-            db.and_(
-                WordToken.corpus == self.id,
-                not_(allowed.exists()),
-                not_(custom_dict.exists())
-            )
+            db.and_(*list_darguments)
+        ).order_by(WordToken.order_id)
+
+    def get_needs_review(self):
+        """ Return all tokens in this corpus flagged for review """
+        return WordToken.query.filter(
+            WordToken.corpus == self.id,
+            WordToken.needs_review == True
         ).order_by(WordToken.order_id)
 
     @property
@@ -392,25 +436,15 @@ class Corpus(db.Model):
         return ChangeRecord.query.filter_by(corpus=self.id).order_by(ChangeRecord.created_on.desc()).paginate(page=page, per_page=limit)
 
     @staticmethod
-    def create(
-            name, word_tokens_dict,
-            allowed_lemma=None, allowed_POS=None, allowed_morph=None,
+    def create_shell(
+            name, allowed_lemma=None, allowed_POS=None, allowed_morph=None,
             context_left=None, context_right=None, control_list: ControlLists = None,
             delimiter_token=None, columns=None
     ):
-        """ Create a corpus
+        """Create the corpus record and control list without inserting tokens.
 
-        :param name: Name of the corpus
-        :param word_tokens_dict: Generator yielding a dictionaries of tokens
-        :param allowed_lemma: List of allowed lemma
-        :param allowed_POS: List of allowed POS
-        :param allowed_morph: list of Allowed Morph in the form of dict with keys (label, readable)
-        :param context_left: Number of tokens to keep on the left
-        :param context_right: Number of tokens to keep on the right
-        :param control_list: Control list to reuse
-        :param delimiter_token: Token used for separating passages
-        :return: Created Corpus
-        :rtype: Corpus
+        Returns a Corpus with status='pending'. Caller must later call
+        WordToken.add_batch() and set status='active' (or use Corpus.create()).
         """
         try:
             if not control_list:
@@ -433,13 +467,43 @@ class Corpus(db.Model):
                 delimiter_token=delimiter_token,
                 context_left=context_left,
                 context_right=context_right,
-                columns=columns
+                columns=columns,
+                status='pending',
             )
             db.session.add(c)
             db.session.commit()
         except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
             db.session.rollback()
             raise e
+        return c
+
+    @staticmethod
+    def create(
+            name, word_tokens_dict,
+            allowed_lemma=None, allowed_POS=None, allowed_morph=None,
+            context_left=None, context_right=None, control_list: ControlLists = None,
+            delimiter_token=None, columns=None
+    ):
+        """ Create a corpus
+
+        :param name: Name of the corpus
+        :param word_tokens_dict: Generator yielding a dictionaries of tokens
+        :param allowed_lemma: List of allowed lemma
+        :param allowed_POS: List of allowed POS
+        :param allowed_morph: list of Allowed Morph in the form of dict with keys (label, readable)
+        :param context_left: Number of tokens to keep on the left
+        :param context_right: Number of tokens to keep on the right
+        :param control_list: Control list to reuse
+        :param delimiter_token: Token used for separating passages
+        :return: Created Corpus
+        :rtype: Corpus
+        """
+        c = Corpus.create_shell(
+            name=name, allowed_lemma=allowed_lemma, allowed_POS=allowed_POS,
+            allowed_morph=allowed_morph, context_left=context_left,
+            context_right=context_right, control_list=control_list,
+            delimiter_token=delimiter_token, columns=columns,
+        )
 
         token_count = WordToken.add_batch(
             corpus_id=c.id, word_tokens_dict=word_tokens_dict,
@@ -449,6 +513,8 @@ class Corpus(db.Model):
         if token_count == 0:
             raise NoTokensInput("No tokens were given")
 
+        c.status = 'active'
+        db.session.commit()
         return c
 
     def update_allowed_values(self, allowed_type, allowed_values):
@@ -731,9 +797,20 @@ class WordToken(db.Model):
     lemma = db.Column(db.String(128))
     label_uniform = db.Column(db.String(128))
     POS = db.Column(db.String(128))
-    morph = db.Column(db.String(128))
-    left_context = db.Column(db.String(512))
-    right_context = db.Column(db.String(512))
+    morph = db.Column(db.String(1024))
+    gloss = db.Column(db.String(1024), nullable=True)
+    needs_review = db.Column(db.Boolean, nullable=False, default=False, server_default='0')
+    review_comment = db.Column(db.String(1024), nullable=True)
+    token_reference = db.Column(db.String(512), nullable=True)
+    left_context = db.Column(db.String(1024))
+    right_context = db.Column(db.String(1024))
+
+    __table_args__ = (
+        # Covers the primary annotation query: filter by corpus, order by position
+        db.Index('ix_word_token_corpus_order', 'corpus', 'order_id'),
+        # Covers the similarity query: find all tokens in a corpus sharing a form
+        db.Index('ix_word_token_corpus_form', 'corpus', 'form'),
+    )
 
     _changes = db.relationship("ChangeRecord")
 
@@ -766,6 +843,10 @@ class WordToken(db.Model):
             "lemma": self.lemma,
             "POS": self.POS,
             "morph": self.morph,
+            "gloss": self.gloss,
+            "needs_review": self.needs_review,
+            "review_comment": self.review_comment,
+            "token_reference": self.token_reference,
             "context": self.context
         }
 
@@ -960,20 +1041,41 @@ class WordToken(db.Model):
 
     @staticmethod
     def get_similar_for_batch(corpus: Corpus, tokens: Iterable["WordToken"]):
-        forms = {token.form: [] for token in tokens}
-        for token in tokens:
+        token_list = list(tokens)
+        for token in token_list:
             token.similar = 0
-            forms[token.form].append(token)
 
-        for w in WordToken.query.filter(
-                db.and_(WordToken.corpus == corpus.id, WordToken.form.in_(list(forms.keys())))
-        ).all():
-            if w.form in forms:
-                for token in forms[w.form]:
-                    if w.lemma == token.lemma or w.POS == token.POS or w.morph == token.morph:
-                        token.similar += 1
-        for token in tokens:
-            token.similar = token.similar - 1 if token.similar > 0 else 0
+        if not token_list:
+            return
+
+        # Self-join: for each page token count OTHER corpus tokens that share
+        # the same form and at least one annotation field (lemma, POS, or morph).
+        # This avoids loading all matching corpus rows into Python.
+        PageToken = aliased(WordToken, flat=True)
+        CorpusToken = aliased(WordToken, flat=True)
+
+        rows = db.session.query(
+            PageToken.id,
+            func.count(CorpusToken.id)
+        ).join(
+            CorpusToken,
+            and_(
+                CorpusToken.corpus == PageToken.corpus,
+                CorpusToken.form == PageToken.form,
+                CorpusToken.id != PageToken.id,
+                or_(
+                    CorpusToken.lemma == PageToken.lemma,
+                    CorpusToken.POS == PageToken.POS,
+                    CorpusToken.morph == PageToken.morph,
+                )
+            )
+        ).filter(
+            PageToken.id.in_([t.id for t in token_list])
+        ).group_by(PageToken.id).all()
+
+        counts = {token_id: count for token_id, count in rows}
+        for token in token_list:
+            token.similar = counts.get(token.id, 0)
 
     @staticmethod
     def get_like(filter_id, form, group_by, type_like="lemma", allowed_list=False):
@@ -1072,7 +1174,7 @@ class WordToken(db.Model):
         return query
 
     @staticmethod
-    def is_valid(lemma, POS, morph, corpus):
+    def is_valid(lemma, POS, morph, corpus, form):
         """ Check if a token is valid for a given corpus
 
         :param lemma: Lemma value of the token to validate
@@ -1095,33 +1197,53 @@ class WordToken(db.Model):
             "POS": True,
             "morph": True
         }
-
         allowed_column = corpus.displayed_columns_by_name
+        current_controlList = corpus.control_lists
+        metadata_filtered = (
+            form
+            and current_controlList
+            and current_controlList.filter_metadata
+            and re.match(current_controlList.re_filter_metadata, form)
+        )
+        if not metadata_filtered:
+            if (lemma  # If we changed the lemma
+                and "lemma" in allowed_column  # And if the lemma is a column known to the project
+                and allowed_lemma.count()  # And if we have a list of accepted lemma
+                ):
+                regex_liste = []
+                if current_controlList:
+                    if current_controlList.filter_ignore:
+                        regex_liste.append(ControlLists.re_filter_ignore)
+                    if current_controlList.filter_punct:
+                        regex_liste.append(ControlLists.re_filter_punct)
+                    if current_controlList.filter_numeral:
+                        regex_liste.append(ControlLists.re_filter_numeral)
+                ignored_by_regex = any(re.match(regex, lemma) for regex in regex_liste)
+                if (
+                    not ignored_by_regex
+                    and not corpus.has_custom_dictionary_value("lemma", lemma)
+                    and corpus.get_allowed_values("lemma", label=lemma).count() == 0
+                ):
+                    statuses["lemma"] = False
 
-        if lemma is not None \
-                and "lemma" in allowed_column \
-                and allowed_lemma.count() > 0 \
-                and corpus.get_allowed_values("lemma", label=lemma).count() == 0:
-            if not corpus.has_custom_dictionary_value("lemma", lemma):
-                statuses["lemma"] = False
-
-        if POS is not None \
+            if POS is not None \
                 and "POS" in allowed_column \
                 and allowed_POS.count() > 0 \
                 and corpus.get_allowed_values("POS", label=POS).count() == 0:
-            if not corpus.has_custom_dictionary_value("POS", POS):
-                statuses["POS"] = False
+                if not corpus.has_custom_dictionary_value("POS", POS):
+                    statuses["POS"] = False
 
-        if morph is not None \
+            if morph is not None \
                 and "morph" in allowed_column \
                 and allowed_morph.count() > 0 \
                 and corpus.get_allowed_values("morph", label=morph).count() == 0:
-            if not corpus.has_custom_dictionary_value("morph", morph):
-                statuses["morph"] = False
+                if not corpus.has_custom_dictionary_value("morph", morph):
+                    statuses["morph"] = False
+
         return statuses
 
     @staticmethod
-    def add_batch(corpus_id, word_tokens_dict, context_left=None, context_right=None):
+    def add_batch(corpus_id, word_tokens_dict, context_left=None, context_right=None, order_id_offset: int = 0):
         """ Add a batch of tokens to a corpus given a TSV
 
         :param corpus_id: Id of the corpus
@@ -1156,6 +1278,8 @@ class WordToken(db.Model):
         lemma_key = "lemma" if "lemma" in _keys else "lemmas"
         pos_key = "pos" if "pos" in _keys else "POS"
         morph_key = "morph"
+        gloss_key = "gloss" if "gloss" in _keys else None
+        ref_key = "token_reference" if "token_reference" in _keys else "ref" if "ref" in _keys else None
 
         for i, token in enumerate(word_tokens_dict):
 
@@ -1191,10 +1315,12 @@ class WordToken(db.Model):
                 label_uniform=label_uniform,
                 POS=POS,
                 morph=morph,
+                gloss=token.get(gloss_key) or None if gloss_key else None,
+                token_reference=token.get(ref_key) or None if ref_key else None,
                 left_context=" ".join(previous_token),
                 right_context=" ".join(next_token),
                 corpus=corpus_id,
-                order_id=i+1  # Asked by JB Camps...
+                order_id=order_id_offset + i + 1  # Asked by JB Camps...
             )
             for k in ("form",):
                 validate_length(k, wt[k], {"form": 128})
@@ -1274,7 +1400,7 @@ class WordToken(db.Model):
         return csv_file.getvalue()
 
     @staticmethod
-    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None):
+    def update(user_id, corpus_id, token_id, lemma=None, POS=None, morph=None, form=None, gloss=None):
         """ Update a given token with lemma, POS and morph value
 
         :param user_id: ID of the user who performs the update
@@ -1283,12 +1409,16 @@ class WordToken(db.Model):
         :type corpus_id: int
         :param token_id: Id of the token
         :type token_id: int
+        :param form: Form
+        :type form: str
         :param lemma: Lemma
         :type lemma: str
         :param POS: PartOfSpeech
         :type POS: str
         :param morph: Morphology tag
         :type morph: str
+        :param gloss: Free-text gloss
+        :type gloss: str
         :return: Current token, Record Token
         :rtype: (WordToken, ChangeRecord)
         """
@@ -1296,18 +1426,19 @@ class WordToken(db.Model):
         corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
         token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
         # Strip if things are not None
+        form = strip_or_none(form)
         lemma = strip_or_none(lemma)
         POS = strip_or_none(POS)
         morph = strip_or_none(morph)
+        gloss = strip_or_none(gloss) or None
 
         # Avoid updating for the same
-        if token.lemma == lemma and token.POS == POS and token.morph == morph:
+        if token.lemma == lemma and token.POS == POS and token.morph == morph and token.gloss == gloss:
             error = WordToken.NothingChangedError("No value where changed")
             error.msg = "No value where changed"
             raise error
-
         # Check if values are correct regarding allowed values
-        validity = WordToken.is_valid(lemma=lemma, POS=POS, morph=morph, corpus=corpus)
+        validity = WordToken.is_valid(form=form, lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):
             error_msg = "Invalid value in {}".format(
                 ", ".join([key for key in validity.keys() if validity[key] is False])
@@ -1317,7 +1448,6 @@ class WordToken(db.Model):
             error.statuses = validity
             error.invalid_columns = [key for key in validity.keys() if validity[key] is False]
             raise error
-
         # Updating
         if not lemma:
             lemma = token.lemma
@@ -1326,11 +1456,12 @@ class WordToken(db.Model):
         if not morph:
             morph = token.morph
 
-        record = ChangeRecord.track(user, token, lemma, POS, morph)
+        record = ChangeRecord.track(user, token, lemma, POS, morph, gloss_new=gloss)
         token.lemma = lemma
         token.label_uniform = unidecode.unidecode(lemma) if lemma else None
         token.POS = POS
         token.morph = morph
+        token.gloss = gloss
         db.session.add(token)
         db.session.commit()
         return token, record
@@ -1367,13 +1498,14 @@ class WordToken(db.Model):
                 WordToken.form == change_record.form,
                 lemma_match,
                 db.or_(
+                    db.false(),
                     *[
                         getattr(WordToken, attr) == getattr(change_record, attr)
                         for attr in changed
                     ]
                 )
             )
-        )
+        ).order_by(WordToken.order_id)
 
     @staticmethod
     def get_nearly_similar_to(token, mode):
@@ -1442,7 +1574,7 @@ class WordToken(db.Model):
                     WordToken.id != token.id,
                     *filtering
                 )
-            )
+        ).order_by(WordToken.order_id)
 
 
 class TokenHistory(db.Model):
@@ -1520,6 +1652,8 @@ class CorpusCustomDictionary(db.Model):
             normalised = unidecode.unidecode(form)
             if normalised == form:
                 query_fields = [CorpusCustomDictionary.secondary_label]
+            else:
+                query_fields = [CorpusCustomDictionary.label]
 
         query = CorpusCustomDictionary.query.with_entities(*retrieve_fields)
         query = query.filter(
@@ -1583,6 +1717,8 @@ class ChangeRecord(db.Model):
     lemma_new = db.Column(db.String(128))
     POS_new = db.Column(db.String(128))
     morph_new = db.Column(db.String(128))
+    gloss = db.Column(db.String(512), nullable=True)
+    gloss_new = db.Column(db.String(512), nullable=True)
     created_on = db.Column(db.DateTime, server_default=db.func.now())
     word_token = db.relationship('WordToken', lazy='select', viewonly=True)
     user = db.relationship(User, lazy='select', viewonly=True)
@@ -1597,7 +1733,7 @@ class ChangeRecord(db.Model):
         return WordToken.get_similar_to_record(self).count()
 
     @staticmethod
-    def track(user, token, lemma_new, POS_new, morph_new):
+    def track(user, token, lemma_new, POS_new, morph_new, gloss_new=None):
         """ Save the history of change for the token
 
         :param token: Token that has been updated
@@ -1608,6 +1744,8 @@ class ChangeRecord(db.Model):
         :type POS_new: str
         :param morph_new: New morphology assigned to the token
         :type morph_new: str
+        :param gloss_new: New gloss assigned to the token
+        :type gloss_new: str
         :return: Change Record history item
         :rtype: ChangeRecord
         """
@@ -1615,7 +1753,8 @@ class ChangeRecord(db.Model):
             user_id=user.id,
             corpus=token.corpus, word_token_id=token.id,
             form=token.form, lemma=token.lemma, POS=token.POS, morph=token.morph,
-            lemma_new=lemma_new, POS_new=POS_new, morph_new=morph_new
+            gloss=token.gloss,
+            lemma_new=lemma_new, POS_new=POS_new, morph_new=morph_new, gloss_new=gloss_new
         )
         db.session.add(tracked)
         return tracked
@@ -1629,7 +1768,7 @@ class ChangeRecord(db.Model):
         """
         return [
             attr
-            for attr in ["lemma", "morph", "POS"]
+            for attr in ["lemma", "morph", "POS", "gloss"]
             if getattr(self, attr) != getattr(self, attr+"_new")
         ]
 

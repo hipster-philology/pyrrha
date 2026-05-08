@@ -6,7 +6,7 @@
         post_endpoint='main.manage_control_lists_user',
         post_kwargs={'cl_id': control_list.id},
         managed_item=control_list,
-        read_endpoint='main.corpus_get',
+        read_endpoint='main.corpus_info',
         read_kwargs={'corpus_id':control_list.id},
         current_user=current_user,
         users=users,

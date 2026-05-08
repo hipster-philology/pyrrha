@@ -1,0 +1,55 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+    <div class="container mt-3">
+
+        <div class="d-flex align-items-center justify-content-between flex-wrap mb-3" style="gap:.5rem">
+            <h1 class="mb-0">{{ _('My Corpora') }}</h1>
+            <div class="btn-toolbar" role="toolbar">
+                <a href="{{ url_for('main.corpus_new') }}" class="btn btn-primary btn-sm mr-2">
+                    <i class="fa fa-plus"></i> {{ _('New Corpus') }}
+                </a>
+                {% if current_user.is_admin() %}
+                <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-danger btn-sm mr-2">
+                    <i class="fa fa-lock"></i> {{ _('Admin') }}
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <script id="list-browser-corpora-config" type="application/json">
+        {
+            "api_url": "{{ url_for('main.browse_corpora_api') }}",
+            "search_placeholder": "{{ _('Search by name…') }}",
+            "per_page": 20,
+            "title_key": "name",
+            "columns": [
+                {"key": "fav",         "label": "",                        "link_key": "url_fav",     "icon_key": "fav_icon"},
+                {"key": "name",        "label": "{{ _('Name') }}",         "link_key": "url_correct"},
+                {"key": "token_count",       "label": "{{ _('Tokens') }}"},
+                {"key": "user_count",        "label": "{{ _('Users') }}"},
+                {"key": "needs_review_count","label": "{{ _('Needs review') }}", "link_key": "url_needs_review"},
+                {"key": "last_change",       "label": "{{ _('Last change') }}"}
+            ],
+            "actions": [
+                {"icon": "fa-download", "link_key": "url_export", "label": "{{ _('Export') }}"},
+                {"icon": "fa-flag", "link_key": "url_needs_review", "label": "{{ _('Tokens to review') }}"},
+                {"icon": "fa-users", "link_key": "url_manage", "label": "{{ _('Manage users') }}"},
+                {"icon": "fa-info-circle", "link_key": "url_get", "label": "{{ _('Details') }}"}
+            ]
+        }
+        </script>
+        <div id="list-browser-corpora"></div>
+
+    </div>
+{% endblock %}
+
+{% block custom_head_tags %}
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="{{ url_for('static', filename='js/list-browser.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            createListBrowser('list-browser-corpora', 'list-browser-corpora-config');
+        });
+    </script>
+{% endblock %}

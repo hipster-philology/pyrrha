@@ -1,37 +1,50 @@
 {% extends 'layouts/base.html' %}
-{% import 'macros/dashboard_macros.html' as dashboard %}
 
 {% block content %}
-    <h1>{{ _('Management of corpora') }}</h1>
-    <div class="container">
-        <table class="table table-hover sortable">
-            <thead>
-                <tr>
-                    <th scope="col">{{ _('Links') }}</th>
-                    <th scope="col">#</th>
-                    <th scope="col">{{ _('Corpus name') }}</th>
-                    <th scope="col">{{ _('Last modified') }}</th>
-                    <th scope="col">{{ _('Users') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for corpus in corpora %}
-                <tr>
-                    <td>
-                        <a href="{{ url_for('main.manage_corpus_users', corpus_id=corpus.id) }}"><span class="fa fa-cog" aria-label="Manage"></span></a>
-                        <a href="{{ url_for('main.corpus_get', corpus_id=corpus.id) }}"><span class="fa fa-link" aria-label="Go"></span></a>
-                    </td>
-                    <td>{{ loop.index }}</td>
-                    <td class="name">{{ corpus.name }}</td>
-                    <td>{% if corpus.last_change %}{{ corpus.last_change.created_on.strftime('%Y-%m-%d') }}{% endif %}</td>
-                    <td>{% for user in corpus.users %}{{ user.full_name() }}{% if corpus.users|length > loop.index %}, {% endif %}{% endfor %}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="container mt-3">
+    <div class="d-flex align-items-center mb-3" style="gap:.75rem">
+        <a href="{{ url_for('main.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+            <i class="fa fa-arrow-left"></i>
+        </a>
+        <h1 class="mb-0">{{ _('All Corpora') }}</h1>
+        <span class="badge badge-danger" style="font-size:.8rem">{{ _('Admin') }}</span>
+        <a href="{{ url_for('main.admin_pending_corpora') }}" class="btn btn-sm btn-outline-warning ml-auto">
+            <i class="fa fa-hourglass-half"></i> {{ _('Pending corpora') }}
+        </a>
     </div>
+
+    <script id="list-browser-corpora-config" type="application/json">
+    {
+        "api_url": "{{ url_for('main.browse_corpora_api', admin=1) }}",
+        "search_placeholder": "{{ _('Search by name…') }}",
+        "per_page": 20,
+        "title_key": "name",
+        "default_sort": "name",
+        "default_sort_dir": "asc",
+        "columns": [
+            {"key": "name",        "label": "{{ _('Name') }}",        "link_key": "url_correct", "sortable": true},
+            {"key": "owners",      "label": "{{ _('Creators') }}",                               "sortable": true},
+            {"key": "token_count", "label": "{{ _('Tokens') }}",                                 "sortable": true},
+            {"key": "user_count",  "label": "{{ _('Users') }}",                                  "sortable": true},
+            {"key": "last_change", "label": "{{ _('Last change') }}",                            "sortable": true}
+        ],
+        "actions": [
+            {"icon": "fa-download", "link_key": "url_export",  "label": "{{ _('Export') }}"},
+            {"icon": "fa-users",    "link_key": "url_manage",  "label": "{{ _('Manage users') }}"},
+            {"icon": "fa-link",     "link_key": "url_get",     "label": "{{ _('View') }}"}
+        ]
+    }
+    </script>
+    <div id="list-browser-corpora"></div>
+</div>
 {% endblock %}
 
-{% block custom_head_tags  %}
-    <script type="text/javascript" src="{{ url_for('static', filename='js/sortable.min.js') }}"></script>
+{% block custom_head_tags %}
+    <script src="https://unpkg.com/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="{{ url_for('static', filename='js/list-browser.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            createListBrowser('list-browser-corpora', 'list-browser-corpora-config');
+        });
+    </script>
 {% endblock %}

@@ -16,4 +16,12 @@
 <p>{{control_list.bibliography | markdown}}</p>
 {% endif %}
 
+<h3>{{ _('Filters') }}</h3>
+<ul>
+  <li>Numeral : {{control_list.filter_numeral}}</li>
+  <li>Punctuation: {{control_list.filter_punct}}</li>
+  <li>Metadata: {{control_list.filter_metadata}}</li>
+  <li>Ignore: {{control_list.filter_ignore}}</li>
+</ul>
+
 {% endblock %}

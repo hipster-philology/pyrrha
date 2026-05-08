@@ -14,6 +14,9 @@
     <a id="geste-tei" class="btn btn-outline-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id, format="tei-geste")}}">
     <i class="fa fa-code"></i> TEI-Geste
     </a>
+    <a id="standoff-tei" class="btn btn-outline-primary" href="{{url_for("main.tokens_export", corpus_id=corpus.id, format="standoff-tei")}}">
+    <i class="fa fa-code"></i> TEI Standoff
+    </a>
 </p>
 
 {% endblock %}

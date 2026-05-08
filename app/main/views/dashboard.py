@@ -1,31 +1,32 @@
-from flask import request, url_for, redirect, abort, flash
+from datetime import datetime, timedelta
+
+from flask import request, url_for, redirect, abort, flash, current_app
 from flask_login import login_required, current_user
 from typing import List
 
 from app import db
+from app.decorators import admin_required
 from app.main.views.utils import render_template_with_nav_info
 from app.models import Corpus, User, Role, ControlLists, CorpusUser, ControlListsUser, WordToken
 from .. import main
 
 
-@main.route('/dashboard', methods=['GET', 'POST'])
+@main.route('/dashboard', methods=['GET'])
 @login_required
+@admin_required
 def dashboard():
-    """admin dashboard page."""
-    corpora = Corpus.for_user(current_user)
-    if current_user.is_admin():
-        control_lists = db.session.query(ControlLists).all()
-    else:
-        control_lists = ControlLists.for_user(current_user)
-    return render_template_with_nav_info(
-        'main/dashboard.html',
-        current_user=current_user,
-        dashboard_corpora=corpora,
-        dashboard_control_lists=control_lists
-    )
+    """Admin dashboard."""
+    return render_template_with_nav_info('main/dashboard.html')
 
 
-@main.route('/dashboard/manage-control-lists-users/<cl_id>', methods=['GET', 'POST'])
+@main.route('/control-lists', methods=['GET'])
+@login_required
+def user_control_lists():
+    """User's control lists management page."""
+    return render_template_with_nav_info('main/user_control_lists.html')
+
+
+@main.route('/dashboard/manage-control-lists-users/<int:cl_id>', methods=['GET', 'POST'])
 @login_required
 def manage_control_lists_user(cl_id):
     """ Save or display corpus accesses
@@ -105,23 +106,60 @@ def update_control_list_user(
 
 @main.route('/dashboard/corpora', methods=['GET'])
 @login_required
-def list_corpora():
+@admin_required
+def admin_list_corpora():
+    return render_template_with_nav_info("main/dashboard_corpus_table.html")
 
-    if current_user.is_admin():
-        corpora = Corpus.query.all()
-    else:
-        corpora = Corpus.for_user(current_user)
-    # ToDo: To Slow
-    # amounts = {
-    #     wt.corpus: wt.order_id
-    #     for wt in WordToken.query.filter(
-    #             db.and_(
-    #                 Corpus.id.in_([corpus.id for corpus in corpora]),
-    #                 WordToken.corpus == Corpus.id
-    #             )
-    #         ).order_by(WordToken.order_id.desc()).distinct(WordToken.corpus).all()
-    # }
-    return render_template_with_nav_info("main/dashboard_corpus_table.html", corpora=corpora)
+
+# Backward-compat endpoint — Playwright tests navigate via url_for('main.list_corpora')
+@main.route('/dashboard/corpora/compat', methods=['GET'], endpoint='list_corpora')
+@login_required
+@admin_required
+def _admin_list_corpora_compat():
+    return redirect(url_for('main.admin_list_corpora'))
+
+
+@main.route('/dashboard/corpora/pending', methods=['GET'])
+@login_required
+@admin_required
+def admin_pending_corpora():
+    """List all pending (incomplete) corpora for admin review."""
+    max_age_hours = current_app.config.get("PENDING_CORPUS_MAX_AGE_HOURS", 24)
+    threshold = datetime.utcnow() - timedelta(hours=max_age_hours)
+
+    rows = (
+        db.session.query(Corpus, db.func.count(WordToken.id).label('token_count'))
+        .outerjoin(WordToken, WordToken.corpus == Corpus.id)
+        .filter(Corpus.status == 'pending')
+        .group_by(Corpus.id)
+        .order_by(Corpus.created_at.asc())
+        .all()
+    )
+    return render_template_with_nav_info(
+        'main/dashboard_pending_corpora.html',
+        rows=rows,
+        threshold=threshold,
+        max_age_hours=max_age_hours,
+    )
+
+
+@main.route('/dashboard/corpora/pending/<int:corpus_id>/delete', methods=['POST'])
+@login_required
+@admin_required
+def admin_delete_pending_corpus(corpus_id):
+    """Delete a pending corpus (admin only)."""
+    corpus = Corpus.query.filter_by(id=corpus_id, status='pending').first_or_404()
+    db.session.delete(corpus)
+    db.session.commit()
+    flash(f"Pending corpus '{corpus.name}' deleted.", category="success")
+    return redirect(url_for('main.admin_pending_corpora'))
+
+
+@main.route('/dashboard/control-lists', methods=['GET'])
+@login_required
+@admin_required
+def admin_list_control_lists():
+    return render_template_with_nav_info("main/dashboard_control_lists_table.html")
 
 
 @main.route('/dashboard/manage-corpus-users/<int:corpus_id>', methods=['GET', 'POST'])
@@ -165,7 +203,7 @@ def manage_corpus_users(corpus_id):
                 flash('Modifications have been saved.', 'success')
             except Exception as e:
                 db.session.rollback()
-            return redirect(url_for('main.dashboard'))
+            return redirect(url_for('main.manage_corpus_users', corpus_id=corpus_id))
 
         else:
             # GET method

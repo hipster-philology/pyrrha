@@ -1,4 +1,4 @@
-from app.models import ChangeRecord, WordToken, Corpus, ControlLists
+from app.models import ChangeRecord, WordToken, Corpus, ControlLists, ControlListsUser, CorpusUser, Column
 from .base import TestModels
 import copy
 
@@ -6,6 +6,10 @@ import copy
 SimilarityFixtures = [
     ControlLists(id=1, name="CL Fixture"),
     Corpus(id=1, name="Fixtures !", control_lists_id=1),
+    Column(heading="Lemma", corpus_id=1),
+    Column(heading="POS", corpus_id=1),
+    Column(heading="Morph", corpus_id=1),
+    Column(heading="Similar", corpus_id=1),
     WordToken(corpus=1, form="Cil", lemma="celui", left_context="_", right_context="_", label_uniform="celui", morph="smn", POS="p"),  # 1
     WordToken(corpus=1, form="Cil", lemma="celle", left_context="_", right_context="_", label_uniform="celle", morph="smn", POS="n"),  # 2
     WordToken(corpus=1, form="Cil", lemma="cil", left_context="_", right_context="_", label_uniform="cil", morph="smn", POS="p"),      # 3
@@ -14,6 +18,7 @@ SimilarityFixtures = [
     WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 6
     WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 7
     WordToken(corpus=1, form="Cil", lemma="cel", left_context="_", right_context="_", label_uniform="cel", morph="smn", POS="p"),      # 8
+
 ]
 
 
@@ -57,10 +62,11 @@ class TestChangeRecord(TestModels):
     def test_similar_lemma_single_change(self):
         """ Ensure only similar features are fixed """
         self.load_fixtures()
+
         token, change_record = WordToken.update(
             user_id=1,
             token_id=1, corpus_id=1,
-            lemma="cil", morph="smn", POS="p"
+            form = "Cil", lemma="cil", morph="smn", POS="p"
         )
         self.assertEqual(
             (token.lemma, token.morph, token.POS),
@@ -91,8 +97,8 @@ class TestChangeRecord(TestModels):
         token, change_record = WordToken.update(
             user_id=1,
             token_id=1, corpus_id=1,
-            lemma="cil", morph="smn", POS="u"
-        )
+            form = "Cil", lemma="cil", morph="smn", POS="u")
+
         self.assertEqual(
             (token.lemma, token.morph, token.POS),
             ("cil", "smn", "u"),
@@ -146,3 +152,6 @@ class TestChangeRecord(TestModels):
             "Change record should be correct"
         )
         self.assertCountEqual(cr4.changed, ["lemma", "POS"])
+
+
+
