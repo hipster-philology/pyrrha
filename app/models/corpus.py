@@ -49,7 +49,7 @@ class CorpusUser(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
     is_owner = db.Column(db.Boolean, default=False)
 
-    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete"))
+    corpus = db.relationship("Corpus", backref=backref("corpus_users", cascade="all, delete", passive_deletes=True))
     user = db.relationship(User, backref=backref("corpus_users", cascade="all, delete-orphan"))
 
     def __init__(self, user, corpus, is_owner=False):
@@ -90,11 +90,11 @@ class Corpus(db.Model):
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     control_lists = db.relationship("ControlLists")
-    word_token_history = db.relationship('TokenHistory', lazy='select', cascade="all, delete-orphan")
+    word_token_history = db.relationship('TokenHistory', lazy='select', cascade="all, delete-orphan", passive_deletes=True)
     users = association_proxy('corpus_users', 'user')
-    word_token = db.relationship("WordToken", cascade="all,delete", lazy="select")
-    changes = db.relationship("ChangeRecord", cascade="all,delete")
-    columns = db.relationship("Column", cascade="all,delete")
+    word_token = db.relationship("WordToken", cascade="all,delete", lazy="select", passive_deletes=True)
+    changes = db.relationship("ChangeRecord", cascade="all,delete", passive_deletes=True)
+    columns = db.relationship("Column", cascade="all,delete", passive_deletes=True)
 
     @classmethod
     def get_or_404(cls, id_, description: Optional[str] = None):
@@ -1602,8 +1602,8 @@ class CorpusCustomDictionary(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     corpus = db.Column(db.Integer, db.ForeignKey('corpus.id', ondelete="CASCADE"), nullable=False)
-    label = db.Column(db.String(128), nullable=False)
-    secondary_label = db.Column(db.String(128))
+    label = db.Column(db.String(1024), nullable=False)
+    secondary_label = db.Column(db.String(1024))
     category = db.Column(db.String(10), nullable=False)
 
     search_index = db.Index("ccd-search", "corpus", "label", "secondary_label", "category")
