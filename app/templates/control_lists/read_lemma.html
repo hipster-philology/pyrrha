@@ -109,26 +109,30 @@
              error = true;
          }
          if (error === false){
-             $.ajax({
-                 url:form.attr("action"),
-                 data: JSON.stringify({"lemmas": value}),
-                 method:"UPDATE",
-                 contentType: 'application/json'
-             }).done(function() { use_badge(badges, "saved"); })
-               .fail(function(data) { use_badge(badges, "error", data.responseJSON.message); });
+             var csrfToken = document.querySelector("meta[name='csrf-token']").content;
+             fetch(form.attr("action"), {
+                 method: "UPDATE",
+                 headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
+                 body: JSON.stringify({"lemmas": value})
+             }).then(function(resp) {
+                 if (resp.ok) { use_badge(badges, "saved"); }
+                 else { resp.json().then(function(d) { use_badge(badges, "error", d.message); }); }
+             }).catch(function() { use_badge(badges, "error", "Network error"); });
          }
 
       });
       $(".rm-lem").on("click", function(event) {
           event.preventDefault();
           var that = $(this),
-              parent = that.parent()
-          $.ajax({
-            url:that.attr("href"),
-            method:"DELETE"
-          })
-              .done(function() { parent.remove(); })
-              .fail(function() { alert("Error while removing the value"); });
+              parent = that.parent(),
+              csrfToken = document.querySelector("meta[name='csrf-token']").content;
+          fetch(that.attr("href"), {
+              method: "DELETE",
+              headers: {"X-CSRFToken": csrfToken}
+          }).then(function(resp) {
+              if (resp.ok) { parent.remove(); }
+              else { alert("Error while removing the value"); }
+          }).catch(function() { alert("Error while removing the value"); });
       });
       {% endif -%}
   });

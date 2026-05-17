@@ -117,26 +117,24 @@
             al.style.display = "none";
             er.style.display = "none";
             var selected_tokens = $.map($(".word-token:checked"), function(elem) { return $(elem).val(); });
-            jQuery.ajax({
-                url: event.target.href,
-                type: 'POST',
-                contentType: "application/json",
-                dataType: "json",
-                data: JSON.stringify({
-                    word_tokens: selected_tokens
-                }),
-                success:function(response){
-                    al.innerText = response.length + " tokens edited.";
-                    al.style.display = "block";
-
-                    for (var i=0; i < response.length; i++) {
-                        document.getElementById("token_" + response[i]["id"] + "_row").remove();
-                    }
-                },
-                error:function(jq, response, errorThrown){
+            var csrfToken = document.querySelector("meta[name='csrf-token']").content;
+            fetch(event.target.href, {
+                method: "POST",
+                headers: {"Content-Type": "application/json", "X-CSRFToken": csrfToken},
+                body: JSON.stringify({word_tokens: selected_tokens})
+            }).then(function(resp) {
+                if (resp.ok) {
+                    resp.json().then(function(response) {
+                        al.innerText = response.length + " tokens edited.";
+                        al.style.display = "block";
+                        for (var i = 0; i < response.length; i++) {
+                            document.getElementById("token_" + response[i]["id"] + "_row").remove();
+                        }
+                    });
+                } else {
                     er.style.display = "block";
                 }
-            });
+            }).catch(function() { er.style.display = "block"; });
         });
     });
     </script>
