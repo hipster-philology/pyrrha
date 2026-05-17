@@ -38,7 +38,12 @@ def auto_login():
 @pytest.fixture
 def app(auto_login):
     flask_app = create_app("test")
-    flask_app.config.update(JSONIFY_PRETTYPRINT_REGULAR=False, LIVESERVER_PORT=PORT, DEBUG=True)
+    flask_app.config.update(
+        JSONIFY_PRETTYPRINT_REGULAR=False,
+        LIVESERVER_PORT=PORT,
+        DEBUG=True,
+        WTF_CSRF_ENABLED=True,
+    )
     flask_app.DEBUG = True
     flask_app.client = flask_app.test_client()
     if auto_login:

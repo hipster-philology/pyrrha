@@ -557,11 +557,20 @@ class TestCorpusRegistration(Helpers):
         db.session.commit()
         pending_id = pending.id
 
-        # Use the Playwright browser (already authenticated via _force_authenticated)
+        # Navigate to the corpus-new page so the browser has a CSRF token in the meta tag,
+        # then call the finalize endpoint from within the browser (same as the template JS does).
+        self.page.goto(self.url_for('main.corpus_new'))
         finalize_url = self.url_for('main.corpus_tokens_finalize', corpus_id=pending_id)
-        resp = self.page.request.post(finalize_url)
-        assert resp.status == 400
-        data = resp.json()
+        result = self.page.evaluate("""async (url) => {
+            const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+            const resp = await fetch(url, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': token},
+            });
+            return {status: resp.status, body: await resp.json()};
+        }""", finalize_url)
+        assert result['status'] == 400
+        data = result['body']
         assert 'error' in data
 
         db.session.expire_all()

@@ -212,7 +212,7 @@ def edit(cl_id, allowed_type, control_list):
     )
 
 
-@control_lists_bp.route('/controls/<int:control_list_id>/api/<allowed_type>')
+@control_lists_bp.route('/controls/<int:control_list_id>/api/<allowed_type>', methods=["GET", "POST"])
 @login_required
 def search_api(control_list_id, allowed_type):
     """ Find allowed values
@@ -220,12 +220,13 @@ def search_api(control_list_id, allowed_type):
     :param control_list_id: Id of the Control List
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
+    form = (request.get_json(silent=True) or {}).get("form") or request.args.get("form")
     return jsonify(
         [
             format_api_like_reply(result, allowed_type)
             for result in WordToken.get_like(
                 filter_id=control_list_id,
-                form=request.args.get("form"),
+                form=form,
                 group_by=True,
                 type_like=allowed_type,
                 allowed_list=True

@@ -14,19 +14,24 @@
   const CACHE_MAX  = 300;
   const _allowedCache = { lemma: new Map(), POS: new Map(), morph: new Map(), default: new Map() };
 
-  function cachedAllowed(url, type) {
-    const store = _allowedCache[type] ?? _allowedCache.default;
-    const now   = Date.now();
-    const entry = store.get(url);
+  function cachedAllowed(baseUrl, type, query) {
+    const store    = _allowedCache[type] ?? _allowedCache.default;
+    const now      = Date.now();
+    const cacheKey = `${baseUrl}\x00${query}`;
+    const entry    = store.get(cacheKey);
     if (entry && now - entry.ts < CACHE_TTL) {
       // Move to end of Map so LRU eviction keeps frequently-used entries alive
-      store.delete(url);
-      store.set(url, entry);
+      store.delete(cacheKey);
+      store.set(cacheKey, entry);
       return entry.promise;
     }
     if (store.size >= CACHE_MAX) store.delete(store.keys().next().value);
-    const promise = fetch(url).then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []);
-    store.set(url, { promise, ts: now });
+    const promise = fetch(baseUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+      body: JSON.stringify({ form: query }),
+    }).then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []);
+    store.set(cacheKey, { promise, ts: now });
     return promise;
   }
 
@@ -34,11 +39,16 @@
 
   async function fetchSuggestions(urls, type, query) {
     if (!urls) return [];
-    const enc = encodeURIComponent((query || '').toLowerCase());
+    const q        = (query || '').toLowerCase();
+    const postOpts = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
+      body: JSON.stringify({ form: q }),
+    };
     const safeJson = p => p.then(r => r.json()).then(d => Array.isArray(d) ? d : []).catch(() => []);
     const [allowed, custom] = await Promise.all([
-      urls.allowed ? cachedAllowed(`${urls.allowed}?form=${enc}`, type) : Promise.resolve([]),
-      urls.custom  ? safeJson(fetch(`${urls.custom}?form=${enc}`))       : Promise.resolve([]),
+      urls.allowed ? cachedAllowed(urls.allowed, type, q) : Promise.resolve([]),
+      urls.custom  ? safeJson(fetch(urls.custom, postOpts))  : Promise.resolve([]),
     ]);
     // Normalize to {value, label} regardless of API shape (plain string or object)
     const normalize = item => {
