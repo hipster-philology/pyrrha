@@ -533,14 +533,14 @@ def corpus_generate_fixtures(corpus_id):
     )
 
 
-@main.route('/corpus/<int:corpus_id>/api/<allowed_type>')
+@main.route('/corpus/<int:corpus_id>/api/<allowed_type>', methods=["GET", "POST"])
 def search_value_api(corpus_id, allowed_type):
     """ Find allowed values
 
     :param corpus_id: Id of the Corpus
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
-    form = request.args.get("form", "")
+    form = (request.get_json(silent=True) or {}).get("form") or request.args.get("form", "")
     if not form.strip():
         return jsonify([])
     corpus = Corpus.get_or_404(corpus_id)
@@ -561,14 +561,14 @@ def search_value_api(corpus_id, allowed_type):
     )
 
 
-@main.route('/corpus/<int:corpus_id>/api/custom-dictionary/<category>')
+@main.route('/corpus/<int:corpus_id>/api/custom-dictionary/<category>', methods=["GET", "POST"])
 def custom_dictionary_search_value_api(corpus_id, category):
     """ Find values in the corpus custom dictionary
 
     :param corpus_id: Id of the Corpus
     :param category: Type of value (lemma, morph, POS)
     """
-    form = request.args.get("form", "")
+    form = (request.get_json(silent=True) or {}).get("form") or request.args.get("form", "")
     if not form.strip():
         return jsonify([])
     corpus = Corpus.get_or_404(corpus_id)
@@ -588,12 +588,12 @@ def custom_dictionary_search_value_api(corpus_id, category):
     )
 
 
-@main.route('/corpus/<int:corpus_id>/api/gloss')
+@main.route('/corpus/<int:corpus_id>/api/gloss', methods=["GET", "POST"])
 @login_required
 @requires_corpus_access("corpus_id")
 def gloss_search_value_api(corpus_id):
     """ Autocomplete endpoint: distinct gloss values already in the corpus. """
-    form = request.args.get("form", "").strip()
+    form = ((request.get_json(silent=True) or {}).get("form") or request.args.get("form", "")).strip()
     corpus = Corpus.get_or_404(corpus_id)
     if not corpus.has_access(current_user):
         abort(403)
