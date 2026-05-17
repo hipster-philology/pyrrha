@@ -120,12 +120,12 @@
       // Called when the autocomplete input receives focus
       function onInputFocus() {
         open.value = true;
-        query.value = '';
+        query.value = props.modelValue ?? '';
         activeIndex.value = -1;
         suggestions.value = [];
         if (props.autocompleteUrls) {
           loading.value = true;
-          fetchSuggestions(props.autocompleteUrls, props.fieldType, '').then(s => {
+          fetchSuggestions(props.autocompleteUrls, props.fieldType, query.value).then(s => {
             suggestions.value = s;
             loading.value = false;
           });
