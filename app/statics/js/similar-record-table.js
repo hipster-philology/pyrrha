@@ -4,6 +4,11 @@
 
   const { createApp, ref, computed, onMounted } = Vue;
 
+  function csrfHeaders() {
+    const token = document.querySelector('meta[name="csrf-token"]')?.content;
+    return token ? { 'X-CSRFToken': token } : {};
+  }
+
   const cfg = JSON.parse(document.getElementById('pyrrha-config').textContent);
   const rec = cfg.record || {};
 
@@ -72,7 +77,7 @@
         try {
           const resp = await fetch(cfg.apply_url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...csrfHeaders() },
             body: JSON.stringify({ word_tokens: [...selected.value] }),
           });
           if (resp.ok) {
