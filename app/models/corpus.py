@@ -1801,28 +1801,24 @@ class ChangeRecord(db.Model):
 class Bookmark(db.Model):
     corpus_id = db.Column(db.Integer, db.ForeignKey("corpus.id", ondelete='CASCADE'), primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), primary_key=True)
-    token_id = db.Column(db.Integer, db.ForeignKey(WordToken.id, ondelete="CASCADE"), primary_key=True)
+    token_id = db.Column(db.Integer, db.ForeignKey(WordToken.id, ondelete="CASCADE"), nullable=False)
     page = db.Column(db.Integer, nullable=False)
 
     @staticmethod
     def mark(corpus: int, user: int, token_id: int, page: int):
-        bm = Bookmark(
-            corpus_id=corpus,
-            user_id=user,
-            token_id=token_id,
-            page=page
-        )
-        Bookmark.clear(corpus, user, _commit=False)
-        db.session.add(bm)
+        bm = Bookmark.query.filter_by(corpus_id=corpus, user_id=user).first()
+        if bm:
+            bm.token_id = token_id
+            bm.page = page
+        else:
+            bm = Bookmark(corpus_id=corpus, user_id=user, token_id=token_id, page=page)
+            db.session.add(bm)
         db.session.commit()
         return bm
 
     @staticmethod
     def clear(corpus: int, user: int, _commit: bool = False):
-        bm = Bookmark.query.filter(db.and_(
-            Bookmark.corpus_id == corpus,
-            Bookmark.user_id == user
-        )).first()
+        bm = Bookmark.query.filter_by(corpus_id=corpus, user_id=user).first()
         if bm:
             db.session.delete(bm)
             if _commit:
