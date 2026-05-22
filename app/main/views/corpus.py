@@ -6,7 +6,7 @@ from sqlalchemy import func, distinct, text
 from typing import List
 
 
-from app import db
+from app import db, csrf
 
 from app.models import CorpusUser, ControlLists, ControlListsUser, WordToken, ChangeRecord, Bookmark, Favorite, User, \
     CorpusCustomDictionary
@@ -320,13 +320,6 @@ def corpus_tokens_finalize(corpus_id):
     return jsonify({"redirect": url_for(".corpus_get", corpus_id=corpus_id)})
 
 
-@main.route('/api/csrf-token')
-@login_required
-def csrf_token_refresh():
-    from flask_wtf.csrf import generate_csrf
-    return jsonify({'csrf_token': generate_csrf()})
-
-
 @main.route('/corpus/favorite/<int:corpus_id>')
 @login_required
 @requires_corpus_access("corpus_id")
@@ -541,6 +534,7 @@ def corpus_generate_fixtures(corpus_id):
 
 
 @main.route('/corpus/<int:corpus_id>/api/<allowed_type>', methods=["GET", "POST"])
+@csrf.exempt
 def search_value_api(corpus_id, allowed_type):
     """ Find allowed values
 
@@ -569,6 +563,7 @@ def search_value_api(corpus_id, allowed_type):
 
 
 @main.route('/corpus/<int:corpus_id>/api/custom-dictionary/<category>', methods=["GET", "POST"])
+@csrf.exempt
 def custom_dictionary_search_value_api(corpus_id, category):
     """ Find values in the corpus custom dictionary
 
@@ -596,6 +591,7 @@ def custom_dictionary_search_value_api(corpus_id, category):
 
 
 @main.route('/corpus/<int:corpus_id>/api/gloss', methods=["GET", "POST"])
+@csrf.exempt
 @login_required
 @requires_corpus_access("corpus_id")
 def gloss_search_value_api(corpus_id):
@@ -678,6 +674,7 @@ def corpus_preferences(corpus_id: int):
 
 
 @main.route("/corpus/<int:corpus_id>/custom-dict", methods=["GET", "POST", "PATCH"])
+@csrf.exempt
 @login_required
 @requires_corpus_access("corpus_id")
 def corpus_custom_dictionary(corpus_id: int):

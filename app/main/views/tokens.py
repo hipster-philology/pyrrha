@@ -8,7 +8,7 @@ from io import StringIO
 from typing import Dict
 from sqlalchemy.orm import selectinload
 
-from app import db
+from app import db, csrf
 from .utils import render_template_with_nav_info, request_wants_json, requires_corpus_access
 from .. import main
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
@@ -292,6 +292,7 @@ def tokens_similar_to_token_data(corpus_id, token_id):
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct/<int:token_id>', methods=["POST"])
+@csrf.exempt
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_correct_single(corpus_id, token_id):
@@ -334,6 +335,7 @@ def tokens_correct_single(corpus_id, token_id):
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>/update', methods=["POST"])
+@csrf.exempt
 @login_required
 @requires_corpus_access("corpus_id")
 def tokens_correct_from_record(corpus_id, record_id):

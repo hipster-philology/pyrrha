@@ -8,7 +8,7 @@ from werkzeug.exceptions import BadRequest, NotFound, Forbidden
 
 from app.main.views.utils import render_template_with_nav_info
 from app.models import ControlLists, ControlListsUser, AllowedLemma, WordToken, User, PublicationStatus, CorpusCustomDictionary
-from app import db, email
+from app import db, email, csrf
 from ..utils import PyrrhaError
 from ..utils.forms import strip_or_none
 from ..utils.tsv import StringDictReader
@@ -213,6 +213,7 @@ def edit(cl_id, allowed_type, control_list):
 
 
 @control_lists_bp.route('/controls/<int:control_list_id>/api/<allowed_type>', methods=["GET", "POST"])
+@csrf.exempt
 @login_required
 def search_api(control_list_id, allowed_type):
     """ Find allowed values

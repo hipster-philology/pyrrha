@@ -9,20 +9,6 @@
     return token ? { 'X-CSRFToken': token } : {};
   }
 
-  // Keep the CSRF token alive for long sessions (server limit: 7200 s).
-  (function scheduleCsrfRefresh() {
-    const REFRESH_MS = 100 * 60 * 1000;
-    setTimeout(async function refresh() {
-      try {
-        const r = await fetch('/api/csrf-token');
-        const d = await r.json();
-        const meta = document.querySelector('meta[name="csrf-token"]');
-        if (meta && d.csrf_token) meta.content = d.csrf_token;
-      } catch (_) {}
-      setTimeout(refresh, REFRESH_MS);
-    }, REFRESH_MS);
-  })();
-
   const cfg = JSON.parse(document.getElementById('pyrrha-config').textContent);
   const rec = cfg.record || {};
 
