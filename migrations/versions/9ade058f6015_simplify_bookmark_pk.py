@@ -5,7 +5,7 @@ corpus is a plain UPDATE instead of a DELETE + INSERT, eliminating the
 concurrent-request UniqueViolation.
 
 Revision ID: 9ade058f6015
-Revises: f1a2b3c4d5e6
+Revises: 06ee9da93d69
 Create Date: 2026-05-22
 
 """
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision = '9ade058f6015'
-down_revision = 'f1a2b3c4d5e6'
+down_revision = '06ee9da93d69'
 branch_labels = None
 depends_on = None
 
