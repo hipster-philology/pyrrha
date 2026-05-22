@@ -36,6 +36,11 @@ class Config:
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
+    # Explicit SameSite=Lax so browsers refuse to send the session cookie on
+    # cross-origin POST/PATCH/DELETE — this is the primary CSRF defence for
+    # fetch-based API endpoints.
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
     # Defaults
     PAGINATION_DEFAULT_TOKENS = 100
     CORPUS_UPLOAD_CHUNK_SIZE = int(os.environ.get("CORPUS_UPLOAD_CHUNK_SIZE", 2000))
