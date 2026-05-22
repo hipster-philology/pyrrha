@@ -19,40 +19,48 @@ depends_on = None
 
 
 def upgrade():
-    # Deduplicate: keep only the most recent bookmark per (corpus_id, user_id)
-    # before dropping the old PK.
-    op.execute("""
-        DELETE FROM bookmark
-        WHERE ctid NOT IN (
-            SELECT DISTINCT ON (corpus_id, user_id) ctid
-            FROM bookmark
-            ORDER BY corpus_id, user_id, token_id DESC
+    bind = op.get_bind()
+    dialect = bind.dialect.name
+
+    if dialect == 'postgresql':
+        # Deduplicate: keep only the most recent bookmark per (corpus_id, user_id).
+        op.execute("""
+            DELETE FROM bookmark
+            WHERE ctid NOT IN (
+                SELECT DISTINCT ON (corpus_id, user_id) ctid
+                FROM bookmark
+                ORDER BY corpus_id, user_id, token_id DESC
+            )
+        """)
+        op.drop_constraint('bookmark_token_id_fkey', 'bookmark', type_='foreignkey')
+        op.drop_constraint('bookmark_pkey', 'bookmark', type_='primary')
+        op.create_primary_key('bookmark_pkey', 'bookmark', ['corpus_id', 'user_id'])
+        op.create_foreign_key(
+            'bookmark_token_id_fkey', 'bookmark',
+            'word_token', ['token_id'], ['id'],
+            ondelete='CASCADE',
         )
-    """)
-
-    # Drop the FK constraint on token_id (recreated below as a plain FK).
-    op.drop_constraint('bookmark_token_id_fkey', 'bookmark', type_='foreignkey')
-
-    # Replace the three-column PK with a two-column PK.
-    op.drop_constraint('bookmark_pkey', 'bookmark', type_='primary')
-    op.create_primary_key('bookmark_pkey', 'bookmark', ['corpus_id', 'user_id'])
-
-    # Re-add the FK on token_id as a plain (non-PK) constraint.
-    op.create_foreign_key(
-        'bookmark_token_id_fkey', 'bookmark',
-        'word_token', ['token_id'], ['id'],
-        ondelete='CASCADE',
-    )
+    else:
+        # SQLite requires full table reconstruction to change the PK.
+        with op.batch_alter_table('bookmark') as batch_op:
+            batch_op.create_primary_key('bookmark_pkey', ['corpus_id', 'user_id'])
 
 
 def downgrade():
-    op.drop_constraint('bookmark_token_id_fkey', 'bookmark', type_='foreignkey')
-    op.drop_constraint('bookmark_pkey', 'bookmark', type_='primary')
-    op.create_primary_key(
-        'bookmark_pkey', 'bookmark', ['corpus_id', 'user_id', 'token_id']
-    )
-    op.create_foreign_key(
-        'bookmark_token_id_fkey', 'bookmark',
-        'word_token', ['token_id'], ['id'],
-        ondelete='CASCADE',
-    )
+    bind = op.get_bind()
+    dialect = bind.dialect.name
+
+    if dialect == 'postgresql':
+        op.drop_constraint('bookmark_token_id_fkey', 'bookmark', type_='foreignkey')
+        op.drop_constraint('bookmark_pkey', 'bookmark', type_='primary')
+        op.create_primary_key(
+            'bookmark_pkey', 'bookmark', ['corpus_id', 'user_id', 'token_id']
+        )
+        op.create_foreign_key(
+            'bookmark_token_id_fkey', 'bookmark',
+            'word_token', ['token_id'], ['id'],
+            ondelete='CASCADE',
+        )
+    else:
+        with op.batch_alter_table('bookmark') as batch_op:
+            batch_op.create_primary_key('bookmark_pkey', ['corpus_id', 'user_id', 'token_id'])
