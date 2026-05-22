@@ -36,6 +36,8 @@ class Config:
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
+    WTF_CSRF_TIME_LIMIT = 7200  # 2 hours; annotation pages refresh the token before this expires
+
     # Defaults
     PAGINATION_DEFAULT_TOKENS = 100
     CORPUS_UPLOAD_CHUNK_SIZE = int(os.environ.get("CORPUS_UPLOAD_CHUNK_SIZE", 2000))

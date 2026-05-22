@@ -9,6 +9,21 @@
     return token ? { 'X-CSRFToken': token } : {};
   }
 
+  // Refresh the CSRF token every 100 minutes so long annotation sessions don't
+  // hit the 2-hour server-side expiry (WTF_CSRF_TIME_LIMIT = 7200).
+  (function scheduleCsrfRefresh() {
+    const REFRESH_MS = 100 * 60 * 1000;
+    setTimeout(async function refresh() {
+      try {
+        const r = await fetch('/api/csrf-token');
+        const d = await r.json();
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && d.csrf_token) meta.content = d.csrf_token;
+      } catch (_) {}
+      setTimeout(refresh, REFRESH_MS);
+    }, REFRESH_MS);
+  })();
+
   // ── Allowed-list cache (session, 1 h TTL, 300 entries per category) ─────────
   const CACHE_TTL  = 60 * 60 * 1000;
   const CACHE_MAX  = 300;

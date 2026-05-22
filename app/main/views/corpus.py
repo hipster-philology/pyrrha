@@ -320,6 +320,13 @@ def corpus_tokens_finalize(corpus_id):
     return jsonify({"redirect": url_for(".corpus_get", corpus_id=corpus_id)})
 
 
+@main.route('/api/csrf-token')
+@login_required
+def csrf_token_refresh():
+    from flask_wtf.csrf import generate_csrf
+    return jsonify({'csrf_token': generate_csrf()})
+
+
 @main.route('/corpus/favorite/<int:corpus_id>')
 @login_required
 @requires_corpus_access("corpus_id")
