@@ -18,9 +18,9 @@ from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
 
 
-def _corpus_urls(corpus, data_url=None):
+def _corpus_urls(corpus, data_url=None, link_to_corpus=False):
     """ Return the URL map shared between the HTML config and the data API. """
-    return {
+    urls = {
         "data": data_url or url_for("main.tokens_correct_data", corpus_id=corpus.id),
         "save": url_for("main.tokens_correct_single", corpus_id=corpus.id, token_id=0)[:-1],
         "edit": url_for("main.tokens_edit_form", corpus_id=corpus.id, token_id=0)[:-1],
@@ -49,6 +49,10 @@ def _corpus_urls(corpus, data_url=None):
             }
         }
     }
+    if link_to_corpus:
+        urls["corpus_base_url"] = url_for("main.tokens_correct", corpus_id=corpus.id)
+        urls["corpus_per_page"] = current_app.config["PAGINATION_DEFAULT_TOKENS"]
+    return urls
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/correct')
@@ -250,7 +254,8 @@ def tokens_similar_to_token(corpus_id, token_id):
         "visible_columns": visible_cols,
         "urls": _corpus_urls(
             corpus,
-            data_url=url_for("main.tokens_similar_to_token_data", corpus_id=corpus.id, token_id=token_id, mode=mode)
+            data_url=url_for("main.tokens_similar_to_token_data", corpus_id=corpus.id, token_id=token_id, mode=mode),
+            link_to_corpus=True
         ),
     }
     return render_template_with_nav_info(
@@ -646,7 +651,8 @@ def tokens_search_through_fields(corpus_id):
         "visible_columns": visible_cols,
         "urls": _corpus_urls(
             corpus,
-            data_url=url_for("main.tokens_search_data", corpus_id=corpus.id)
+            data_url=url_for("main.tokens_search_data", corpus_id=corpus.id),
+            link_to_corpus=True
         ),
     }
 
