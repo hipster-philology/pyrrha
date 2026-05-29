@@ -364,6 +364,7 @@
       visibleColumns: Array,
       urls: Object,
       page: Number,
+      isBookmarked: Boolean,
     },
     emits: ['tab-row-next', 'tab-row-prev'],
     setup(props, { emit: rowEmit, expose }) {
@@ -400,7 +401,7 @@
       const hasGloss   = computed(() => props.visibleColumns.includes('gloss'));
       const hasSimilar = computed(() => props.visibleColumns.includes('similar'));
 
-      const rowClass = computed(() => ['at-row', state.changed && 'at-row--changed', state.needs_review && 'at-row--needs-review']);
+      const rowClass = computed(() => ['at-row', state.changed && 'at-row--changed', state.needs_review && 'at-row--needs-review', props.isBookmarked && 'at-row--bookmark']);
       const simClass = computed(() => {
         if (state.similar > 100) return 'sim-badge sim-badge--many';
         if (state.similar > 0)   return 'sim-badge sim-badge--has';
@@ -564,7 +565,7 @@
 
         <!-- Col 1: ID spans 2 rows -->
         <div class="at-cell at-cell--id">
-          <a :href="'#tok' + token.order_id" :id="'tok' + token.order_id" class="at-order-id" tabindex="-1">{{ token.token_reference ?? token.order_id }}</a>
+          <a :href="urls.corpus_base_url ? urls.corpus_base_url + '?page=' + (Math.floor(token.order_id / urls.corpus_per_page) + 1) + '#tok' + token.order_id : '#tok' + token.order_id" :id="'tok' + token.order_id" class="at-order-id" tabindex="-1">{{ token.token_reference ?? token.order_id }}</a>
           <button :class="['at-review-toggle', state.needs_review && 'at-review-toggle--active']"
                   :title="state.needs_review ? (state.review_comment || 'Flagged for review') : 'Mark for review'"
                   @click="state.showReviewPanel = !state.showReviewPanel" tabindex="-1">⚑</button>
@@ -745,12 +746,13 @@
         .map(k => colLabels[k])
         .join(' · ');
 
-      const tokens    = ref([]);
-      const page      = ref(1);
-      const pages     = ref(1);
-      const total     = ref(0);
-      const loading   = ref(true);
-      const loadError = ref(null);
+      const tokens          = ref([]);
+      const page            = ref(1);
+      const pages           = ref(1);
+      const total           = ref(0);
+      const loading         = ref(true);
+      const loadError       = ref(null);
+      const bookmarkTokenId = ref(null);
 
       async function fetchPage(num) {
         loading.value = true;
@@ -764,13 +766,21 @@
           const resp = await fetch(url.toString());
           if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
           const data = await resp.json();
-          tokens.value = data.tokens;
-          page.value   = data.page;
-          pages.value  = data.pages;
-          total.value  = data.total;
+          tokens.value          = data.tokens;
+          page.value            = data.page;
+          pages.value           = data.pages;
+          total.value           = data.total;
+          bookmarkTokenId.value = data.bookmark_token_id ?? null;
           const newUrl = new URL(window.location.href);
           newUrl.searchParams.set('page', String(data.page));
           history.pushState({ page: data.page }, '', newUrl.toString());
+          loading.value = false;
+          await nextTick();
+          const hash = window.location.hash;
+          if (hash) {
+            const target = document.getElementById(hash.slice(1));
+            if (target) target.scrollIntoView({ block: 'center' });
+          }
         } catch (e) {
           loadError.value = e.message || 'Failed to load tokens';
         } finally {
@@ -781,7 +791,7 @@
       onMounted(() => {
         const p = parseInt(new URLSearchParams(window.location.search).get('page') || '1');
         fetchPage(p);
-        window.addEventListener('popstate', e => fetchPage(e.state?.page || 1));
+        window.addEventListener('popstate', e => { if (e.state?.page != null) fetchPage(e.state.page); });
       });
 
       const rowRefs = ref([]);
@@ -796,7 +806,7 @@
       }
 
       return {
-        tokens, page, pages, total, loading, loadError,
+        tokens, page, pages, total, loading, loadError, bookmarkTokenId,
         visibleColumns, urls: config.urls, annoHeader,
         fetchPage, rowRefs, onTabRowNext, onTabRowPrev,
       };
@@ -825,6 +835,7 @@
               :visible-columns="visibleColumns"
               :urls="urls"
               :page="page"
+              :is-bookmarked="token.id === bookmarkTokenId"
               @tab-row-next="onTabRowNext(idx)"
               @tab-row-prev="onTabRowPrev(idx)"
             />

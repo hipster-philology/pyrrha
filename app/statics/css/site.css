@@ -339,8 +339,19 @@ https://codepen.io/sergiopedercini/pen/jmKdbj/?source=post_page-----------------
 }
 .at-row:last-child { border-bottom: none; }
 .at-row:hover { background: var(--at-highlight); }
-.at-row--changed { background: rgba(59, 130, 246, 0.04); border-left: 4px solid #3b82f6; }
-.at-row--needs-review { background: rgba(234, 179, 8, 0.07); border-left: 4px solid #d97706; }
+.at-row--changed { background: rgba(59, 130, 246, 0.04); }
+.at-row--needs-review { background: rgba(234, 179, 8, 0.07); }
+.at-row--bookmark { background: rgba(236, 72, 153, 0.06); }
+
+.at-row--changed .at-cell--id { border-left: 4px solid #3b82f6; }
+.at-row--needs-review .at-cell--id { border-left: 4px solid #d97706; }
+.at-row--bookmark .at-cell--id { border-left: 4px solid #ec4899; }
+.at-row--bookmark .at-cell--id::after {
+  content: "\f02e";
+  font-family: FontAwesome;
+  font-size: 10px;
+  color: #ec4899;
+}
 
 .at-review-panel {
   grid-column: 1 / -1;
@@ -398,6 +409,7 @@ https://codepen.io/sergiopedercini/pen/jmKdbj/?source=post_page-----------------
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   gap: 4px;
   color: var(--at-text-muted); font-size: 11px;
+  box-sizing: border-box;
 }
 .at-order-id { color: var(--at-text-muted); text-decoration: none; }
 .at-order-id:hover { color: var(--at-crimson); }
