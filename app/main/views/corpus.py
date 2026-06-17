@@ -194,16 +194,21 @@ def corpus_new_init():
         return jsonify({"error": "You can't disable Lemma and POS and Morph. Keep at least one."}), 400
 
     # Clean up any previous pending corpora for this user before creating a new one
-    old_pending = (
-        db.session.query(Corpus)
-        .join(CorpusUser, CorpusUser.corpus_id == Corpus.id)
-        .filter(CorpusUser.user_id == current_user.id, Corpus.status == 'pending')
-        .all()
-    )
-    for old in old_pending:
-        db.session.delete(old)
-    if old_pending:
-        db.session.commit()
+    try:
+        old_pending = (
+            db.session.query(Corpus)
+            .join(CorpusUser, CorpusUser.corpus_id == Corpus.id)
+            .filter(CorpusUser.user_id == current_user.id, Corpus.status == 'pending')
+            .all()
+        )
+        for old in old_pending:
+            db.session.delete(old)
+        if old_pending:
+            db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        logger.error(e)
+        return jsonify({"error": "Could not clean up your previous unfinished corpus. Please contact an admin."}), 400
 
     form_kwargs = dict(
         name=name, context_left=context_left, context_right=context_right,
