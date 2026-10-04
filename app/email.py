@@ -1,4 +1,5 @@
 from flask import render_template
+from flask_babel import force_locale, get_locale
 from flask_mail import Message
 from smtplib import SMTPDataError
 from threading import Thread
@@ -22,12 +23,17 @@ def send_email_async(app, recipient, subject, template, bcc=None, mailTriggerSta
     if (mailTriggerStatus):
         if not isinstance(recipient, list):
             recipient = [recipient]
-        msg = Message(
-            app.config['EMAIL_SUBJECT_PREFIX'] + ' ' + subject,
-            sender=app.config['EMAIL_SENDER'],
-            recipients=recipient, bcc=bcc)
-        msg.body = render_template(template + '.txt', **kwargs)
-        msg.html = render_template(template + '.html', **kwargs)
+        # Write the email in the language of its addressee when we know it
+        locale = getattr(kwargs.get("user"), "locale", None)
+        if locale not in app.config["LANGUAGES"]:
+            locale = str(get_locale() or "en")
+        with force_locale(locale):
+            msg = Message(
+                app.config['EMAIL_SUBJECT_PREFIX'] + ' ' + str(subject),
+                sender=app.config['EMAIL_SENDER'],
+                recipients=recipient, bcc=bcc)
+            msg.body = render_template(template + '.txt', **kwargs)
+            msg.html = render_template(template + '.html', **kwargs)
         Thread(target=_async, args=(app, msg)).start()
     else:
         logger.info('Warning, you are using Pyrrha without mail confirmation.' 

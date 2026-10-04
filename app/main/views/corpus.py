@@ -1,4 +1,5 @@
 from flask import request, flash, redirect, url_for, abort, current_app, jsonify
+from flask_babel import gettext as _
 from flask_login import current_user, login_required
 import sqlalchemy.exc
 from werkzeug.exceptions import NotFound
@@ -62,7 +63,7 @@ def corpus_new():
         if not current_user.is_authenticated:
             abort(403)
         elif not len(strip_or_none(request.form.get("name", ""))):
-            flash("You forgot to give a name to your corpus", category="error")
+            flash(_("You forgot to give a name to your corpus"), category="error")
             return error()
         else:
             form_kwargs = {
@@ -88,7 +89,7 @@ def corpus_new():
                 and "morphColumn" in request.form
             ):
                 flash(
-                    "You can't disable Lemma and POS and Morph. Keep at least one of them.",
+                    _("You can't disable Lemma and POS and Morph. Keep at least one of them."),
                     category="error"
                 )
                 return error()
@@ -98,7 +99,7 @@ def corpus_new():
                 try:
                     control_list = ControlLists.get_or_404(request.form.get("control_list_select"))
                 except Exception as e:
-                    flash("This control list does not exist", category="error")
+                    flash(_("This control list does not exist"), category="error")
                     logger.error(e)
                     return error()
                 form_kwargs.update({"word_tokens_dict": tokens,
@@ -134,28 +135,28 @@ def corpus_new():
                 current_controlList.filter_numeral = 'numeral' in list_filter
                 current_controlList.filter_ignore = 'ignore' in list_filter
                 db.session.commit()
-                flash("New corpus registered", category="success")
+                flash(_("New corpus registered"), category="success")
             except (sqlalchemy.exc.StatementError, sqlalchemy.exc.IntegrityError) as e:
                 db.session.rollback()
-                flash("The corpus cannot be registered. Check your data", category="error")
+                flash(_("The corpus cannot be registered. Check your data"), category="error")
                 logger.error(e)
                 if db.session.get_bind().dialect.name == "postgresql":
                     unique_constraint = 'duplicate key value violates unique constraint "corpus_name_key"'
                 else:
                     unique_constraint = "unique constraint failed: corpus.name"
                 if unique_constraint in str(e.orig).lower():
-                    flash("You have already a corpus going by the name {}".format(request.form.get("name")),
+                    flash(_("You have already a corpus going by the name %(name)s", name=request.form.get("name")),
                           category="error")
                 return error()
             except MissingTokenColumnValue as exc:
                 db.session.rollback()
-                flash("At least one line of your corpus is missing a token/form. Check line %s " % exc.line,
+                flash(_("At least one line of your corpus is missing a token/form. Check line %(line)s ", line=exc.line),
                       category="error")
                 logger.error(exc)
                 return error()
             except NoTokensInput:
                 db.session.rollback()
-                flash("You did not input any text.", category="error")
+                flash(_("You did not input any text."), category="error")
                 return error()
             except ValidationError as exception:
                 db.session.rollback()
@@ -163,7 +164,7 @@ def corpus_new():
                 return error()
             except Exception as e:
                 db.session.rollback()
-                flash("The corpus cannot be registered. Check your data", category="error")
+                flash(_("The corpus cannot be registered. Check your data"), category="error")
                 logger.error(e)
                 return error()
             return redirect(url_for(".corpus_get", corpus_id=corpus.id))
@@ -431,7 +432,7 @@ def corpus_bookmark(corpus_id):
                 token=bm.token_id
             )
         else:
-            flash("No bookmark found for this corpus on your account", category="warning")
+            flash(_("No bookmark found for this corpus on your account"), category="warning")
             link = url_for("main.tokens_correct", corpus_id=corpus_id)
     return redirect(link)
 
@@ -447,10 +448,10 @@ def corpus_delete(corpus_id: int):
             # Enjoy cascade deletion
             db.session.delete(corpus)
             db.session.commit()
-            flash("The corpus has been removed", category="success")
+            flash(_("The corpus has been removed"), category="success")
             return redirect(url_for(".index"))
         else:
-            flash("The corpus name you entered is not the one expected.", category="error")
+            flash(_("The corpus name you entered is not the one expected."), category="error")
     return render_template_with_nav_info(
         template="main/corpus_delete.html", corpus=corpus, form=form
     )
@@ -506,14 +507,14 @@ def control_list_switch(corpus_id: int):
             corpus.control_lists_id = control_list.id
             switch_control_lists_access(corpus, users, current_control_lists.id)
             flash(
-                "The control list has been switched to {}".format(control_list.name),
+                _("The control list has been switched to %(name)s", name=control_list.name),
                 category="success"
             )
             current_control_lists = control_list
         except Exception:
             db.session.rollback()
             flash(
-                "An unknown error occurred, the control list has not been switched",
+                _("An unknown error occurred, the control list has not been switched"),
                 category="error"
             )
     return render_template_with_nav_info(
@@ -651,12 +652,12 @@ def corpus_preferences(corpus_id: int):
             )
         except PreferencesUpdateError as exception:
             flash(
-                f"Faild to update preferences: {exception}",
+                _("Faild to update preferences: %(error)s", error=exception),
                 category="error"
             )
         else:
             flash(
-                f"Updated preferences",
+                _("Updated preferences"),
                 category="success"
             )
     # Ensure Gloss column exists for corpora created before it was introduced
@@ -722,12 +723,12 @@ def corpus_custom_dictionary(corpus_id: int):
             )
         except PersonalDictionaryError as exception:
             flash(
-                f"Faild to update dictionary: {exception}",
+                _("Faild to update dictionary: %(error)s", error=exception),
                 category="error"
             )
         else:
             flash(
-                f"Updated custom dictionary",
+                _("Updated custom dictionary"),
                 category="success"
             )
     return render_template_with_nav_info(

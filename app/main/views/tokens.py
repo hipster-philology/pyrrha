@@ -1,5 +1,6 @@
 from flask import request, jsonify, url_for, abort, render_template, current_app, redirect, flash, Response, \
     stream_with_context
+from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from slugify import slugify
 import math
@@ -688,7 +689,7 @@ def tokens_search_data(corpus_id):
     if not token_dict:
         return jsonify({"tokens": [], "page": 1, "pages": 0, "total": 0, "per_page": 100, "bookmark_token_id": None})
 
-    tokens_q, _, _ = corpus.token_search(
+    tokens_q, *_unused = corpus.token_search(
         token_dict=token_dict,
         case_sensitive='caseBox' not in request.args,
         desc=int_or(request.args.get("desc"), 0)
@@ -739,7 +740,7 @@ def tokens_edit_form(corpus_id, token_id):
     go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
     if request.method == "POST" and request.form.get("form"):
         token.edit_form(request.form.get("form"), corpus=corpus, user=current_user)
-        flash("The form has been updated.", category="success")
+        flash(_("The form has been updated."), category="success")
         return redirect(go_back_url)
     return render_template_with_nav_info(
         "main/tokens_edit_form.html", corpus=corpus, token=token,
@@ -765,9 +766,9 @@ def tokens_del_row(corpus_id, token_id):
     if request.method == "POST":
         if request.form.get("form") == token.form:
             token.del_form(corpus=corpus, user=current_user)
-            flash("The form has been deleted.", category="success")
+            flash(_("The form has been deleted."), category="success")
         else:
-            flash("The form was not matched", category="error")
+            flash(_("The form was not matched"), category="error")
         return redirect(go_back_url)
 
     return render_template_with_nav_info(
@@ -793,7 +794,7 @@ def tokens_add_row(corpus_id, token_id):
 
     if request.method == "POST" and request.form.get("form"):
         token.add_form(request.form.get("form"), corpus=corpus, user=current_user)
-        flash("The form has been updated.", category="success")
+        flash(_("The form has been updated."), category="success")
         return redirect(go_back_url)
 
     return render_template_with_nav_info(
