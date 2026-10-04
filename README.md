@@ -99,6 +99,12 @@ python manage.py translate compile
 All commands are run via `manage.py`. Pass `--config <name>` to select the
 environment — `dev` (default), `prod`, or `test`.
 
+The `prod` environment refuses to start unless the `SECRET_KEY` environment
+variable is set to a random secret. Also set `ADMIN_PASSWORD`, and change the
+password of the default administrator account (`ppa-admin@ppa.fr`) after the
+first login. In `prod`, session and remember-me cookies are `Secure`,
+`HttpOnly` and `SameSite=Lax`, so the site must be served over HTTPS.
+
 ```
 python manage.py --config <env> <command> [options]
 ```

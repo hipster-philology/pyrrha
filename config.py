@@ -4,6 +4,7 @@ from typing import List
 from sqlalchemy.pool import NullPool
 
 basedir = os.path.abspath(os.path.dirname(__file__))
+SECRET_KEY_PLACEHOLDER = 'SECRET_KEY_ENV_VAR_NOT_SET'
 
 
 class Config:
@@ -11,7 +12,7 @@ class Config:
     if os.environ.get('SECRET_KEY'):
         SECRET_KEY = os.environ.get('SECRET_KEY')
     else:
-        SECRET_KEY = 'SECRET_KEY_ENV_VAR_NOT_SET'
+        SECRET_KEY = SECRET_KEY_PLACEHOLDER
         print('SECRET KEY ENV VAR NOT SET! SHOULD NOT SEE IN PRODUCTION')
     # SQLALCHEMY_COMMIT_ON_TEARDOWN = True
     # Deprecated
@@ -50,6 +51,28 @@ class Config:
     @staticmethod
     def init_app(app):
         pass
+
+
+class ProductionConfig(Config):
+    """Production settings: refuses to start with the development defaults."""
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+
+    @staticmethod
+    def init_app(app):
+        if app.config.get("SECRET_KEY") in (None, "", SECRET_KEY_PLACEHOLDER):
+            raise RuntimeError(
+                "SECRET_KEY environment variable must be set to a random secret in production."
+            )
+        if app.config.get("ADMIN_PASSWORD") == "admin":
+            app.logger.warning(
+                "ADMIN_PASSWORD is the default value. Set the ADMIN_PASSWORD environment variable "
+                "and change the password of the default administrator account."
+            )
 
 
 class DevelopmentConfig(Config):
@@ -168,6 +191,6 @@ class PostgreSQLTestConfig(BaseTestConfig):
 
 config = {
     "dev": DevelopmentConfig,
-    "prod": Config,
+    "prod": ProductionConfig,
     "test": PostgreSQLTestConfig if os.environ.get("TEST_DBMS", "sqlite").lower() == "postgresql" else SQLiteTestConfig
 }
