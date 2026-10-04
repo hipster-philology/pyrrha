@@ -163,13 +163,21 @@
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mt-3">
             {% if can_edit %}
-                <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage') }} {{ item_type_name }} {{ _('users') }}</h2>
-                <p class="form-text">{{ _('Add or remove') }} {{ item_type_name }} {{ _('access to users') }}</p>
+                {% if item_type_name == 'corpus' %}
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage corpus users') }}</h2>
+                <p class="form-text">{{ _('Add or remove corpus access to users') }}</p>
+                {% else %}
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View and manage control list users') }}</h2>
+                <p class="form-text">{{ _('Add or remove control list access to users') }}</p>
+                {% endif %}
             {% else %}
-                <h2><i class="fa fa-users mr-2"></i> {{ _('View') }} {{ item_type_name }} {{ _('users') }}</h2>
-                <p class="form-text">
-                    {{ _('Only') }} {{ item_type_name }} {{ _('owners can manage user accesses') }}
-                </p>
+                {% if item_type_name == 'corpus' %}
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View corpus users') }}</h2>
+                <p class="form-text">{{ _('Only corpus owners can manage user accesses') }}</p>
+                {% else %}
+                <h2><i class="fa fa-users mr-2"></i> {{ _('View control list users') }}</h2>
+                <p class="form-text">{{ _('Only control list owners can manage user accesses') }}</p>
+                {% endif %}
             {% endif %}
             <div class="container">
                 <div>
@@ -224,8 +232,11 @@
 
                             <div class="col-md-9" style="padding: 0;">
                                 <h3 class="mt-3"><i class="fa fa-user-plus mr-2"></i>{{ _('Grant access to a user') }}</h3>
-                                <p>{{ _('The user will be able to use the post-correction tools but also grant and remove
-                                    accesses to this') }} {{ item_type_name }}</p>
+                                {% if item_type_name == 'corpus' %}
+                                <p>{{ _('The user will be able to use the post-correction tools but also grant and remove accesses to this corpus') }}</p>
+                                {% else %}
+                                <p>{{ _('The user will be able to use the post-correction tools but also grant and remove accesses to this control list') }}</p>
+                                {% endif %}
 
                                 {{ search_user(roles) }}
                                 {{ users_table(current_user, users, redirect=False) }}

@@ -121,7 +121,7 @@ def reset_password_request():
             flash(_('A password reset link has been sent to %(email)s.',
                     email=form.email.data), 'warning')
         else:
-            flash(_('You are running in dev or test mode. No emails can be sent'
+            flash(_('You are running in dev or test mode. No emails can be sent '
                 'for this function. Use the admin account'
                 ' (check source code for passwords)'), 'warning')
         return redirect(url_for('account.login'))
