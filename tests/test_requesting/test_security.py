@@ -100,3 +100,24 @@ class TestLoginRedirect(TestBase):
     def test_local_next_is_honoured(self):
         resp = self._login("/dashboard")
         self.assertEqual(resp.location, "/dashboard")
+
+
+class TestProductionConfig(TestBase):
+
+    def test_prod_requires_secret_key(self):
+        import os
+        from unittest import mock
+        from config import ProductionConfig, SECRET_KEY_PLACEHOLDER
+        app = mock.Mock()
+        app.config = {"SECRET_KEY": SECRET_KEY_PLACEHOLDER, "ADMIN_PASSWORD": "x"}
+        with self.assertRaises(RuntimeError):
+            ProductionConfig.init_app(app)
+        app.config = {"SECRET_KEY": "a-real-secret", "ADMIN_PASSWORD": "x"}
+        ProductionConfig.init_app(app)
+
+    def test_prod_cookie_flags(self):
+        from config import ProductionConfig
+        self.assertTrue(ProductionConfig.SESSION_COOKIE_SECURE)
+        self.assertTrue(ProductionConfig.SESSION_COOKIE_HTTPONLY)
+        self.assertEqual(ProductionConfig.SESSION_COOKIE_SAMESITE, "Lax")
+        self.assertTrue(ProductionConfig.REMEMBER_COOKIE_SECURE)
