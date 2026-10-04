@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-04 10:46+0200\n"
+"POT-Creation-Date: 2026-10-04 10:50+0200\n"
 "PO-Revision-Date: 2022-06-30 14:23+0000\n"
 "Last-Translator: Tashi Dhondup <dhonduptiger658@gmail.com>, 2022\n"
 "Language: bo_CN\n"
@@ -596,63 +596,127 @@ msgid "Resend confirmation email"
 msgstr ""
 
 #: app/templates/account/email/change_email.html:1
+#: app/templates/account/email/change_email.txt:1
 #: app/templates/account/email/confirm.html:1
+#: app/templates/account/email/confirm.txt:1
 #: app/templates/account/email/invite.html:1
+#: app/templates/account/email/invite.txt:1
 #: app/templates/account/email/reset_password.html:1
-#, fuzzy
-msgid "Dear"
-msgstr "འཚོལ་ཞིབ།"
-
-#: app/templates/account/email/change_email.html:3
-msgid "To confirm your new email address"
+#: app/templates/account/email/reset_password.txt:1
+#, python-format
+msgid "Dear %(name)s,"
 msgstr ""
 
 #: app/templates/account/email/change_email.html:3
-#: app/templates/account/email/confirm.html:5
-#: app/templates/account/email/invite.html:5
-msgid "click here"
+#, python-format
+msgid "To confirm your new email address <a href=\"%(link)s\">click here</a>."
 msgstr ""
 
 #: app/templates/account/email/change_email.html:5
+#: app/templates/account/email/confirm.html:7
+#: app/templates/account/email/invite.html:7
+#: app/templates/account/email/reset_password.html:5
 msgid ""
 "Alternatively, you can paste the following link in your browser's address"
 " bar:"
 msgstr ""
 
 #: app/templates/account/email/change_email.html:9
+#: app/templates/account/email/change_email.txt:7
 #: app/templates/account/email/confirm.html:11
+#: app/templates/account/email/confirm.txt:9
 #: app/templates/account/email/invite.html:13
+#: app/templates/account/email/invite.txt:11
 #: app/templates/account/email/reset_password.html:11
+#: app/templates/account/email/reset_password.txt:9
 msgid "Sincerely,"
 msgstr ""
 
+#: app/templates/account/email/change_email.html:11
+#: app/templates/account/email/change_email.txt:9
+#: app/templates/account/email/confirm.html:13
+#: app/templates/account/email/confirm.txt:11
+#: app/templates/account/email/invite.html:15
+#: app/templates/account/email/invite.txt:13
+#: app/templates/account/email/reset_password.html:13
+#: app/templates/account/email/reset_password.txt:11
+#, python-format
+msgid "The %(app)s Team"
+msgstr ""
+
 #: app/templates/account/email/change_email.html:13
+#: app/templates/account/email/change_email.txt:11
 #: app/templates/account/email/confirm.html:15
+#: app/templates/account/email/confirm.txt:13
 #: app/templates/account/email/invite.html:17
+#: app/templates/account/email/invite.txt:15
 #: app/templates/account/email/reset_password.html:15
-#: app/templates/control_lists/email/contact.html:10
+#: app/templates/account/email/reset_password.txt:13
+#: app/templates/control_lists/email/contact.html:9
+#: app/templates/control_lists/email/contact.txt:9
 msgid "Note: replies to this email address are not monitored."
 msgstr ""
 
+#: app/templates/account/email/change_email.txt:3
+msgid "To confirm your new email address click on the following link:"
+msgstr ""
+
 #: app/templates/account/email/confirm.html:3
-#, fuzzy
-msgid "Welcome to"
-msgstr "Pyrrha ལ་ཕེབས་པར་དགའ་བསུ་ཞུ།"
+#, python-format
+msgid "Welcome to <b>%(app)s</b>!"
+msgstr ""
 
 #: app/templates/account/email/confirm.html:5
-msgid "To confirm your account, please"
+#, python-format
+msgid "To confirm your account, please <a href=\"%(link)s\">click here</a>."
+msgstr ""
+
+#: app/templates/account/email/confirm.txt:3
+#, python-format
+msgid "Welcome to %(app)s!"
+msgstr ""
+
+#: app/templates/account/email/confirm.txt:5
+msgid "To confirm your account, please click on the following link:"
 msgstr ""
 
 #: app/templates/account/email/invite.html:3
-msgid "You are invited to join"
+#, python-format
+msgid "You are invited to join <b>%(app)s</b>!"
 msgstr ""
 
 #: app/templates/account/email/invite.html:5
-msgid "To set your password, please"
+#, python-format
+msgid "To set your password, please <a href=\"%(link)s\">click here</a>."
+msgstr ""
+
+#: app/templates/account/email/invite.html:11
+#: app/templates/account/email/invite.txt:9
+#, python-format
+msgid "Once completed, please log in as %(email)s with the password you set."
+msgstr ""
+
+#: app/templates/account/email/invite.txt:3
+#, python-format
+msgid "You are invited to join %(app)s!"
+msgstr ""
+
+#: app/templates/account/email/invite.txt:5
+msgid "To set your password, please click on the following link:"
+msgstr ""
+
+#: app/templates/account/email/reset_password.html:3
+#, python-format
+msgid "To reset your password, <a href=\"%(link)s\">click here</a>."
 msgstr ""
 
 #: app/templates/account/email/reset_password.html:9
+#: app/templates/account/email/reset_password.txt:7
 msgid "If you have not requested a password reset, simply ignore this message."
+msgstr ""
+
+#: app/templates/account/email/reset_password.txt:3
+msgid "To reset your password, click on the following link:"
 msgstr ""
 
 #: app/templates/admin/manage_user.html:41
@@ -1110,6 +1174,20 @@ msgstr ""
 #: app/templates/control_lists/rename.html:8
 msgid "Rename the control list"
 msgstr "སྟངས་འཛིན་ཐོ་གཞུང་དེ་ལ་མིང་བསྐྱར་འདོགས་བྱེད།"
+
+#: app/templates/control_lists/email/contact.html:5
+#, python-format
+msgid ""
+"This email has been sent by %(name)s (%(email)s) to every administrators "
+"of the control list <a href=\"%(url)s\">%(title)s</a>"
+msgstr ""
+
+#: app/templates/control_lists/email/contact.txt:5
+#, python-format
+msgid ""
+"This email has been sent by %(name)s <%(email)s> to every administrators "
+"of the control list %(title)s ( %(url)s )"
+msgstr ""
 
 #: app/templates/errors/403.html:4
 #, python-format
@@ -2688,4 +2766,25 @@ msgstr "འདྲ་ཤས་ཆེ་བ་རྣམས་ནི།"
 
 #~ msgid "edited"
 #~ msgstr "རྩོམ་སྒྲིག་ཟིན་པ།"
+
+#~ msgid "Dear"
+#~ msgstr "འཚོལ་ཞིབ།"
+
+#~ msgid "To confirm your new email address"
+#~ msgstr ""
+
+#~ msgid "click here"
+#~ msgstr ""
+
+#~ msgid "Welcome to"
+#~ msgstr "Pyrrha ལ་ཕེབས་པར་དགའ་བསུ་ཞུ།"
+
+#~ msgid "To confirm your account, please"
+#~ msgstr ""
+
+#~ msgid "You are invited to join"
+#~ msgstr ""
+
+#~ msgid "To set your password, please"
+#~ msgstr ""
 

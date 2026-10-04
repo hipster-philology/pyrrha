@@ -1,16 +1,15 @@
-Dear {{ user.full_name() }},
+{% trans name=user.full_name() %}Dear {{ name }},{% endtrans %}
 
-You are invited to join {{ config.APP_NAME }}!
+{% trans app=config.APP_NAME %}You are invited to join {{ app }}!{% endtrans %}
 
-To set your password, please click on the following link:
+{{ _('To set your password, please click on the following link:') }}
 
 {{ invite_link }}
 
-Once completed, please log in as {{ user.email }} with the password you set.
+{{ _('Once completed, please log in as %(email)s with the password you set.', email=user.email) }}
 
-Sincerely,
+{{ _('Sincerely,') }}
 
-The {{ config.APP_NAME }} Team
+{{ _('The %(app)s Team', app=config.APP_NAME) }}
 
-Note: replies to this email address are not monitored.
-
+{{ _('Note: replies to this email address are not monitored.') }}

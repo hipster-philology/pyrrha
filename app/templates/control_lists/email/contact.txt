@@ -2,9 +2,8 @@
 
 ---------------------------
 
-This email has been sent by {{user.first_name}} {{user.last_name}}  <{{user.email}}> to every administrators of the
-control list {{control_list_title}} ( {{url}} )
+{{ _('This email has been sent by %(name)s <%(email)s> to every administrators of the control list %(title)s ( %(url)s )', name=user.first_name ~ ' ' ~ user.last_name, email=user.email, title=control_list_title, url=url) }}
 
 ---------------------------
 
-Note: replies to this email address are not monitored.
+{{ _('Note: replies to this email address are not monitored.') }}
