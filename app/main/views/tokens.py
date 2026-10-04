@@ -183,7 +183,7 @@ def tokens_correct_unallowed_data(corpus_id, allowed_type):
 @requires_corpus_access("corpus_id")
 def tokens_similar_to_record(corpus_id, record_id):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
+    record = ChangeRecord.query.filter_by(**{"id": record_id, "corpus": corpus_id}).first_or_404()
     visible_cols = list(corpus.displayed_columns_by_name.keys())
     pyrrha_config = {
         "corpus_id": corpus.id,
@@ -211,7 +211,7 @@ def tokens_similar_to_record(corpus_id, record_id):
 @requires_corpus_access("corpus_id")
 def tokens_similar_to_record_data(corpus_id, record_id):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
-    record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
+    record = ChangeRecord.query.filter_by(**{"id": record_id, "corpus": corpus_id}).first_or_404()
     tokens = WordToken.get_similar_to_record(change_record=record).paginate(
         page=int_or(request.args.get("page"), 1),
         per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
@@ -350,8 +350,15 @@ def tokens_correct_from_record(corpus_id, record_id):
     :param record_id: Id of the ChangeRecord
     """
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
-    record = ChangeRecord.query.filter_by(**{"id": record_id}).first_or_404()
-    changed = record.apply_changes_to(user_id=current_user.id, token_ids=request.json.get("word_tokens"))
+    record = ChangeRecord.query.filter_by(**{"id": record_id, "corpus": corpus_id}).first_or_404()
+    payload = request.get_json(silent=True) or {}
+    token_ids = payload.get("word_tokens")
+    if not isinstance(token_ids, list) or not all(
+        isinstance(i, int) and not isinstance(i, bool) or (isinstance(i, str) and i.isdigit())
+        for i in token_ids
+    ):
+        abort(400)
+    changed = record.apply_changes_to(user_id=current_user.id, token_ids=token_ids)
     return jsonify([word_token.to_dict() for word_token in changed])
 
 
