@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Pyrrha 5.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 10:50+0200\n"
+"POT-Creation-Date: 2026-10-04 10:53+0200\n"
 "PO-Revision-Date: 2026-10-04 10:43+0200\n"
 "Last-Translator: Pyrrha contributors\n"
 "Language: fr\n"
@@ -294,11 +294,12 @@ msgstr "Le rôle de %(name)s est maintenant « %(role)s »."
 msgid "Status for user %(name)s successfully changed to %(status)s."
 msgstr "Le statut de %(name)s est maintenant « %(status)s »."
 
-#: app/admin/views.py:161 app/templates/macros/dashboard_macros.html:50
+#: app/admin/views.py:161 app/templates/admin/manage_user.html:42
+#: app/templates/macros/dashboard_macros.html:50
 msgid "Confirmed"
 msgstr "Confirmé"
 
-#: app/admin/views.py:161
+#: app/admin/views.py:161 app/templates/admin/manage_user.html:42
 msgid "Unconfirmed"
 msgstr "Non confirmé"
 
@@ -371,6 +372,22 @@ msgstr "Une erreur Pyrrha s'est produite : %(error)s"
 #: app/control_lists/views.py:193
 msgid "An unknown error occurred"
 msgstr "Une erreur inconnue s'est produite"
+
+#: app/control_lists/views.py:197 app/templates/main/corpus_new.html:307
+msgid "This should be formatted as a list of lemma separated by new line"
+msgstr "Ce doit être une liste de lemmes séparés par des retours à la ligne"
+
+#: app/control_lists/views.py:200
+msgid "This should be formatted as a list of POS separated by comma and no space"
+msgstr "Ce doit être une liste de POS séparées par des virgules, sans espace"
+
+#: app/control_lists/views.py:203
+msgid ""
+"The TSV should at least have the header : label and could have a readable "
+"column for human"
+msgstr ""
+"Le TSV doit au moins avoir l'en-tête : label, et peut avoir une colonne "
+"readable pour les humains"
 
 #: app/control_lists/views.py:262
 msgid "The email has been sent to the control list administrators."
@@ -556,6 +573,22 @@ msgstr "Créez votre mot de passe"
 #: app/templates/account/login.html:22
 msgid "Forgot password?"
 msgstr "Mot de passe oublié ?"
+
+#: app/templates/account/manage.html:6
+msgid "Account information"
+msgstr "Informations du compte"
+
+#: app/templates/account/manage.html:7 app/templates/admin/manage_user.html:8
+msgid "Change email address"
+msgstr "Changer d'adresse e-mail"
+
+#: app/templates/account/manage.html:8
+msgid "Change password"
+msgstr "Changer de mot de passe"
+
+#: app/templates/account/manage.html:9 app/templates/macros/nav_macros.html:36
+msgid "Log out"
+msgstr "Se déconnecter"
 
 #: app/templates/account/manage.html:25 app/templates/admin/manage_user.html:29
 msgid "Full name"
@@ -744,6 +777,22 @@ msgstr ""
 msgid "To reset your password, click on the following link:"
 msgstr "Pour réinitialiser votre mot de passe, cliquez sur le lien suivant :"
 
+#: app/templates/admin/manage_user.html:7
+msgid "User information"
+msgstr "Informations sur l'utilisateur·ice"
+
+#: app/templates/admin/manage_user.html:9
+msgid "Change account type"
+msgstr "Changer le type de compte"
+
+#: app/templates/admin/manage_user.html:10
+msgid "Change account status"
+msgstr "Changer le statut du compte"
+
+#: app/templates/admin/manage_user.html:11
+msgid "Delete user"
+msgstr "Supprimer l'utilisateur·ice"
+
 #: app/templates/admin/manage_user.html:41
 msgid "Account status"
 msgstr "Statut du compte"
@@ -832,6 +881,17 @@ msgstr ""
 "contrôle pour proposer de nouvelles valeurs acceptées de lemmes, de POS ou "
 "de morphologies. Nous avons préféré l'e-mail afin que la discussion puisse "
 "être riche lorsque c'est nécessaire."
+
+#: app/templates/control_lists/control_list.html:5
+#: app/templates/control_lists/edit.html:6
+#: app/templates/control_lists/ignore_filter.html:4
+#: app/templates/control_lists/information_edit.html:3
+#: app/templates/control_lists/information_read.html:3
+#: app/templates/control_lists/read.html:3
+#: app/templates/control_lists/read_lemma.html:4
+#: app/templates/macros/nav_macros.html:215
+msgid "Control List"
+msgstr "Liste de contrôle"
 
 #: app/templates/control_lists/control_list.html:10
 #: app/templates/control_lists/information_edit.html:11
@@ -1017,6 +1077,7 @@ msgid "Bibliography of the control list"
 msgstr "Bibliographie de la liste de contrôle"
 
 #: app/templates/control_lists/information_edit.html:30
+#: app/templates/control_lists/information_read.html:3
 #: app/templates/control_lists/information_read.html:7
 #: app/templates/control_lists/macros.html:9
 msgid "Guidelines"
@@ -1030,6 +1091,10 @@ msgid ""
 msgstr ""
 "Toutes les informations utiles sur la manière d'annoter avec votre liste de "
 "contrôle. Peut renvoyer vers des données externes et utiliser le format"
+
+#: app/templates/control_lists/information_read.html:11
+msgid "No guidelines available at this moment."
+msgstr "Aucune consigne d'annotation n'est disponible pour le moment."
 
 #: app/templates/control_lists/information_read.html:19
 msgid "Filters"
@@ -1371,7 +1436,8 @@ msgstr "Enregistrer les modifications"
 
 #: app/templates/macros/header_macros.html:2
 #: app/templates/macros/nav_macros.html:200
-#: app/templates/main/tokens_add_row.html:8
+#: app/templates/main/corpus_edit_allowed_values.html:5
+#: app/templates/main/corpus_info.html:5 app/templates/main/tokens_add_row.html:8
 #: app/templates/main/tokens_correct.html:11
 #: app/templates/main/tokens_correct_unallowed.html:11
 #: app/templates/main/tokens_del_row.html:8
@@ -1397,10 +1463,6 @@ msgstr "Administration"
 #: app/templates/macros/nav_macros.html:35
 msgid "Your Account"
 msgstr "Votre compte"
-
-#: app/templates/macros/nav_macros.html:36
-msgid "Log out"
-msgstr "Se déconnecter"
 
 #: app/templates/macros/nav_macros.html:42
 msgid "Log In"
@@ -1481,10 +1543,6 @@ msgstr "Gérer qui peut accéder à ce corpus"
 #: app/templates/main/dashboard_corpus_table.html:28
 msgid "Users"
 msgstr "Utilisateur·ices"
-
-#: app/templates/macros/nav_macros.html:215
-msgid "Control List"
-msgstr "Liste de contrôle"
 
 #: app/templates/macros/nav_macros.html:217
 msgid "Edit values in the control list"
@@ -1890,6 +1948,10 @@ msgstr "Annotations au fil du temps"
 msgid "Most common corrections"
 msgstr "Corrections les plus fréquentes"
 
+#: app/templates/main/corpus_info.html:119
+msgid "Number of corrections to display"
+msgstr "Nombre de corrections à afficher"
+
 #: app/templates/main/corpus_info.html:122
 msgid "See more"
 msgstr "Voir plus"
@@ -2237,10 +2299,6 @@ msgstr "Morphologies chargées"
 #: app/templates/main/corpus_new.html:306
 msgid "Allowed lemma"
 msgstr "Lemmes autorisés"
-
-#: app/templates/main/corpus_new.html:307
-msgid "This should be formatted as a list of lemma separated by new line"
-msgstr "Ce doit être une liste de lemmes séparés par des retours à la ligne"
 
 #: app/templates/main/corpus_new.html:312
 msgid "This should be formatted as a list of POS separated by comma"

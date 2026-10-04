@@ -3,10 +3,10 @@
 {% import 'macros/check_password.html' as check %}
 
 {% set endpoints = [
-    ('account.manage', 'Account information'),
-    ('account.change_email_request', 'Change email address'),
-    ('account.change_password', 'Change password'),
-    ('account.logout', 'Log out')
+    ('account.manage', _('Account information')),
+    ('account.change_email_request', _('Change email address')),
+    ('account.change_password', _('Change password')),
+    ('account.logout', _('Log out'))
 ] %}
 
 {% macro navigation(items) %}

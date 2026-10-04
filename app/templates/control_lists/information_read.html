@@ -1,6 +1,6 @@
 {% extends 'layouts/base.html' %}
 
-{% block page_title %}Control List {{control_list.name}} : Guidelines{% endblock %}
+{% block page_title %}{{ _('Control List') }} {{control_list.name}} : {{ _('Guidelines') }}{% endblock %}
 
 {% block content %}
 
@@ -8,7 +8,7 @@
 {% if control_list.notes %}
   {{ control_list.notes | markdown }}
 {% else %}
-  {{ "*No guidelines available at this moment.*" | markdown}}
+  {{ ('*' ~ _('No guidelines available at this moment.') ~ '*') | markdown}}
 {% endif %}
 
 {% if control_list.bibliography %}

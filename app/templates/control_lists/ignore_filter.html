@@ -1,7 +1,7 @@
 {% extends 'layouts/base.html' %}
 {% import 'macros/nav_macros.html' as nav %}
 
-{% block page_title %}Control List {{control_list.name}}{% endblock %}
+{% block page_title %}{{ _('Control List') }} {{control_list.name}}{% endblock %}
 
 {% block content %}
 <h1>{{control_list.name}}</h1>
