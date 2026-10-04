@@ -86,11 +86,11 @@ def lemma_list(control_list_id):
     elif request.method == "UPDATE" and request.mimetype == "application/json" and can_edit:
         form = request.get_json().get("lemmas", None)
         if not form:
-            return abort(400, jsonify({"message": "No lemma were passed."}))
+            return abort(400, jsonify({"message": _("No lemma were passed.")}))
         lemmas = list(set(form.split()))
         try:
             AllowedLemma.add_batch(lemmas, control_list.id, _commit=True)
-            return jsonify({"message": "Data saved"})
+            return jsonify({"message": _("Data saved")})
         except ValueError as E:
             db.session.rollback()
             return make_response(jsonify({"message": str(E)}), 400)
@@ -98,12 +98,12 @@ def lemma_list(control_list_id):
             db.session.rollback()
             error = str(E.orig)
             if error.startswith("UNIQUE constraint failed"):
-                return make_response(jsonify({"message": "One of the lemma you submitted already exist. "
-                                                         "Remove this lemma and resubmit."}), 400)
-            return make_response(jsonify({"message": "Database error. Contact the administrator."}), 400)
+                return make_response(jsonify({"message": _("One of the lemma you submitted already exist. "
+                                                         "Remove this lemma and resubmit.")}), 400)
+            return make_response(jsonify({"message": _("Database error. Contact the administrator.")}), 400)
         except Exception as E:
             db.session.rollback()
-            return make_response(jsonify({"message": "Unknown Error"}), 400)
+            return make_response(jsonify({"message": _("Unknown Error")}), 400)
     elif request.method == "GET":
         kwargs = {}
         page = request.args.get("page", 1, type=int)
