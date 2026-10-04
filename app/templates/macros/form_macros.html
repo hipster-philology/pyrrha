@@ -67,7 +67,7 @@
             {% if messages %}
                 <ul class="list">
                     {% for message in messages %}
-                        <li>{{ message | safe }}</li>
+                        <li>{{ message }}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -108,7 +108,7 @@
         {{ render_form_input(field) }}
         {% if field.errors %}
             <div class="alert alert-danger">
-                {{ field.errors[0] | safe }}
+                {{ field.errors[0] }}
             </div>
         {% endif %}
     </div>
