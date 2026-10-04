@@ -1,5 +1,6 @@
 from flask import (
     Blueprint,
+    abort,
     flash,
     redirect,
     render_template,
@@ -101,7 +102,7 @@ def reset_password_request():
         return redirect(url_for('main.index'))
     form = RequestResetPasswordForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(email=form.email.data.lower()).first()
         if user:
             token = user.generate_password_reset_token()
             reset_link = url_for(
@@ -133,7 +134,7 @@ def reset_password(token):
         return redirect(url_for('main.index'))
     form = ResetPasswordForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is None:
             flash('Invalid email address.', 'form-error')
             return redirect(url_for('main.index'))
@@ -260,7 +261,7 @@ def join_from_invite(user_id, token):
 
     new_user = db.session.get(User, user_id)
     if new_user is None:
-        return redirect(404)
+        abort(404)
 
     if new_user.password_hash is not None:
         flash('You have already joined.', 'error')

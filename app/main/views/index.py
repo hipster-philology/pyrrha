@@ -1,5 +1,5 @@
 from flask_login import current_user
-from flask import request, session, redirect, url_for
+from flask import request, session, redirect, url_for, abort
 
 
 from .utils import render_template_with_nav_info
@@ -8,6 +8,9 @@ from .. import main
 from ...models import Corpus
 from ... import db
 from ...utils.pagination import int_or
+
+
+SUPPORTED_LOCALES = ('en', 'bo_CN')
 
 
 @main.route('/')
@@ -26,6 +29,8 @@ def index():
 
 @main.route("/locale/<language>")
 def locale(language):
+    if language not in SUPPORTED_LOCALES:
+        abort(404)
     if current_user.is_authenticated and not current_user.is_anonymous:
         if current_user.locale != language:
             current_user.locale = language
