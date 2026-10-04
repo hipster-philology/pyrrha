@@ -173,3 +173,20 @@ class TestPagingLimits(TestBase):
         resp = self.client.get("/corpus/1/tokens/search/data?form=a&desc=abc&limit=99999999")
         self.assertEqual(resp.status_code, 200)
         self.assertLessEqual(resp.get_json()["per_page"], 500)
+
+
+class TestHygiene(TestBase):
+
+    def test_unknown_locale_is_rejected(self):
+        self.assertEqual(self.client.get("/locale/xx_not_real").status_code, 404)
+        self.assertEqual(self.client.get("/locale/en").status_code, 302)
+
+    def test_unknown_invite_is_404(self):
+        self.client.get(url_for("account.logout"))
+        self.assertEqual(self.client.get("/account/join-from-invite/9999/token").status_code, 404)
+
+    def test_formula_neutralisation(self):
+        from app.utils.tsv import neutralize_formula
+        for value in ("=1+1", "+1", "-1", "@SUM(A1)"):
+            self.assertEqual(neutralize_formula(value), "'" + value)
+        self.assertEqual(neutralize_formula("saint"), "saint")
