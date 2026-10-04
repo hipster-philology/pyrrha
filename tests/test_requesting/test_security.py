@@ -80,3 +80,23 @@ class TestChangeRecordIsolation(TestBase):
         for payload in ({"word_tokens": "1"}, {"word_tokens": [{"a": 1}]}, {}):
             resp = self.bob.post(f"/corpus/1/tokens/similar/{record.id}/update", json=payload)
             self.assertEqual(resp.status_code, 400, payload)
+
+
+class TestLoginRedirect(TestBase):
+
+    def _login(self, next_url):
+        self.client.get(url_for("account.logout"))
+        return self.client.post(
+            url_for("account.login") + "?next=" + next_url,
+            data=dict(email=self.app.config["ADMIN_EMAIL"], password=self.app.config["ADMIN_PASSWORD"])
+        )
+
+    def test_external_next_is_ignored(self):
+        for target in ("https://evil.example", "//evil.example", "/\\evil.example", "javascript:alert(1)"):
+            resp = self._login(target)
+            self.assertEqual(resp.status_code, 302, target)
+            self.assertEqual(resp.location, url_for("main.index"), target)
+
+    def test_local_next_is_honoured(self):
+        resp = self._login("/dashboard")
+        self.assertEqual(resp.location, "/dashboard")
