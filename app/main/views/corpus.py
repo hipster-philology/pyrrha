@@ -644,7 +644,7 @@ def corpus_preferences(corpus_id: int):
             )
         except PreferencesUpdateError as exception:
             flash(
-                _("Faild to update preferences: %(error)s", error=exception),
+                _("Failed to update preferences: %(error)s", error=exception),
                 category="error"
             )
         else:
@@ -714,7 +714,7 @@ def corpus_custom_dictionary(corpus_id: int):
             )
         except PersonalDictionaryError as exception:
             flash(
-                _("Faild to update dictionary: %(error)s", error=exception),
+                _("Failed to update dictionary: %(error)s", error=exception),
                 category="error"
             )
         else:

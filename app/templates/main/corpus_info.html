@@ -22,17 +22,17 @@
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-edit fa-3x"></i>
                     <em>{{stats.changes|thousands}}</em>
-                    {{ _('annotations') }} <br />{{ _('corrected') }}
+                    {% trans %}annotations<br />corrected{% endtrans %}
                 </div>
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-bug fa-3x"></i>
                     <em>{{stats.unallowed|thousands}}</em>
-                    {{ _('unallowed') }} <br /> {{ _('values') }}
+                    {% trans %}unallowed<br />values{% endtrans %}
                 </div>
                 <div class="col-md-2 stats-fact">
                     <i class="fa fa-strikethrough fa-3x"></i>
                     <em>{{stats.forms_edited|thousands}}</em>
-                    {{ _('forms') }} <br /> {{ _('edited') }}
+                    {% trans %}forms<br />edited{% endtrans %}
                 </div>
             </div>
             <div class="row">
