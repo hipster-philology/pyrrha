@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from flask import request, url_for, redirect, abort, flash, current_app
+from flask_babel import gettext as _
 from flask_login import login_required, current_user
 from typing import List
 
@@ -64,7 +65,7 @@ def manage_control_lists_user(cl_id):
                 ]:
                     db.session.add(cu)
                 db.session.commit()
-                flash('Modifications have been saved.', 'success')
+                flash(_('Modifications have been saved.'), 'success')
             except Exception as e:
                 db.session.rollback()
                 raise e
@@ -151,7 +152,7 @@ def admin_delete_pending_corpus(corpus_id):
     corpus = Corpus.query.filter_by(id=corpus_id, status='pending').first_or_404()
     db.session.delete(corpus)
     db.session.commit()
-    flash(f"Pending corpus '{corpus.name}' deleted.", category="success")
+    flash(_("Pending corpus '%(name)s' deleted.", name=corpus.name), category="success")
     return redirect(url_for('main.admin_pending_corpora'))
 
 
@@ -200,7 +201,7 @@ def manage_corpus_users(corpus_id):
                     db.session.add(cu)
                 update_control_list_user(corpus, prev_clu, users, _commit=False)
                 db.session.commit()
-                flash('Modifications have been saved.', 'success')
+                flash(_('Modifications have been saved.'), 'success')
             except Exception as e:
                 db.session.rollback()
             return redirect(url_for('main.manage_corpus_users', corpus_id=corpus_id))

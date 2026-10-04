@@ -6,6 +6,7 @@ from flask import (
     render_template,
     request,
     url_for, current_app)
+from flask_babel import gettext as _, lazy_gettext as _l
 from flask_login import (
     current_user,
     login_required,
@@ -39,11 +40,11 @@ def login():
         if user is not None and user.password_hash is not None and \
                 user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
-            flash('You are now logged in. Welcome back!', 'success')
+            flash(_('You are now logged in. Welcome back!'), 'success')
             next_url = request.args.get('next')
             return redirect(next_url if is_safe_next(next_url) else url_for('main.index'))
         else:
-            flash('Invalid email or password.', 'form-error')
+            flash(_('Invalid email or password.'), 'form-error')
     return render_template_with_nav_info('account/login.html', form=form)
 
 
@@ -64,17 +65,17 @@ def register():
         send_email_async(
             app=current_app._get_current_object(),
             recipient=user.email,
-            subject='Confirm Your Account',
+            subject=_l('Confirm Your Account'),
             template='account/email/confirm',
             user=user,
             mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             confirm_link=confirm_link)
         if current_app.config["SEND_MAIL_STATUS"]:
-            flash('A confirmation link has been sent to {}.'.format(user.email),
+            flash(_('A confirmation link has been sent to %(email)s.', email=user.email),
               'warning')
         else:
-            flash('You are running in dev or test mode. Your account needs'
-            ' to be confirmed via the command line interface or through the CLI', 'warning')
+            flash(_('You are running in dev or test mode. Your account needs'
+            ' to be confirmed via the command line interface or through the CLI'), 'warning')
         return redirect(url_for('main.index'))
     return render_template_with_nav_info('account/register.html', form=form)
 
@@ -83,7 +84,7 @@ def register():
 @login_required
 def logout():
     logout_user()
-    flash('You have been logged out.', 'info')
+    flash(_('You have been logged out.'), 'info')
     return redirect(url_for('main.index'))
 
 
@@ -110,19 +111,19 @@ def reset_password_request():
             send_email_async(
                 app=current_app._get_current_object(),
                 recipient=user.email,
-                subject='Reset Your Password',
+                subject=_l('Reset Your Password'),
                 template='account/email/reset_password',
                 user=user,
                 reset_link=reset_link,
                 mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 next=request.args.get('next'))
         if current_app.config["SEND_MAIL_STATUS"]:
-            flash('A password reset link has been sent to {}.'.format(
-                    form.email.data), 'warning')
+            flash(_('A password reset link has been sent to %(email)s.',
+                    email=form.email.data), 'warning')
         else:
-            flash('You are running in dev or test mode. No emails can be sent'
+            flash(_('You are running in dev or test mode. No emails can be sent'
                 'for this function. Use the admin account'
-                ' (check source code for passwords)', 'warning')
+                ' (check source code for passwords)'), 'warning')
         return redirect(url_for('account.login'))
     return render_template_with_nav_info('account/reset_password.html', form=form)
 
@@ -136,13 +137,13 @@ def reset_password(token):
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data.lower()).first()
         if user is None:
-            flash('Invalid email address.', 'form-error')
+            flash(_('Invalid email address.'), 'form-error')
             return redirect(url_for('main.index'))
         if user.reset_password(token, form.new_password.data):
-            flash('Your password has been updated.', 'form-success')
+            flash(_('Your password has been updated.'), 'form-success')
             return redirect(url_for('account.login'))
         else:
-            flash('The password reset link is invalid or has expired.',
+            flash(_('The password reset link is invalid or has expired.'),
                   'form-error')
             return redirect(url_for('main.index'))
     return render_template_with_nav_info('account/reset_password.html', form=form)
@@ -158,10 +159,10 @@ def change_password():
             current_user.password = form.new_password.data
             db.session.add(current_user)
             db.session.commit()
-            flash('Your password has been updated.', 'form-success')
+            flash(_('Your password has been updated.'), 'form-success')
             return redirect(url_for('main.index'))
         else:
-            flash('Original password is invalid.', 'form-error')
+            flash(_('Original password is invalid.'), 'form-error')
     return render_template_with_nav_info('account/manage.html', form=form)
 
 
@@ -179,7 +180,7 @@ def change_email_request():
             send_email_async(
                 app=current_app._get_current_object(),
                 recipient=new_email,
-                subject='Confirm Your New Email',
+                subject=_l('Confirm Your New Email'),
                 template='account/email/change_email',
                 # current_user is a LocalProxy, we want the underlying user
                 # object
@@ -187,15 +188,15 @@ def change_email_request():
                 mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
                 change_email_link=change_email_link)
             if current_app.config["SEND_MAIL_STATUS"]:
-                flash('A confirmation link has been sent to {}.'.format(new_email),
+                flash(_('A confirmation link has been sent to %(email)s.', email=new_email),
                   'warning')
             else:
-                flash('You are running in dev or test mode. Your account needs' 
-                ' to be confirmed via the command line interface or through the CLI',
+                flash(_('You are running in dev or test mode. Your account needs'
+                ' to be confirmed via the command line interface or through the CLI'),
                 'warning')
             return redirect(url_for('main.index'))
         else:
-            flash('Invalid email or password.', 'form-error')
+            flash(_('Invalid email or password.'), 'form-error')
     return render_template_with_nav_info('account/manage.html', form=form)
 
 
@@ -204,9 +205,9 @@ def change_email_request():
 def change_email(token):
     """Change existing user's email with provided token."""
     if current_user.change_email(token):
-        flash('Your email address has been updated.', 'success')
+        flash(_('Your email address has been updated.'), 'success')
     else:
-        flash('The confirmation link is invalid or has expired.', 'error')
+        flash(_('The confirmation link is invalid or has expired.'), 'error')
     return redirect(url_for('main.index'))
 
 
@@ -219,19 +220,19 @@ def confirm_request():
     send_email_async(
         app=current_app._get_current_object(),
         recipient=current_user.email,
-        subject='Confirm Your Account',
+        subject=_l('Confirm Your Account'),
         template='account/email/confirm',
         # current_user is a LocalProxy, we want the underlying user object
         user=current_user._get_current_object(),
         mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
         confirm_link=confirm_link)
     if current_app.config["SEND_MAIL_STATUS"]:
-        flash('A new confirmation link has been sent to {}.'.format(
-            current_user.email), 'warning')
+        flash(_('A new confirmation link has been sent to %(email)s.',
+            email=current_user.email), 'warning')
     else:
-        flash('You are running in dev or test mode.'
+        flash(_('You are running in dev or test mode.'
         ' Your account needs to be confirmed via the command line'
-        ' interface or through the CLI', 'warning')
+        ' interface or through the CLI'), 'warning')
     return redirect(url_for('main.index'))
 
 
@@ -242,9 +243,9 @@ def confirm(token):
     if current_user.confirmed:
         return redirect(url_for('main.index'))
     if current_user.confirm_account(token):
-        flash('Your account has been confirmed.', 'success')
+        flash(_('Your account has been confirmed.'), 'success')
     else:
-        flash('The confirmation link is invalid or has expired.', 'error')
+        flash(_('The confirmation link is invalid or has expired.'), 'error')
     return redirect(url_for('main.index'))
 
 
@@ -256,7 +257,7 @@ def join_from_invite(user_id, token):
     a password.
     """
     if current_user is not None and current_user.is_authenticated:
-        flash('You are already logged in.', 'error')
+        flash(_('You are already logged in.'), 'error')
         return redirect(url_for('main.index'))
 
     new_user = db.session.get(User, user_id)
@@ -264,7 +265,7 @@ def join_from_invite(user_id, token):
         abort(404)
 
     if new_user.password_hash is not None:
-        flash('You have already joined.', 'error')
+        flash(_('You have already joined.'), 'error')
         return redirect(url_for('main.index'))
 
     if new_user.confirm_account(token):
@@ -273,14 +274,14 @@ def join_from_invite(user_id, token):
             new_user.password = form.password.data
             db.session.add(new_user)
             db.session.commit()
-            flash('Your password has been set. After you log in, you can '
+            flash(_('Your password has been set. After you log in, you can '
                   'go to the "Your Account" page to review your account '
-                  'information and settings.', 'success')
+                  'information and settings.'), 'success')
             return redirect(url_for('account.login'))
         return render_template('account/join_invite.html', form=form)
     else:
-        flash('The confirmation link is invalid or has expired. Another '
-              'invite email with a new link has been sent to you.', 'error')
+        flash(_('The confirmation link is invalid or has expired. Another '
+              'invite email with a new link has been sent to you.'), 'error')
         token = new_user.generate_confirmation_token()
         invite_link = url_for(
             'account.join_from_invite',
@@ -290,15 +291,15 @@ def join_from_invite(user_id, token):
         send_email_async(
             app=current_app._get_current_object(),
             recipient=new_user.email,
-            subject='You Are Invited To Join',
+            subject=_l('You Are Invited To Join'),
             template='account/email/invite',
             user=new_user,
             mailTriggerStatus=current_app.config["SEND_MAIL_STATUS"],
             invite_link=invite_link)
         if not current_app.config["SEND_MAIL_STATUS"]:
-            flash('You are running this application without mail server.'
+            flash(_('You are running this application without mail server.'
                 ' This functionnality can\'t work: no email was sent. '
-                'Check the CLI or use SQL commands to confirm the account.', 
+                'Check the CLI or use SQL commands to confirm the account.'),
                 'warning')
     return redirect(url_for('main.index'))
 
