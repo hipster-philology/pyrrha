@@ -175,7 +175,7 @@ def delete_user_request(user_id):
     return render_template_with_nav_info('admin/manage_user.html', user=user)
 
 
-@admin.route('/user/<int:user_id>/_delete')
+@admin.route('/user/<int:user_id>/_delete', methods=['POST'])
 @login_required
 @admin_required
 def delete_user(user_id):
@@ -184,7 +184,9 @@ def delete_user(user_id):
         flash('You cannot delete your own account. Please ask another '
               'administrator to do this.', 'danger')
     else:
-        user = User.query.filter_by(id=user_id).first()
+        user = db.session.get(User, user_id)
+        if user is None:
+            abort(404)
         db.session.delete(user)
         db.session.commit()
         flash('Successfully deleted user %s.' % user.full_name(), 'success')
