@@ -5,6 +5,7 @@ from flask import (
     redirect,
     url_for,
     current_app)
+from flask_babel import gettext as _, lazy_gettext as _l
 from flask_login import current_user, login_required
 
 from app import db
@@ -37,7 +38,7 @@ def new_user():
             password=form.password.data)
         db.session.add(user)
         db.session.commit()
-        flash('User {} successfully created'.format(user.full_name()),
+        flash(_('User %(name)s successfully created', name=user.full_name()),
               'form-success')
     return render_template_with_nav_info('admin/new_user.html', form=form)
 
@@ -65,12 +66,12 @@ def invite_user():
         send_email_async(
             app=current_app._get_current_object(),
             recipient=user.email,
-            subject='You Are Invited To Join',
+            subject=_l('You Are Invited To Join'),
             template='account/email/invite',
             user=user,
             invite_link=invite_link,
         )
-        flash('User {} successfully invited'.format(user.full_name()),
+        flash(_('User %(name)s successfully invited', name=user.full_name()),
               'form-success')
     return render_template_with_nav_info('admin/new_user.html', form=form)
 
@@ -111,8 +112,8 @@ def change_user_email(user_id):
         user.email = form.email.data
         db.session.add(user)
         db.session.commit()
-        flash('Email for user {} successfully changed to {}.'.format(
-            user.full_name(), user.email), 'form-success')
+        flash(_('Email for user %(name)s successfully changed to %(email)s.',
+            name=user.full_name(), email=user.email), 'form-success')
     return render_template_with_nav_info('admin/manage_user.html', user=user, form=form)
 
 
@@ -123,8 +124,8 @@ def change_user_email(user_id):
 def change_account_type(user_id):
     """Change a user's account type."""
     if current_user.id == user_id:
-        flash('You cannot change the type of your own account. Please ask '
-              'another administrator to do this.', 'danger')
+        flash(_('You cannot change the type of your own account. Please ask '
+              'another administrator to do this.'), 'danger')
         return redirect(url_for('admin.user_info', user_id=user_id))
 
     user = db.session.get(User, user_id)
@@ -135,8 +136,8 @@ def change_account_type(user_id):
         user.role = form.role.data
         db.session.add(user)
         db.session.commit()
-        flash('Role for user {} successfully changed to {}.'.format(
-            user.full_name(), user.role.name), 'form-success')
+        flash(_('Role for user %(name)s successfully changed to %(role)s.',
+            name=user.full_name(), role=user.role.name), 'form-success')
     return render_template_with_nav_info('admin/manage_user.html', user=user, form=form)
 
 
@@ -156,8 +157,8 @@ def change_account_status(user_id):
         user.confirmed = not user.confirmed
         db.session.add(user)
         db.session.commit()
-        flash('Status for user {} successfully changed to {}.'.format(
-            user.full_name(), 'Confirmed' if user.confirmed else 'Unconfirmed'), 'form-success')
+        flash(_('Status for user %(name)s successfully changed to %(status)s.',
+            name=user.full_name(), status=_('Confirmed') if user.confirmed else _('Unconfirmed')), 'form-success')
     else:
         form = ChangeAccountStatusForm(status=user.confirmed)
 
@@ -181,15 +182,15 @@ def delete_user_request(user_id):
 def delete_user(user_id):
     """Delete a user's account."""
     if current_user.id == user_id:
-        flash('You cannot delete your own account. Please ask another '
-              'administrator to do this.', 'danger')
+        flash(_('You cannot delete your own account. Please ask another '
+              'administrator to do this.'), 'danger')
     else:
         user = db.session.get(User, user_id)
         if user is None:
             abort(404)
         db.session.delete(user)
         db.session.commit()
-        flash('Successfully deleted user %s.' % user.full_name(), 'success')
+        flash(_('Successfully deleted user %(name)s.', name=user.full_name()), 'success')
     return redirect(url_for('admin.registered_users'))
 
 

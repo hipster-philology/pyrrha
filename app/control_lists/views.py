@@ -1,4 +1,5 @@
 from flask import request, flash, redirect, url_for, Blueprint, abort, jsonify, make_response, current_app
+from flask_babel import gettext as _
 from flask_login import current_user, login_required
 from functools import wraps
 
@@ -39,7 +40,7 @@ def cl_editable(control_list_param: str):
             )
             can_edit = is_owner or current_user.is_admin()
             if not can_edit:
-                flash("You are not an owner of the list.", category="error")
+                flash(_("You are not an owner of the list."), category="error")
                 return redirect(url_for(".get", control_list_id=kwargs[control_list_param]))
             return func(*args, control_list=control_list, **kwargs)
         return decorated_view
@@ -133,7 +134,7 @@ def lemma_list(control_list_id):
 @login_required
 def read_allowed_values(control_list_id, allowed_type):
     if allowed_type not in ["POS", "morph"]:
-        flash("The category you selected is wrong petit coquin !", category="error")
+        flash(_("The category you selected is wrong petit coquin !"), category="error")
         return redirect(url_for(".get", control_list_id=control_list_id))
 
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
@@ -185,11 +186,11 @@ def edit(cl_id, allowed_type, control_list):
             allowed_values = list(StringDictReader(allowed_values))
         try:
             control_list.update_allowed_values(allowed_type, allowed_values)
-            flash("Control List Updated", category="success")
+            flash(_("Control List Updated"), category="success")
         except PyrrhaError as exception:
-            flash("A Pyrrha error occurred: {}".format(exception), category="error")
+            flash(_("A Pyrrha error occurred: %(error)s", error=exception), category="error")
         except:
-            flash("An unknown error occurred", category="error")
+            flash(_("An unknown error occurred"), category="error")
 
     values = control_list.get_allowed_values(allowed_type=allowed_type, order_by="id")
     if allowed_type == "lemma":
@@ -260,7 +261,7 @@ def contact(control_list_id):
             message=form.message.data,
             control_list_title=control_list.name,
             url=control_list_link)
-        flash('The email has been sent to the control list administrators.', 'success')
+        flash(_('The email has been sent to the control list administrators.'), 'success')
         return redirect(url_for('control_lists_bp.contact', control_list_id=control_list_id))
     return render_template_with_nav_info('control_lists/contact.html', form=form, control_list=control_list)
 
@@ -280,9 +281,9 @@ def rename(control_list_id, control_list):
         db.session.add(control_list)
         try:
             db.session.commit()
-            flash("The name of the list has been updated.", category="success")
+            flash(_("The name of the list has been updated."), category="success")
         except:
-            flash("There was an error when we tried to rename your control list.", category="error")
+            flash(_("There was an error when we tried to rename your control list."), category="error")
         return redirect(control_list_link)
     return render_template_with_nav_info('control_lists/rename.html', form=form, control_list=control_list)
 
@@ -297,10 +298,10 @@ def propose_as_public(control_list_id):
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
 
     if not is_owner:
-        flash("You are not an owner of the list.", category="error")
+        flash(_("You are not an owner of the list."), category="error")
         return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
     elif control_list.public != PublicationStatus.private:
-        flash("This list is already public or submitted.", category="warning")
+        flash(_("This list is already public or submitted."), category="warning")
         return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
 
     form = SendMailToAdmin(prefix="mail")
@@ -323,11 +324,11 @@ def propose_as_public(control_list_id):
                 message=form.message.data,
                 control_list_title=control_list.name,
                 url=control_list_link)
-            flash('The email has been sent to the administrators.', 'success')
+            flash(_('The email has been sent to the administrators.'), 'success')
             db.session.commit()
         except Exception:
             db.session.rollback()
-            flash("There was an error during the messaging step")
+            flash(_("There was an error during the messaging step"))
     return render_template_with_nav_info('control_lists/propose_as_public.html', form=form, control_list=control_list)
 
 
@@ -339,18 +340,18 @@ def go_public(control_list_id):
     """
     control_list, is_owner = ControlLists.get_linked_or_404(control_list_id=control_list_id, user=current_user)
     if not current_user.is_admin():
-        flash("You do not have the rights for this action.", category="error")
+        flash(_("You do not have the rights for this action."), category="error")
     elif control_list.public == PublicationStatus.public:
-        flash("This list is already public.", category="warning")
+        flash(_("This list is already public."), category="warning")
     else:
         control_list.public = PublicationStatus.public
         db.session.add(control_list)
         try:
             db.session.commit()
-            flash('This list is now public.', 'success')
+            flash(_('This list is now public.'), 'success')
         except Exception:
             db.session.rollback()
-            flash("There was an error during the update.", category="error")
+            flash(_("There was an error during the update."), category="error")
 
     return redirect(url_for("control_lists_bp.get", control_list_id=control_list_id))
 
@@ -399,7 +400,7 @@ def ignore_terms_filter(control_list_id, control_list):
         db.session.commit()
 
 
-        flash('The filters have been updated.', 'success')
+        flash(_('The filters have been updated.'), 'success')
         db.session.refresh(control_list)
         return render_template_with_nav_info(
             'control_lists/ignore_filter.html',
