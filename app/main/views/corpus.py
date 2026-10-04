@@ -689,11 +689,11 @@ def corpus_custom_dictionary(corpus_id: int):
             corpus.insert_custom_dictionary_value(category=category, string=value)
             return jsonify({
                 "status": True,
-                "message": "New value saved."
+                "message": _("New value saved.")
             })
         except PersonalDictionaryError:
             resp = jsonify({
-                "message": "Unable to add to custom dictionary",
+                "message": _("Unable to add to custom dictionary"),
                 "status": False
             })
             resp.status_code = 403
