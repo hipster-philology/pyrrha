@@ -105,6 +105,13 @@ def create_app(config_name="dev"):
     from .control_lists import control_lists_bp
     app.register_blueprint(control_lists_bp)
 
+    @app.after_request
+    def _security_headers(response):
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        response.headers.setdefault("Referrer-Policy", "same-origin")
+        return response
+
     # Static file cache-busting via versioned URLs
     if app.debug:
         @app.context_processor
