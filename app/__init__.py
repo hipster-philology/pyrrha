@@ -9,7 +9,7 @@ from flask_mail import Mail
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import CSRFProtect
-from flask_babel import Babel
+from flask_babel import Babel, get_locale as get_babel_locale
 from sqlalchemy.engine import Engine
 from .ext_config import get_locale
 from .markdown_ext import Markdown
@@ -105,6 +105,10 @@ def create_app(config_name="dev"):
 
     from .control_lists import control_lists_bp
     app.register_blueprint(control_lists_bp)
+
+    @app.context_processor
+    def _inject_locale():
+        return dict(current_locale=str(get_babel_locale() or 'en'))
 
     @app.after_request
     def _security_headers(response):
