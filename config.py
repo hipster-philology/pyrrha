@@ -42,6 +42,13 @@ class Config:
     # fetch-based API endpoints.
     SESSION_COOKIE_SAMESITE = 'Lax'
 
+    # Interface languages: locale code -> name in that language
+    LANGUAGES = {
+        'en': 'English',
+        'fr': 'Français',
+        'bo_CN': 'བོད་ཡིག',
+    }
+
     # Defaults
     PAGINATION_DEFAULT_TOKENS = 100
     CORPUS_UPLOAD_CHUNK_SIZE = int(os.environ.get("CORPUS_UPLOAD_CHUNK_SIZE", 2000))
