@@ -4,7 +4,7 @@
 
 {% block content %}
 
-<h2>Edit information about {{control_list.name}}</h2>
+<h2>{{ _('Edit information about %(name)s', name=control_list.name) }}</h2>
 <form method="post" action="{{url_for('control_lists_bp.information_edit', control_list_id=control_list.id)}}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">

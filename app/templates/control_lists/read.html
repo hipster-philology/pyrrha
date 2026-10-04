@@ -7,7 +7,7 @@
 <h2>{{ _('Allowed values for') }} {{allowed_type}}</h2>
 {% if allowed_values %}
 <table class="table table-sm small">
-    <thead><tr><th>Label</th>{% if readable %}<th>{{ _('Readable') }}</th>{% endif %}</tr></thead>
+    <thead><tr><th>{{ _('Label') }}</th>{% if readable %}<th>{{ _('Readable') }}</th>{% endif %}</tr></thead>
     <tbody>
         {%  if readable %}
             {%- for token in allowed_values %}

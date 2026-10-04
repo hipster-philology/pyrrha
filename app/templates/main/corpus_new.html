@@ -11,7 +11,7 @@
         <legend>{{ _('Metadata') }}</legend>
         <div class="form-group">
             <label for="corpusName">{{ _('Corpus Name') }}</label>
-            <input name="name" type="text" class="form-control" id="corpusName" aria-describedby="corpusNameHelp" placeholder="Enter name of the corpus" value="{% if name %}{{name}}{%endif%}" />
+            <input name="name" type="text" class="form-control" id="corpusName" aria-describedby="corpusNameHelp" placeholder="{{ _('Enter name of the corpus') }}" value="{% if name %}{{name}}{%endif%}" />
             <small id="corpusNameHelp" class="form-text text-muted">{{ _('This should be a clear name') }}</small>
         </div>
         <div class="form-group">
@@ -213,7 +213,7 @@ or	or4	ADVgen	DEGRE=-</pre>
                     <span id="lemmatize-status" class="small"></span>
                 </div>
                 <div id="lemmatize-progress" class="hidden-default font-italic mt-2">
-                    <img src="{{ url_for("static", filename="ajax-loader.gif") }}" alt="loading…" />
+                    <img src="{{ url_for("static", filename="ajax-loader.gif") }}" alt="{{ _('loading…') }}" />
                     <span id="tokens-count">0</span> {{ _('tokens processed…') }}
                 </div>
 
@@ -320,7 +320,7 @@ or	or4	ADVgen	DEGRE=-</pre>
                 <div class="form-group row">
             <div class="col">
                 <label for="ignoreforms" id="ignoreforms" class="form-text text-muted">
-                    Ignore Elements in Control List:
+                    {{ _('Ignore Elements in Control List:') }}
                 </label>
             </div>
     <div class="col">
@@ -328,13 +328,13 @@ or	or4	ADVgen	DEGRE=-</pre>
                 <li>
                     <label>
                         <input type="checkbox" name="punct" value="punct">
-                        Punctuation
+                        {{ _('Punctuation') }}
                     </label>
                 </li>
             <li>
                     <label>
                         <input type="checkbox" name="numeral" value="numeral">
-                        Numeral
+                        {{ _('Numeral') }}
                     </label>
                 </li>
             </ul>
@@ -344,13 +344,13 @@ or	or4	ADVgen	DEGRE=-</pre>
             <li>
                     <label>
                         <input type="checkbox" name="metadata" value="metadata">
-                        Metadata
+                        {{ _('Metadata') }}
                     </label>
                 </li>
             <li>
                     <label>
                         <input type="checkbox" name="ignore" value="ignore">
-                        Ignore
+                        {{ _('Ignore') }}
                     </label>
                 </li>
         </ul>
@@ -844,7 +844,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         document.getElementById(targetId).value = txt;
                         document.getElementById(showId).style.display = 'block';
                     })
-                    .catch(function () { alert('Something went wrong loading ' + file); });
+                    .catch(function () { alert({{ _('Something went wrong loading') | tojson }} + ' ' + file); });
             }
             loadInto('lemma.txt', 'allowed_lemma', 'config_loader_lemma');
             loadInto('POS.txt',   'allowed_POS',   'config_loader_POS');

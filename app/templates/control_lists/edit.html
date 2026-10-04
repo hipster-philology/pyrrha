@@ -7,11 +7,11 @@
 
 {% block content %}
 
-<h2>Edit allowed {{allowed_type}}</h2>
+<h2>{{ _('Edit allowed %(type)s', type=allowed_type) }}</h2>
 <form method="post" action="{{url_for('control_lists_bp.edit', cl_id=control_list.id, allowed_type=allowed_type)}}">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
-        <label for="allowed_values">Allowed {{allowed_type}}</label>
+        <label for="allowed_values">{{ _('Allowed %(type)s', type=allowed_type) }}</label>
         <small id="allowed_values_help" class="form-text text-muted">{{format_message}}</small>
         {{ upload_text.upload_text("allowed_values") }}
         <textarea aria-describedby="allowed_values_help" class="form-control" id="allowed_values" name="allowed_values">{{values}}</textarea>

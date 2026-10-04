@@ -46,8 +46,8 @@
                         </th>
                     {% endif %}
                 {% endfor%}
-                <th>Context</th>
-                {%- if similar %}<th>Similar</th>{% endif -%}<th>Save</th>{% if not checkbox %}<th class="dd">+</th>{% endif %}</tr>
+                <th>{{ _('Context') }}</th>
+                {%- if similar %}<th>{{ _('Similar') }}</th>{% endif -%}<th>{{ _('Save') }}</th>{% if not checkbox %}<th class="dd">+</th>{% endif %}</tr>
         </thead>
         <tbody>
             {% for token in tokens.items %}
@@ -82,7 +82,7 @@
                             </a>
                         </td>
                         <td class="dd">
-                          <a id="dd_t{{token.order_id}}" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="More options" tabindex="-1">
+                          <a id="dd_t{{token.order_id}}" href="#" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" aria-label="{{ _('More options') }}" tabindex="-1">
                             <i class="fa fa-plus-square"></i>
                           </a>
                           <div class="dropdown-menu" aria-labelledby="dd_t{{token.order_id}}">

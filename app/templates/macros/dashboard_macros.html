@@ -13,7 +13,7 @@
             </select>
         </div>
         <input id="search-users" type="text" class="form-control"
-               aria-label="Text input with dropdown button" placeholder="Search users…">
+               aria-label="{{ _('Search users…') }}" placeholder="{{ _('Search users…') }}">
     </div>
 {% endmacro %}
 
@@ -47,7 +47,7 @@
                 {% endif %}
                 <td class="user role">{{ u.role.name }}</td>
                 {% if current_user.is_admin() %}
-                <td>{% if u.confirmed %}<span class="px1">{{ _('Confirmed') }}</span><span class="fa fa-check-circle" aria-label="Confirmed"></span>{% else %}<span class="px1">{{ _('Not Confirmed') }}</span><span class="fa fa-circle"  aria-label="Not Confirmed"></span>{% endif %}</td>
+                <td>{% if u.confirmed %}<span class="px1">{{ _('Confirmed') }}</span><span class="fa fa-check-circle" aria-label="{{ _('Confirmed') }}"></span>{% else %}<span class="px1">{{ _('Not Confirmed') }}</span><span class="fa fa-circle"  aria-label="{{ _('Not Confirmed') }}"></span>{% endif %}</td>
                 {% endif %}
             </tr>
         {% endfor %}
@@ -243,7 +243,7 @@
         {% if can_edit %}
             <div id="hidden-inputs"></div>
             <input type="button" class="mt-5 mb-5 btn btn-primary" tabindex="-1" role="button" aria-disabled="true"
-                   value="Save modifications" id="accesses-form-submit"/>
+                   value="{{ _('Save modifications') }}" id="accesses-form-submit"/>
         {% endif %}
     </form>
 </div>
