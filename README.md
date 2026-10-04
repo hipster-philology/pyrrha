@@ -37,6 +37,8 @@ From the root directory, run:
 
 `pybabel compile -d translations`
 
+See "Update the translations" below for the whole workflow.
+
 ## Demo
 ![Pandora Post-Correction Editor](./demo.gif)
 
@@ -74,22 +76,31 @@ with the mail you used. If you are simply running it for yourself, we would defi
 
 ## Update the translations
 
+The interface is available in English (the source language), French (`fr`) and Tibetan (`bo_CN`).
+The catalogs live in `translations/<language>/LC_MESSAGES/messages.po`. The compiled
+`messages.mo` files are not versioned: **compile the translations every time you deploy**.
+
 From the root directory, run:
 
 `python manage.py translate compile`
 
-If you changed the template or variables
+If you changed a template, a flash message or a form label (strings are wrapped in `_()`
+in templates and Python code, and in `_l()` for module-level form labels):
 
 ```sh
 python manage.py translate update
-# Change the translation and then do
+# Translate the new entries in translations/<language>/LC_MESSAGES/messages.po, check the
+# entries flagged "fuzzy" (they are guesses and ignored until you remove the flag), and then do
 python manage.py translate compile
 ```
 
-If you want to add a language
+Write whole sentences in `_()`, with named placeholders (`_("Hello %(name)s", name=name)`),
+and never build a sentence out of several translated pieces: word order and agreement differ between languages.
+
+If you want to add a language, add it to `LANGUAGES` in `config.py` and run
 
 ```sh
-python manage.py translate init fr
+python manage.py translate init de
 python manage.py translate update
 python manage.py translate compile
 ```
