@@ -9,7 +9,7 @@
             {% if icon %}
                 <i class="{{ icon }}"  aria-hidden="true"></i>
             {% endif %}
-            {{ name | safe }}
+            {{ name }}
         </a></li>
     {% endfor %}
 {% endmacro %}
@@ -52,7 +52,7 @@
       </button>
       <div class="collapse navbar-collapse" id="main-nav">
          <a class="navbar-brand {% if request.endpoint == endpoint %}active{% endif %}" href="{{ url_for('main.index') }}">
-                <i class="fa fa-home"  aria-hidden="true"></i> {{ config.APP_NAME | safe }}
+                <i class="fa fa-home"  aria-hidden="true"></i> {{ config.APP_NAME }}
         </a>
             <ul class="navbar-nav mr-auto">
                 {{ header_items(current_user) }}
@@ -76,7 +76,7 @@
                     {% for corpus in corpora %}
                         <a class="dropdown-item dd-corpus"
                            id="dropdown_link_{{corpus.id}}" href="{{url_for("main.tokens_correct", corpus_id=corpus.id)}}">
-                            {{ corpus.name | safe }}
+                            {{ corpus.name }}
                         </a>
                     {% endfor %}
                     </div>
@@ -98,7 +98,7 @@
                         {% for control_list in control_lists %}
                             <a class="dropdown-item dd-control_list"
                                id="dropdown_link_cl_{{control_list.id}}" href="{{url_for("control_lists_bp.get", control_list_id=control_list.id)}}">
-                                {{ control_list.name | safe }}
+                                {{ control_list.name }}
                             </a>
                         {% endfor %}
                     {% endif %}
