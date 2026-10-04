@@ -1,15 +1,15 @@
-<p>{{ _('Dear') }} {{ user.full_name() }},</p>
+<p>{% trans name=user.full_name() %}Dear {{ name }},{% endtrans %}</p>
 
-<p>{{ _('Welcome to') }} <b>{{ config.APP_NAME }}</b>!</p>
+<p>{% trans app=config.APP_NAME %}Welcome to <b>{{ app }}</b>!{% endtrans %}</p>
 
-<p>{{ _('To confirm your account, please') }} <a href="{{ confirm_link }}">{{ _('click here') }}</a>.</p>
+<p>{% trans link=confirm_link %}To confirm your account, please <a href="{{ link }}">click here</a>.{% endtrans %}</p>
 
-<p>Alternatively, you can paste the following link in your browser's address bar:</p>
+<p>{{ _("Alternatively, you can paste the following link in your browser's address bar:") }}</p>
 
 <p>{{ confirm_link }}</p>
 
 <p>{{ _('Sincerely,') }}</p>
 
-<p>The {{ config.APP_NAME }} Team</p>
+<p>{{ _('The %(app)s Team', app=config.APP_NAME) }}</p>
 
 <p><small>{{ _('Note: replies to this email address are not monitored.') }}</small></p>

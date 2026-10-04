@@ -37,6 +37,9 @@ class Config:
     EMAIL_SUBJECT_PREFIX = '[{}]'.format(APP_NAME)
     EMAIL_SENDER = '{app_name} Admin <{email}>'.format(app_name=APP_NAME, email=MAIL_USERNAME)
 
+    # Where the compiled translation catalogs live (absolute, so it does not depend on the working directory)
+    BABEL_TRANSLATION_DIRECTORIES = os.path.join(basedir, "translations")
+
     # Interface languages: locale code -> name in that language
     LANGUAGES = {
         'en': 'English',

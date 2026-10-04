@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Pyrrha 5.1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-10-04 10:46+0200\n"
+"POT-Creation-Date: 2026-10-04 10:50+0200\n"
 "PO-Revision-Date: 2026-10-04 10:43+0200\n"
 "Last-Translator: Pyrrha contributors\n"
 "Language: fr\n"
@@ -613,23 +613,28 @@ msgid "Resend confirmation email"
 msgstr "Renvoyer l'e-mail de confirmation"
 
 #: app/templates/account/email/change_email.html:1
+#: app/templates/account/email/change_email.txt:1
 #: app/templates/account/email/confirm.html:1
+#: app/templates/account/email/confirm.txt:1
 #: app/templates/account/email/invite.html:1
+#: app/templates/account/email/invite.txt:1
 #: app/templates/account/email/reset_password.html:1
-msgid "Dear"
-msgstr "Bonjour"
+#: app/templates/account/email/reset_password.txt:1
+#, python-format
+msgid "Dear %(name)s,"
+msgstr "Bonjour %(name)s,"
 
 #: app/templates/account/email/change_email.html:3
-msgid "To confirm your new email address"
-msgstr "Pour confirmer votre nouvelle adresse e-mail"
-
-#: app/templates/account/email/change_email.html:3
-#: app/templates/account/email/confirm.html:5
-#: app/templates/account/email/invite.html:5
-msgid "click here"
-msgstr "cliquez ici"
+#, python-format
+msgid "To confirm your new email address <a href=\"%(link)s\">click here</a>."
+msgstr ""
+"Pour confirmer votre nouvelle adresse e-mail, <a href=\"%(link)s\">cliquez "
+"ici</a>."
 
 #: app/templates/account/email/change_email.html:5
+#: app/templates/account/email/confirm.html:7
+#: app/templates/account/email/invite.html:7
+#: app/templates/account/email/reset_password.html:5
 msgid ""
 "Alternatively, you can paste the following link in your browser's address "
 "bar:"
@@ -638,41 +643,106 @@ msgstr ""
 "navigateur :"
 
 #: app/templates/account/email/change_email.html:9
+#: app/templates/account/email/change_email.txt:7
 #: app/templates/account/email/confirm.html:11
+#: app/templates/account/email/confirm.txt:9
 #: app/templates/account/email/invite.html:13
+#: app/templates/account/email/invite.txt:11
 #: app/templates/account/email/reset_password.html:11
+#: app/templates/account/email/reset_password.txt:9
 msgid "Sincerely,"
 msgstr "Cordialement,"
 
+#: app/templates/account/email/change_email.html:11
+#: app/templates/account/email/change_email.txt:9
+#: app/templates/account/email/confirm.html:13
+#: app/templates/account/email/confirm.txt:11
+#: app/templates/account/email/invite.html:15
+#: app/templates/account/email/invite.txt:13
+#: app/templates/account/email/reset_password.html:13
+#: app/templates/account/email/reset_password.txt:11
+#, python-format
+msgid "The %(app)s Team"
+msgstr "L'équipe %(app)s"
+
 #: app/templates/account/email/change_email.html:13
+#: app/templates/account/email/change_email.txt:11
 #: app/templates/account/email/confirm.html:15
+#: app/templates/account/email/confirm.txt:13
 #: app/templates/account/email/invite.html:17
+#: app/templates/account/email/invite.txt:15
 #: app/templates/account/email/reset_password.html:15
-#: app/templates/control_lists/email/contact.html:10
+#: app/templates/account/email/reset_password.txt:13
+#: app/templates/control_lists/email/contact.html:9
+#: app/templates/control_lists/email/contact.txt:9
 msgid "Note: replies to this email address are not monitored."
 msgstr "Remarque : les réponses envoyées à cette adresse e-mail ne sont pas lues."
 
+#: app/templates/account/email/change_email.txt:3
+msgid "To confirm your new email address click on the following link:"
+msgstr "Pour confirmer votre nouvelle adresse e-mail, cliquez sur le lien suivant :"
+
 #: app/templates/account/email/confirm.html:3
-msgid "Welcome to"
-msgstr "Bienvenue sur"
+#, python-format
+msgid "Welcome to <b>%(app)s</b>!"
+msgstr "Bienvenue sur <b>%(app)s</b> !"
 
 #: app/templates/account/email/confirm.html:5
-msgid "To confirm your account, please"
-msgstr "Pour confirmer votre compte,"
+#, python-format
+msgid "To confirm your account, please <a href=\"%(link)s\">click here</a>."
+msgstr "Pour confirmer votre compte, <a href=\"%(link)s\">cliquez ici</a>."
+
+#: app/templates/account/email/confirm.txt:3
+#, python-format
+msgid "Welcome to %(app)s!"
+msgstr "Bienvenue sur %(app)s !"
+
+#: app/templates/account/email/confirm.txt:5
+msgid "To confirm your account, please click on the following link:"
+msgstr "Pour confirmer votre compte, cliquez sur le lien suivant :"
 
 #: app/templates/account/email/invite.html:3
-msgid "You are invited to join"
-msgstr "Vous êtes invité·e à rejoindre"
+#, python-format
+msgid "You are invited to join <b>%(app)s</b>!"
+msgstr "Vous êtes invité·e à rejoindre <b>%(app)s</b> !"
 
 #: app/templates/account/email/invite.html:5
-msgid "To set your password, please"
-msgstr "Pour définir votre mot de passe,"
+#, python-format
+msgid "To set your password, please <a href=\"%(link)s\">click here</a>."
+msgstr "Pour définir votre mot de passe, <a href=\"%(link)s\">cliquez ici</a>."
+
+#: app/templates/account/email/invite.html:11
+#: app/templates/account/email/invite.txt:9
+#, python-format
+msgid "Once completed, please log in as %(email)s with the password you set."
+msgstr ""
+"Une fois terminé, connectez-vous avec l'adresse %(email)s et le mot de passe"
+" que vous avez défini."
+
+#: app/templates/account/email/invite.txt:3
+#, python-format
+msgid "You are invited to join %(app)s!"
+msgstr "Vous êtes invité·e à rejoindre %(app)s !"
+
+#: app/templates/account/email/invite.txt:5
+msgid "To set your password, please click on the following link:"
+msgstr "Pour définir votre mot de passe, cliquez sur le lien suivant :"
+
+#: app/templates/account/email/reset_password.html:3
+#, python-format
+msgid "To reset your password, <a href=\"%(link)s\">click here</a>."
+msgstr "Pour réinitialiser votre mot de passe, <a href=\"%(link)s\">cliquez ici</a>."
 
 #: app/templates/account/email/reset_password.html:9
+#: app/templates/account/email/reset_password.txt:7
 msgid "If you have not requested a password reset, simply ignore this message."
 msgstr ""
 "Si vous n'avez pas demandé de réinitialisation de mot de passe, ignorez "
 "simplement ce message."
+
+#: app/templates/account/email/reset_password.txt:3
+msgid "To reset your password, click on the following link:"
+msgstr "Pour réinitialiser votre mot de passe, cliquez sur le lien suivant :"
 
 #: app/templates/admin/manage_user.html:41
 msgid "Account status"
@@ -1149,6 +1219,25 @@ msgstr "Erreur lors du retrait de la valeur"
 #: app/templates/control_lists/rename.html:8
 msgid "Rename the control list"
 msgstr "Renommer la liste de contrôle"
+
+#: app/templates/control_lists/email/contact.html:5
+#, python-format
+msgid ""
+"This email has been sent by %(name)s (%(email)s) to every administrators of "
+"the control list <a href=\"%(url)s\">%(title)s</a>"
+msgstr ""
+"Ce message a été envoyé par %(name)s (%(email)s) à tous les "
+"administrateur·ices de la liste de contrôle <a "
+"href=\"%(url)s\">%(title)s</a>"
+
+#: app/templates/control_lists/email/contact.txt:5
+#, python-format
+msgid ""
+"This email has been sent by %(name)s <%(email)s> to every administrators of "
+"the control list %(title)s ( %(url)s )"
+msgstr ""
+"Ce message a été envoyé par %(name)s <%(email)s> à tous les "
+"administrateur·ices de la liste de contrôle %(title)s ( %(url)s )"
 
 #: app/templates/errors/403.html:4
 #, python-format
@@ -2535,72 +2624,4 @@ msgstr "Token d'origine"
 #: app/templates/main/tokens_similar_to_token.html:66
 msgid "Similar matching"
 msgstr "Correspondances similaires"
-
-#~ msgid ""
-#~ "You are running in dev or test "
-#~ "mode. No emails can be sentfor this"
-#~ " function. Use the admin account (check"
-#~ " source code for passwords)"
-#~ msgstr ""
-
-#~ msgid "Faild to update preferences: %(error)s"
-#~ msgstr ""
-
-#~ msgid "Faild to update dictionary: %(error)s"
-#~ msgstr ""
-
-#~ msgid "Ancienne valeur"
-#~ msgstr ""
-
-#~ msgid "Nouvelle valeur"
-#~ msgstr ""
-
-#~ msgid "View and manage"
-#~ msgstr ""
-
-#~ msgid "users"
-#~ msgstr ""
-
-#~ msgid "Add or remove"
-#~ msgstr ""
-
-#~ msgid "access to users"
-#~ msgstr ""
-
-#~ msgid "Only"
-#~ msgstr ""
-
-#~ msgid "owners can manage user accesses"
-#~ msgstr ""
-
-#~ msgid ""
-#~ "The user will be able to use "
-#~ "the post-correction tools but also "
-#~ "grant and remove\n"
-#~ "                                    accesses to this"
-#~ msgstr ""
-
-#~ msgid "Edit allowed"
-#~ msgstr ""
-
-#~ msgid "Allowed"
-#~ msgstr ""
-
-#~ msgid "annotations"
-#~ msgstr ""
-
-#~ msgid "corrected"
-#~ msgstr ""
-
-#~ msgid "unallowed"
-#~ msgstr ""
-
-#~ msgid "values"
-#~ msgstr ""
-
-#~ msgid "forms"
-#~ msgstr ""
-
-#~ msgid "edited"
-#~ msgstr ""
 
