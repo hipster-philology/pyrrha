@@ -1,6 +1,6 @@
 {% extends 'layouts/base.html' %}
 
 {% block content %}
-    <h1 class="ui header">Error 403</h1>
+    <h1 class="ui header">{{ _('Error %(code)s', code=403) }}</h1>
     <h3 class="ui header" id="error_message">{{ _('Forbidden: You do not have the right to access this page.') }}</h3>
 {% endblock %}

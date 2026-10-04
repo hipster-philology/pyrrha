@@ -54,7 +54,7 @@
             </a>
             <h2 class="mt-3 mb-5">
                 {{ user.full_name() }}
-                <small class="form-text">View and manage {{ user.first_name }}’s account.</small>
+                <small class="form-text">{{ _('View and manage %(name)s’s account.', name=user.first_name) }}</small>
             </h2>
         </div>
         <div class="row">
@@ -85,7 +85,7 @@
                     </div>
                 {% elif form %}
                     {% if request.endpoint == 'admin.change_account_status' %}
-                      This account is actually {{'confirmed' if user.confirmed else 'unconfirmed'}}.
+                      {{ _('This account is actually %(status)s.', status=_('confirmed') if user.confirmed else _('unconfirmed')) }}
                     {% endif %}
                     {{ f.render_form(form) }}
                 {% else %}
