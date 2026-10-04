@@ -14,6 +14,7 @@ from sqlalchemy.orm import backref, aliased
 from sqlalchemy import func, literal, not_, or_, and_
 from werkzeug.exceptions import BadRequest
 from flask import url_for, abort
+from flask_babel import gettext as _
 
 # Application imports
 from app import db
@@ -1435,14 +1436,14 @@ class WordToken(db.Model):
         # Avoid updating for the same
         if token.lemma == lemma and token.POS == POS and token.morph == morph and token.gloss == gloss:
             error = WordToken.NothingChangedError("No value where changed")
-            error.msg = "No value where changed"
+            error.msg = _("No value where changed")
             raise error
         # Check if values are correct regarding allowed values
         validity = WordToken.is_valid(form=form, lemma=lemma, POS=POS, morph=morph, corpus=corpus)
         if False in list(validity.values()):
-            error_msg = "Invalid value in {}".format(
-                ", ".join([key for key in validity.keys() if validity[key] is False])
-            )
+            error_msg = _("Invalid value in %(columns)s", columns=", ".join(
+                [key for key in validity.keys() if validity[key] is False]
+            ))
             error = WordToken.ValidityError(error_msg)
             error.msg = error_msg
             error.statuses = validity
