@@ -110,11 +110,12 @@
 
                     <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><i class="fa fa-language"  aria-hidden="true"></i>
-                        Language
+                        {{ _('Language') }}
                     </a>
                     <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-                      <a class="dropdown-item" href="{{url_for('main.locale', language='bo_CN')}}">Tibetan</a>
-                      <a class="dropdown-item" href="{{url_for('main.locale', language='en')}}">English</a>
+                      {% for code, name in config.LANGUAGES.items() %}
+                      <a class="dropdown-item" href="{{url_for('main.locale', language=code)}}" lang="{{ code }}">{{ name }}</a>
+                      {% endfor %}
                     </div>
                   </li>
                   <li class="nav-item"><a class="nav-link" href="https://github.com/hipster-philology/pyrrha/issues/new/choose" target="_blank"><i class="fa fa-bug"  aria-hidden="true"></i> {{ _('Bug or request ?') }}</a></li>

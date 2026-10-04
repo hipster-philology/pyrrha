@@ -1,7 +1,7 @@
 {% import 'macros/nav_macros.html' as nav %}
 {% import 'control_lists/macros.html' as control_list_macros with context %}
 <!DOCTYPE html>
-<html>
+<html lang="{{ current_locale | replace('_', '-') }}">
     <head>
         {% include 'partials/_head.html' %}
         {# Any templates that extend this template can set custom_head_tags to add scripts to their page #}
