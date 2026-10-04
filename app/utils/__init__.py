@@ -1,7 +1,8 @@
 from .pagination import int_or
 from .tsv import StringDictReader
 from .forms import string_to_none
-from typing import Dict
+from typing import Dict, Optional
+from urllib.parse import urlparse
 
 
 class PyrrhaError(Exception):
@@ -41,3 +42,15 @@ def validate_length(k: str, v: str, lengths: Dict[str, int]):
             f"column '{k}': '{v}' is too long (maximum {lengths[k]} characters)"
         )
 
+
+
+def is_safe_next(target: Optional[str]) -> bool:
+    """Only accept same-site relative paths as post-login redirect targets.
+
+    :param target: Value of the ``next`` query parameter
+    :return: True if the target is a local path (no scheme, no host)
+    """
+    if not target or not target.startswith("/") or target.startswith(("//", "/\\")):
+        return False
+    parsed = urlparse(target)
+    return not parsed.scheme and not parsed.netloc

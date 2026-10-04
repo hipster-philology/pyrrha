@@ -23,6 +23,7 @@ from app.account.forms import (
     ResetPasswordForm)
 from app.email import send_email_async
 from app.main.views.utils import render_template_with_nav_info
+from app.utils import is_safe_next
 from app.models import User
 
 account = Blueprint('account', __name__)
@@ -38,7 +39,8 @@ def login():
                 user.verify_password(form.password.data):
             login_user(user, form.remember_me.data)
             flash('You are now logged in. Welcome back!', 'success')
-            return redirect(request.args.get('next') or url_for('main.index'))
+            next_url = request.args.get('next')
+            return redirect(next_url if is_safe_next(next_url) else url_for('main.index'))
         else:
             flash('Invalid email or password.', 'form-error')
     return render_template_with_nav_info('account/login.html', form=form)
