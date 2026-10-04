@@ -121,3 +121,28 @@ class TestProductionConfig(TestBase):
         self.assertTrue(ProductionConfig.SESSION_COOKIE_HTTPONLY)
         self.assertEqual(ProductionConfig.SESSION_COOKIE_SAMESITE, "Lax")
         self.assertTrue(ProductionConfig.REMEMBER_COOKIE_SECURE)
+
+
+class TestAdminUserDeletion(TestBase):
+
+    def setUp(self):
+        super().setUp()
+        self.victim = User(first_name="Vic", last_name="Tim", email="vic@example.org",
+                           password="correct horse battery", confirmed=True)
+        self.db.session.add(self.victim)
+        self.db.session.commit()
+        self.victim_id = self.victim.id
+
+    def test_get_does_not_delete(self):
+        resp = self.client.get(f"/admin/user/{self.victim_id}/_delete")
+        self.assertEqual(resp.status_code, 405)
+        self.assertIsNotNone(self.db.session.get(User, self.victim_id))
+
+    def test_post_deletes(self):
+        resp = self.client.post(f"/admin/user/{self.victim_id}/_delete")
+        self.assertEqual(resp.status_code, 302)
+        self.db.session.expire_all()
+        self.assertIsNone(self.db.session.get(User, self.victim_id))
+
+    def test_unknown_user_is_404(self):
+        self.assertEqual(self.client.post("/admin/user/9999/_delete").status_code, 404)
