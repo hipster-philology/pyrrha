@@ -13,7 +13,7 @@ from .utils import render_template_with_nav_info, request_wants_json, requires_c
 from .. import main
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
 from ...utils.forms import string_to_none
-from ...utils.pagination import int_or
+from ...utils.pagination import int_or, MAX_PAGE_SIZE
 from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
 
@@ -87,7 +87,7 @@ def tokens_correct_data(corpus_id):
 
     tokens = corpus.get_tokens().paginate(
         page=int_or(request.args.get("page"), 1),
-        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"], max_value=MAX_PAGE_SIZE)
     )
 
     if "similar" in corpus.displayed_columns_by_name:
@@ -151,7 +151,7 @@ def tokens_correct_unallowed_data(corpus_id, allowed_type):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first()
     tokens = corpus.get_unallowed(allowed_type).paginate(
         page=int_or(request.args.get("page"), 1),
-        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"], max_value=MAX_PAGE_SIZE)
     )
     changed = corpus.changed(tokens.items)
     tokens_data = []
@@ -210,7 +210,7 @@ def tokens_similar_to_record_data(corpus_id, record_id):
     record = ChangeRecord.query.filter_by(**{"id": record_id, "corpus": corpus_id}).first_or_404()
     tokens = WordToken.get_similar_to_record(change_record=record).paginate(
         page=int_or(request.args.get("page"), 1),
-        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"], max_value=MAX_PAGE_SIZE)
     )
     changed = corpus.changed(tokens.items)
     tokens_data = []
@@ -269,7 +269,7 @@ def tokens_similar_to_token_data(corpus_id, token_id):
     token = WordToken.query.filter_by(**{"id": token_id, "corpus": corpus_id}).first_or_404()
     tokens = WordToken.get_nearly_similar_to(token, mode=mode).paginate(
         page=int_or(request.args.get("page"), 1),
-        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"], max_value=MAX_PAGE_SIZE)
     )
     changed = corpus.changed(tokens.items)
     tokens_data = []
@@ -414,7 +414,7 @@ def tokens_needs_review_data(corpus_id):
     corpus = Corpus.query.filter_by(**{"id": corpus_id}).first_or_404()
     tokens = corpus.get_needs_review().paginate(
         page=int_or(request.args.get("page"), 1),
-        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+        per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"], max_value=MAX_PAGE_SIZE)
     )
     changed = corpus.changed(tokens.items)
     tokens_data = []
@@ -552,7 +552,7 @@ def tokens_history(corpus_id):
     :param corpus_id: ID of the corpus
     """
     corpus = Corpus.get_or_404(corpus_id)
-    tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 20))
+    tokens = corpus.get_history(page=int_or(request.args.get("page"), 1), limit=int_or(request.args.get("limit"), 20, max_value=MAX_PAGE_SIZE))
     return render_template_with_nav_info('main/tokens_history.html', corpus=corpus, tokens=tokens)
 
 
@@ -682,11 +682,11 @@ def tokens_search_data(corpus_id):
     tokens_q, _, _ = corpus.token_search(
         token_dict=token_dict,
         case_sensitive='caseBox' not in request.args,
-        desc=int(request.args.get("desc", "0"))
+        desc=int_or(request.args.get("desc"), 0)
     )
     tokens = tokens_q.paginate(
         page=int_or(request.args.get("page"), 1),
-        per_page=int_or(request.args.get("limit"), 100)
+        per_page=int_or(request.args.get("limit"), 100, max_value=MAX_PAGE_SIZE)
     )
 
     if "similar" in corpus.displayed_columns_by_name:
@@ -805,7 +805,7 @@ def tokens_edit_history(corpus_id):
     corpus = Corpus.get_or_404(corpus_id)
     tokens = TokenHistory.query.filter_by(corpus=corpus.id).paginate(
             page=int_or(request.args.get("page"), 1),
-            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"])
+            per_page=int_or(request.args.get("limit"), current_app.config["PAGINATION_DEFAULT_TOKENS"], max_value=MAX_PAGE_SIZE)
         )
     return render_template_with_nav_info("main/tokens_edit_history.html", corpus=corpus,
                                          tokens=tokens)

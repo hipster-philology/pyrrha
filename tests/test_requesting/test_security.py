@@ -146,3 +146,30 @@ class TestAdminUserDeletion(TestBase):
 
     def test_unknown_user_is_404(self):
         self.assertEqual(self.client.post("/admin/user/9999/_delete").status_code, 404)
+
+
+class TestSecurityHeaders(TestBase):
+
+    def test_headers_are_set(self):
+        resp = self.client.get(url_for("main.index"))
+        self.assertEqual(resp.headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(resp.headers["X-Frame-Options"], "SAMEORIGIN")
+        self.assertEqual(resp.headers["Referrer-Policy"], "same-origin")
+
+
+class TestPagingLimits(TestBase):
+
+    def setUp(self):
+        super().setUp()
+        self.addCorpus("wauchier", with_token=True)
+
+    def test_limit_is_clamped(self):
+        from app.utils.pagination import int_or, MAX_PAGE_SIZE
+        self.assertEqual(int_or("999999", 100, max_value=MAX_PAGE_SIZE), MAX_PAGE_SIZE)
+        self.assertEqual(int_or("12", 100, max_value=MAX_PAGE_SIZE), 12)
+        self.assertEqual(int_or("abc", 100, max_value=MAX_PAGE_SIZE), 100)
+
+    def test_search_data_survives_bad_desc(self):
+        resp = self.client.get("/corpus/1/tokens/search/data?form=a&desc=abc&limit=99999999")
+        self.assertEqual(resp.status_code, 200)
+        self.assertLessEqual(resp.get_json()["per_page"], 500)
