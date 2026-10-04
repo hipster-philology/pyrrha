@@ -222,7 +222,10 @@ def search_api(control_list_id, allowed_type):
     :param control_list_id: Id of the Control List
     :param allowed_type: Type of allowed value (lemma, morph, POS)
     """
-    form = (request.get_json(silent=True) or {}).get("form") or request.args.get("form")
+    payload = request.get_json(silent=True)
+    form = (payload.get("form") if isinstance(payload, dict) else None) or request.args.get("form") or ""
+    if not isinstance(form, str) or not form.strip():
+        return jsonify([])
     return jsonify(
         [
             format_api_like_reply(result, allowed_type)

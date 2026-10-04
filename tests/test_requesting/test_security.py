@@ -202,3 +202,27 @@ class TestRegistrationDuplicateMessage(TestBase):
             password="correct horse battery", password2="correct horse battery"))
         html = resp.get_data(as_text=True)
         self.assertIn('<a href="/account/reset-password">password reset</a>', html)
+
+
+class TestControlListSearchApi(TestBase):
+
+    def setUp(self):
+        super().setUp()
+        self.addCorpus("wauchier", with_token=False, with_allowed_lemma=True)
+
+    def test_missing_or_empty_form_returns_an_empty_list(self):
+        for query in ("", "?form=", "?form=%20%20"):
+            resp = self.client.get("/controls/1/api/lemma" + query)
+            self.assertEqual(resp.status_code, 200, query)
+            self.assertEqual(resp.get_json(), [], query)
+
+    def test_search_still_returns_matches(self):
+        resp = self.client.get("/controls/1/api/lemma?form=s")
+        self.assertEqual(resp.status_code, 200)
+        self.assertIsInstance(resp.get_json(), list)
+
+    def test_post_with_missing_or_malformed_body_returns_an_empty_list(self):
+        for body in ({}, {"form": ""}, {"form": None}, [], "text"):
+            resp = self.client.post("/controls/1/api/lemma", json=body)
+            self.assertEqual(resp.status_code, 200, body)
+            self.assertEqual(resp.get_json(), [], body)
