@@ -76,7 +76,7 @@ class ResetPasswordForm(FlaskForm):
     submit = SubmitField('Reset password')
 
     def validate_email(self, field):
-        if User.query.filter_by(email=field.data).first() is None:
+        if User.query.filter_by(email=field.data.lower()).first() is None:
             raise ValidationError('Unknown email address.')
 
 

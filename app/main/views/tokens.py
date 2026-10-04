@@ -14,6 +14,7 @@ from .. import main
 from ...models import WordToken, Corpus, ChangeRecord, TokenHistory, Bookmark
 from ...utils.forms import string_to_none
 from ...utils.pagination import int_or, MAX_PAGE_SIZE
+from ...utils.tsv import neutralize_formula
 from ...utils.tsv import TSV_CONFIG, stream_tsv
 from ...utils.response import stream_template
 
@@ -606,12 +607,12 @@ def tokens_history_download(corpus_id):
             row = {
                 "user": "{}.{}".format(record.user.first_name[0], record.user.last_name),
                 "edit": record.created_on.isoformat(),
-                "context": ctx,
+                "context": neutralize_formula(ctx),
             }
             for col in ("lemma", "POS", "morph", "gloss"):
                 if col in visible:
-                    row[col + "_old"] = getattr(record, col) or ""
-                    row[col + "_new"] = getattr(record, col + "_new") or ""
+                    row[col + "_old"] = neutralize_formula(getattr(record, col) or "")
+                    row[col + "_new"] = neutralize_formula(getattr(record, col + "_new") or "")
             writer.writerow(row)
             yield output.getvalue()
 

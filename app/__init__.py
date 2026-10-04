@@ -29,7 +29,8 @@ login_manager = LoginManager()
 login_manager.session_protection = 'strong'
 login_manager.login_view = 'account.login'
 
-logging.basicConfig(filename='./pyrrha_corpus_creation.log', level=logging.DEBUG,
+logging.basicConfig(filename=os.environ.get('LOG_FILE', './pyrrha_corpus_creation.log'),
+                    level=os.environ.get('LOG_LEVEL', 'INFO').upper(),
                         format='%(asctime)s %(levelname)s %(name)s %(message)s')
 
 logger = logging.getLogger(__name__)
