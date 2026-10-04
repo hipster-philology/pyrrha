@@ -107,7 +107,7 @@ def lemma_list(control_list_id):
         kwargs = {}
         page = request.args.get("page", 1, type=int)
 
-        limit = request.args.get("limit", 1000, type=int)
+        limit = max(1, min(request.args.get("limit", 1000, type=int), 5000))
         kw = strip_or_none(request.args.get("kw", ""))
         template = "control_lists/read_lemma.html"
         allowed_values = control_list.get_allowed_values(
