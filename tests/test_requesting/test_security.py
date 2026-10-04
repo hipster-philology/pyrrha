@@ -190,3 +190,15 @@ class TestHygiene(TestBase):
         for value in ("=1+1", "+1", "-1", "@SUM(A1)"):
             self.assertEqual(neutralize_formula(value), "'" + value)
         self.assertEqual(neutralize_formula("saint"), "saint")
+
+
+class TestRegistrationDuplicateMessage(TestBase):
+    """The duplicate-email error holds a trusted link that must stay clickable, not escaped."""
+
+    def test_reset_link_is_rendered_as_html(self):
+        self.client.get(url_for("account.logout"))
+        resp = self.client.post(url_for("account.register"), data=dict(
+            first_name="A", last_name="B", email=self.app.config["ADMIN_EMAIL"],
+            password="correct horse battery", password2="correct horse battery"))
+        html = resp.get_data(as_text=True)
+        self.assertIn('<a href="/account/reset-password">password reset</a>', html)

@@ -1,3 +1,4 @@
+from flask_babel import gettext as _, lazy_gettext as _l
 from flask_wtf import FlaskForm
 from wtforms.fields import (
     TextAreaField,
@@ -8,11 +9,11 @@ from wtforms.validators import InputRequired
 
 
 class SendMailToAdmin(FlaskForm):
-    title = StringField('Title', validators=[InputRequired()])
-    message = TextAreaField("Message", validators=[InputRequired()])
-    submit = SubmitField('Send mail')
+    title = StringField(_l('Title'), validators=[InputRequired()])
+    message = TextAreaField(_l("Message"), validators=[InputRequired()])
+    submit = SubmitField(_l('Send mail'))
 
 
 class Rename(FlaskForm):
-    title = StringField('Title', validators=[InputRequired()])
-    submit = SubmitField('Rename')
+    title = StringField(_l('Title'), validators=[InputRequired()])
+    submit = SubmitField(_l('Rename'))
