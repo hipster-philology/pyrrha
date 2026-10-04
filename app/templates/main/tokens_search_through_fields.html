@@ -29,7 +29,7 @@
             <td>
                 <div class="form-group">
                     <input name="form" type="text" class="form-control" id="form" aria-describedby="formHelp"
-                           placeholder="Enter form" value="{% if form %}{{ form }}{% endif %}"/>
+                           placeholder="{{ _('Enter form') }}" value="{% if form %}{{ form }}{% endif %}"/>
                 </div>
             </td>
             {% if "Lemma" in visible %}

@@ -15,7 +15,7 @@
       <div class="col-md-3">
         <button class="btn btn-outline-info" id="show_lemma"><i class="fa fa-pencil-square-o"></i> {{ _('Add new lemma') }}</button></div>
       <div class="col-md-3" style="display: none;" id="show_lemma_container">
-        <textarea name="lemmas" class="form-control" placeholder="One lemma per line" aria-label="Add new lemma" id="submit_lemma_textarea"></textarea>
+        <textarea name="lemmas" class="form-control" placeholder="{{ _('One lemma per line') }}" aria-label="{{ _('Add new lemma') }}" id="submit_lemma_textarea"></textarea>
         <button type="submit" class="btn btn-primary" style="margin-top: 1em;" id="submit_lemma">{{ _('Save the new lemmas') }}</button>
         <div>
           <span id="lemma_saving" class="hidden-default lemma_badge text-secondary border-secondary border rounded badge"><i class="fa fa-spinner fa-spin"></i> {{ _('Saving') }}</span>
@@ -31,13 +31,13 @@
 <div class="row">
   <div class="col-sm-12">
     <h3>{{ _('Results') }}</h3>
-    <small class="text-muted">There is {{allowed_values.total}} lemma{% if kw %} for this query{% endif %}.</small>
+    <small class="text-muted">{% if kw %}{{ ngettext('There is %(num)d lemma for this query.', 'There are %(num)d lemmas for this query.', allowed_values.total) }}{% else %}{{ ngettext('There is %(num)d lemma.', 'There are %(num)d lemmas.', allowed_values.total) }}{% endif %}</small>
     <form method="GET" class="col-md-3">
         <div class="input-group input-group-sm">
           <div class="input-group-prepend">
             <button type="submit" class="btn btn-outline-primary" id="searchLemma">{{ _('Search for') }}</button>
           </div>
-          <input type="text" name="kw" class="form-control-sm form-control" value="{{kw}}" placeholder="Search a lemma" aria-label="Search Lemma" aria-describedby="searchLemma">
+          <input type="text" name="kw" class="form-control-sm form-control" value="{{kw}}" placeholder="{{ _('Search a lemma') }}" aria-label="{{ _('Search Lemma') }}" aria-describedby="searchLemma">
           <div class="input-group-append">
             <button type="button" class="btn btn-outline-info" id="searchHelp"><i class="fa fa-plus-circle"></i> {{ _('Show help') }} </button>
           </div>
@@ -55,7 +55,7 @@
     <ul id="lemma-list">
     {%- if can_edit %}
     {%- for token in allowed_values.items %}
-        <li><a class="rm-lem" href="{{url_for('control_lists_bp.lemma_list', control_list_id=control_list.id, id=token.id)}}"><i aria-label="Remove" class="fa fa-trash-o"></i></a>&nbsp;{{token.label}}</li>
+        <li><a class="rm-lem" href="{{url_for('control_lists_bp.lemma_list', control_list_id=control_list.id, id=token.id)}}"><i aria-label="{{ _('Remove') }}" class="fa fa-trash-o"></i></a>&nbsp;{{token.label}}</li>
     {% endfor -%}
     {% else %}
     {%- for token in allowed_values.items %}
@@ -128,7 +128,7 @@
             method:"DELETE"
           })
               .done(function() { parent.remove(); })
-              .fail(function() { alert("Error while removing the value"); });
+              .fail(function() { alert({{ _('Error while removing the value') | tojson }}); });
       });
       {% endif -%}
   });

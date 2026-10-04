@@ -12,11 +12,8 @@
         <div class="row ">
             <div class="ml-3 col-sm-6">
                 <div class="alert alert-danger">
-                    <p>Once you have deleted the corpus, we won't have any backup. You cannot
-                        go back once it's done ! If you want to feel safer,
-                        go <a href="{{url_for('.tokens_export', corpus_id=corpus.id)}}">export the corpus.</a></p>
-                    <p> The name of your corpus is <code>{{corpus.name}}</code>. Copy here the name of your corpus
-                        to confirm its deletion.</p>
+                    <p>{% trans export_url=url_for('.tokens_export', corpus_id=corpus.id) %}Once you have deleted the corpus, we won't have any backup. You cannot go back once it's done ! If you want to feel safer, go <a href="{{ export_url }}">export the corpus.</a>{% endtrans %}</p>
+                    <p>{% trans name=corpus.name %}The name of your corpus is <code>{{ name }}</code>. Copy here the name of your corpus to confirm its deletion.{% endtrans %}</p>
                 </div>
                 {{ f.render_form(form, action=url_for('.corpus_delete', corpus_id=corpus.id)) }}
             </div>
