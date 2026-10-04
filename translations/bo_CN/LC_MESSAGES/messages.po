@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-10-04 10:50+0200\n"
+"POT-Creation-Date: 2026-10-04 10:53+0200\n"
 "PO-Revision-Date: 2022-06-30 14:23+0000\n"
 "Last-Translator: Tashi Dhondup <dhonduptiger658@gmail.com>, 2022\n"
 "Language: bo_CN\n"
@@ -284,11 +284,12 @@ msgstr ""
 msgid "Status for user %(name)s successfully changed to %(status)s."
 msgstr ""
 
-#: app/admin/views.py:161 app/templates/macros/dashboard_macros.html:50
+#: app/admin/views.py:161 app/templates/admin/manage_user.html:42
+#: app/templates/macros/dashboard_macros.html:50
 msgid "Confirmed"
 msgstr "གཏན་འཁེལ་བྱས་ཟིན།"
 
-#: app/admin/views.py:161
+#: app/admin/views.py:161 app/templates/admin/manage_user.html:42
 msgid "Unconfirmed"
 msgstr ""
 
@@ -360,6 +361,22 @@ msgstr ""
 
 #: app/control_lists/views.py:193
 msgid "An unknown error occurred"
+msgstr ""
+
+#: app/control_lists/views.py:197 app/templates/main/corpus_new.html:307
+msgid "This should be formatted as a list of lemma separated by new line"
+msgstr ""
+"འདི་ནི་ངེས་པར་དུ་ཐིག་ཕྲེང་གསར་པ་རེས་བར་ཕྱེས་པའི་lemma "
+"ཡི་ཐོ་གཞུང་ཞིག་གི་རྣམ་པ་རུ་ཡོད་དགོས།"
+
+#: app/control_lists/views.py:200
+msgid "This should be formatted as a list of POS separated by comma and no space"
+msgstr ""
+
+#: app/control_lists/views.py:203
+msgid ""
+"The TSV should at least have the header : label and could have a readable"
+" column for human"
 msgstr ""
 
 #: app/control_lists/views.py:262
@@ -544,6 +561,22 @@ msgstr "གསང་གྲངས་མི་དྲན་ནམ།"
 msgid "Forgot password?"
 msgstr "གསང་གྲངས་མི་དྲན་ནམ།"
 
+#: app/templates/account/manage.html:6
+msgid "Account information"
+msgstr ""
+
+#: app/templates/account/manage.html:7 app/templates/admin/manage_user.html:8
+msgid "Change email address"
+msgstr ""
+
+#: app/templates/account/manage.html:8
+msgid "Change password"
+msgstr ""
+
+#: app/templates/account/manage.html:9 app/templates/macros/nav_macros.html:36
+msgid "Log out"
+msgstr "ཕྱིར་ཐོན།"
+
 #: app/templates/account/manage.html:25 app/templates/admin/manage_user.html:29
 #, fuzzy
 msgid "Full name"
@@ -719,6 +752,22 @@ msgstr ""
 msgid "To reset your password, click on the following link:"
 msgstr ""
 
+#: app/templates/admin/manage_user.html:7
+msgid "User information"
+msgstr ""
+
+#: app/templates/admin/manage_user.html:9
+msgid "Change account type"
+msgstr ""
+
+#: app/templates/admin/manage_user.html:10
+msgid "Change account status"
+msgstr ""
+
+#: app/templates/admin/manage_user.html:11
+msgid "Delete user"
+msgstr ""
+
 #: app/templates/admin/manage_user.html:41
 #, fuzzy
 msgid "Account status"
@@ -808,6 +857,17 @@ msgstr ""
 "            new lemma, POS or morphologies accepted values. We have "
 "preferred to use email so that discussion could be rich\n"
 "            when needed."
+
+#: app/templates/control_lists/control_list.html:5
+#: app/templates/control_lists/edit.html:6
+#: app/templates/control_lists/ignore_filter.html:4
+#: app/templates/control_lists/information_edit.html:3
+#: app/templates/control_lists/information_read.html:3
+#: app/templates/control_lists/read.html:3
+#: app/templates/control_lists/read_lemma.html:4
+#: app/templates/macros/nav_macros.html:215
+msgid "Control List"
+msgstr "སྟངས་འཛིན་ཐོ་གཞུང་།"
 
 #: app/templates/control_lists/control_list.html:10
 #: app/templates/control_lists/information_edit.html:11
@@ -976,6 +1036,7 @@ msgid "Bibliography of the control list"
 msgstr "སྟངས་འཛིན་ཐོ་གཞུང་དེའི་དཔེ་ཐོ།"
 
 #: app/templates/control_lists/information_edit.html:30
+#: app/templates/control_lists/information_read.html:3
 #: app/templates/control_lists/information_read.html:7
 #: app/templates/control_lists/macros.html:9
 msgid "Guidelines"
@@ -990,6 +1051,10 @@ msgstr ""
 "All the relevant information that might be of help\n"
 "        about how to tag using your control list. Can link to external "
 "data and use"
+
+#: app/templates/control_lists/information_read.html:11
+msgid "No guidelines available at this moment."
+msgstr ""
 
 #: app/templates/control_lists/information_read.html:19
 msgid "Filters"
@@ -1314,6 +1379,8 @@ msgstr ""
 
 #: app/templates/macros/header_macros.html:2
 #: app/templates/macros/nav_macros.html:200
+#: app/templates/main/corpus_edit_allowed_values.html:5
+#: app/templates/main/corpus_info.html:5
 #: app/templates/main/tokens_add_row.html:8
 #: app/templates/main/tokens_correct.html:11
 #: app/templates/main/tokens_correct_unallowed.html:11
@@ -1341,10 +1408,6 @@ msgstr ""
 #, fuzzy
 msgid "Your Account"
 msgstr "ཐོ་འགོད།"
-
-#: app/templates/macros/nav_macros.html:36
-msgid "Log out"
-msgstr "ཕྱིར་ཐོན།"
 
 #: app/templates/macros/nav_macros.html:42
 msgid "Log In"
@@ -1428,10 +1491,6 @@ msgstr ""
 #, fuzzy
 msgid "Users"
 msgstr "སྤྱོད་མཁན།"
-
-#: app/templates/macros/nav_macros.html:215
-msgid "Control List"
-msgstr "སྟངས་འཛིན་ཐོ་གཞུང་།"
 
 #: app/templates/macros/nav_macros.html:217
 msgid "Edit values in the control list"
@@ -1844,6 +1903,10 @@ msgstr "ཆུ་ཚོད་ལས་བརྒལ་བའི་འགྲེལ
 msgid "Most common corrections"
 msgstr "ཆེས་སྤྱིར་བཏང་གི་ཕྱོགས་བསྒྲིགས་རྣམས།"
 
+#: app/templates/main/corpus_info.html:119
+msgid "Number of corrections to display"
+msgstr ""
+
 #: app/templates/main/corpus_info.html:122
 msgid "See more"
 msgstr ""
@@ -2187,12 +2250,6 @@ msgstr "ནང་འདྲེན་བྱས་པའི་ Morphology"
 #: app/templates/main/corpus_new.html:306
 msgid "Allowed lemma"
 msgstr "ཆོག་མཆན་ཐོབ་པའི་ lemma"
-
-#: app/templates/main/corpus_new.html:307
-msgid "This should be formatted as a list of lemma separated by new line"
-msgstr ""
-"འདི་ནི་ངེས་པར་དུ་ཐིག་ཕྲེང་གསར་པ་རེས་བར་ཕྱེས་པའི་lemma "
-"ཡི་ཐོ་གཞུང་ཞིག་གི་རྣམ་པ་རུ་ཡོད་དགོས།"
 
 #: app/templates/main/corpus_new.html:312
 msgid "This should be formatted as a list of POS separated by comma"

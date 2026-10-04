@@ -4,11 +4,11 @@
 {% set deletion_endpoint = 'admin.delete_user_request' %}
 
 {% set endpoints = [
-    ('admin.user_info', 'User information'),
-    ('admin.change_user_email', 'Change email address'),
-    ('admin.change_account_type', 'Change account type'),
-    ('admin.change_account_status', 'Change account status'),
-    (deletion_endpoint, 'Delete user')
+    ('admin.user_info', _('User information')),
+    ('admin.change_user_email', _('Change email address')),
+    ('admin.change_account_type', _('Change account type')),
+    ('admin.change_account_status', _('Change account status')),
+    (deletion_endpoint, _('Delete user'))
 ] %}
 
 {% macro navigation(items) %}
@@ -39,7 +39,7 @@
             </tr>
             <tr>
               <td>{{ _('Account status') }}</td>
-               <td>{{'Confirmed' if user.confirmed else 'Unconfirmed'}} </td>
+               <td>{{ _('Confirmed') if user.confirmed else _('Unconfirmed') }} </td>
             </tr>
         </table>
     </form>
