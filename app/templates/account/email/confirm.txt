@@ -1,14 +1,13 @@
-Dear {{ user.full_name() }},
+{% trans name=user.full_name() %}Dear {{ name }},{% endtrans %}
 
-Welcome to {{ config.APP_NAME }}!
+{% trans app=config.APP_NAME %}Welcome to {{ app }}!{% endtrans %}
 
-To confirm your account, please click on the following link:
+{{ _('To confirm your account, please click on the following link:') }}
 
 {{ confirm_link }}
 
-Sincerely,
+{{ _('Sincerely,') }}
 
-The {{ config.APP_NAME }} Team
+{{ _('The %(app)s Team', app=config.APP_NAME) }}
 
-Note: replies to this email address are not monitored.
-
+{{ _('Note: replies to this email address are not monitored.') }}

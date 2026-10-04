@@ -42,6 +42,9 @@ class Config:
     # fetch-based API endpoints.
     SESSION_COOKIE_SAMESITE = 'Lax'
 
+    # Where the compiled translation catalogs live (absolute, so it does not depend on the working directory)
+    BABEL_TRANSLATION_DIRECTORIES = os.path.join(basedir, "translations")
+
     # Interface languages: locale code -> name in that language
     LANGUAGES = {
         'en': 'English',

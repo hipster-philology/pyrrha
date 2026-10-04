@@ -1,11 +1,11 @@
-Dear {{ user.full_name() }},
+{% trans name=user.full_name() %}Dear {{ name }},{% endtrans %}
 
-To confirm your new email address click on the following link:
+{{ _('To confirm your new email address click on the following link:') }}
 
 {{ change_email_link }}
 
-Sincerely,
+{{ _('Sincerely,') }}
 
-The {{ config.APP_NAME }} Team
+{{ _('The %(app)s Team', app=config.APP_NAME) }}
 
-Note: replies to this email address are not monitored.
+{{ _('Note: replies to this email address are not monitored.') }}

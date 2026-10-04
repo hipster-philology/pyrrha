@@ -2,8 +2,7 @@
 
 <hr />
 
-<p><small>This email has been sent by {{user.first_name}} {{user.last_name}} ({{user.email}}) to every administrators of the
-    control list <a href="{{url}}">{{control_list_title}}</a></small></p>
+<p><small>{% trans name=user.first_name ~ ' ' ~ user.last_name, email=user.email, url=url, title=control_list_title %}This email has been sent by {{ name }} ({{ email }}) to every administrators of the control list <a href="{{ url }}">{{ title }}</a>{% endtrans %}</small></p>
 
 <hr />
 
