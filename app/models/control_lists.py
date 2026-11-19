@@ -351,6 +351,7 @@ class AllowedLemma(db.Model):
         :param allowed_values: List of dictionary with label and readable keys
         :param control_lists_id: Id of the Control List
         :param _commit: Force commit (Default: false)
+        :return: List of lemmas that already existed and were skipped
         """
         if len(allowed_values) != len(set(allowed_values)):
             raise PyrrhaError("Following values are duplicated: " + ", ".join(
@@ -360,15 +361,27 @@ class AllowedLemma(db.Model):
                     if cnt > 1
                 ]
             ))
+        # Skip lemmas already in the list instead of failing on the unique index
+        existing = set()
+        values = list(allowed_values)
+        for start in range(0, len(values), 500):
+            existing.update(
+                label for (label,) in db.session.query(AllowedLemma.label).filter(
+                    AllowedLemma.control_list == control_lists_id,
+                    AllowedLemma.label.in_(values[start:start + 500])
+                )
+            )
+        skipped = [item for item in values if item in existing]
         db.session.bulk_insert_mappings(
             AllowedLemma,
             [
                 dict(label=item, control_list=control_lists_id, label_uniform=unidecode.unidecode(item))
-                for item in allowed_values
+                for item in values if item not in existing
             ]
         )
         if _commit:
             db.session.commit()
+        return skipped
 
     @staticmethod
     def to_input_format(query):

@@ -162,3 +162,39 @@ class TestTokenReview(TokenCorrectHelpers):
         # Click the toggle directly — panel should open (no need to flag first)
         row.locator(".at-review-toggle").click()
         panel.wait_for(state="visible", timeout=5000)
+
+
+class TestOrderIdLinksToCorpus(TokenCorrectHelpers):
+    """On the For Review and Unallowed pages, the order id links to the token in the correction page"""
+
+    @pytest.fixture(autouse=True)
+    def setup(self, page, url_for_port, app):
+        self.page = page
+        self.url_for = url_for_port
+        self.app = app
+
+    def _assert_link(self, url):
+        self.page.goto(url)
+        self.page.wait_for_load_state("networkidle")
+        self.page.locator(".at-loading").wait_for(state="hidden", timeout=10000)
+        link = self.page.locator(".at-order-id").first
+        link.wait_for(state="visible", timeout=5000)
+        order_id = int(link.get_attribute("id").replace("tok", ""))
+        href = link.get_attribute("href")
+        base = self.url_for("main.tokens_correct", corpus_id=self.CORPUS_ID, _external=False)
+        page_number = -(-order_id // self.app.config["PAGINATION_DEFAULT_TOKENS"])
+        assert href.endswith(f"/corpus/{self.CORPUS_ID}/tokens/correct?page={page_number}#tok{order_id}"), href
+        assert "/tokens/correct" in base
+
+    def test_needs_review_link(self):
+        from app import db
+        self.addCorpus(with_token=True, tokens_up_to=24)
+        token = db.session.query(WordToken).filter_by(corpus=int(self.CORPUS_ID), order_id=3).first()
+        token.needs_review = True
+        db.session.commit()
+        self._assert_link(self.url_for("main.tokens_needs_review", corpus_id=self.CORPUS_ID))
+
+    def test_unallowed_link(self):
+        self.addCorpus(with_token=True, tokens_up_to=24, partial_allowed_lemma=True)
+        self._assert_link(self.url_for(
+            "main.tokens_correct_unallowed", corpus_id=self.CORPUS_ID, allowed_type="lemma"))

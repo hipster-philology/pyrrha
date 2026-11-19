@@ -89,7 +89,10 @@ def lemma_list(control_list_id):
             return abort(400, jsonify({"message": _("No lemma were passed.")}))
         lemmas = list(set(form.split()))
         try:
-            AllowedLemma.add_batch(lemmas, control_list.id, _commit=True)
+            skipped = AllowedLemma.add_batch(lemmas, control_list.id, _commit=True)
+            if skipped:
+                return jsonify({"message": _("Data saved") + " (" + _(
+                    "%(count)s already existing lemma(s) skipped", count=len(skipped)) + ")"})
             return jsonify({"message": _("Data saved")})
         except ValueError as E:
             db.session.rollback()
@@ -97,7 +100,7 @@ def lemma_list(control_list_id):
         except sqlalchemy.exc.StatementError as E:
             db.session.rollback()
             error = str(E.orig)
-            if error.startswith("UNIQUE constraint failed"):
+            if isinstance(E, sqlalchemy.exc.IntegrityError) or error.startswith("UNIQUE constraint failed"):
                 return make_response(jsonify({"message": _("One of the lemma you submitted already exist. "
                                                          "Remove this lemma and resubmit.")}), 400)
             return make_response(jsonify({"message": _("Database error. Contact the administrator.")}), 400)
