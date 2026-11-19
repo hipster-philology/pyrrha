@@ -90,3 +90,34 @@ class TestReviewAPI(TestBase):
     def test_needs_review_filter_page(self):
         resp = self.client.get('/corpus/1/tokens/needs-review')
         self.assertEqual(resp.status_code, 200)
+
+
+class TestLongValues(TestBase):
+    """ A long morph must be recorded in the change history (issue #357) """
+
+    def test_long_morph_correction(self):
+        self.addCorpus("wauchier", with_token=True)
+        morph = ("Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin+Case=Acc|Person=3|PrepCase=Npr|"
+                 "PronType=Prs|Reflex=Yes+Case=Acc|Gender=Masc|Number=Sing|Person=3|PrepCase=Npr|PronType=Prs")
+        self.assertGreater(len(morph), 128)
+        resp = self.client.post("/corpus/1/tokens/correct/2", data={
+            "lemma": "deber+él+él", "POS": "VERB+PRON+PRON", "morph": morph})
+        self.assertEqual(resp.status_code, 200, resp.data)
+        self.assertEqual(json.loads(resp.data)["token"]["morph"], morph)
+        from app.models import ChangeRecord
+        self.assertEqual(ChangeRecord.query.order_by(ChangeRecord.id.desc()).first().morph_new, morph)
+
+
+class TestContextLinks(TestBase):
+    """ For review and unallowed pages link to the token in the correction page (issue #356) """
+
+    def setUp(self):
+        super().setUp()
+        self.addCorpus("wauchier", with_token=True)
+
+    def test_links_to_corpus(self):
+        for url in ("/corpus/1/tokens/needs-review", "/corpus/1/tokens/unallowed/lemma/correct"):
+            resp = self.client.get(url)
+            self.assertEqual(resp.status_code, 200, url)
+            self.assertIn("corpus_base_url", resp.get_data(as_text=True), url)
+            self.assertIn("/corpus/1/tokens/correct", resp.get_data(as_text=True), url)

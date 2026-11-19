@@ -7,6 +7,7 @@ import math
 from csv import DictWriter
 from io import StringIO
 from typing import Dict
+import sqlalchemy.exc
 from sqlalchemy.orm import selectinload
 
 from app import db, csrf
@@ -139,7 +140,8 @@ def tokens_correct_unallowed(corpus_id, allowed_type):
         "visible_columns": visible_cols,
         "urls": _corpus_urls(
             corpus,
-            data_url=url_for("main.tokens_correct_unallowed_data", corpus_id=corpus.id, allowed_type=allowed_type)
+            data_url=url_for("main.tokens_correct_unallowed_data", corpus_id=corpus.id, allowed_type=allowed_type),
+            link_to_corpus=True
         ),
     }
     return render_template_with_nav_info(
@@ -339,6 +341,12 @@ def tokens_correct_single(corpus_id, token_id):
         response = jsonify({"status": False, "message": E.msg, "details": E.statuses})
         response.status_code = 400
         return response
+    except sqlalchemy.exc.DataError:
+        db.session.rollback()
+        response = jsonify({"status": False, "message": _("One of the values is too long to be saved."),
+                            "details": []})
+        response.status_code = 400
+        return response
 
 
 @main.route('/corpus/<int:corpus_id>/tokens/similar/<int:record_id>/update', methods=["POST"])
@@ -405,7 +413,8 @@ def tokens_needs_review(corpus_id):
         "visible_columns": visible_cols,
         "urls": _corpus_urls(
             corpus,
-            data_url=url_for("main.tokens_needs_review_data", corpus_id=corpus.id)
+            data_url=url_for("main.tokens_needs_review_data", corpus_id=corpus.id),
+            link_to_corpus=True
         ),
     }
     return render_template_with_nav_info(
@@ -736,7 +745,7 @@ def tokens_edit_form(corpus_id, token_id):
     """
     corpus = Corpus.get_or_404(corpus_id)
     token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
-    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    page = math.ceil(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"])
     go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
     if request.method == "POST" and request.form.get("form"):
         token.edit_form(request.form.get("form"), corpus=corpus, user=current_user)
@@ -760,7 +769,7 @@ def tokens_del_row(corpus_id, token_id):
     """
     corpus = Corpus.get_or_404(corpus_id)
     token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
-    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    page = math.ceil(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"])
     go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
 
     if request.method == "POST":
@@ -789,7 +798,7 @@ def tokens_add_row(corpus_id, token_id):
     """
     corpus = Corpus.get_or_404(corpus_id)
     token = WordToken.query.filter_by(**{"corpus": corpus_id, "id": token_id}).first_or_404()
-    page = math.floor(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"]) + 1
+    page = math.ceil(token.order_id / current_app.config["PAGINATION_DEFAULT_TOKENS"])
     go_back_url = url_for(".tokens_correct", corpus_id=corpus_id, page=page) + "#tok" + str(token.order_id)
 
     if request.method == "POST" and request.form.get("form"):
